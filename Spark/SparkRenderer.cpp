@@ -2,6 +2,7 @@
 #include <exception>
 #include <iostream>
 #include "ResourceLoader.h"
+#include "HID.h"
 
 SparkRenderer* SparkRenderer::getInstance()
 {
@@ -44,6 +45,19 @@ void SparkRenderer::initOpengl()
 	{
 		throw std::exception("Failed to initialize OpenGL loader!");
 	}
+
+	glfwSetKeyCallback(window, HID::key_callback);
+	glfwSetCursorPosCallback(window, HID::cursor_position_callback);
+
+	unsigned char pixels[16 * 16 * 4];
+	memset(pixels, 0xff, sizeof(pixels));
+	GLFWimage image;
+	image.width = 16;
+	image.height = 16;
+	image.pixels = pixels;
+	GLFWcursor* cursor = glfwCreateCursor(&image, 0, 0);
+
+	glfwSetCursor(window, cursor);
 
 	glfwSwapInterval(0);
 }

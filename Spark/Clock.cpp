@@ -5,7 +5,11 @@ double Clock::deltaTime = 0;
 void Clock::tick()
 {
 	static double lastTime;
+#ifdef DEBUG
+	deltaTime > 1.0f / 30.0f ? deltaTime = 1.0f / 30.0f : deltaTime = glfwGetTime() - lastTime;
+#else
 	deltaTime = glfwGetTime() - lastTime;
+#endif
 	lastTime = glfwGetTime();
 }
 
