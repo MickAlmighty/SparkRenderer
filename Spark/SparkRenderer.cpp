@@ -2,16 +2,6 @@
 #include <exception>
 #include <iostream>
 
-
-SparkRenderer::SparkRenderer()
-{
-}
-
-
-SparkRenderer::~SparkRenderer()
-{
-}
-
 SparkRenderer* SparkRenderer::getInstance()
 {
 	static SparkRenderer* spark_renderer = nullptr;
@@ -24,14 +14,20 @@ SparkRenderer* SparkRenderer::getInstance()
 
 void SparkRenderer::setup()
 {
+	initOpengl();
+	initMembers();
+}
 
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
-
-	if(!glfwInit())
+void SparkRenderer::initOpengl()
+{
+	if (!glfwInit())
 	{
 		throw std::exception("glfw init failed");
 	}
+
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	glfwSetErrorCallback(error_callback);
 
@@ -40,7 +36,7 @@ void SparkRenderer::setup()
 	{
 		throw std::exception("Window creation failed");
 	}
-	
+
 	glfwMakeContextCurrent(window);
 
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
@@ -48,18 +44,27 @@ void SparkRenderer::setup()
 		throw std::exception("Failed to initialize OpenGL loader!");
 	}
 
-	glfwSwapInterval(1);
+	glfwSwapInterval(0);
+}
 
+void SparkRenderer::initMembers()
+{
+	screenQuad.setup();
+	shader = std::make_unique<Shader>("C:/Studia/Semestr6/SparkRenderer/shaders/default.vert", "C:/Studia/Semestr6/SparkRenderer/shaders/default.frag");
 }
 
 void SparkRenderer::renderPass()
 {
-	glfwPollEvents();
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glClearColor(0, 0, 0, 1);
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-	
+
+	shader->use();
+
+	screenQuad.draw();
+
 	glfwSwapBuffers(window);
+	glfwPollEvents();
 }
 
 void SparkRenderer::cleanup()
