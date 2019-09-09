@@ -1,6 +1,7 @@
 #include "SparkRenderer.h"
 #include <exception>
 #include <iostream>
+#include "ResourceLoader.h"
 
 SparkRenderer* SparkRenderer::getInstance()
 {
@@ -31,7 +32,7 @@ void SparkRenderer::initOpengl()
 
 	glfwSetErrorCallback(error_callback);
 
-	window = glfwCreateWindow(640, 480, "Spark", NULL, NULL);
+	window = glfwCreateWindow(1280, 720, "Spark", NULL, NULL);
 	if (!window)
 	{
 		throw std::exception("Window creation failed");
@@ -50,7 +51,8 @@ void SparkRenderer::initOpengl()
 void SparkRenderer::initMembers()
 {
 	screenQuad.setup();
-	shader = std::make_unique<Shader>("C:/Studia/Semestr6/SparkRenderer/shaders/default.vert", "C:/Studia/Semestr6/SparkRenderer/shaders/default.frag");
+	shader = std::make_unique<Shader>("C:/Studia/Semestr6/SparkRenderer/res/shaders/default.vert", "C:/Studia/Semestr6/SparkRenderer/res/shaders/default.frag");
+	model = ResourceLoader::loadModel("C:/Studia/Semestr6/SparkRenderer/res/models/box/box.obj");
 }
 
 void SparkRenderer::renderPass()
@@ -59,9 +61,16 @@ void SparkRenderer::renderPass()
 	glClearColor(0, 0, 0, 1);
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
+	glm::mat4 view = glm::lookAt(glm::vec3(0, 0, -3), glm::vec3(0), glm::vec3(0, 1, 0));
+	glm::mat4 projection = glm::perspective(glm::radians(70.0f), 1280.0f / 720.0f, 0.1f, 100.0f);
+	
 	shader->use();
+	model->transform.setRotationDegrees(30, 30, 0);
+	glm::mat4 MVP = projection * view * model->transform.getMatrix();
+	shader->setMat4("MVP", MVP);
+	model->draw();
 
-	screenQuad.draw();
+	//screenQuad.draw();
 
 	glfwSwapBuffers(window);
 	glfwPollEvents();
@@ -79,5 +88,5 @@ bool SparkRenderer::isWindowOpened() const
 
 void SparkRenderer::error_callback(int error, const char* description)
 {
-	fprintf(stderr, "Error: %s\n", description);
+	fprintf(stderr, "Error: %s/n", description);
 }

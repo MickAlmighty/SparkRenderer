@@ -1,16 +1,16 @@
 #pragma once
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include <cstdio>
 #include "Structs.h"
 #include "Shader.h"
+#include "Model.h"
 
 class SparkRenderer
 {
 private:
 	GLFWwindow* window = nullptr;
 	ScreenQuad screenQuad{};
-
+	Model* model = nullptr;
 
 	~SparkRenderer() = default;
 	SparkRenderer() = default;

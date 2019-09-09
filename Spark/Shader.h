@@ -8,10 +8,9 @@ class Shader
 {
 private:
 	GLuint ID;
-	~Shader();
-
 public:
 	Shader(const char* vertexShaderPath, const char* fragmentShaderPath);
+	~Shader();
 	GLuint compileVertexShader(const char* vertexShaderSource);
 	GLuint compileFragmentShader(const char* fragmentShaderSource);
 	void linkProgram(GLuint vertexShader, GLuint fragmentShader);
