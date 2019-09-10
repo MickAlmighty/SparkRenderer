@@ -1,4 +1,6 @@
 #include "Camera.h"
+#include "Clock.h"
+#include "HID.h"
 
 
 Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch): Front(glm::vec3(0.0f, 0.0f, -1.0f)),
@@ -27,17 +29,25 @@ glm::mat4 Camera::GetViewMatrix()
 	return glm::lookAt(Position, Position + Front, Up);
 }
 
-void Camera::ProcessKeyboard(Camera_Movement direction, float deltaTime)
+void Camera::ProcessKeyboard()
 {
-	float velocity = MovementSpeed * deltaTime;
-	if (direction == FORWARD)
-		Position += Front * velocity;
-	if (direction == BACKWARD)
-		Position -= Front * velocity;
-	if (direction == LEFT)
-		Position -= Right * velocity;
-	if (direction == RIGHT)
-		Position += Right * velocity;
+	float velocity = MovementSpeed * Clock::getDeltaTime();
+	if (HID::isKeyPressed(GLFW_KEY_LEFT_SHIFT))
+		velocity *= 1.5f;
+	glm::vec3 front = glm::normalize(glm::vec3(Front.x, 0, Front.z));
+	glm::vec3 right = glm::normalize(glm::vec3(Right.x, 0, Right.z));
+	if (HID::isKeyPressed(GLFW_KEY_W))
+		Position += front * velocity;
+	if (HID::isKeyPressed(GLFW_KEY_S))
+		Position -= front * velocity;
+	if (HID::isKeyPressed(GLFW_KEY_A))
+		Position -= right * velocity;
+	if (HID::isKeyPressed(GLFW_KEY_D))
+		Position += right * velocity;
+	if (HID::isKeyPressed(GLFW_KEY_Q))
+		Position -= WorldUp * velocity;
+	if (HID::isKeyPressed(GLFW_KEY_E))
+		Position += WorldUp * velocity;
 }
 
 void Camera::ProcessMouseMovement(float xoffset, float yoffset, bool constrainPitch)
@@ -79,6 +89,7 @@ void Camera::updateCameraVectors()
 	front.y = sin(glm::radians(Pitch));
 	front.z = sin(glm::radians(Yaw)) * cos(glm::radians(Pitch));
 	Front = glm::normalize(front);
+	//Front = glm::normalize(glm::vec3(front.x, 0, front.z));
 	// Also re-calculate the Right and Up vector
 	Right = glm::normalize(glm::cross(Front, WorldUp));
 	// Normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.

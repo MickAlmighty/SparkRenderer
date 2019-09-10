@@ -4,16 +4,6 @@
 
 Texture ResourceManager::findTexture(const std::string&& path)
 {
-	/*auto texture_it = std::find_if(std::begin(textures), std::end(textures), [&path](const Texture& tex)
-	{
-		return tex.path.compare(path);
-	});
-
-	if(texture_it != std::end(textures))
-	{
-		return *texture_it;
-	}*/
-
 	for(auto& tex_it : textures)
 	{
 		if (tex_it.path == path)

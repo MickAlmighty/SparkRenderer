@@ -50,7 +50,7 @@ void SparkRenderer::initOpengl()
 
 	glfwSetKeyCallback(window, HID::key_callback);
 	glfwSetCursorPosCallback(window, HID::cursor_position_callback);
-	//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	unsigned char pixels[16 * 16 * 4];
 	memset(pixels, 0xff, sizeof(pixels));
@@ -75,16 +75,18 @@ void SparkRenderer::initMembers()
 
 void SparkRenderer::renderPass()
 {
+	camera->ProcessKeyboard();
+	camera->ProcessMouseMovement(HID::mouse.direction.x, -HID::mouse.direction.y);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glClearColor(0, 0, 0, 1);
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);
 	//glm::mat4 view = glm::lookAt(glm::vec3(0, 0, -3), glm::vec3(0), glm::vec3(0, 1, 0));
 	glm::mat4 view = camera->GetViewMatrix();
-	glm::mat4 projection = glm::perspective(glm::radians(70.0f), 1280.0f / 720.0f, 0.1f, 100.0f);
+	glm::mat4 projection = glm::perspective(glm::radians(60.0f), 1280.0f / 720.0f, 0.1f, 100.0f);
 	
 	shader->use();
-	model->transform.setRotationDegrees(30, 30, 0);
+	model->transform.setRotationDegrees(0, 30, 0);
 	glm::mat4 MVP = projection * view * model->transform.getMatrix();
 	shader->setMat4("MVP", MVP);
 	model->draw();
