@@ -142,6 +142,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Clock.cpp" />
     <ClCompile Include="glad.c" />
     <ClCompile Include="HID.cpp" />
@@ -153,10 +154,13 @@
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="Spark.cpp" />
     <ClCompile Include="SparkRenderer.cpp" />
+    <ClCompile Include="stb_image.cpp" />
     <ClCompile Include="Transform.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Camera.h" />
     <ClInclude Include="Clock.h" />
+    <ClInclude Include="Enums.h" />
     <ClInclude Include="HID.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Model.h" />

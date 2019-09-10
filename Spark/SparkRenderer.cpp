@@ -3,6 +3,9 @@
 #include <iostream>
 #include "ResourceLoader.h"
 #include "HID.h"
+#include "ResourceManager.h"
+
+GLFWwindow* SparkRenderer::window = nullptr;
 
 SparkRenderer* SparkRenderer::getInstance()
 {
@@ -16,7 +19,6 @@ SparkRenderer* SparkRenderer::getInstance()
 
 void SparkRenderer::setup()
 {
-	initOpengl();
 	initMembers();
 }
 
@@ -48,6 +50,7 @@ void SparkRenderer::initOpengl()
 
 	glfwSetKeyCallback(window, HID::key_callback);
 	glfwSetCursorPosCallback(window, HID::cursor_position_callback);
+	//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	unsigned char pixels[16 * 16 * 4];
 	memset(pixels, 0xff, sizeof(pixels));
@@ -66,7 +69,8 @@ void SparkRenderer::initMembers()
 {
 	screenQuad.setup();
 	shader = std::make_unique<Shader>("C:/Studia/Semestr6/SparkRenderer/res/shaders/default.vert", "C:/Studia/Semestr6/SparkRenderer/res/shaders/default.frag");
-	model = ResourceLoader::loadModel("C:/Studia/Semestr6/SparkRenderer/res/models/box/box.obj");
+	model = ResourceManager::getInstance()->findModel(R"(C:\Studia\Semestr6\SparkRenderer\res\models\box\box.obj)");
+	camera = new Camera(glm::vec3(0, 0, 2));
 }
 
 void SparkRenderer::renderPass()
@@ -74,8 +78,9 @@ void SparkRenderer::renderPass()
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glClearColor(0, 0, 0, 1);
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-
-	glm::mat4 view = glm::lookAt(glm::vec3(0, 0, -3), glm::vec3(0), glm::vec3(0, 1, 0));
+	glEnable(GL_DEPTH_TEST);
+	//glm::mat4 view = glm::lookAt(glm::vec3(0, 0, -3), glm::vec3(0), glm::vec3(0, 1, 0));
+	glm::mat4 view = camera->GetViewMatrix();
 	glm::mat4 projection = glm::perspective(glm::radians(70.0f), 1280.0f / 720.0f, 0.1f, 100.0f);
 	
 	shader->use();
@@ -87,7 +92,6 @@ void SparkRenderer::renderPass()
 	//screenQuad.draw();
 
 	glfwSwapBuffers(window);
-	glfwPollEvents();
 }
 
 void SparkRenderer::cleanup()

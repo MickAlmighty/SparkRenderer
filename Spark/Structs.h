@@ -5,6 +5,12 @@
 #include <glm/glm.hpp>
 #include <vector>
 
+struct Texture
+{
+	GLuint ID;
+	std::string path;
+};
+
 struct Vertex
 {
 	glm::vec3 pos;

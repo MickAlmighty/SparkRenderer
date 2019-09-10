@@ -234,7 +234,7 @@ static int has_ext(const char *ext) {
 
             terminator = loc + strlen(ext);
             if((loc == extensions || *(loc - 1) == ' ') &&
-                (*terminator == ' ' || *terminator == '\0')) {
+                (*terminator == ' ' || *terminator == '/0')) {
                 return 1;
             }
             extensions = terminator;

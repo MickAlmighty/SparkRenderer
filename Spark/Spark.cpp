@@ -2,9 +2,14 @@
 #include "SparkRenderer.h"
 #include "Clock.h"
 #include <iostream>
+#include "HID.h"
+#include "ResourceManager.h"
 
 void Spark::setup()
 {
+	SparkRenderer::getInstance()->initOpengl();
+	ResourceManager::getInstance()->loadResources();
+
 	SparkRenderer::getInstance()->setup();
 }
 
@@ -19,6 +24,7 @@ void Spark::run()
 #ifdef DEBUG
 		std::cout << Clock::getFPS() << std::endl;
 #endif
+		HID::clearStates();
 	}
 }
 
