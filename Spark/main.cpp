@@ -1,11 +1,20 @@
 #include <iostream>
 #include "Spark.h"
+#include "Structs.h"
+
 
 int main()
 {
+	InitializationVariables variables{
+		1280,
+		720,
+		R"(C:\Studia\Semestr6\SparkRenderer\res\models)",
+		R"(C:\Studia\Semestr6\SparkRenderer\res)"
+	};
+
 	try
 	{
-		Spark::setup();
+		Spark::setup(variables);
 		Spark::run();
 		Spark::clean();
 	}

@@ -5,9 +5,18 @@
 #include "HID.h"
 #include "ResourceManager.h"
 
-void Spark::setup()
+unsigned int Spark::WIDTH, Spark::HEIGHT;
+std::filesystem::path Spark::pathToModels;
+std::filesystem::path Spark::pathToResources;
+
+void Spark::setup(InitializationVariables& variables)
 {
-	SparkRenderer::getInstance()->initOpengl();
+	WIDTH = variables.width;
+	HEIGHT = variables.height;
+	pathToModels = variables.pathToModels;
+	pathToResources = variables.pathToResources;
+	
+	SparkRenderer::initOpenGL();
 	ResourceManager::getInstance()->loadResources();
 
 	SparkRenderer::getInstance()->setup();
@@ -30,4 +39,5 @@ void Spark::run()
 
 void Spark::clean()
 {
+	SparkRenderer::getInstance()->cleanup();
 }

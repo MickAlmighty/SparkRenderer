@@ -22,7 +22,7 @@ ResourceLoader::~ResourceLoader()
 
 
 
-std::map<std::string, Model*> ResourceLoader::loadModels(std::filesystem::path&& modelsDirectory)
+std::map<std::string, Model*> ResourceLoader::loadModels(std::filesystem::path& modelsDirectory)
 {
 	std::map<std::string, Model*> models;
 	for (auto& path_it : std::filesystem::recursive_directory_iterator(modelsDirectory))
@@ -134,7 +134,7 @@ std::unique_ptr<Mesh> ResourceLoader::loadMesh(aiMesh* assimpMesh)
 	return std::make_unique<Mesh>(vertices, indices);
 }
 
-std::vector<Texture> ResourceLoader::loadTextures(std::filesystem::path&& resDirectory)
+std::vector<Texture> ResourceLoader::loadTextures(std::filesystem::path& resDirectory)
 {
 	std::vector<Texture> textures;
 	for (auto& path_it : std::filesystem::recursive_directory_iterator(resDirectory))

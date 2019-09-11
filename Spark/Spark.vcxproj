@@ -175,6 +175,10 @@
   <ItemGroup>
     <None Include="..\res\shaders\default.frag" />
     <None Include="..\res\shaders\default.vert" />
+    <None Include="..\res\shaders\postprocessing.frag" />
+    <None Include="..\res\shaders\postprocessing.vert" />
+    <None Include="..\res\shaders\screen.frag" />
+    <None Include="..\res\shaders\screen.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

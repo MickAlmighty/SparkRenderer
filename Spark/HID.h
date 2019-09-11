@@ -20,5 +20,7 @@ public:
 	static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos);
 	static void clearStates();
 	static bool isKeyPressed(int key);
+	static bool isKeyReleased(int key);
+	static bool isKeyHeld(int key);
 };
 

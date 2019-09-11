@@ -4,6 +4,15 @@
 
 #include <glm/glm.hpp>
 #include <vector>
+#include <filesystem>
+
+struct InitializationVariables
+{
+	unsigned int width;
+	unsigned int height;
+	std::filesystem::path pathToModels;
+	std::filesystem::path pathToResources;
+};
 
 struct Texture
 {

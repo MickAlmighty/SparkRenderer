@@ -2,6 +2,7 @@
 #include <iostream>
 
 #include "Clock.h"
+#include "Spark.h"
 
 Mouse HID::mouse{};
 std::map<int, int> HID::keyStates;
@@ -25,7 +26,7 @@ void HID::key_callback(GLFWwindow* window, int key, int scancode, int action, in
 
 void HID::cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
 {
-	static double lastXpos = 0, lastYPos = 0;
+	static double lastXpos = Spark::WIDTH * 0.5f, lastYPos = Spark::HEIGHT * 0.5f;
 	
 	mouse.direction.x = xpos - lastXpos; 
 	mouse.direction.y = ypos - lastYPos;
@@ -53,6 +54,26 @@ bool HID::isKeyPressed(int key)
 	if(key_it != keyStates.end())
 	{
 		return key_it->second == GLFW_PRESS;
+	}
+	return false;
+}
+
+bool HID::isKeyReleased(int key)
+{
+	const auto key_it = keyStates.find(key);
+	if (key_it != keyStates.end())
+	{
+		return key_it->second == GLFW_RELEASE;
+	}
+	return false;
+}
+
+bool HID::isKeyHeld(int key)
+{
+	const auto key_it = keyStates.find(key);
+	if (key_it != keyStates.end())
+	{
+		return key_it->second == GLFW_REPEAT;
 	}
 	return false;
 }

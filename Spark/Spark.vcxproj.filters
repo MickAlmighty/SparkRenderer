@@ -109,5 +109,17 @@
     <None Include="..\res\shaders\default.vert">
       <Filter>shaders</Filter>
     </None>
+    <None Include="..\res\shaders\screen.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="..\res\shaders\screen.vert">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="..\res\shaders\postprocessing.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="..\res\shaders\postprocessing.vert">
+      <Filter>shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

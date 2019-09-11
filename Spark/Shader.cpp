@@ -5,7 +5,7 @@
 #include <fstream>
 #include <sstream>
 
-Shader::Shader(const char* vertexShaderPath, const char* fragmentShaderPath)
+Shader::Shader(const std::string& vertexShaderPath, const std::string& fragmentShaderPath)
 {
 	// 1. pobierz kod Ÿród³owy Vertex/Fragment Shadera z filePath  
 	std::string vertexCode;
@@ -124,7 +124,7 @@ void Shader::setInt(const std::string& name, int value) const
 void Shader::setFloat(const std::string& name, float value) const
 {
 	GLuint location = glGetUniformLocation(ID, name.c_str());
-	
+	glUniform1fv(ID, 1, &value);
 }
 
 void Shader::setVec2(const std::string& name, glm::vec2 value) const

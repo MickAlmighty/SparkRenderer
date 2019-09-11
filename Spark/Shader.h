@@ -9,7 +9,7 @@ class Shader
 private:
 	GLuint ID;
 public:
-	Shader(const char* vertexShaderPath, const char* fragmentShaderPath);
+	Shader(const std::string& vertexShaderPath, const std::string& fragmentShaderPath);
 	~Shader();
 	GLuint compileVertexShader(const char* vertexShaderSource);
 	GLuint compileFragmentShader(const char* fragmentShaderSource);
