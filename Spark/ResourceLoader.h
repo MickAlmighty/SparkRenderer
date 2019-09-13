@@ -11,7 +11,7 @@ const std::vector<std::string> modelExtensions = {
 	};
 
 const std::vector<std::string> textureExtensions = {
-	".jpg"
+	".jpg", ".png"
 	};
 
 class ResourceLoader

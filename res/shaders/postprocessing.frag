@@ -6,7 +6,7 @@ uniform vec2 inversedScreenSize;
 
 uniform float u_lumaThreshold = 0.4;
 uniform float u_mulReduce = 1.0/8.0;
-uniform float u_minReduce = 1.0/32.0;
+uniform float u_minReduce = 1.0/128.0;
 uniform float u_maxSpan = 8.0;
 
 in vec2 tex_coords;

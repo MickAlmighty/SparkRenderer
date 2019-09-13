@@ -1,5 +1,6 @@
 #pragma once
 #include <map>
+#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include "Structs.h"
 #include "Model.h"

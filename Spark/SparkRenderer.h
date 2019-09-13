@@ -13,7 +13,7 @@ private:
 	ScreenQuad screenQuad{};
 	Model* model = nullptr;
 
-	GLuint mainFramebuffer{}, colorTexture{};
+	GLuint mainFramebuffer{}, colorTexture{}, positionTexture{}, normalsTexture{};
 	GLuint postprocessingFramebuffer{}, postProcessingTexture{};
 	
 	

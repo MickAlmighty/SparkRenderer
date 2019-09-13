@@ -3,6 +3,7 @@
 #include "Spark.h"
 
 
+
 Texture ResourceManager::findTexture(const std::string&& path)
 {
 	for(auto& tex_it : textures)
@@ -41,6 +42,17 @@ ResourceManager::ResourceManager()
 
 ResourceManager::~ResourceManager()
 {
+	for(auto& tex_it: textures)
+	{
+		glDeleteTextures(1, &tex_it.ID);
+	}
+	textures.clear();
+
+	for(auto& model_it: models)
+	{
+		delete model_it.second;
+	}
+	models.clear();
 }
 
 ResourceManager* ResourceManager::getInstance()

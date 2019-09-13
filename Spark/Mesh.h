@@ -1,8 +1,9 @@
 #pragma once
 #include "Structs.h"
 #include <vector>
+#include "Component.h"
 
-class Mesh
+class Mesh : public Component
 {
 private:
 	std::vector<Vertex> vertices;
@@ -12,7 +13,9 @@ private:
 	GLuint vbo{};
 	GLuint ebo{};
 public:
-	Mesh(std::vector<Vertex>& vertices, std::vector<unsigned int> indices);
+	Mesh(std::vector<Vertex>& vertices, std::vector<unsigned int> indices, std::string&& newName = "Mesh");
+	void update() override;
+	void fixedUpdate() override;
 	void setup();
 	void draw();
 	~Mesh();

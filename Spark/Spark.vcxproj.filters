@@ -54,10 +54,19 @@
     <ClCompile Include="HID.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Camera.cpp">
+    <ClCompile Include="stb_image.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="stb_image.cpp">
+    <ClCompile Include="JsonSerializer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GameObject.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Component.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -99,6 +108,18 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Enums.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="JsonSerializer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GameObject.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Component.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ISerializable.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

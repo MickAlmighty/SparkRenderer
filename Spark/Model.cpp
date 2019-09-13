@@ -15,8 +15,7 @@ void Model::draw()
 {
 	for(auto& texture_it : textures)
 	{
-		glActiveTexture(GL_TEXTURE0 + texture_it.first);
-		glBindTexture(GL_TEXTURE_2D, texture_it.second.ID);
+		glBindTextureUnit(static_cast<GLuint>(texture_it.first), texture_it.second.ID);
 	}
 
 	for(auto& mesh_ptr: meshes)
@@ -24,5 +23,5 @@ void Model::draw()
 		mesh_ptr->draw();
 	}
 
-	glBindTexture(GL_TEXTURE_2D, 0);
+	glBindTextures(static_cast<GLuint>(DIFFUSE_TARGET), textures.size(), nullptr);
 }

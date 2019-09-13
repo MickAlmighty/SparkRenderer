@@ -2,12 +2,22 @@
 #include <iostream>
 
 
-Mesh::Mesh(std::vector<Vertex>& vertices, std::vector<unsigned int> indices)
+Mesh::Mesh(std::vector<Vertex>& vertices, std::vector<unsigned int> indices, std::string&& _newName) : Component(_newName)
 {
 	this->vertices = std::move(vertices);
 	this->indices = std::move(indices);
 
 	setup();
+}
+
+void Mesh::update()
+{
+
+}
+
+void Mesh::fixedUpdate()
+{
+
 }
 
 void Mesh::setup()
