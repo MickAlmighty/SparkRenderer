@@ -36,18 +36,27 @@ void Camera::ProcessKeyboard()
 		velocity *= 1.5f;
 	glm::vec3 front = glm::normalize(glm::vec3(Front.x, 0, Front.z));
 	glm::vec3 right = glm::normalize(glm::vec3(Right.x, 0, Right.z));
+	
+	glm::vec3 finalDirection(0);
+
 	if (HID::isKeyPressed(GLFW_KEY_W))
-		Position += front * velocity;
+		finalDirection += front;
 	if (HID::isKeyPressed(GLFW_KEY_S))
-		Position -= front * velocity;
+		finalDirection -= front;
 	if (HID::isKeyPressed(GLFW_KEY_A))
-		Position -= right * velocity;
+		finalDirection -= right;
 	if (HID::isKeyPressed(GLFW_KEY_D))
-		Position += right * velocity;
+		finalDirection += right;
 	if (HID::isKeyPressed(GLFW_KEY_Q))
-		Position -= WorldUp * velocity;
+		finalDirection -= WorldUp;
 	if (HID::isKeyPressed(GLFW_KEY_E))
-		Position += WorldUp * velocity;
+		finalDirection += WorldUp;
+
+	if (finalDirection != glm::vec3(0))
+	{
+		finalDirection = glm::normalize(finalDirection);
+		Position += finalDirection * velocity;
+	}
 }
 
 void Camera::ProcessMouseMovement(float xoffset, float yoffset, bool constrainPitch)

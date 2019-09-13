@@ -18,6 +18,18 @@ HID::~HID()
 
 void HID::key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
+	static bool mouseDisabled = false;
+	if (key == GLFW_KEY_LEFT_ALT && action == GLFW_RELEASE && mouseDisabled)
+	{
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		mouseDisabled = false;
+	}
+	else if (key == GLFW_KEY_LEFT_ALT && action == GLFW_RELEASE && !mouseDisabled)
+	{
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+		mouseDisabled = true;
+	}
+
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, GLFW_TRUE);
 	const int state = glfwGetKey(window, key);
