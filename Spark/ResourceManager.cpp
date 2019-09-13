@@ -76,3 +76,13 @@ void ResourceManager::loadResources()
 	textures = ResourceLoader::loadTextures(Spark::pathToResources);
 	models = ResourceLoader::loadModels(Spark::pathToModels);
 }
+
+void ResourceManager::cleanup()
+{
+	textures.clear();
+	
+	for (auto model_it : models)
+		delete model_it.second;
+	models.clear();
+	shaders.clear();
+}

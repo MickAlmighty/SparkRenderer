@@ -20,5 +20,6 @@ public:
 	~ResourceManager();
 	static ResourceManager* getInstance();
 	void loadResources();
+	void cleanup();
 };
 

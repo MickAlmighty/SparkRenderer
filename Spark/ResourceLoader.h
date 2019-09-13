@@ -21,8 +21,8 @@ private:
 	~ResourceLoader();
 	static Model* loadModel(const std::filesystem::path& path);
 	static bool checkExtension(std::string&& extension, const std::vector<std::string>& extensions);
-	static std::vector<std::unique_ptr<Mesh>> loadMeshes(const aiScene * scene);
-	static std::unique_ptr<Mesh> loadMesh(aiMesh* assimpMesh);
+	static std::vector<std::unique_ptr<Mesh>> loadMeshes(const aiScene * scene, const std::filesystem::path& modelPath);
+	static std::unique_ptr<Mesh> loadMesh(aiMesh* assimpMesh, const std::filesystem::path& modelPath);
 	static std::map<TextureTarget, Texture> findTextures(const std::filesystem::path& modelDirectory);
 	static Texture loadTexture(std::string&& path);
 public:

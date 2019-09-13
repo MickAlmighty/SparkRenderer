@@ -237,9 +237,13 @@ void SparkRenderer::renderToScreen()
 void SparkRenderer::cleanup()
 {
 	glfwDestroyWindow(window);
+	model = nullptr;
+	postprocessingShader = nullptr;
+	screenShader = nullptr;
+	mainShader = nullptr;
 }
 
-bool SparkRenderer::isWindowOpened() const
+bool SparkRenderer::isWindowOpened()
 {
 	return !glfwWindowShouldClose(window);
 }

@@ -46,19 +46,17 @@ Model* ResourceLoader::loadModel(const Path& path)
 		throw std::exception(importer.GetErrorString());
 	}
 
-	std::vector<std::unique_ptr<Mesh>> meshes = loadMeshes(scene);
+	std::vector<std::unique_ptr<Mesh>> meshes = loadMeshes(scene, path);
 
-	std::map<TextureTarget, Texture> textures = findTextures(path.parent_path());
-
-	return new Model(meshes, textures);
+	return new Model(meshes);
 }
 
-std::vector<std::unique_ptr<Mesh>> ResourceLoader::loadMeshes(const aiScene* scene)
+std::vector<std::unique_ptr<Mesh>> ResourceLoader::loadMeshes(const aiScene* scene, const std::filesystem::path& modelPath)
 {
 	std::vector<std::unique_ptr<Mesh>> meshes;
 	for (int i = 0; i < scene->mNumMeshes; i++)
 	{
-		meshes.push_back(loadMesh(scene->mMeshes[i]));
+		meshes.push_back(loadMesh(scene->mMeshes[i], modelPath));
 	}
 	return meshes;
 }
@@ -93,7 +91,7 @@ std::map<TextureTarget, Texture> ResourceLoader::findTextures(const std::filesys
 	return textures;
 }
 
-std::unique_ptr<Mesh> ResourceLoader::loadMesh(aiMesh* assimpMesh)
+std::unique_ptr<Mesh> ResourceLoader::loadMesh(aiMesh* assimpMesh, const std::filesystem::path& modelPath)
 {
 	std::vector<Vertex> vertices(assimpMesh->mNumVertices);
 
@@ -131,7 +129,9 @@ std::unique_ptr<Mesh> ResourceLoader::loadMesh(aiMesh* assimpMesh)
 			indices.push_back(face.mIndices[j]);
 	}
 
-	return std::make_unique<Mesh>(vertices, indices);
+	std::map<TextureTarget, Texture> textures = findTextures(modelPath.parent_path());
+
+	return std::make_unique<Mesh>(vertices, indices, textures);
 }
 
 std::vector<Texture> ResourceLoader::loadTextures(std::filesystem::path& resDirectory)

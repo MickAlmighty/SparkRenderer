@@ -42,7 +42,7 @@ public:
 	void renderPass();
 	void cleanup();
 
-	bool isWindowOpened() const;
+	static bool isWindowOpened();
 
 	static void error_callback(int error, const char* description);
 };

@@ -24,8 +24,7 @@ void Spark::setup(InitializationVariables& variables)
 
 void Spark::run()
 {
-	
-	while(SparkRenderer::getInstance()->isWindowOpened())
+	while(SparkRenderer::isWindowOpened())
 	{
 		Clock::tick();
 		glfwPollEvents();
@@ -40,4 +39,5 @@ void Spark::run()
 void Spark::clean()
 {
 	SparkRenderer::getInstance()->cleanup();
+	ResourceManager::getInstance()->cleanup();
 }

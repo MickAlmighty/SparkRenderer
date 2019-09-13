@@ -10,9 +10,8 @@ class Model
 {
 private:
 	std::vector<std::unique_ptr<Mesh>> meshes;
-	std::map<TextureTarget, Texture> textures;
 public:
-	Model(std::vector<std::unique_ptr<Mesh>>& meshes, std::map<TextureTarget, Texture>& textures);
+	Model(std::vector<std::unique_ptr<Mesh>>& meshes);
 	~Model();
 
 	Transform transform;

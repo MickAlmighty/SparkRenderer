@@ -102,6 +102,9 @@ void Shader::linkProgram(GLuint vertexShader, GLuint fragmentShader)
 Shader::~Shader()
 {
 	glDeleteProgram(ID);
+#ifdef DEBUG
+	std::cout << "Shader deleted!" << std::endl;
+#endif
 }
 
 void Shader::use()

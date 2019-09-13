@@ -154,6 +154,8 @@
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="ResourceLoader.cpp" />
     <ClCompile Include="ResourceManager.cpp" />
+    <ClCompile Include="Scene.cpp" />
+    <ClCompile Include="SceneManager.cpp" />
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="Spark.cpp" />
     <ClCompile Include="SparkRenderer.cpp" />
@@ -173,6 +175,8 @@
     <ClInclude Include="Model.h" />
     <ClInclude Include="ResourceLoader.h" />
     <ClInclude Include="ResourceManager.h" />
+    <ClInclude Include="Scene.h" />
+    <ClInclude Include="SceneManager.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="Spark.h" />
     <ClInclude Include="SparkRenderer.h" />
