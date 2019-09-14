@@ -1,11 +1,11 @@
 #include <iostream>
-#include "Spark.h"
-#include "Structs.h"
+#include <Spark.h>
+#include <Structs.h>
 #include <fstream>
 #include <json/writer.h>
 #include <json/reader.h>
 #include <iomanip>
-#include "JsonSerializer.h"
+#include <JsonSerializer.h>
 
 int main()
 {

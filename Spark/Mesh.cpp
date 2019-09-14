@@ -1,24 +1,16 @@
-#include "Mesh.h"
+#include <Mesh.h>
 #include <iostream>
+#include <EngineSystems/SparkRenderer.h>
+#include <functional>
 
 
-Mesh::Mesh(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices, std::map<TextureTarget, Texture>& meshTextures, std::string&& _newName) : Component(_newName)
+Mesh::Mesh(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices, std::map<TextureTarget, Texture>& meshTextures, std::string&& _newName)
 {
 	this->vertices = std::move(vertices);
 	this->indices = std::move(indices);
 	this->textures = std::move(meshTextures);
 
 	setup();
-}
-
-void Mesh::update()
-{
-
-}
-
-void Mesh::fixedUpdate()
-{
-
 }
 
 void Mesh::setup()
@@ -54,9 +46,20 @@ void Mesh::setup()
 	glBindVertexArray(0);
 }
 
-
-void Mesh::draw()
+void Mesh::addToRenderQueue(glm::mat4 model)
 {
+	auto f = [this, model](std::shared_ptr<Shader>& shader)
+	{
+		draw(shader, model);
+	};
+	SparkRenderer::renderQueue[shaderType].push_back(f);
+}
+
+
+void Mesh::draw(std::shared_ptr<Shader>& shader, glm::mat4 model)
+{
+	shader->setMat4("model", model);
+
 	for (auto& texture_it : textures)
 	{
 		glBindTextureUnit(static_cast<GLuint>(texture_it.first), texture_it.second.ID);
@@ -64,13 +67,13 @@ void Mesh::draw()
 
 	glBindVertexArray(vao);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+	glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indices.size()), GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);
 
-	glBindTextures(static_cast<GLuint>(DIFFUSE_TARGET), textures.size(), nullptr);
+	glBindTextures(static_cast<GLuint>(DIFFUSE_TARGET), static_cast<GLsizei>(textures.size()), nullptr);
 }
 
-Mesh::~Mesh()
+void Mesh::cleanup()
 {
 	glDeleteBuffers(1, &vbo);
 	glDeleteBuffers(1, &ebo);
@@ -79,4 +82,8 @@ Mesh::~Mesh()
 #ifdef DEBUG
 	std::cout << "Mesh deleted!" << std::endl;
 #endif
+}
+
+Mesh::~Mesh()
+{
 }

@@ -1,10 +1,10 @@
-#include "Spark.h"
-#include "SparkRenderer.h"
-#include "Clock.h"
+#include <Spark.h>
+#include <EngineSystems/SparkRenderer.h>
+#include <Clock.h>
 #include <iostream>
-#include "HID.h"
-#include "ResourceManager.h"
-#include "SceneManager.h"
+#include <HID.h>
+#include <EngineSystems/ResourceManager.h>
+#include <EngineSystems/SceneManager.h>
 
 unsigned int Spark::WIDTH, Spark::HEIGHT;
 std::filesystem::path Spark::pathToModelMeshes;
@@ -31,14 +31,11 @@ void Spark::run()
 		Clock::tick();
 		glfwPollEvents();
 		SceneManager::getInstance()->update();
-
 		SparkRenderer::getInstance()->renderPass();
-
-		
-		#ifdef DEBUG
+		HID::clearStates();
+#ifdef DEBUG
 		std::cout << Clock::getFPS() << std::endl;
 #endif
-		HID::clearStates();
 	}
 }
 

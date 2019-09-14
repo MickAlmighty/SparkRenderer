@@ -1,4 +1,4 @@
-#include "Scene.h"
+#include <Scene.h>
 #include <list>
 
 Scene::Scene(std::string&& sceneName) : name(sceneName)

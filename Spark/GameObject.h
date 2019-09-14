@@ -1,9 +1,9 @@
 #pragma once
 #include <list>
 #include <memory>
-#include "Transform.h"
-#include "Component.h"
-#include "Scene.h"
+#include <Component.h>
+#include <Scene.h>
+#include <Structs.h>
 
 class Component;
 class GameObject
@@ -13,14 +13,13 @@ class GameObject
 	std::weak_ptr<GameObject> parent;
 	std::list<std::shared_ptr<GameObject>> children;
 	std::list<std::shared_ptr<Component>> components;
-	Transform world;
-	Transform local;
 	void update();
 	void fixedUpdate();
 public:
+	Transform transform;
 	std::shared_ptr<GameObject> getParent() const;
 	void addChild(const std::shared_ptr<GameObject>& newChild, const std::shared_ptr<GameObject>& parent);
-	void addComponent(std::shared_ptr<Component>& component, const std::shared_ptr<GameObject>& gameObject);
+	void addComponent(std::shared_ptr<Component>& component, std::shared_ptr<GameObject>& gameObject);
 	bool removeComponent(std::string&& name);
 	bool removeChild(std::string&& gameObjectName);
 	GameObject(std::string&& _name = "GameObject");
@@ -35,7 +34,6 @@ public:
 			T* component_ptr = dynamic_cast<T*>(component.get());
 			if (component_ptr != nullptr)
 			{
-				it->get()->gameObject = nullptr;
 				components.erase(it);
 				return true;
 			}

@@ -1,8 +1,8 @@
-#include "HID.h"
+#include <HID.h>
 #include <iostream>
 
-#include "Clock.h"
-#include "Spark.h"
+#include <Clock.h>
+#include <Spark.h>
 
 Mouse HID::mouse{};
 std::map<int, int> HID::keyStates;

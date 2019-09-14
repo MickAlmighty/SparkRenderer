@@ -5,6 +5,14 @@
 #include <glm/glm.hpp>
 #include <vector>
 #include <filesystem>
+#include <LocalTranform.h>
+#include <WorldTransform.h>
+
+struct Transform
+{
+	LocalTransform local;
+	WorldTransform world;
+};
 
 struct InitializationVariables
 {
@@ -73,11 +81,9 @@ struct ScreenQuad
 	void draw()
 	{
 		glBindVertexArray(vao);
-		glDrawArrays(GL_TRIANGLES, 0, vertices.size());
+		glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(vertices.size()));
 		glBindVertexArray(0);
 	}
-
-
 
 	~ScreenQuad()
 	{

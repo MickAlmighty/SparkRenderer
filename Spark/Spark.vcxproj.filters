@@ -16,6 +16,9 @@
     <Filter Include="shaders">
       <UniqueIdentifier>{37dbd568-aa14-43ff-9b5b-f5c699c61789}</UniqueIdentifier>
     </Filter>
+    <Filter Include="EngineSystems">
+      <UniqueIdentifier>{ce002514-0c19-4342-9276-421614628bce}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -24,25 +27,16 @@
     <ClCompile Include="Spark.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SparkRenderer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="glad.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Shader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ResourceManager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Mesh.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ResourceLoader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Transform.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Clock.cpp">
@@ -66,21 +60,30 @@
     <ClCompile Include="Camera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SceneManager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Scene.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ModelMesh.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="LocalTranform.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="WorldTransform.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="EngineSystems\SparkRenderer.cpp">
+      <Filter>EngineSystems</Filter>
+    </ClCompile>
+    <ClCompile Include="EngineSystems\SceneManager.cpp">
+      <Filter>EngineSystems</Filter>
+    </ClCompile>
+    <ClCompile Include="EngineSystems\ResourceManager.cpp">
+      <Filter>EngineSystems</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Spark.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="SparkRenderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Structs.h">
@@ -89,16 +92,10 @@
     <ClInclude Include="Shader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ResourceManager.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Mesh.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ResourceLoader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Transform.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Clock.h">
@@ -125,14 +122,26 @@
     <ClInclude Include="ISerializable.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SceneManager.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Scene.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ModelMesh.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LocalTranform.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="WorldTransform.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineSystems\SparkRenderer.h">
+      <Filter>EngineSystems</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineSystems\SceneManager.h">
+      <Filter>EngineSystems</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineSystems\ResourceManager.h">
+      <Filter>EngineSystems</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -1,31 +1,30 @@
-#include "ResourceLoader.h"
+#include <ResourceLoader.h>
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include <stb_image/stb_image.h>
-#include "Structs.h"
-//#include <experimental/filesystem>
+#include <Structs.h>
 #include <filesystem>
-#include "ResourceManager.h"
+#include <EngineSystems/ResourceManager.h>
 
 using Path = std::filesystem::path;
 
-std::map<std::string, std::shared_ptr<ModelMesh>> ResourceLoader::loadModelMeshes(std::filesystem::path& modelDirectory)
+std::map<std::string, std::vector<Mesh>> ResourceLoader::loadModels(std::filesystem::path& modelDirectory)
 {
-	std::map<std::string, std::shared_ptr<ModelMesh>> models;
+	std::map<std::string, std::vector<Mesh>> models;
 	for (auto& path_it : std::filesystem::recursive_directory_iterator(modelDirectory))
 	{
 		if(checkExtension(path_it.path().extension().string(), ModelMeshExtensions))
 		{
-			models.emplace(path_it.path().string(), loadModelMesh(path_it.path()));
+			models.emplace(path_it.path().string(), loadModel(path_it.path()));
 		}
 	}
 
 	return models;
 }
 
-std::shared_ptr<ModelMesh> ResourceLoader::loadModelMesh(const Path& path)
+std::vector<Mesh> ResourceLoader::loadModel(const Path& path)
 {
 	Assimp::Importer importer;
 	const aiScene *scene = importer.ReadFile(path.string(), aiProcessPreset_TargetRealtime_Fast | aiProcess_FlipUVs);
@@ -35,15 +34,15 @@ std::shared_ptr<ModelMesh> ResourceLoader::loadModelMesh(const Path& path)
 		throw std::exception(importer.GetErrorString());
 	}
 
-	std::vector<std::unique_ptr<Mesh>> meshes = loadMeshes(scene, path);
+	std::vector<Mesh> meshes = loadMeshes(scene, path);
 
-	return std::make_shared<ModelMesh>(meshes);
+	return meshes;
 }
 
-std::vector<std::unique_ptr<Mesh>> ResourceLoader::loadMeshes(const aiScene* scene, const std::filesystem::path& modelPath)
+std::vector<Mesh> ResourceLoader::loadMeshes(const aiScene* scene, const std::filesystem::path& modelPath)
 {
-	std::vector<std::unique_ptr<Mesh>> meshes;
-	for (int i = 0; i < scene->mNumMeshes; i++)
+	std::vector<Mesh> meshes;
+	for (unsigned int i = 0; i < scene->mNumMeshes; i++)
 	{
 		meshes.push_back(loadMesh(scene->mMeshes[i], modelPath));
 	}
@@ -80,11 +79,11 @@ std::map<TextureTarget, Texture> ResourceLoader::findTextures(const std::filesys
 	return textures;
 }
 
-std::unique_ptr<Mesh> ResourceLoader::loadMesh(aiMesh* assimpMesh, const std::filesystem::path& modelPath)
+Mesh ResourceLoader::loadMesh(aiMesh* assimpMesh, const std::filesystem::path& modelPath)
 {
 	std::vector<Vertex> vertices(assimpMesh->mNumVertices);
 
-	for (int i = 0; i < assimpMesh->mNumVertices; i++)
+	for (unsigned int i = 0; i < assimpMesh->mNumVertices; i++)
 	{
 		Vertex v{};
 
@@ -120,7 +119,7 @@ std::unique_ptr<Mesh> ResourceLoader::loadMesh(aiMesh* assimpMesh, const std::fi
 
 	std::map<TextureTarget, Texture> textures = findTextures(modelPath.parent_path());
 
-	return std::make_unique<Mesh>(vertices, indices, textures);
+	return Mesh(vertices, indices, textures);
 }
 
 std::vector<Texture> ResourceLoader::loadTextures(std::filesystem::path& resDirectory)

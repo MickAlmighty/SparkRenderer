@@ -3,9 +3,9 @@ layout (location = 0) in vec3 position;
 layout (location = 1) in vec3 normal;
 layout (location = 2) in vec2 texture_coords;
 
-uniform mat4 MVP;
-uniform mat4 View;
-uniform mat4 Model;
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
 
 out vec2 tex_coords;
 
@@ -16,9 +16,11 @@ out TO_TEXTURES {
 
 void main()
 {
-	mat3 normalMatrix = transpose(inverse(mat3(View * Model)));
+	mat3 normalMatrix = transpose(inverse(mat3(view * model)));
+	vec4 worldPosition = model * vec4(position, 1);
 	to_textures.normal = normalMatrix * normal;
-	to_textures.position = vec3(Model * vec4(position, 1));
-    gl_Position = MVP * vec4(position, 1);
+
+	to_textures.position = vec3(worldPosition.xyz);
+    gl_Position = projection * view * worldPosition;
     tex_coords = texture_coords;
 }

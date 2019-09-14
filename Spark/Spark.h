@@ -1,7 +1,7 @@
 #pragma once
 #include <iostream>
 #include <filesystem>
-#include "Structs.h"
+#include <Structs.h>
 
 class Spark
 {

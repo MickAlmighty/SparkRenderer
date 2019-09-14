@@ -15,7 +15,7 @@ in TO_TEXTURES {
 
 void main()
 {
-    Position = to_textures.position;
+	Position = to_textures.position;
     FragColor = texture(diffuseTexture, tex_coords);
     //Normal = to_textures.normal;
     Normal = texture(normalTexture, tex_coords).xyz;

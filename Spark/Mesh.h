@@ -1,13 +1,15 @@
 #pragma once
-#include "Structs.h"
+#include <Structs.h>
 #include <vector>
-#include "Component.h"
+#include <Component.h>
 #include <map>
-#include "Enums.h"
+#include <Enums.h>
+#include <Shader.h>
 
-class Mesh : public Component
+class Mesh
 {
 private:
+	ShaderType shaderType = DEFAULT_SHADER;
 	std::vector<Vertex> vertices;
 	std::vector<unsigned int> indices;
 	std::map<TextureTarget, Texture> textures;
@@ -17,10 +19,10 @@ private:
 	GLuint ebo{};
 public:
 	Mesh(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices, std::map<TextureTarget, Texture>& meshTextures, std::string&& newName = "Mesh");
-	void update() override;
-	void fixedUpdate() override;
 	void setup();
-	void draw();
+	void addToRenderQueue(glm::mat4 model);
+	void draw(std::shared_ptr<Shader>& shader, glm::mat4 model);
+	void cleanup();
 	~Mesh();
 };
 

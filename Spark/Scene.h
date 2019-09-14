@@ -1,8 +1,8 @@
 #pragma once
-#include "GameObject.h"
+#include <GameObject.h>
 #include <memory>
 #include <list>
-#include "SceneManager.h"
+#include <EngineSystems/SceneManager.h>
 
 class GameObject;
 class Component;

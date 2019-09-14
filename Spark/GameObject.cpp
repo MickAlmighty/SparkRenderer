@@ -1,24 +1,47 @@
-#include "GameObject.h"
+#include <GameObject.h>
 #include <algorithm>
 #include <iostream>
 
 void GameObject::update()
 {
+	if (parent.lock() == nullptr)
+	{
+		transform.world.setMatrix(transform.local.getMatrix());
+	}
+	else
+	{
+		transform.world.setMatrix(parent.lock()->transform.world.getMatrix() * transform.local.getMatrix());
+	}
+
+	for(auto& component: components)
+	{
+		component->update();
+	}
+
+	for(auto& child: children)
+	{
+		child->update();
+	}
 }
 
 void GameObject::fixedUpdate()
 {
-	/*if(parent == nullptr)
+	/*if(parent.lock() == nullptr)
 	{
-		world = local;
+		transform.world.setMatrix(transform.local.getMatrix());
 	}
 	else
 	{
-		world = parent->world.getMatrix() * local.getMatrix();
+		transform.world.setMatrix(parent.lock()->transform.world.getMatrix() * transform.local.getMatrix());
 	}*/
+
+	for (auto& component : components)
+	{
+		component->fixedUpdate();
+	}
 }
 
-std::shared_ptr<GameObject> GameObject::getParrent() const
+std::shared_ptr<GameObject> GameObject::getParent() const
 {
 	return parent.lock();
 }
@@ -29,9 +52,9 @@ void GameObject::addChild(const std::shared_ptr<GameObject>& newChild, const std
 	children.push_back(newChild);
 }
 
-void GameObject::addComponent(std::shared_ptr<Component>& component, const std::shared_ptr<GameObject>& gameObject)
+void GameObject::addComponent(std::shared_ptr<Component>& component, std::shared_ptr<GameObject>& gameObject)
 {
-	component->gameObject = gameObject;
+	component->setGameObject(gameObject);
 	components.push_back(component);
 }
 
