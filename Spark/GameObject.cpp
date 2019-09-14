@@ -1,5 +1,6 @@
 #include "GameObject.h"
 #include <algorithm>
+#include <iostream>
 
 void GameObject::update()
 {
@@ -7,30 +8,36 @@ void GameObject::update()
 
 void GameObject::fixedUpdate()
 {
-	if(parent == nullptr)
+	/*if(parent == nullptr)
 	{
 		world = local;
 	}
 	else
 	{
-		//world = parent->world.getMatrix() * local.getMatrix();
-	}
+		world = parent->world.getMatrix() * local.getMatrix();
+	}*/
 }
 
-void GameObject::addChild(std::shared_ptr<GameObject>&& newChild, std::shared_ptr<GameObject>&& parent)
+std::shared_ptr<GameObject> GameObject::getParrent() const
+{
+	return parent.lock();
+}
+
+void GameObject::addChild(const std::shared_ptr<GameObject>& newChild, const std::shared_ptr<GameObject>& parent)
 {
 	newChild->parent = parent;
 	children.push_back(newChild);
 }
 
-void GameObject::addComponent(std::shared_ptr<Component> component)
+void GameObject::addComponent(std::shared_ptr<Component>& component, const std::shared_ptr<GameObject>& gameObject)
 {
+	component->gameObject = gameObject;
 	components.push_back(component);
 }
 
 bool GameObject::removeComponent(std::string&& name)
 {
-	const auto component_it = std::find_if(std::begin(components), std::end(components), [name] (const std::shared_ptr<Component>& component)
+	const auto component_it = std::find_if(std::begin(components), std::end(components), [&name] (const std::shared_ptr<Component>& component)
 	{
 		return component->name == name;
 	});
@@ -44,7 +51,7 @@ bool GameObject::removeComponent(std::string&& name)
 
 bool GameObject::removeChild(std::string&& gameObjectName)
 {
-	const auto gameObject_it = std::find_if(std::begin(children), std::end(children), [gameObjectName] (const std::shared_ptr<GameObject>& gameObject)
+	const auto gameObject_it = std::find_if(std::begin(children), std::end(children), [&gameObjectName] (const std::shared_ptr<GameObject>& gameObject)
 	{
 		return gameObject->name == gameObjectName;
 	});
@@ -63,6 +70,7 @@ GameObject::GameObject(std::string&& _name) : name(_name)
 
 GameObject::~GameObject()
 {
-	parent = nullptr;
-	children.clear();
+#ifdef DEBUG
+	std::cout << "GameObject: " << name.c_str() << " destroyed!" << std::endl;
+#endif
 }

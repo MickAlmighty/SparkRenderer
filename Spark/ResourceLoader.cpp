@@ -11,32 +11,21 @@
 
 using Path = std::filesystem::path;
 
-ResourceLoader::ResourceLoader()
+std::map<std::string, std::shared_ptr<ModelMesh>> ResourceLoader::loadModelMeshes(std::filesystem::path& modelDirectory)
 {
-}
-
-
-ResourceLoader::~ResourceLoader()
-{
-}
-
-
-
-std::map<std::string, Model*> ResourceLoader::loadModels(std::filesystem::path& modelsDirectory)
-{
-	std::map<std::string, Model*> models;
-	for (auto& path_it : std::filesystem::recursive_directory_iterator(modelsDirectory))
+	std::map<std::string, std::shared_ptr<ModelMesh>> models;
+	for (auto& path_it : std::filesystem::recursive_directory_iterator(modelDirectory))
 	{
-		if(checkExtension(path_it.path().extension().string(), modelExtensions))
+		if(checkExtension(path_it.path().extension().string(), ModelMeshExtensions))
 		{
-			models.emplace(path_it.path().string(), loadModel(path_it.path()));
+			models.emplace(path_it.path().string(), loadModelMesh(path_it.path()));
 		}
 	}
 
 	return models;
 }
 
-Model* ResourceLoader::loadModel(const Path& path)
+std::shared_ptr<ModelMesh> ResourceLoader::loadModelMesh(const Path& path)
 {
 	Assimp::Importer importer;
 	const aiScene *scene = importer.ReadFile(path.string(), aiProcessPreset_TargetRealtime_Fast | aiProcess_FlipUVs);
@@ -48,7 +37,7 @@ Model* ResourceLoader::loadModel(const Path& path)
 
 	std::vector<std::unique_ptr<Mesh>> meshes = loadMeshes(scene, path);
 
-	return new Model(meshes);
+	return std::make_shared<ModelMesh>(meshes);
 }
 
 std::vector<std::unique_ptr<Mesh>> ResourceLoader::loadMeshes(const aiScene* scene, const std::filesystem::path& modelPath)

@@ -10,7 +10,7 @@ private:
 	Spark() = default;
 public:
 	static unsigned int WIDTH, HEIGHT;
-	static std::filesystem::path pathToModels;
+	static std::filesystem::path pathToModelMeshes;
 	static std::filesystem::path pathToResources;
 	
 	static void setup(InitializationVariables& variables);

@@ -138,7 +138,7 @@ void SparkRenderer::initMembers()
 	mainShader = ResourceManager::getInstance()->getShader(DEFAULT_SHADER);
 	screenShader = ResourceManager::getInstance()->getShader(SCREEN_SHADER);
 	postprocessingShader = ResourceManager::getInstance()->getShader(POSTPROCESSING_SHADER);
-	model = ResourceManager::getInstance()->findModel(R"(C:\Studia\Semestr6\SparkRenderer\res\models\box\box.obj)");
+	model = ResourceManager::getInstance()->findModelMesh(R"(C:\Studia\Semestr6\SparkRenderer\res\models\box\box.obj)");
 	camera = new Camera(glm::vec3(0, 0, 2));
 
 	glCreateFramebuffers(1, &mainFramebuffer);
@@ -196,7 +196,7 @@ void SparkRenderer::renderPass()
 	glm::mat4 MVP = projection * view * model->transform.getMatrix();
 	mainShader->setMat4("MVP", MVP);
 	mainShader->setMat4("View", view);
-	mainShader->setMat4("Model", model->transform.getMatrix());
+	mainShader->setMat4("ModelMesh", model->transform.getMatrix());
 	model->draw();
 
 	postprocessingPass();

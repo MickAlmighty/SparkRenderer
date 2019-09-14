@@ -14,7 +14,7 @@ Texture ResourceManager::findTexture(const std::string&& path)
 	return {};
 }
 
-Model* ResourceManager::findModel(const std::string&& path)
+std::shared_ptr<ModelMesh> ResourceManager::findModelMesh(const std::string&& path)
 {
 	const auto& it = models.find(path);
 	if (it != models.end())
@@ -33,26 +33,6 @@ std::shared_ptr<Shader>& ResourceManager::getShader(ShaderType type)
 	}
 
 	throw std::exception("Cannot find shader! Probably shader was not loaded!");
-}
-
-ResourceManager::ResourceManager()
-{
-}
-
-
-ResourceManager::~ResourceManager()
-{
-	for(auto& tex_it: textures)
-	{
-		glDeleteTextures(1, &tex_it.ID);
-	}
-	textures.clear();
-
-	for(auto& model_it: models)
-	{
-		delete model_it.second;
-	}
-	models.clear();
 }
 
 ResourceManager* ResourceManager::getInstance()
@@ -74,15 +54,16 @@ void ResourceManager::loadResources()
 	shaders.emplace(POSTPROCESSING_SHADER, std::make_shared<Shader>(shaderDir.string() + "postprocessing.vert", shaderDir.string() + "postprocessing.frag"));
 
 	textures = ResourceLoader::loadTextures(Spark::pathToResources);
-	models = ResourceLoader::loadModels(Spark::pathToModels);
+	models = ResourceLoader::loadModelMeshes(Spark::pathToModelMeshes);
 }
 
 void ResourceManager::cleanup()
 {
+	for (auto& tex_it : textures)
+	{
+		glDeleteTextures(1, &tex_it.ID);
+	}
 	textures.clear();
-	
-	for (auto model_it : models)
-		delete model_it.second;
 	models.clear();
 	shaders.clear();
 }

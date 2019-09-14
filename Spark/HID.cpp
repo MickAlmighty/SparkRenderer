@@ -40,14 +40,14 @@ void HID::cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
 {
 	static double lastXpos = Spark::WIDTH * 0.5f, lastYPos = Spark::HEIGHT * 0.5f;
 	
-	mouse.direction.x = xpos - lastXpos; 
-	mouse.direction.y = ypos - lastYPos;
+	mouse.direction.x = static_cast<float>(xpos - lastXpos);
+	mouse.direction.y = static_cast<float>(ypos - lastYPos);
 	//mouse.direction *= Clock::getDeltaTime();
 	lastXpos = xpos;
 	lastYPos = ypos;
 
-	mouse.screenPosition.x = xpos;
-	mouse.screenPosition.y = ypos;
+	mouse.screenPosition.x = static_cast<float>(xpos);
+	mouse.screenPosition.y = static_cast<float>(ypos);
 
 #ifdef DEBUG
 	//std::cout << "Mouse X: " << xpos << " Mouse Y: " << ypos << std::endl;

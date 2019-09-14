@@ -6,14 +6,15 @@
 #include "Enums.h"
 #include <map>
 
-class Model
+class ModelMesh : public Component
 {
 private:
 	std::vector<std::unique_ptr<Mesh>> meshes;
 public:
-	Model(std::vector<std::unique_ptr<Mesh>>& meshes);
-	~Model();
-
+	ModelMesh(std::vector<std::unique_ptr<Mesh>>& meshes, std::string&& modelName = "ModelMesh");
+	~ModelMesh();
+	void update() override;
+	void fixedUpdate() override;
 	Transform transform;
 	void draw();
 };

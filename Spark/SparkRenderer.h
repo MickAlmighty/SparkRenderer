@@ -4,14 +4,14 @@
 
 #include "Structs.h"
 #include "Shader.h"
-#include "Model.h"
+#include "ModelMesh.h"
 #include "Camera.h"
 
 class SparkRenderer
 {
 private:
 	ScreenQuad screenQuad{};
-	Model* model = nullptr;
+	std::shared_ptr<ModelMesh> model = nullptr;
 
 	GLuint mainFramebuffer{}, colorTexture{}, positionTexture{}, normalsTexture{};
 	GLuint postprocessingFramebuffer{}, postProcessingTexture{};
