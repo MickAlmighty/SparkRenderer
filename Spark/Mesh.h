@@ -9,15 +9,15 @@
 class Mesh
 {
 private:
+	GLuint vao{};
+	GLuint vbo{};
+	GLuint ebo{};
+public:
 	ShaderType shaderType = DEFAULT_SHADER;
 	std::vector<Vertex> vertices;
 	std::vector<unsigned int> indices;
 	std::map<TextureTarget, Texture> textures;
 
-	GLuint vao{};
-	GLuint vbo{};
-	GLuint ebo{};
-public:
 	Mesh(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices, std::map<TextureTarget, Texture>& meshTextures, std::string&& newName = "Mesh");
 	void setup();
 	void addToRenderQueue(glm::mat4 model);

@@ -15,6 +15,6 @@ public:
 	~ModelMesh();
 	void update() override;
 	void fixedUpdate() override;
-	void draw();
+	void drawGUI() override;
 };
 

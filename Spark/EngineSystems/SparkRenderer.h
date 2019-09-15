@@ -28,17 +28,20 @@ private:
 	void renderToScreen();
 
 	void initMembers();
+	void createFrameBuffersAndTextures();
+	void deleteFrameBuffersAndTextures() const;
 	~SparkRenderer() = default;
 	SparkRenderer() = default;
 public:
 	static GLFWwindow* window;
 	static std::map<ShaderType, std::list<std::function<void(std::shared_ptr<Shader>&)>>> renderQueue;
+	
 	static SparkRenderer* getInstance();
+	static void resizeWindow(GLuint width, GLuint height);
 	SparkRenderer(const SparkRenderer&) = delete;
 	SparkRenderer operator=(const SparkRenderer&) = delete;
 	
 	static void initOpenGL();
-
 	void setup();
 	void renderPass();
 	void cleanup();

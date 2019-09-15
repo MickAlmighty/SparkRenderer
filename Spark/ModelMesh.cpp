@@ -1,4 +1,5 @@
 #include <ModelMesh.h>
+#include <GUI/ImGui/imgui.h>
 
 ModelMesh::ModelMesh(std::vector<Mesh>& meshes, std::string&& modelName) : Component(modelName)
 {
@@ -29,10 +30,25 @@ void ModelMesh::fixedUpdate()
 {
 }
 
-void ModelMesh::draw()
+void ModelMesh::drawGUI()
 {
-	/*for(auto& mesh_ptr: meshes)
+	ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 5.0f);
+	ImGui::SetNextWindowSizeConstraints(ImVec2(250, 100), ImVec2(250, FLT_MAX)); // Width = 250, Height > 100
+	ImGui::BeginChild("ModelMesh", { 250, 100 }, true, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_MenuBar);
+	if (ImGui::BeginMenuBar())
 	{
-		mesh_ptr->draw();
-	}*/
+		ImGui::Text("ModelMesh");
+		ImGui::EndMenuBar();
+	}
+	for(Mesh& mesh: meshes)
+	{
+		ImGui::Text("Vertices:"); ImGui::SameLine(); ImGui::Text(std::to_string(mesh.vertices.size()).c_str());
+		ImGui::Text("Indices:"); ImGui::SameLine(); ImGui::Text(std::to_string(mesh.indices.size()).c_str());
+		ImGui::Text("Textures:"); ImGui::SameLine(); ImGui::Text(std::to_string(mesh.textures.size()).c_str());
+		ImGui::Text("Shader enum:"); ImGui::SameLine(); ImGui::Text(std::to_string(mesh.shaderType).c_str());
+		ImGui::Separator();
+	}
+
+	ImGui::EndChild();
+	ImGui::PopStyleVar();
 }

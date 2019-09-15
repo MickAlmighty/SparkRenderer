@@ -15,5 +15,6 @@ public:
 	virtual void update() = 0;
 	virtual void fixedUpdate() = 0;
 	virtual void setGameObject(std::shared_ptr<GameObject>& game_object) { gameObject = game_object; };
+	virtual void drawGUI() = 0;
 };
 

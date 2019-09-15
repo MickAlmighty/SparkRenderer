@@ -1,6 +1,7 @@
 #include <GameObject.h>
 #include <algorithm>
 #include <iostream>
+#include <GUI/ImGui/imgui.h>
 
 void GameObject::update()
 {
@@ -86,9 +87,17 @@ bool GameObject::removeChild(std::string&& gameObjectName)
 	return false;
 }
 
+void GameObject::drawGUI()
+{
+	ImGui::Text(name.c_str());
+	transform.local.drawGUI();
+	for (auto& component : components)
+		component->drawGUI();
+}
+
 GameObject::GameObject(std::string&& _name) : name(_name)
 {
-
+	
 }
 
 GameObject::~GameObject()

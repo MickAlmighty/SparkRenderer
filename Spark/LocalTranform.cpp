@@ -1,11 +1,39 @@
 #include <LocalTranform.h>
 #include <glm/gtx/euler_angles.hpp>
+#include <GUI/ImGui/imgui.h>
+#include <glm/gtc/type_ptr.hpp>
 
 LocalTransform::LocalTransform(glm::vec3 pos, glm::vec3 scale, glm::vec3 rotation)
 {
 	this->position = pos;
 	this->scale = scale;
 	this->rotationEuler = rotation;
+}
+
+void LocalTransform::drawGUI()
+{
+	ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 5.0f);
+	ImGui::SetNextWindowSizeConstraints(ImVec2(250, 100), ImVec2(280, FLT_MAX)); // Width = 250, Height > 100
+	ImGui::BeginChild("Local Transform", {250, 100}, true, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_AlwaysAutoResize);
+	if (ImGui::BeginMenuBar())
+	{
+		ImGui::Text("Transform");
+		ImGui::EndMenuBar();
+	}
+
+	glm::vec3 oldPos = position;
+	glm::vec3 oldScale = scale;
+	glm::vec3 oldRotation = rotationEuler;
+
+	ImGui::DragFloat3("Position", glm::value_ptr(position), 0.005f);
+	ImGui::DragFloat3("Scale", glm::value_ptr(scale), 0.005f);
+	ImGui::DragFloat3("Rotation", glm::value_ptr(rotationEuler));
+	//setRotationDegrees(rotation);
+	if (oldPos != position || oldScale != scale || oldRotation != rotationEuler)
+		dirty = true;
+
+	ImGui::EndChild();
+	ImGui::PopStyleVar();
 }
 
 glm::mat4 LocalTransform::getMatrix()
@@ -23,8 +51,8 @@ glm::mat4 LocalTransform::recreateMatrix() const
 {
 	const glm::mat4 posMatrix = glm::translate(glm::mat4(1), position);
 	const glm::mat4 scaleMatrix = glm::scale(glm::mat4(1), scale);
-	const glm::mat4 rotationMatrix = glm::eulerAngleYXZ(rotationEuler.y, rotationEuler.x, rotationEuler.z);
-
+	const glm::vec3 roationRadians = glm::radians(rotationEuler);
+	const glm::mat4 rotationMatrix = glm::eulerAngleYXZ(roationRadians.y, roationRadians.x, roationRadians.z);
 	return posMatrix * rotationMatrix * scaleMatrix;
 }
 
@@ -93,7 +121,9 @@ void LocalTransform::setScale(glm::vec3 scale)
 
 void LocalTransform::setRotationDegrees(float x, float y, float z)
 {
-	rotationEuler = glm::vec3(x, y, z);
+	rotationEuler.x = x;
+	rotationEuler.y = y;
+	rotationEuler.z = z;
 	dirty = true;
 }
 

@@ -65,10 +65,14 @@ void ResourceManager::cleanup()
 		glDeleteTextures(1, &tex_it.ID);
 	}
 	textures.clear();
-	/*for(auto& model_it: models)
+	for(auto& model_it: models)
 	{
-		model_it.second->
-	}*/
+		//std::vector<Mesh> meshes = model_it.second;
+		for(Mesh& mesh : model_it.second)
+		{
+			mesh.cleanup();
+		}
+	}
 	models.clear();
 	shaders.clear();
 }

@@ -8,6 +8,7 @@
 class Component;
 class GameObject
 {
+private:
 	friend class Scene;
 	std::string name = "GameObject";
 	std::weak_ptr<GameObject> parent;
@@ -22,6 +23,7 @@ public:
 	void addComponent(std::shared_ptr<Component>& component, std::shared_ptr<GameObject>& gameObject);
 	bool removeComponent(std::string&& name);
 	bool removeChild(std::string&& gameObjectName);
+	void drawGUI();
 	GameObject(std::string&& _name = "GameObject");
 	~GameObject();
 

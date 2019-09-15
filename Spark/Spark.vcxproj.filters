@@ -105,6 +105,9 @@
     <ClCompile Include="GUI\ImGui\imgui_impl_opengl3.cpp">
       <Filter>GUI\ImGui</Filter>
     </ClCompile>
+    <ClCompile Include="GUI\SparkGui.cpp">
+      <Filter>GUI</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Spark.h">
@@ -190,6 +193,9 @@
     </ClInclude>
     <ClInclude Include="GUI\ImGui\imgui_impl_opengl3.h">
       <Filter>GUI\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\SparkGui.h">
+      <Filter>GUI</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

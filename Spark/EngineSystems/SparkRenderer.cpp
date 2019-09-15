@@ -66,6 +66,11 @@ SparkRenderer* SparkRenderer::getInstance()
 	return  spark_renderer;
 }
 
+void SparkRenderer::resizeWindow(GLuint width, GLuint height)
+{
+	glfwSetWindowSize(window, width, height);
+}
+
 void SparkRenderer::setup()
 {
 	initMembers();
@@ -81,6 +86,8 @@ void SparkRenderer::initOpenGL()
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	//glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
+	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 	
 	window = glfwCreateWindow(Spark::WIDTH, Spark::HEIGHT, "Spark", NULL, NULL);
 	if (!window)
@@ -148,6 +155,11 @@ void SparkRenderer::initMembers()
 	screenShader = ResourceManager::getInstance()->getShader(SCREEN_SHADER);
 	postprocessingShader = ResourceManager::getInstance()->getShader(POSTPROCESSING_SHADER);
 
+	createFrameBuffersAndTextures();
+}
+
+void SparkRenderer::createFrameBuffersAndTextures()
+{
 	glCreateFramebuffers(1, &mainFramebuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, mainFramebuffer);
 	createTexture(colorTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
@@ -186,8 +198,30 @@ void SparkRenderer::initMembers()
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
+void SparkRenderer::deleteFrameBuffersAndTextures() const
+{
+	GLuint textures[4] = { colorTexture, positionTexture, normalsTexture, postProcessingTexture };
+	glDeleteTextures(4, textures);
+
+	GLuint frameBuffers[2] = { mainFramebuffer, postprocessingFramebuffer };
+	glDeleteFramebuffers(2, frameBuffers);
+}
+
 void SparkRenderer::renderPass()
 {
+	
+	int width, height;
+	glfwGetWindowSize(window, &width, &height);
+	if(Spark::WIDTH != width || Spark::HEIGHT != height)
+	{
+		Spark::WIDTH = width;
+		Spark::HEIGHT = height;
+		deleteFrameBuffersAndTextures();
+		createFrameBuffersAndTextures();
+	}
+	
+	glViewport(0, 0, Spark::WIDTH, Spark::HEIGHT);
+	
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
@@ -216,7 +250,7 @@ void SparkRenderer::renderPass()
 	postprocessingPass();
 	renderToScreen();
 
-	SceneManager::getInstance()->getCurrentScene()->drawGUI();
+	SceneManager::getInstance()->drawGUI();
 
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -255,6 +289,7 @@ void SparkRenderer::renderToScreen()
 
 void SparkRenderer::cleanup()
 {
+	deleteFrameBuffersAndTextures();
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();

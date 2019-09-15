@@ -7,6 +7,7 @@
 #include <filesystem>
 #include <LocalTranform.h>
 #include <WorldTransform.h>
+#include <json/value.h>
 
 struct Transform
 {
@@ -20,6 +21,24 @@ struct InitializationVariables
 	unsigned int height;
 	std::filesystem::path pathToModels;
 	std::filesystem::path pathToResources;
+
+	Json::Value serialize() const
+	{
+		Json::Value root;
+		root["width"] = width;
+		root["height"] = height;
+		root["pathToModels"] = pathToModels.string();
+		root["pathToResources"] = pathToResources.string();
+		return root;
+	}
+
+	void deserialize(Json::Value& root)
+	{
+		width = root.get("width", 1280).asInt();
+		height = root.get("height", 720).asInt();
+		pathToModels = root["pathToModels"].asString();
+		pathToResources = root["pathToResources"].asString();
+	}
 };
 
 struct Texture

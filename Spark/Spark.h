@@ -12,7 +12,9 @@ public:
 	static unsigned int WIDTH, HEIGHT;
 	static std::filesystem::path pathToModelMeshes;
 	static std::filesystem::path pathToResources;
-	
+
+	static bool runProgram;
+
 	static void setup(InitializationVariables& variables);
 	static void run();
 	static void clean();

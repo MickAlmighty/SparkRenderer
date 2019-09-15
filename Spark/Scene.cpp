@@ -1,6 +1,7 @@
 #include <Scene.h>
 #include <list>
 #include <GUI/ImGui/imgui.h>
+#include "Spark.h"
 
 Scene::Scene(std::string&& sceneName) : name(sceneName)
 {
@@ -46,24 +47,67 @@ std::shared_ptr<Camera> Scene::getCamera() const
 
 void Scene::drawGUI()
 {
-	//static float f = 0.0f;
-	//static int counter = 0;
-	//static glm::vec3 clear_color;
+	/*for(GameObject gameObject : root)
+	ImGui::TreePush()*/
+	drawSceneGraph();
+	static bool opened = false;
+	ImGuiIO& io = ImGui::GetIO();
+	
+	ImGui::SetNextWindowPos({ io.DisplaySize.x - 5, 25 }, ImGuiCond_Always, {1, 0} );
+	ImGui::SetNextWindowSizeConstraints(ImVec2(250, 100), ImVec2(FLT_MAX, FLT_MAX)); // Width > 250, Height > 100
+	if (ImGui::Begin("GameObject", &opened, {0, 0}, -1, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		auto gameObject_ptr = gameObjectToPreview.lock();
+		if (gameObject_ptr != nullptr)
+			gameObject_ptr->drawGUI();
+	}
+	ImGui::End();
+}
 
-	//ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+void Scene::drawSceneGraph()
+{
+	ImGuiIO& io = ImGui::GetIO();
+	ImGui::SetNextWindowPos({ 5, 25 }, ImGuiCond_Always, { 0, 0 });
+	if (ImGui::Begin("Scene", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_HorizontalScrollbar))
+	{
+		ImGui::Text(name.c_str());
+		ImGui::Separator();
+		drawTreeNode(root);
+	}
+	ImGui::End();
+}
 
-	//ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+void Scene::drawTreeNode(std::shared_ptr<GameObject>& node)
+{
+	bool opened = node == gameObjectToPreview.lock();
+	ImGui::Selectable(node->name.c_str(), opened, 0, { node->name.length() * 7.1f, 0.0f });
+	ImGui::OpenPopupOnItemClick("GraphNode_operations", 1);
 
-	//ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-	//ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+	if (ImGui::BeginPopup("GraphNode_operations"))
+	{
+		ImGui::Text("Popup Example");
+		ImGui::EndPopup();
+	}
 
-	//if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-	//	counter++;
-	//ImGui::SameLine();
-	//ImGui::Text("counter = %d", counter);
+	if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0))
+	{
+		gameObjectToPreview = node;
+		std::cout << "GameObject: " + node->name + " clicked!" << std::endl;
+	}
 
-	//ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-	//ImGui::End();
-	bool show = true;
-	ImGui::ShowDemoWindow(&show);
+	if (node->children.empty())
+		return;
+
+	ImGui::SameLine();
+	if (ImGui::TreeNode("Children"))
+	{
+		ImGui::PushID(this);
+		for (auto& gameObject : node->children)
+		{
+			drawTreeNode(gameObject);
+		}
+
+		ImGui::TreePop();
+		ImGui::PopID();
+	}
 }

@@ -13,6 +13,7 @@ private:
 public:
 	LocalTransform(glm::vec3 pos = glm::vec3(0), glm::vec3 scale = glm::vec3(1), glm::vec3 rotation = glm::vec3(0));
 	~LocalTransform() = default;
+	void drawGUI();
 
 	glm::mat4 getMatrix();
 	glm::vec3 getPosition() const;

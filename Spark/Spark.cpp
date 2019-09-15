@@ -10,6 +10,7 @@
 unsigned int Spark::WIDTH, Spark::HEIGHT;
 std::filesystem::path Spark::pathToModelMeshes;
 std::filesystem::path Spark::pathToResources;
+bool Spark::runProgram = true;
 
 void Spark::setup(InitializationVariables& variables)
 {
@@ -27,7 +28,7 @@ void Spark::setup(InitializationVariables& variables)
 
 void Spark::run()
 {
-	while(SparkRenderer::isWindowOpened())
+	while(SparkRenderer::isWindowOpened() && runProgram)
 	{
 		Clock::tick();
 		glfwPollEvents();

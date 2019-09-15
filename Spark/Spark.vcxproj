@@ -156,6 +156,7 @@
     <ClCompile Include="GUI\ImGui\imgui_impl_glfw.cpp" />
     <ClCompile Include="GUI\ImGui\imgui_impl_opengl3.cpp" />
     <ClCompile Include="GUI\ImGui\imgui_widgets.cpp" />
+    <ClCompile Include="GUI\SparkGui.cpp" />
     <ClCompile Include="HID.cpp" />
     <ClCompile Include="JsonSerializer.cpp" />
     <ClCompile Include="LocalTranform.cpp" />
@@ -186,6 +187,7 @@
     <ClInclude Include="GUI\ImGui\imstb_rectpack.h" />
     <ClInclude Include="GUI\ImGui\imstb_textedit.h" />
     <ClInclude Include="GUI\ImGui\imstb_truetype.h" />
+    <ClInclude Include="GUI\SparkGui.h" />
     <ClInclude Include="HID.h" />
     <ClInclude Include="ISerializable.h" />
     <ClInclude Include="JsonSerializer.h" />
