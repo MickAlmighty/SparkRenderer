@@ -61,6 +61,14 @@ void Camera::ProcessKeyboard()
 
 void Camera::ProcessMouseMovement(float xoffset, float yoffset, bool constrainPitch)
 {
+	static bool cameraRotation = true;
+	if(HID::isKeyPressed(GLFW_KEY_SPACE))
+	{
+		cameraRotation = !cameraRotation;
+	}
+
+	if (cameraRotation == false)
+		return;
 	xoffset *= MouseSensitivity;
 	yoffset *= MouseSensitivity;
 

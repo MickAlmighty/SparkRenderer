@@ -1,7 +1,9 @@
 #pragma once
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-
+#include <GUI/ImGui/imgui.h>
+#include <GUI/ImGui/imgui_impl_glfw.h>
+#include <GUI/ImGui/imgui_impl_opengl3.h>
 #include <Structs.h>
 #include <Shader.h>
 #include <ModelMesh.h>
@@ -34,7 +36,7 @@ public:
 	static SparkRenderer* getInstance();
 	SparkRenderer(const SparkRenderer&) = delete;
 	SparkRenderer operator=(const SparkRenderer&) = delete;
-	Camera* camera = nullptr;
+	
 	static void initOpenGL();
 
 	void setup();

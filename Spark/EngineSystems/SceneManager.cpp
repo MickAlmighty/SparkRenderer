@@ -1,7 +1,9 @@
-#include <SceneManager.h>
+#include <EngineSystems/SceneManager.h>
 #include <algorithm>
-#include <ResourceManager.h>
+#include <EngineSystems/ResourceManager.h>
 #include <Spark.h>
+#include <EngineSystems/SceneManager.h>
+#include <EngineSystems/ResourceManager.h>
 
 std::shared_ptr<SceneManager> SceneManager::getInstance()
 {
@@ -25,8 +27,10 @@ void SceneManager::setup()
 	auto gameObject2 = std::make_shared<GameObject>("SecondModel");
 	scene->addComponentToGameObject(model2, gameObject2);
 	gameObject2->transform.local.setPosition(-3, 2, -2);
-	
-	scene->addGameObject(gameObject2);
+
+	gameObject->addChild(gameObject2, gameObject);
+	gameObject->transform.local.setRotationDegrees(45, 45, 0);
+	//scene->addGameObject(gameObject2);
 
 
 	addScene(scene);
@@ -70,4 +74,9 @@ bool SceneManager::setCurrentScene(std::string&& sceneName)
 		return true;
 	}
 	return false;
+}
+
+std::shared_ptr<Scene> SceneManager::getCurrentScene()
+{
+	return current_scene;
 }

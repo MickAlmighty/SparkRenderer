@@ -1,10 +1,11 @@
-#include <Spark.h>
 #include <EngineSystems/SparkRenderer.h>
+#include <EngineSystems/ResourceManager.h>
+#include <EngineSystems/SceneManager.h>
+#include <Spark.h>
 #include <Clock.h>
 #include <iostream>
 #include <HID.h>
-#include <EngineSystems/ResourceManager.h>
-#include <EngineSystems/SceneManager.h>
+
 
 unsigned int Spark::WIDTH, Spark::HEIGHT;
 std::filesystem::path Spark::pathToModelMeshes;

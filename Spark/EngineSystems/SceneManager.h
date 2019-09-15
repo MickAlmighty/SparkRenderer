@@ -15,7 +15,7 @@ public:
 	void cleanup();
 	void addScene(const std::shared_ptr<Scene>& scene);
 	bool setCurrentScene(std::string&& sceneName);
-
+	std::shared_ptr<Scene> getCurrentScene();
 	static std::shared_ptr<SceneManager> getInstance();
 	SceneManager() = default;
 	~SceneManager() = default;

@@ -19,6 +19,12 @@
     <Filter Include="EngineSystems">
       <UniqueIdentifier>{ce002514-0c19-4342-9276-421614628bce}</UniqueIdentifier>
     </Filter>
+    <Filter Include="GUI">
+      <UniqueIdentifier>{ee61c895-3ed5-4748-9c8f-62070fc9852d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GUI\ImGui">
+      <UniqueIdentifier>{a3837f58-b301-4553-902b-f579ba1f1047}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -81,6 +87,24 @@
     <ClCompile Include="EngineSystems\ResourceManager.cpp">
       <Filter>EngineSystems</Filter>
     </ClCompile>
+    <ClCompile Include="GUI\ImGui\imgui.cpp">
+      <Filter>GUI\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\ImGui\imgui_demo.cpp">
+      <Filter>GUI\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\ImGui\imgui_draw.cpp">
+      <Filter>GUI\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\ImGui\imgui_widgets.cpp">
+      <Filter>GUI\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\ImGui\imgui_impl_glfw.cpp">
+      <Filter>GUI\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\ImGui\imgui_impl_opengl3.cpp">
+      <Filter>GUI\ImGui</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Spark.h">
@@ -142,6 +166,30 @@
     </ClInclude>
     <ClInclude Include="EngineSystems\ResourceManager.h">
       <Filter>EngineSystems</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\ImGui\imconfig.h">
+      <Filter>GUI\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\ImGui\imgui.h">
+      <Filter>GUI\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\ImGui\imgui_internal.h">
+      <Filter>GUI\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\ImGui\imstb_rectpack.h">
+      <Filter>GUI\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\ImGui\imstb_textedit.h">
+      <Filter>GUI\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\ImGui\imstb_truetype.h">
+      <Filter>GUI\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\ImGui\imgui_impl_glfw.h">
+      <Filter>GUI\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\ImGui\imgui_impl_opengl3.h">
+      <Filter>GUI\ImGui</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

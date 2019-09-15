@@ -1,9 +1,9 @@
 #include <EngineSystems/SparkRenderer.h>
+#include <EngineSystems/ResourceManager.h>
 #include <exception>
 #include <iostream>
 #include <ResourceLoader.h>
 #include <HID.h>
-#include <EngineSystems/ResourceManager.h>
 #include <Spark.h>
 
 GLFWwindow* SparkRenderer::window = nullptr;
@@ -115,6 +115,14 @@ void SparkRenderer::initOpenGL()
 	image.pixels = pixels;
 	GLFWcursor* cursor = glfwCreateCursor(&image, 0, 0);
 
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	ImGui::StyleColorsLight();
+	ImGui_ImplGlfw_InitForOpenGL(window, true);
+	const char* glsl_version = "#version 450";
+	ImGui_ImplOpenGL3_Init(glsl_version);
+
 	glfwSetCursor(window, cursor);
 
 	glfwSwapInterval(0);
@@ -139,7 +147,6 @@ void SparkRenderer::initMembers()
 	mainShader = ResourceManager::getInstance()->getShader(DEFAULT_SHADER);
 	screenShader = ResourceManager::getInstance()->getShader(SCREEN_SHADER);
 	postprocessingShader = ResourceManager::getInstance()->getShader(POSTPROCESSING_SHADER);
-	camera = new Camera(glm::vec3(0, 0, 2));
 
 	glCreateFramebuffers(1, &mainFramebuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, mainFramebuffer);
@@ -181,6 +188,10 @@ void SparkRenderer::initMembers()
 
 void SparkRenderer::renderPass()
 {
+	ImGui_ImplOpenGL3_NewFrame();
+	ImGui_ImplGlfw_NewFrame();
+	ImGui::NewFrame();
+	auto camera = SceneManager::getInstance()->getCurrentScene()->getCamera();
 	camera->ProcessKeyboard();
 	camera->ProcessMouseMovement(HID::mouse.direction.x, -HID::mouse.direction.y);
 	glBindFramebuffer(GL_FRAMEBUFFER, mainFramebuffer);
@@ -204,6 +215,11 @@ void SparkRenderer::renderPass()
 
 	postprocessingPass();
 	renderToScreen();
+
+	SceneManager::getInstance()->getCurrentScene()->drawGUI();
+
+	ImGui::Render();
+	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 	glfwSwapBuffers(window);
 }
 
@@ -239,7 +255,11 @@ void SparkRenderer::renderToScreen()
 
 void SparkRenderer::cleanup()
 {
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
 	glfwDestroyWindow(window);
+	glfwTerminate();
 }
 
 bool SparkRenderer::isWindowOpened()

@@ -150,6 +150,12 @@
     <ClCompile Include="EngineSystems\SparkRenderer.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="glad.c" />
+    <ClCompile Include="GUI\ImGui\imgui.cpp" />
+    <ClCompile Include="GUI\ImGui\imgui_demo.cpp" />
+    <ClCompile Include="GUI\ImGui\imgui_draw.cpp" />
+    <ClCompile Include="GUI\ImGui\imgui_impl_glfw.cpp" />
+    <ClCompile Include="GUI\ImGui\imgui_impl_opengl3.cpp" />
+    <ClCompile Include="GUI\ImGui\imgui_widgets.cpp" />
     <ClCompile Include="HID.cpp" />
     <ClCompile Include="JsonSerializer.cpp" />
     <ClCompile Include="LocalTranform.cpp" />
@@ -172,6 +178,14 @@
     <ClInclude Include="EngineSystems\SparkRenderer.h" />
     <ClInclude Include="Enums.h" />
     <ClInclude Include="GameObject.h" />
+    <ClInclude Include="GUI\ImGui\imconfig.h" />
+    <ClInclude Include="GUI\ImGui\imgui.h" />
+    <ClInclude Include="GUI\ImGui\imgui_impl_glfw.h" />
+    <ClInclude Include="GUI\ImGui\imgui_impl_opengl3.h" />
+    <ClInclude Include="GUI\ImGui\imgui_internal.h" />
+    <ClInclude Include="GUI\ImGui\imstb_rectpack.h" />
+    <ClInclude Include="GUI\ImGui\imstb_textedit.h" />
+    <ClInclude Include="GUI\ImGui\imstb_truetype.h" />
     <ClInclude Include="HID.h" />
     <ClInclude Include="ISerializable.h" />
     <ClInclude Include="JsonSerializer.h" />
