@@ -47,14 +47,12 @@ std::shared_ptr<Camera> Scene::getCamera() const
 
 void Scene::drawGUI()
 {
-	/*for(GameObject gameObject : root)
-	ImGui::TreePush()*/
 	drawSceneGraph();
 	static bool opened = false;
 	ImGuiIO& io = ImGui::GetIO();
 	
 	ImGui::SetNextWindowPos({ io.DisplaySize.x - 5, 25 }, ImGuiCond_Always, {1, 0} );
-	ImGui::SetNextWindowSizeConstraints(ImVec2(250, 120), ImVec2(FLT_MAX, FLT_MAX)); // Width > 250, Height > 100
+	ImGui::SetNextWindowSizeConstraints(ImVec2(250, 120), ImVec2(FLT_MAX, FLT_MAX)); // Width = 250, Height > 100
 	if (ImGui::Begin("GameObject", &opened, {0, 0}, -1, ImGuiWindowFlags_AlwaysAutoResize))
 	{
 		auto gameObject_ptr = gameObjectToPreview.lock();
@@ -111,7 +109,7 @@ void Scene::drawTreeNode(std::shared_ptr<GameObject>& node, bool isRootNode)
 		ImGui::EndPopup();
 	}
 
-	if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0))
+	if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0) && !isRootNode)
 	{
 		gameObjectToPreview = node;
 		std::cout << "GameObject: " + node->name + " clicked!" << std::endl;

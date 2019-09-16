@@ -104,6 +104,17 @@ bool GameObject::removeChild(std::shared_ptr<GameObject>& child)
 void GameObject::drawGUI()
 {
 	ImGui::Text(name.c_str());
+	static char nameInput[64] = "";
+	ImGui::InputTextWithHint("", name.c_str(), nameInput, 64);
+	ImGui::SameLine();
+	if(ImGui::Button("Change Name"))
+	{
+		name = nameInput;
+		for(int i = 0; i < 64; i++)
+		{
+			nameInput[i] = '\0';
+		}
+	}
 	transform.local.drawGUI();
 	for (auto& component : components)
 		component->drawGUI();

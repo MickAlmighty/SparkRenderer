@@ -45,6 +45,21 @@ public:
 		return false;
 	}
 
+	template <class T>
+	std::shared_ptr<T> getComponent()
+	{
+		auto component_it = std::find_if(std::begin(components), std::end(components), [](std::shared_ptr<Component> component)
+		{
+			T* comp_ptr = dynamic_cast<T*>(component.get());
+			return comp_ptr != nullptr;
+		});
+		if(component_it != components.end())
+		{
+			return *component_it;
+		}
+		return nullptr;
+	}
+
 	/*template <class T>
 	bool removeComponentsOfType()
 	{

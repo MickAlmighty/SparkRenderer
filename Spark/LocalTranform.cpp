@@ -13,8 +13,8 @@ LocalTransform::LocalTransform(glm::vec3 pos, glm::vec3 scale, glm::vec3 rotatio
 void LocalTransform::drawGUI()
 {
 	ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 5.0f);
-	ImGui::SetNextWindowSizeConstraints(ImVec2(250, 100), ImVec2(280, FLT_MAX)); // Width = 250, Height > 100
-	ImGui::BeginChild("Local Transform", {250, 100}, true, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_AlwaysAutoResize);
+	ImGui::SetNextWindowSizeConstraints(ImVec2(250, 100), ImVec2(FLT_MAX, 100)); // Width = 250, Height > 100
+	ImGui::BeginChild("Local Transform", {0, 0}, true, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_AlwaysAutoResize);
 	if (ImGui::BeginMenuBar())
 	{
 		ImGui::Text("Transform");
