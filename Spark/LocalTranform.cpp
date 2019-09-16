@@ -73,7 +73,6 @@ glm::vec3 LocalTransform::getRotationRadians() const
 
 glm::vec3 LocalTransform::getRotationDegrees() const
 {
-	glm::vec3 degrees;
 	return rotationEuler;
 }
 

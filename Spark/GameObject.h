@@ -23,6 +23,7 @@ public:
 	void addComponent(std::shared_ptr<Component>& component, std::shared_ptr<GameObject>& gameObject);
 	bool removeComponent(std::string&& name);
 	bool removeChild(std::string&& gameObjectName);
+	bool removeChild(std::shared_ptr<GameObject>& child);
 	void drawGUI();
 	GameObject(std::string&& _name = "GameObject");
 	~GameObject();

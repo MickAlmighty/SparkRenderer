@@ -87,6 +87,20 @@ bool GameObject::removeChild(std::string&& gameObjectName)
 	return false;
 }
 
+bool GameObject::removeChild(std::shared_ptr<GameObject>& child)
+{
+	const auto gameObject_it = std::find_if(std::begin(children), std::end(children), [&child](const std::shared_ptr<GameObject>& gameObject)
+	{
+		return gameObject == child;
+	});
+	if (gameObject_it != children.end())
+	{
+		children.erase(gameObject_it);
+		return true;
+	}
+	return false;
+}
+
 void GameObject::drawGUI()
 {
 	ImGui::Text(name.c_str());

@@ -24,5 +24,6 @@ int main()
 		std::cout << e.what() << std::endl;
 		return 1;
 	}
+	getchar();
 	return 0;
 }

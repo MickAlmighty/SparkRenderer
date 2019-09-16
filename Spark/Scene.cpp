@@ -54,7 +54,7 @@ void Scene::drawGUI()
 	ImGuiIO& io = ImGui::GetIO();
 	
 	ImGui::SetNextWindowPos({ io.DisplaySize.x - 5, 25 }, ImGuiCond_Always, {1, 0} );
-	ImGui::SetNextWindowSizeConstraints(ImVec2(250, 100), ImVec2(FLT_MAX, FLT_MAX)); // Width > 250, Height > 100
+	ImGui::SetNextWindowSizeConstraints(ImVec2(250, 120), ImVec2(FLT_MAX, FLT_MAX)); // Width > 250, Height > 100
 	if (ImGui::Begin("GameObject", &opened, {0, 0}, -1, ImGuiWindowFlags_AlwaysAutoResize))
 	{
 		auto gameObject_ptr = gameObjectToPreview.lock();
@@ -72,13 +72,20 @@ void Scene::drawSceneGraph()
 	{
 		ImGui::Text(name.c_str());
 		ImGui::Separator();
-		drawTreeNode(root);
+		drawTreeNode(root, true);
 	}
 	ImGui::End();
+
+	std::for_each(std::begin(toRemove), std::end(toRemove), [](std::shared_ptr<GameObject>& game_object)
+	{
+		game_object->getParent()->removeChild(game_object);
+	});
+	toRemove.clear();
 }
 
-void Scene::drawTreeNode(std::shared_ptr<GameObject>& node)
+void Scene::drawTreeNode(std::shared_ptr<GameObject>& node, bool isRootNode)
 {
+	ImGui::PushID(node.get());
 	bool opened = node == gameObjectToPreview.lock();
 	ImGui::Selectable(node->name.c_str(), opened, 0, { node->name.length() * 7.1f, 0.0f });
 	ImGui::OpenPopupOnItemClick("GraphNode_operations", 1);
@@ -86,6 +93,21 @@ void Scene::drawTreeNode(std::shared_ptr<GameObject>& node)
 	if (ImGui::BeginPopup("GraphNode_operations"))
 	{
 		ImGui::Text("Popup Example");
+
+		if (ImGui::Button("Add child"))
+		{
+			node->addChild(std::make_shared<GameObject>(), node);
+			ImGui::CloseCurrentPopup();
+		}
+
+		if(!isRootNode)
+		{
+			if (ImGui::Button("Delete"))
+			{
+				toRemove.push_back(node);
+				ImGui::CloseCurrentPopup();
+			}
+		}
 		ImGui::EndPopup();
 	}
 
@@ -95,19 +117,18 @@ void Scene::drawTreeNode(std::shared_ptr<GameObject>& node)
 		std::cout << "GameObject: " + node->name + " clicked!" << std::endl;
 	}
 
-	if (node->children.empty())
-		return;
-
-	ImGui::SameLine();
-	if (ImGui::TreeNode("Children"))
+	if (!node->children.empty())
 	{
-		ImGui::PushID(this);
-		for (auto& gameObject : node->children)
+		ImGui::SameLine();
+		if (ImGui::TreeNode("Children"))
 		{
-			drawTreeNode(gameObject);
-		}
+			for (auto gameObject : node->children)
+			{
+				drawTreeNode(gameObject, false);
+			}
 
-		ImGui::TreePop();
-		ImGui::PopID();
+			ImGui::TreePop();
+		}
 	}
+	ImGui::PopID();
 }

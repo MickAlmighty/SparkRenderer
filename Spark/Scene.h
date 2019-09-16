@@ -13,6 +13,7 @@ private:
 	friend class SceneManager;
 	std::string name = "New Scene";
 	std::shared_ptr<GameObject> root = std::make_shared<GameObject>("Root");
+	std::list < std::shared_ptr<GameObject> > toRemove;
 	std::weak_ptr<GameObject> gameObjectToPreview;
 	std::shared_ptr<Camera>camera = std::make_shared<Camera>(glm::vec3(0, 0, 2));
 public:
@@ -26,6 +27,6 @@ public:
 	std::shared_ptr<Camera> getCamera() const;
 	virtual void drawGUI();
 	void drawSceneGraph();
-	void drawTreeNode(std::shared_ptr<GameObject>& node);
+	void drawTreeNode(std::shared_ptr<GameObject>& node, bool isRootNode);
 };
 
