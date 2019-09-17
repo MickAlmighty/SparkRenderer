@@ -16,7 +16,8 @@ class ResourceManager
 	~ResourceManager() = default;
 public:
 	Texture findTexture(const std::string&& path);
-	std::shared_ptr<ModelMesh> findModelMesh(const std::string&& path);
+	std::vector<Mesh> findModelMeshes(const std::string& path);
+	std::vector<std::string> getPathsToModels();
 	std::shared_ptr<Shader>& getShader(ShaderType type);
 
 	static ResourceManager* getInstance();

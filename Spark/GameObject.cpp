@@ -2,6 +2,12 @@
 #include <algorithm>
 #include <iostream>
 #include <GUI/ImGui/imgui.h>
+#include <GUI/SparkGui.h>
+
+std::shared_ptr<GameObject> GameObject::get_ptr()
+{
+	return shared_from_this();
+}
 
 void GameObject::update()
 {
@@ -53,24 +59,10 @@ void GameObject::addChild(const std::shared_ptr<GameObject>& newChild, const std
 	children.push_back(newChild);
 }
 
-void GameObject::addComponent(std::shared_ptr<Component>& component, std::shared_ptr<GameObject>& gameObject)
+void GameObject::addComponent(std::shared_ptr<Component> component, std::shared_ptr<GameObject> gameObject)
 {
 	component->setGameObject(gameObject);
 	components.push_back(component);
-}
-
-bool GameObject::removeComponent(std::string&& name)
-{
-	const auto component_it = std::find_if(std::begin(components), std::end(components), [&name] (const std::shared_ptr<Component>& component)
-	{
-		return component->name == name;
-	});
-	if(component_it != components.end())
-	{
-		components.erase(component_it);
-		return true;
-	}
-	return false;
 }
 
 bool GameObject::removeChild(std::string&& gameObjectName)
@@ -87,7 +79,7 @@ bool GameObject::removeChild(std::string&& gameObjectName)
 	return false;
 }
 
-bool GameObject::removeChild(std::shared_ptr<GameObject>& child)
+bool GameObject::removeChild(std::shared_ptr<GameObject> child)
 {
 	const auto gameObject_it = std::find_if(std::begin(children), std::end(children), [&child](const std::shared_ptr<GameObject>& gameObject)
 	{
@@ -105,9 +97,9 @@ void GameObject::drawGUI()
 {
 	ImGui::Text(name.c_str());
 	static char nameInput[64] = "";
-	ImGui::InputTextWithHint("", name.c_str(), nameInput, 64);
+	ImGui::InputTextWithHint("", name.c_str(), nameInput, 64, ImGuiInputTextFlags_CharsNoBlank);
 	ImGui::SameLine();
-	if(ImGui::Button("Change Name"))
+	if(ImGui::Button("Change Name") && nameInput[0] != '\0')
 	{
 		name = nameInput;
 		for(int i = 0; i < 64; i++)
@@ -118,6 +110,12 @@ void GameObject::drawGUI()
 	transform.local.drawGUI();
 	for (auto& component : components)
 		component->drawGUI();
+
+	const std::shared_ptr<Component> componentToAdd = SparkGui::addComponent();
+	if(componentToAdd != nullptr)
+	{
+		addComponent(componentToAdd, get_ptr());
+	}
 }
 
 GameObject::GameObject(std::string&& _name) : name(_name)

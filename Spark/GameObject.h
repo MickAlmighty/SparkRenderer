@@ -6,7 +6,7 @@
 #include <Structs.h>
 
 class Component;
-class GameObject
+class GameObject : public std::enable_shared_from_this<GameObject>
 {
 private:
 	friend class Scene;
@@ -14,16 +14,16 @@ private:
 	std::weak_ptr<GameObject> parent;
 	std::list<std::shared_ptr<GameObject>> children;
 	std::list<std::shared_ptr<Component>> components;
+	std::shared_ptr<GameObject> get_ptr();
 	void update();
 	void fixedUpdate();
 public:
 	Transform transform;
 	std::shared_ptr<GameObject> getParent() const;
 	void addChild(const std::shared_ptr<GameObject>& newChild, const std::shared_ptr<GameObject>& parent);
-	void addComponent(std::shared_ptr<Component>& component, std::shared_ptr<GameObject>& gameObject);
-	bool removeComponent(std::string&& name);
+	void addComponent(std::shared_ptr<Component> component, std::shared_ptr<GameObject> gameObject);
 	bool removeChild(std::string&& gameObjectName);
-	bool removeChild(std::shared_ptr<GameObject>& child);
+	bool removeChild(std::shared_ptr<GameObject> child);
 	void drawGUI();
 	GameObject(std::string&& _name = "GameObject");
 	~GameObject();
@@ -58,6 +58,25 @@ public:
 			return *component_it;
 		}
 		return nullptr;
+	}
+
+	template <class T>
+	bool removeComponent(std::string& name)
+	{
+		auto component_it = std::find_if(std::begin(components), std::end(components), [&name](std::shared_ptr<Component> component)
+		{
+			if(dynamic_cast<T*>(component.get()))
+			{
+				return component->name == name;
+			}
+			return false;
+		});
+		if (component_it != components.end())
+		{
+			components.erase(component_it);
+			return true;
+		}
+		return false;
 	}
 
 	/*template <class T>

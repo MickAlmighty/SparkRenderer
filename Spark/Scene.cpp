@@ -15,19 +15,25 @@ Scene::~Scene()
 #endif
 }
 
-void Scene::update() const
+void Scene::update()
 {
+	removeObjectsFromScene();
+	
 	root->update();
 }
 
-void Scene::fixedUpdate() const
+void Scene::fixedUpdate()
 {
 	root->fixedUpdate();
 }
 
-void Scene::removeGameObject(std::string&& name)
+void Scene::removeObjectsFromScene()
 {
-
+	std::for_each(std::begin(toRemove), std::end(toRemove), [](std::function<void()>& f)
+	{
+		f();
+	});
+	toRemove.clear();
 }
 
 void Scene::addGameObject(std::shared_ptr<GameObject> game_object)
@@ -52,7 +58,7 @@ void Scene::drawGUI()
 	ImGuiIO& io = ImGui::GetIO();
 	
 	ImGui::SetNextWindowPos({ io.DisplaySize.x - 5, 25 }, ImGuiCond_Always, {1, 0} );
-	ImGui::SetNextWindowSizeConstraints(ImVec2(250, 120), ImVec2(FLT_MAX, FLT_MAX)); // Width = 250, Height > 100
+	ImGui::SetNextWindowSizeConstraints(ImVec2(250, 120), ImVec2(FLT_MAX, io.DisplaySize.y - 50)); // Width = 250, Height > 100
 	if (ImGui::Begin("GameObject", &opened, {0, 0}, -1, ImGuiWindowFlags_AlwaysAutoResize))
 	{
 		auto gameObject_ptr = gameObjectToPreview.lock();
@@ -74,14 +80,14 @@ void Scene::drawSceneGraph()
 	}
 	ImGui::End();
 
-	std::for_each(std::begin(toRemove), std::end(toRemove), [](std::shared_ptr<GameObject>& game_object)
+	std::for_each(std::begin(toRemove), std::end(toRemove), [](std::function<void()>& f)
 	{
-		game_object->getParent()->removeChild(game_object);
+		f();
 	});
 	toRemove.clear();
 }
 
-void Scene::drawTreeNode(std::shared_ptr<GameObject>& node, bool isRootNode)
+void Scene::drawTreeNode(std::shared_ptr<GameObject> node, bool isRootNode)
 {
 	ImGui::PushID(node.get());
 	bool opened = node == gameObjectToPreview.lock();
@@ -102,7 +108,11 @@ void Scene::drawTreeNode(std::shared_ptr<GameObject>& node, bool isRootNode)
 		{
 			if (ImGui::Button("Delete"))
 			{
-				toRemove.push_back(node);
+				const std::function<void()> remove = [node]()
+				{
+					node->getParent()->removeChild(node);
+				};
+				toRemove.push_back(remove);
 				ImGui::CloseCurrentPopup();
 			}
 		}

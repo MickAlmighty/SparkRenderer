@@ -1,6 +1,7 @@
 #pragma once
 #include <iostream>
 #include <GameObject.h>
+#include "GUI/ImGui/imgui.h"
 
 class GameObject;
 class Component
@@ -16,5 +17,17 @@ public:
 	virtual void fixedUpdate() = 0;
 	virtual void setGameObject(std::shared_ptr<GameObject>& game_object) { gameObject = game_object; };
 	virtual void drawGUI() = 0;
+	template <class T>
+	void removeComponentGUI()
+	{
+		if (ImGui::Button("Delete"))
+		{
+			auto remove = [this]()
+			{
+				getGameObject()->removeComponent<T>(name);
+			};
+			SceneManager::getInstance()->getCurrentScene()->toRemove.push_back(remove);
+		}
+	};
 };
 

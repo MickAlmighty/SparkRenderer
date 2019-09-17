@@ -1,13 +1,19 @@
 #include <ModelMesh.h>
 #include <GUI/ImGui/imgui.h>
+#include "GUI/SparkGui.h"
 
 ModelMesh::ModelMesh(std::vector<Mesh>& meshes, std::string&& modelName) : Component(modelName)
 {
-	this->meshes = std::move(meshes);
+	this->meshes = meshes;
 }
 
-ModelMesh::ModelMesh(const ModelMesh* modelMesh)
+ModelMesh::ModelMesh()
 {
+}
+
+void ModelMesh::setMeshes(std::vector<Mesh>& meshes)
+{
+	this->meshes = meshes;
 }
 
 ModelMesh::~ModelMesh()
@@ -32,9 +38,10 @@ void ModelMesh::fixedUpdate()
 
 void ModelMesh::drawGUI()
 {
+	ImGui::PushID(this);
 	ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 5.0f);
-	ImGui::SetNextWindowSizeConstraints(ImVec2(250, 100), ImVec2(FLT_MAX, FLT_MAX)); // Width = 250, Height > 100
-	ImGui::BeginChild("ModelMesh", { 0, 0 }, true, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_MenuBar);
+	ImGui::SetNextWindowSizeConstraints(ImVec2(250, 0), ImVec2(FLT_MAX, 150)); // Width = 250, Height > 100
+	ImGui::BeginChild("ModelMesh", { 0, 0 }, true, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_AlwaysAutoResize);
 	if (ImGui::BeginMenuBar())
 	{
 		ImGui::Text("ModelMesh");
@@ -49,11 +56,14 @@ void ModelMesh::drawGUI()
 		ImGui::Separator();
 	}
 
-	if(ImGui::Button("Delete"))
+	if(meshes.empty())
 	{
-		//getGameObject()->removeComponent();
+		meshes = SparkGui::getMeshes();
 	}
+
+	removeComponentGUI<ModelMesh>();
 
 	ImGui::EndChild();
 	ImGui::PopStyleVar();
+	ImGui::PopID();
 }

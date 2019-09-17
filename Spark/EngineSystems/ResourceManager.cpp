@@ -14,15 +14,24 @@ Texture ResourceManager::findTexture(const std::string&& path)
 	return {};
 }
 
-std::shared_ptr<ModelMesh> ResourceManager::findModelMesh(const std::string&& path)
+std::vector<Mesh> ResourceManager::findModelMeshes(const std::string& path)
 {
 	const auto& it = models.find(path);
 	if (it != models.end())
 	{
-		std::vector<Mesh> meshes = it->second;
-		return std::make_shared<ModelMesh>(meshes);
+		return it->second;
 	}
-	return nullptr;
+	return {};
+}
+
+std::vector<std::string> ResourceManager::getPathsToModels()
+{
+	std::vector<std::string> paths;
+	for (auto& element : models)
+	{
+		paths.push_back(element.first);
+	}
+	return paths;
 }
 
 std::shared_ptr<Shader>& ResourceManager::getShader(ShaderType type)

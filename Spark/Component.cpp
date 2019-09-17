@@ -4,3 +4,5 @@ Component::Component(std::string& componentName)
 {
 	name = componentName;
 }
+
+
