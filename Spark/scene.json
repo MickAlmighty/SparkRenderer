@@ -1,0 +1,233 @@
+{
+	"name" : "MainScene",
+	"sceneGraph" : 
+	{
+		"children" : 
+		[
+			{
+				"children" : 
+				[
+					{
+						"children" : 
+						[
+							{
+								"localTransform" : 
+								{
+									"position" : 
+									[
+										0.0,
+										0.0,
+										0.0
+									],
+									"rotation" : 
+									[
+										0.0,
+										0.0,
+										0.0
+									],
+									"scale" : 
+									[
+										0.0,
+										0.0,
+										0.0
+									]
+								},
+								"name" : "GameObject",
+								"objectType" : 1,
+								"worldTransform" : 
+								{
+									"worldMatrix" : 
+									[
+										[
+											1.0,
+											0.0,
+											0.0,
+											0.0
+										],
+										[
+											0.0,
+											1.0,
+											0.0,
+											0.0
+										],
+										[
+											0.0,
+											0.0,
+											1.0,
+											0.0
+										],
+										[
+											0.0,
+											2.0,
+											0.0,
+											1.0
+										]
+									]
+								}
+							}
+						],
+						"localTransform" : 
+						{
+							"position" : 
+							[
+								0.0,
+								2.0,
+								0.0
+							],
+							"rotation" : 
+							[
+								0.0,
+								0.0,
+								0.0
+							],
+							"scale" : 
+							[
+								0.0,
+								2.0,
+								0.0
+							]
+						},
+						"name" : "SecondModel",
+						"objectType" : 1,
+						"worldTransform" : 
+						{
+							"worldMatrix" : 
+							[
+								[
+									1.0,
+									0.0,
+									0.0,
+									0.0
+								],
+								[
+									0.0,
+									1.0,
+									0.0,
+									0.0
+								],
+								[
+									0.0,
+									0.0,
+									1.0,
+									0.0
+								],
+								[
+									0.0,
+									2.0,
+									0.0,
+									1.0
+								]
+							]
+						}
+					}
+				],
+				"localTransform" : 
+				{
+					"position" : 
+					[
+						0.0,
+						0.0,
+						0.0
+					],
+					"rotation" : 
+					[
+						0.0,
+						0.0,
+						0.0
+					],
+					"scale" : 
+					[
+						0.0,
+						0.0,
+						0.0
+					]
+				},
+				"name" : "FirstModel",
+				"objectType" : 1,
+				"worldTransform" : 
+				{
+					"worldMatrix" : 
+					[
+						[
+							1.0,
+							0.0,
+							0.0,
+							0.0
+						],
+						[
+							0.0,
+							1.0,
+							0.0,
+							0.0
+						],
+						[
+							0.0,
+							0.0,
+							1.0,
+							0.0
+						],
+						[
+							0.0,
+							0.0,
+							0.0,
+							1.0
+						]
+					]
+				}
+			}
+		],
+		"localTransform" : 
+		{
+			"position" : 
+			[
+				0.0,
+				0.0,
+				0.0
+			],
+			"rotation" : 
+			[
+				0.0,
+				0.0,
+				0.0
+			],
+			"scale" : 
+			[
+				0.0,
+				0.0,
+				0.0
+			]
+		},
+		"name" : "Root",
+		"objectType" : 1,
+		"worldTransform" : 
+		{
+			"worldMatrix" : 
+			[
+				[
+					1.0,
+					0.0,
+					0.0,
+					0.0
+				],
+				[
+					0.0,
+					1.0,
+					0.0,
+					0.0
+				],
+				[
+					0.0,
+					0.0,
+					1.0,
+					0.0
+				],
+				[
+					0.0,
+					0.0,
+					0.0,
+					1.0
+				]
+			]
+		}
+	}
+}

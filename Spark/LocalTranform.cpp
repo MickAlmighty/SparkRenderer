@@ -36,6 +36,30 @@ void LocalTransform::drawGUI()
 	ImGui::PopStyleVar();
 }
 
+Json::Value LocalTransform::serialize() const
+{
+	Json::Value serializedTransform;
+	Json::Value sPos;
+	sPos[0] = position.x;
+	sPos[1] = position.y;
+	sPos[2] = position.z;
+	serializedTransform["position"] = sPos;
+
+	Json::Value sScale;
+	sScale[0] = position.x;
+	sScale[1] = position.y;
+	sScale[2] = position.z;
+	serializedTransform["scale"] = sScale;
+
+	Json::Value sRot;
+	sRot[0] = rotationEuler.x;
+	sRot[1] = rotationEuler.y;
+	sRot[2] = rotationEuler.z;
+	serializedTransform["rotation"] = sRot;
+
+	return serializedTransform;
+}
+
 glm::mat4 LocalTransform::getMatrix()
 {
 	if (dirty)

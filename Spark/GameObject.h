@@ -4,9 +4,10 @@
 #include <Component.h>
 #include <Scene.h>
 #include <Structs.h>
+#include <ISerializable.h>
 
 class Component;
-class GameObject : public std::enable_shared_from_this<GameObject>
+class GameObject : public std::enable_shared_from_this<GameObject>, public ISerializable
 {
 private:
 	friend class Scene;
@@ -78,6 +79,11 @@ public:
 		}
 		return false;
 	}
+
+	SerializableType getSerializableType() override;
+	Json::Value serialize(Json::Value& root) override;
+	void deserialize(Json::Value& root) override;
+
 
 	/*template <class T>
 	bool removeComponentsOfType()

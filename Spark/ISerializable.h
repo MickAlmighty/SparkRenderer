@@ -3,7 +3,8 @@
 
 enum class SerializableType
 {
-	GameObjectSerializable = 1
+	SGameObject = 1,
+	SModelMesh
 };
 
 

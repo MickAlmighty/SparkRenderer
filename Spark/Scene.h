@@ -5,7 +5,7 @@
 #include <EngineSystems/SceneManager.h>
 #include <Camera.h>
 #include <functional>
-
+#include <json/value.h>
 class GameObject;
 class Component;
 class Scene
@@ -26,6 +26,7 @@ public:
 	void addGameObject(std::shared_ptr<GameObject> game_object);
 	void addComponentToGameObject(std::shared_ptr<Component>& component, std::shared_ptr<GameObject> game_object);
 	std::shared_ptr<Camera> getCamera() const;
+	Json::Value serialize();
 	virtual void drawGUI();
 	void drawSceneGraph();
 	void drawTreeNode(std::shared_ptr<GameObject> node, bool isRootNode);

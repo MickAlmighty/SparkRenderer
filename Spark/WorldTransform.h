@@ -1,5 +1,6 @@
 #pragma once
 #include <glm/glm.hpp>
+#include <json/value.h>
 
 class WorldTransform
 {
@@ -8,7 +9,8 @@ class WorldTransform
 public:
 	glm::mat4 getMatrix() const;
 	glm::vec3 getPosition() const;
-	
+	Json::Value serialize() const;
+
 	void setMatrix(glm::mat4 mat);
 	void setPosition(glm::vec3 position);
 	void setPosition(float x, float y, float z);

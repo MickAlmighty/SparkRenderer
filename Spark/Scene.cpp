@@ -51,6 +51,16 @@ std::shared_ptr<Camera> Scene::getCamera() const
 	return camera;
 }
 
+Json::Value Scene::serialize()
+{
+	Json::Value serialize;
+	serialize["name"] = name;
+	Json::Value serializeSceneGraph;
+	serialize["sceneGraph"] = root->serialize(serializeSceneGraph);
+
+	return serialize;
+}
+
 void Scene::drawGUI()
 {
 	drawSceneGraph();

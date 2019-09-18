@@ -111,6 +111,10 @@ void SceneManager::drawMainMenuGui()
 		if (ImGui::BeginMenu("SceneManager"))
 		{
 			ImGui::Text("Current Scene:"); ImGui::SameLine(); ImGui::Text(current_scene->name.c_str());
+			if(ImGui::Button("Save Current Scene"))
+			{
+				JsonSerializer::writeToFile("scene.json",current_scene->serialize());
+			}
 			ImGui::EndMenu();
 		}
 		ImGui::EndMainMenuBar();

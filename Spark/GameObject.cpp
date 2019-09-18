@@ -129,3 +129,29 @@ GameObject::~GameObject()
 	std::cout << "GameObject: " << name.c_str() << " destroyed!" << std::endl;
 #endif
 }
+
+SerializableType GameObject::getSerializableType()
+{
+	return SerializableType::SGameObject;
+}
+
+Json::Value GameObject::serialize(Json::Value& root)
+{
+	root["name"] = name;
+	root["objectType"] = static_cast<unsigned int>(getSerializableType());
+	root["localTransform"] = transform.local.serialize();
+	root["worldTransform"] = transform.world.serialize();
+	unsigned int i = 0;
+	for(const auto& child : children)
+	{
+		Json::Value serializedChild;
+		root["children"][i] = child->serialize(serializedChild);
+		++i;
+	}
+	return root;
+}
+
+void GameObject::deserialize(Json::Value& root)
+{
+
+}

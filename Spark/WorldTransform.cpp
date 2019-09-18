@@ -11,6 +11,17 @@ glm::vec3 WorldTransform::getPosition() const
 	return modelMatrix[3];
 }
 
+Json::Value WorldTransform::serialize() const
+{
+	Json::Value worldSerialized;
+	for(int i = 0; i < 4; ++i)
+	{
+		for (int j = 0; j < 4; ++j)
+			worldSerialized["worldMatrix"][i][j] = modelMatrix[i][j];
+	}
+	return worldSerialized;
+}
+
 void WorldTransform::setMatrix(glm::mat4 mat)
 {
 	modelMatrix = mat;
