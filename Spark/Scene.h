@@ -26,7 +26,8 @@ public:
 	void addGameObject(std::shared_ptr<GameObject> game_object);
 	void addComponentToGameObject(std::shared_ptr<Component>& component, std::shared_ptr<GameObject> game_object);
 	std::shared_ptr<Camera> getCamera() const;
-	Json::Value serialize();
+	Json::Value serialize() const;
+	void deserialize(Json::Value& root);
 	virtual void drawGUI();
 	void drawSceneGraph();
 	void drawTreeNode(std::shared_ptr<GameObject> node, bool isRootNode);

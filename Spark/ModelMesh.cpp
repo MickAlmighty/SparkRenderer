@@ -1,6 +1,7 @@
 #include <ModelMesh.h>
 #include <GUI/ImGui/imgui.h>
 #include "GUI/SparkGui.h"
+#include "EngineSystems/ResourceManager.h"
 
 ModelMesh::ModelMesh(std::vector<Mesh>& meshes, std::string&& modelName) : Component(modelName)
 {
@@ -11,9 +12,10 @@ ModelMesh::ModelMesh()
 {
 }
 
-void ModelMesh::setMeshes(std::vector<Mesh>& meshes)
+void ModelMesh::setModel(std::pair<std::string, std::vector<Mesh>> model)
 {
-	this->meshes = meshes;
+	modelPath = model.first;
+	meshes = model.second;
 }
 
 ModelMesh::~ModelMesh()
@@ -58,7 +60,9 @@ void ModelMesh::drawGUI()
 
 	if(meshes.empty())
 	{
-		meshes = SparkGui::getMeshes();
+		const auto model = SparkGui::getMeshes();
+		modelPath = model.first;
+		meshes = model.second;
 	}
 
 	removeComponentGUI<ModelMesh>();
@@ -66,4 +70,22 @@ void ModelMesh::drawGUI()
 	ImGui::EndChild();
 	ImGui::PopStyleVar();
 	ImGui::PopID();
+}
+
+SerializableType ModelMesh::getSerializableType()
+{
+	return SerializableType::SModelMesh;
+}
+
+Json::Value ModelMesh::serialize()
+{
+	Json::Value root;
+	root["modelPath"] = modelPath;
+	return root;
+}
+
+void ModelMesh::deserialize(Json::Value& root)
+{
+	modelPath = root.get("modelPath", "").asString();
+	meshes = ResourceManager::getInstance()->findModelMeshes(modelPath);
 }

@@ -2,10 +2,12 @@
 #include <iostream>
 #include <GameObject.h>
 #include "GUI/ImGui/imgui.h"
+#include <ISerializable.h>
 
 class GameObject;
-class Component
+class Component : public ISerializable
 {
+private:
 	std::weak_ptr<GameObject> gameObject;
 public:
 	std::string name = "Component";

@@ -3,7 +3,10 @@
 #include <fstream>
 #include <json/reader.h>
 #include <json/writer.h>
+#include "GameObject.h"
+#include "ModelMesh.h"
 
+std::map<int, std::shared_ptr<ISerializable>> JsonSerializer::serializedObjects;
 
 JsonSerializer::JsonSerializer()
 {
@@ -25,7 +28,7 @@ void JsonSerializer::writeToFile(std::filesystem::path&& filePath, Json::Value&&
 Json::Value JsonSerializer::readFromFile(std::filesystem::path&& filePath)
 {
 	Json::Value root;
-	std::ifstream file("settings.json", std::ios::in | std::ios::binary | std::ios::ate);
+	std::ifstream file(filePath, std::ios::in | std::ios::binary | std::ios::ate);
 	if (file.is_open())
 	{
 		auto size = file.tellg();
@@ -44,4 +47,126 @@ Json::Value JsonSerializer::readFromFile(std::filesystem::path&& filePath)
 	}
 	file.close();
 	return root;
+}
+
+Json::Value JsonSerializer::serialize(std::shared_ptr<ISerializable> objToSerialize)
+{
+	Json::Value root;
+	root["type"] = static_cast<int>(objToSerialize->getSerializableType());
+	root["object"] = objToSerialize->serialize();
+	return root;
+}
+
+
+
+std::shared_ptr<ISerializable> JsonSerializer::deserialize(Json::Value& root)
+{
+	SerializableType type = static_cast<SerializableType>(root["type"].asInt());
+
+	std::shared_ptr<ISerializable> deserialized;
+	switch(type)
+	{
+	case SerializableType::SGameObject:
+		deserialized = make<GameObject>();
+		break;
+	case SerializableType::SModelMesh:
+		deserialized = make<ModelMesh>();
+		break;
+	default: 
+		;
+	}
+	deserialized->deserialize(root["object"]);
+	return deserialized;
+}
+
+Json::Value JsonSerializer::serializeVec2(glm::vec2 val)
+{
+	Json::Value root;
+	root[0] = val.x;
+	root[1] = val.y;
+	return root;
+}
+
+glm::vec2 JsonSerializer::deserializeVec2(Json::Value& root)
+{
+	glm::vec2 val;
+	val.x = root.get(Json::ArrayIndex(0), 0).asFloat();
+	val.y = root.get(Json::ArrayIndex(1), 0).asFloat();
+	return val;
+}
+
+Json::Value JsonSerializer::serializeVec3(glm::vec3 val)
+{
+	Json::Value root;
+	root[0] = val.x;
+	root[1] = val.y;
+	root[2] = val.z;
+	return root;
+}
+
+glm::vec3 JsonSerializer::deserializeVec3(Json::Value& root)
+{
+	glm::vec3 val;
+	val.x = root.get(Json::ArrayIndex(0), 0).asFloat();
+	val.y = root.get(Json::ArrayIndex(1), 0).asFloat();
+	val.z = root.get(Json::ArrayIndex(2), 0).asFloat();
+	return val;
+}
+
+Json::Value JsonSerializer::serializeVec4(glm::vec4 val)
+{
+	Json::Value root;
+	root[0] = val.x;
+	root[1] = val.y;
+	root[2] = val.z;
+	root[3] = val.w;
+	return root;
+}
+
+glm::vec4 JsonSerializer::deserializeVec4(Json::Value& root)
+{
+	glm::vec4 val;
+	val.x = root.get(Json::ArrayIndex(0), 0).asFloat();
+	val.y = root.get(Json::ArrayIndex(1), 0).asFloat();
+	val.z = root.get(Json::ArrayIndex(2), 0).asFloat();
+	val.w = root.get(Json::ArrayIndex(3), 0).asFloat();
+	return val;
+}
+
+Json::Value JsonSerializer::serializeMat3(glm::mat3 val)
+{
+	Json::Value root;
+	root[0] = serializeVec3(val[0]);
+	root[1] = serializeVec3(val[1]);
+	root[2] = serializeVec3(val[2]);
+	return root;
+}
+
+glm::mat3 JsonSerializer::deserializeMat3(Json::Value& root)
+{
+	glm::mat3 val;
+	val[0] = deserializeVec3(root[0]);
+	val[1] = deserializeVec3(root[1]);
+	val[2] = deserializeVec3(root[2]);
+	return val;
+}
+
+Json::Value JsonSerializer::serializeMat4(glm::mat4 val)
+{
+	Json::Value root;
+	root[0] = serializeVec4(val[0]);
+	root[1] = serializeVec4(val[1]);
+	root[2] = serializeVec4(val[2]);
+	root[3] = serializeVec4(val[3]);
+	return root;
+}
+
+glm::mat4 JsonSerializer::deserializeMat4(Json::Value& root)
+{
+	glm::mat4 val;
+	val[0] = deserializeVec4(root[0]);
+	val[1] = deserializeVec4(root[1]);
+	val[2] = deserializeVec4(root[2]);
+	val[3] = deserializeVec4(root[3]);
+	return val;
 }

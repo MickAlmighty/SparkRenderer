@@ -10,6 +10,7 @@ public:
 	glm::mat4 getMatrix() const;
 	glm::vec3 getPosition() const;
 	Json::Value serialize() const;
+	void deserialize(Json::Value& root);
 
 	void setMatrix(glm::mat4 mat);
 	void setPosition(glm::vec3 position);

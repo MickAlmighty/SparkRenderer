@@ -1,5 +1,7 @@
 #include <WorldTransform.h>
 #include <glm/gtx/euler_angles.hpp>
+#include "JsonSerializer.h"
+#include <iostream>
 
 glm::mat4 WorldTransform::getMatrix() const
 {
@@ -14,12 +16,14 @@ glm::vec3 WorldTransform::getPosition() const
 Json::Value WorldTransform::serialize() const
 {
 	Json::Value worldSerialized;
-	for(int i = 0; i < 4; ++i)
-	{
-		for (int j = 0; j < 4; ++j)
-			worldSerialized["worldMatrix"][i][j] = modelMatrix[i][j];
-	}
+	worldSerialized["modelMatrix"] = JsonSerializer::serializeMat4(modelMatrix);
 	return worldSerialized;
+}
+
+void WorldTransform::deserialize(Json::Value& root)
+{
+	modelMatrix = JsonSerializer::deserializeMat4(root["modelMatrix"]);
+	dirty = true;
 }
 
 void WorldTransform::setMatrix(glm::mat4 mat)

@@ -2,6 +2,7 @@
 #include <glm/gtx/euler_angles.hpp>
 #include <GUI/ImGui/imgui.h>
 #include <glm/gtc/type_ptr.hpp>
+#include "JsonSerializer.h"
 
 LocalTransform::LocalTransform(glm::vec3 pos, glm::vec3 scale, glm::vec3 rotation)
 {
@@ -39,25 +40,18 @@ void LocalTransform::drawGUI()
 Json::Value LocalTransform::serialize() const
 {
 	Json::Value serializedTransform;
-	Json::Value sPos;
-	sPos[0] = position.x;
-	sPos[1] = position.y;
-	sPos[2] = position.z;
-	serializedTransform["position"] = sPos;
-
-	Json::Value sScale;
-	sScale[0] = position.x;
-	sScale[1] = position.y;
-	sScale[2] = position.z;
-	serializedTransform["scale"] = sScale;
-
-	Json::Value sRot;
-	sRot[0] = rotationEuler.x;
-	sRot[1] = rotationEuler.y;
-	sRot[2] = rotationEuler.z;
-	serializedTransform["rotation"] = sRot;
-
+	serializedTransform["position"] = JsonSerializer::serializeVec3(position);
+	serializedTransform["scale"] = JsonSerializer::serializeVec3(scale);
+	serializedTransform["rotationEuler"] = JsonSerializer::serializeVec3(rotationEuler);
 	return serializedTransform;
+}
+
+void LocalTransform::deserialize(Json::Value& root)
+{
+	position = JsonSerializer::deserializeVec3(root["position"]);
+	scale = JsonSerializer::deserializeVec3(root["scale"]);
+	rotationEuler = JsonSerializer::deserializeVec3(root["rotationEuler"]);
+	dirty = true;
 }
 
 glm::mat4 LocalTransform::getMatrix()

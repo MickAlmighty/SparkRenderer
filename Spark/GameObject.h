@@ -21,6 +21,7 @@ private:
 public:
 	Transform transform;
 	std::shared_ptr<GameObject> getParent() const;
+	void setParent(const std::shared_ptr<GameObject> newParent);
 	void addChild(const std::shared_ptr<GameObject>& newChild, const std::shared_ptr<GameObject>& parent);
 	void addComponent(std::shared_ptr<Component> component, std::shared_ptr<GameObject> gameObject);
 	bool removeChild(std::string&& gameObjectName);
@@ -81,7 +82,7 @@ public:
 	}
 
 	SerializableType getSerializableType() override;
-	Json::Value serialize(Json::Value& root) override;
+	Json::Value serialize() override;
 	void deserialize(Json::Value& root) override;
 
 

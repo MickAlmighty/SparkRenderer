@@ -2,6 +2,7 @@
 #include <list>
 #include <GUI/ImGui/imgui.h>
 #include "Spark.h"
+#include "JsonSerializer.h"
 
 Scene::Scene(std::string&& sceneName) : name(sceneName)
 {
@@ -51,14 +52,23 @@ std::shared_ptr<Camera> Scene::getCamera() const
 	return camera;
 }
 
-Json::Value Scene::serialize()
+Json::Value Scene::serialize() const
 {
 	Json::Value serialize;
 	serialize["name"] = name;
 	Json::Value serializeSceneGraph;
-	serialize["sceneGraph"] = root->serialize(serializeSceneGraph);
-
+	serialize["sceneGraph"] = JsonSerializer::serialize(root);
 	return serialize;
+}
+
+void Scene::deserialize(Json::Value& deserializationRoot)
+{
+	for (auto& member : deserializationRoot.getMemberNames())
+	{
+		std::cout<< member << std::endl;
+	}
+	name = deserializationRoot.get("name", "Scene").asString();
+	root = std::static_pointer_cast<GameObject>(JsonSerializer::deserialize(deserializationRoot["sceneGraph"]));
 }
 
 void Scene::drawGUI()

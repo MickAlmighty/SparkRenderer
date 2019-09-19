@@ -8,7 +8,7 @@ class SparkGui
 {
 public:
 	static std::shared_ptr<Component> addComponent();
-	static std::vector<Mesh> getMeshes();
+	static std::pair<std::string, std::vector<Mesh>> getMeshes();
 };
 
 const static std::map<std::string, std::function<std::shared_ptr<Component>()>> componentCreation {

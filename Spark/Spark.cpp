@@ -36,7 +36,7 @@ void Spark::run()
 		SparkRenderer::getInstance()->renderPass();
 		HID::clearStates();
 #ifdef DEBUG
-		std::cout << Clock::getFPS() << std::endl;
+		//std::cout << Clock::getFPS() << std::endl;
 #endif
 	}
 }

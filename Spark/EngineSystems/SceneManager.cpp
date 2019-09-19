@@ -115,6 +115,11 @@ void SceneManager::drawMainMenuGui()
 			{
 				JsonSerializer::writeToFile("scene.json",current_scene->serialize());
 			}
+			if (ImGui::Button("Load main scene"))
+			{
+				Json::Value root = JsonSerializer::readFromFile("scene.json");
+				current_scene->deserialize(root);
+			}
 			ImGui::EndMenu();
 		}
 		ImGui::EndMainMenuBar();

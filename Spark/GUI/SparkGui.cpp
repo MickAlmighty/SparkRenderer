@@ -35,10 +35,10 @@ std::shared_ptr<Component> SparkGui::addComponent()
 	return component;
 }
 
-std::vector<Mesh> SparkGui::getMeshes()
+std::pair<std::string, std::vector<Mesh>> SparkGui::getMeshes()
 {
 	static bool componentWindowAddition = false;
-	std::vector<Mesh> meshes;
+	std::pair<std::string, std::vector<Mesh>> meshes;
 	if (ImGui::Button("Add Model Meshes"))
 	{
 		componentWindowAddition = true;
@@ -53,7 +53,8 @@ std::vector<Mesh> SparkGui::getMeshes()
 			{
 				if (ImGui::Button(path.c_str()))
 				{
-					meshes = ResourceManager::getInstance()->findModelMeshes(path);
+					meshes.first = path;
+					meshes.second = ResourceManager::getInstance()->findModelMeshes(path);
 					componentWindowAddition = false;
 				}
 			}

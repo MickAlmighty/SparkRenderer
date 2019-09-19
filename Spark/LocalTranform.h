@@ -16,6 +16,7 @@ public:
 	~LocalTransform() = default;
 	void drawGUI();
 	Json::Value serialize() const;
+	void deserialize(Json::Value& root);
 	glm::mat4 getMatrix();
 	glm::vec3 getPosition() const;
 	glm::vec3 getScale() const;

@@ -51,7 +51,7 @@ void HID::cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
 
 #ifdef DEBUG
 	//std::cout << "Mouse X: " << xpos << " Mouse Y: " << ypos << std::endl;
-	std::cout << "Mouse X_Dir: " << mouse.direction.x << " Mouse Y_Dir: " << mouse.direction.y << std::endl;
+	//std::cout << "Mouse X_Dir: " << mouse.direction.x << " Mouse Y_Dir: " << mouse.direction.y << std::endl;
 #endif
 }
 
