@@ -83,7 +83,7 @@ vec4 FXAA(vec4 color)
 	}
 
 
-	return vec4(1, 0, 0, 1);
+	//return vec4(1, 0, 0, 1); debug
 }
 
 void main()

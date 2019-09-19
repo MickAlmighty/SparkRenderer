@@ -3,6 +3,9 @@
 #include <GUI/ImGui/imgui.h>
 #include "Spark.h"
 #include "JsonSerializer.h"
+#include "HID.h"
+#include "GUI/ImGuizmo.h"
+#include <glm/gtc/type_ptr.hpp>
 
 Scene::Scene(std::string&& sceneName) : name(sceneName)
 {
@@ -20,6 +23,8 @@ void Scene::update()
 {
 	removeObjectsFromScene();
 	
+	camera->ProcessKeyboard();
+	camera->ProcessMouseMovement(HID::mouse.direction.x, -HID::mouse.direction.y);
 	root->update();
 }
 
@@ -83,7 +88,59 @@ void Scene::drawGUI()
 	{
 		auto gameObject_ptr = gameObjectToPreview.lock();
 		if (gameObject_ptr != nullptr)
+		{
 			gameObject_ptr->drawGUI();
+
+			static ImGuizmo::OPERATION mCurrentGizmoOperation(ImGuizmo::ROTATE);
+			static ImGuizmo::MODE mCurrentGizmoMode(ImGuizmo::WORLD);
+			if (ImGui::IsKeyPressed(90))
+				mCurrentGizmoOperation = ImGuizmo::TRANSLATE;
+			if (ImGui::IsKeyPressed(69))
+				mCurrentGizmoOperation = ImGuizmo::ROTATE;
+			if (ImGui::IsKeyPressed(82)) // r Key
+				mCurrentGizmoOperation = ImGuizmo::SCALE;
+			if (ImGui::RadioButton("Translate", mCurrentGizmoOperation == ImGuizmo::TRANSLATE))
+				mCurrentGizmoOperation = ImGuizmo::TRANSLATE;
+			ImGui::SameLine();
+			if (ImGui::RadioButton("Rotate", mCurrentGizmoOperation == ImGuizmo::ROTATE))
+				mCurrentGizmoOperation = ImGuizmo::ROTATE;
+			ImGui::SameLine();
+			if (ImGui::RadioButton("Scale", mCurrentGizmoOperation == ImGuizmo::SCALE))
+				mCurrentGizmoOperation = ImGuizmo::SCALE;
+
+			glm::vec3 pos;// = gameObject_ptr->transform.world.getPosition();
+			glm::vec3 scale;// = gameObject_ptr->transform.world.getScale();
+			glm::vec3 rotation;// = gameObject_ptr->transform.world.getRotationDegrees();
+			ImGuizmo::DecomposeMatrixToComponents(&gameObject_ptr->transform.local.getMatrix()[0][0], &pos.x, &rotation.x, &scale.x);
+
+			ImGui::InputFloat3("Tr", glm::value_ptr(pos), 3);
+			ImGui::InputFloat3("Sc", glm::value_ptr(scale), 3);
+			ImGui::InputFloat3("Rt", glm::value_ptr(rotation), 3);
+
+			glm::mat4 mat(1);
+			ImGuizmo::RecomposeMatrixFromComponents(&pos.x, &rotation.x, &scale.x, glm::value_ptr(mat));
+
+
+			if (mCurrentGizmoOperation != ImGuizmo::SCALE)
+			{
+				if (ImGui::RadioButton("Local", mCurrentGizmoMode == ImGuizmo::LOCAL))
+					mCurrentGizmoMode = ImGuizmo::LOCAL;
+				ImGui::SameLine();
+				if (ImGui::RadioButton("World", mCurrentGizmoMode == ImGuizmo::WORLD))
+					mCurrentGizmoMode = ImGuizmo::WORLD;
+			}
+		
+			ImGuiIO& io = ImGui::GetIO();
+			ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
+			ImGuizmo::Manipulate(glm::value_ptr(camera->GetViewMatrix()), glm::value_ptr(camera->getProjectionMatrix()), mCurrentGizmoOperation, mCurrentGizmoMode, &mat[0][0]);
+			
+		/*	glm::mat4 worldToLocal = glm::inverse(mat);*/
+			ImGuizmo::DecomposeMatrixToComponents(&mat[0][0], &pos.x, &rotation.x, &scale.x);
+			
+			gameObject_ptr->transform.local.setPosition(pos);
+			gameObject_ptr->transform.local.setScale(scale);
+			gameObject_ptr->transform.local.setRotationDegrees(rotation);
+		}
 	}
 	ImGui::End();
 }

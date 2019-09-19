@@ -69,9 +69,10 @@ glm::mat4 LocalTransform::recreateMatrix() const
 {
 	const glm::mat4 posMatrix = glm::translate(glm::mat4(1), position);
 	const glm::mat4 scaleMatrix = glm::scale(glm::mat4(1), scale);
-	const glm::vec3 roationRadians = glm::radians(rotationEuler);
-	const glm::mat4 rotationMatrix = glm::eulerAngleYXZ(roationRadians.y, roationRadians.x, roationRadians.z);
-	return posMatrix * rotationMatrix * scaleMatrix;
+	const glm::vec3 rotationRadians = glm::radians(rotationEuler);
+	//const glm::mat4 rotationMatrix = glm::eulerAngleYXZ(roationRadians.y, roationRadians.x, roationRadians.z);
+	glm::mat4 rot = glm::mat4_cast(glm::quat(rotationRadians));
+	return posMatrix * rot * scaleMatrix;
 }
 
 glm::vec3 LocalTransform::getPosition() const

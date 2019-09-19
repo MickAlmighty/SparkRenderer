@@ -5,6 +5,7 @@
 #include <ResourceLoader.h>
 #include <HID.h>
 #include <Spark.h>
+#include <GUI/ImGuizmo.h>
 
 GLFWwindow* SparkRenderer::window = nullptr;
 std::map<ShaderType, std::list<std::function<void(std::shared_ptr<Shader>&)>>> SparkRenderer::renderQueue;
@@ -129,6 +130,7 @@ void SparkRenderer::initOpenGL()
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	const char* glsl_version = "#version 450";
 	ImGui_ImplOpenGL3_Init(glsl_version);
+	ImGui_ImplOpenGL3_NewFrame();
 
 	glfwSetCursor(window, cursor);
 
@@ -222,19 +224,19 @@ void SparkRenderer::renderPass()
 	
 	glViewport(0, 0, Spark::WIDTH, Spark::HEIGHT);
 	
-	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
+	ImGuizmo::BeginFrame();
+
 	auto camera = SceneManager::getInstance()->getCurrentScene()->getCamera();
-	camera->ProcessKeyboard();
-	camera->ProcessMouseMovement(HID::mouse.direction.x, -HID::mouse.direction.y);
+
 	glBindFramebuffer(GL_FRAMEBUFFER, mainFramebuffer);
 	glClearColor(0, 0, 0, 1);
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);
 
-	glm::mat4 view = camera->GetViewMatrix();
-	glm::mat4 projection = glm::perspective(glm::radians(60.0f), (float)Spark::WIDTH / Spark::HEIGHT, 0.1f, 100.0f);
+	const glm::mat4 view = camera->GetViewMatrix();
+	const glm::mat4 projection = camera->getProjectionMatrix();
 
 
 	std::shared_ptr<Shader> shader = mainShader.lock();

@@ -150,6 +150,7 @@
     <ClCompile Include="EngineSystems\SparkRenderer.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="glad.c" />
+    <ClCompile Include="GUI\ImGuizmo.cpp" />
     <ClCompile Include="GUI\ImGui\imgui.cpp" />
     <ClCompile Include="GUI\ImGui\imgui_demo.cpp" />
     <ClCompile Include="GUI\ImGui\imgui_draw.cpp" />
@@ -179,6 +180,7 @@
     <ClInclude Include="EngineSystems\SparkRenderer.h" />
     <ClInclude Include="Enums.h" />
     <ClInclude Include="GameObject.h" />
+    <ClInclude Include="GUI\ImGuizmo.h" />
     <ClInclude Include="GUI\ImGui\imconfig.h" />
     <ClInclude Include="GUI\ImGui\imgui.h" />
     <ClInclude Include="GUI\ImGui\imgui_impl_glfw.h" />

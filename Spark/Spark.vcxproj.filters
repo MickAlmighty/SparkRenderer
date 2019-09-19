@@ -108,6 +108,9 @@
     <ClCompile Include="GUI\SparkGui.cpp">
       <Filter>GUI</Filter>
     </ClCompile>
+    <ClCompile Include="GUI\ImGuizmo.cpp">
+      <Filter>GUI</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Spark.h">
@@ -195,6 +198,9 @@
       <Filter>GUI\ImGui</Filter>
     </ClInclude>
     <ClInclude Include="GUI\SparkGui.h">
+      <Filter>GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\ImGuizmo.h">
       <Filter>GUI</Filter>
     </ClInclude>
   </ItemGroup>

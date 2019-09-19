@@ -1,6 +1,7 @@
 #include <Camera.h>
 #include <Clock.h>
 #include <HID.h>
+#include "Spark.h"
 
 
 Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch): Front(glm::vec3(0.0f, 0.0f, -1.0f)),
@@ -27,6 +28,11 @@ Camera::Camera(float posX, float posY, float posZ, float upX, float upY, float u
 glm::mat4 Camera::GetViewMatrix()
 {
 	return glm::lookAt(Position, Position + Front, Up);
+}
+
+glm::mat4 Camera::getProjectionMatrix() const
+{
+	return glm::perspectiveFov(glm::radians(fov), 1.0f * Spark::WIDTH, 1.0f * Spark::HEIGHT, zNear, zFar);
 }
 
 void Camera::ProcessKeyboard()
