@@ -4,6 +4,7 @@
 #include <GUI/ImGui/imgui.h>
 #include <GUI/SparkGui.h>
 #include "JsonSerializer.h"
+#include "GUI/ImGuizmo.h"
 
 std::shared_ptr<GameObject> GameObject::get_ptr()
 {
@@ -119,6 +120,7 @@ void GameObject::drawGUI()
 		}
 	}
 	transform.local.drawGUI();
+	drawGizmos();
 	for (auto& component : components)
 		component->drawGUI();
 
@@ -128,6 +130,70 @@ void GameObject::drawGUI()
 		addComponent(componentToAdd, get_ptr());
 	}
 }
+
+void GameObject::drawGizmos()
+{
+	static ImGuizmo::OPERATION mCurrentGizmoOperation(ImGuizmo::ROTATE);
+	static ImGuizmo::MODE mCurrentGizmoMode(ImGuizmo::WORLD);
+	if (ImGui::IsKeyPressed(GLFW_KEY_T))
+		mCurrentGizmoOperation = ImGuizmo::TRANSLATE;
+	if (ImGui::IsKeyPressed(GLFW_KEY_R))
+		mCurrentGizmoOperation = ImGuizmo::ROTATE;
+	if (ImGui::IsKeyPressed(GLFW_KEY_Y))
+		mCurrentGizmoOperation = ImGuizmo::SCALE;
+	if (ImGui::RadioButton("Translate", mCurrentGizmoOperation == ImGuizmo::TRANSLATE))
+		mCurrentGizmoOperation = ImGuizmo::TRANSLATE;
+	ImGui::SameLine();
+	if (ImGui::RadioButton("Rotate", mCurrentGizmoOperation == ImGuizmo::ROTATE))
+		mCurrentGizmoOperation = ImGuizmo::ROTATE;
+	ImGui::SameLine();
+	if (ImGui::RadioButton("Scale", mCurrentGizmoOperation == ImGuizmo::SCALE))
+		mCurrentGizmoOperation = ImGuizmo::SCALE;
+
+	glm::mat4 worldMatrix = getParent()->transform.world.getMatrix() * transform.local.getMatrix();//transform.world.getMatrix();
+
+	//ImGuizmo::DecomposeMatrixToComponents(&worldMatrix[0][0], &pos.x, &rotation.x, &scale.x);
+
+	/*ImGui::DragFloat3("Tr", glm::value_ptr(pos), 0.005f);
+	ImGui::DragFloat3("Sc", glm::value_ptr(scale), 0.005f);
+	ImGui::DragFloat3("Rt", glm::value_ptr(rotation), 0.1f);
+
+	ImGuizmo::RecomposeMatrixFromComponents(&pos.x, &rotation.x, &scale.x, glm::value_ptr(worldMatrix));*/
+
+	if (mCurrentGizmoOperation != ImGuizmo::SCALE)
+	{
+		if (ImGui::RadioButton("Local", mCurrentGizmoMode == ImGuizmo::LOCAL))
+			mCurrentGizmoMode = ImGuizmo::LOCAL;
+		ImGui::SameLine();
+		if (ImGui::RadioButton("World", mCurrentGizmoMode == ImGuizmo::WORLD))
+			mCurrentGizmoMode = ImGuizmo::WORLD;
+	}
+
+	ImGuiIO& io = ImGui::GetIO();
+	auto camera = SceneManager::getInstance()->getCurrentScene()->getCamera();
+	ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
+	ImGuizmo::Manipulate(glm::value_ptr(camera->GetViewMatrix()), glm::value_ptr(camera->getProjectionMatrix()), mCurrentGizmoOperation, mCurrentGizmoMode, &worldMatrix[0][0]);
+
+	glm::mat4 localMatrix = glm::inverse(getParent()->transform.world.getMatrix()) * worldMatrix; //getting new localTransform by multiplying by inverse of parent world transform
+	
+	glm::vec3 pos{}, scale{}, rotation{};
+	ImGuizmo::DecomposeMatrixToComponents(&localMatrix[0][0], &pos.x, &rotation.x, &scale.x);
+
+
+	if (glm::length(pos - transform.local.getPosition()) > 0.1f)
+	{
+		transform.local.setPosition(pos);
+	}
+	if (glm::length(scale - transform.local.getScale()) > 0.1f)
+	{
+		transform.local.setScale(scale);
+	}
+	if (glm::length(rotation - transform.local.getRotationDegrees()) > 0.1f)
+	{
+		transform.local.setRotationDegrees(rotation);
+	}
+}
+
 
 GameObject::GameObject(std::string&& _name) : name(_name)
 {

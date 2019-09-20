@@ -18,6 +18,7 @@ private:
 	std::shared_ptr<GameObject> get_ptr();
 	void update();
 	void fixedUpdate();
+	void drawGizmos();
 public:
 	Transform transform;
 	std::shared_ptr<GameObject> getParent() const;

@@ -28,7 +28,7 @@ void LocalTransform::drawGUI()
 
 	ImGui::DragFloat3("Position", glm::value_ptr(position), 0.005f);
 	ImGui::DragFloat3("Scale", glm::value_ptr(scale), 0.005f);
-	ImGui::DragFloat3("Rotation", glm::value_ptr(rotationEuler));
+	ImGui::DragFloat3("Rotation", glm::value_ptr(rotationEuler), 0.1f);
 	//setRotationDegrees(rotation);
 	if (oldPos != position || oldScale != scale || oldRotation != rotationEuler)
 		dirty = true;
