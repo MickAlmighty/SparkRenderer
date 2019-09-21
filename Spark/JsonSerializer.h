@@ -6,15 +6,20 @@
 
 class JsonSerializer
 {
+private:
 	JsonSerializer();
 	~JsonSerializer();
-	static std::map<int, std::shared_ptr<ISerializable>> serializedObjects;
+	inline static std::map<std::shared_ptr<ISerializable>, int> serializedObjects{};
+	inline static int counter = 0;
+
+	static std::shared_ptr<ISerializable> findSerializedObject(const int id);
+	static int findId(const std::shared_ptr<ISerializable>& serializableObject);
 public:
 	static void writeToFile(std::filesystem::path&& filePath, Json::Value&& root);
 	static Json::Value readFromFile(std::filesystem::path&& filePath);
-	static Json::Value serialize(std::shared_ptr<ISerializable> objToSerialize);
+	static Json::Value serialize(const std::shared_ptr<ISerializable> objToSerialize);
 	static std::shared_ptr<ISerializable> deserialize(Json::Value& root);
-
+	static void clearState();
 	static Json::Value serializeVec2(glm::vec2 val);
 	static glm::vec2 deserializeVec2(Json::Value& root);
 	static Json::Value serializeVec3(glm::vec3 val);

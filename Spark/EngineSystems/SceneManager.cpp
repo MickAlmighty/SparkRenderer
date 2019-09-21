@@ -19,22 +19,6 @@ std::shared_ptr<SceneManager> SceneManager::getInstance()
 void SceneManager::setup()
 {
 	auto scene = std::make_shared<Scene>("MainScene");
-	std::vector<Mesh> meshes = ResourceManager::getInstance()->findModelMeshes(Spark::pathToModelMeshes.string() + "\\box\\box.obj");
-	std::shared_ptr<Component> model = std::make_shared<ModelMesh>(meshes);
-	auto gameObject = std::make_shared<GameObject>("FirstModel");
-	scene->addComponentToGameObject(model, gameObject);
-	scene->addGameObject(gameObject);
-
-	std::shared_ptr<Component> model2 = std::make_shared<ModelMesh>(meshes);
-	auto gameObject2 = std::make_shared<GameObject>("SecondModel");
-	scene->addComponentToGameObject(model2, gameObject2);
-	gameObject2->transform.local.setPosition(0, 2, 0);
-
-	gameObject->addChild(gameObject2, gameObject);
-	//gameObject->transform.local.setRotationDegrees(45, 45, 0);
-	//scene->addGameObject(gameObject2);
-
-
 	addScene(scene);
 	setCurrentScene("MainScene");
 

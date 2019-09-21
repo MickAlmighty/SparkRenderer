@@ -63,17 +63,15 @@ Json::Value Scene::serialize() const
 	serialize["name"] = name;
 	Json::Value serializeSceneGraph;
 	serialize["sceneGraph"] = JsonSerializer::serialize(root);
+	JsonSerializer::clearState();
 	return serialize;
 }
 
 void Scene::deserialize(Json::Value& deserializationRoot)
 {
-	for (auto& member : deserializationRoot.getMemberNames())
-	{
-		std::cout<< member << std::endl;
-	}
 	name = deserializationRoot.get("name", "Scene").asString();
 	root = std::static_pointer_cast<GameObject>(JsonSerializer::deserialize(deserializationRoot["sceneGraph"]));
+	JsonSerializer::clearState();
 }
 
 void Scene::drawGUI()

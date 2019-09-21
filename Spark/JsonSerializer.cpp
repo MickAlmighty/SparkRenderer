@@ -6,8 +6,6 @@
 #include "GameObject.h"
 #include "ModelMesh.h"
 
-std::map<int, std::shared_ptr<ISerializable>> JsonSerializer::serializedObjects;
-
 JsonSerializer::JsonSerializer()
 {
 }
@@ -15,6 +13,30 @@ JsonSerializer::JsonSerializer()
 
 JsonSerializer::~JsonSerializer()
 {
+}
+
+std::shared_ptr<ISerializable> JsonSerializer::findSerializedObject(const int id)
+{
+	for(const auto& it : serializedObjects)
+	{
+		if(it.second == id)
+		{
+			return it.first;
+		}
+	}
+	return nullptr;
+}
+
+int JsonSerializer::findId(const std::shared_ptr<ISerializable>& serializableObject)
+{
+	for (auto it : serializedObjects)
+	{
+		if (it.first == serializableObject)
+		{
+			return it.second;
+		}
+	}
+	return -1;
 }
 
 void JsonSerializer::writeToFile(std::filesystem::path&& filePath, Json::Value&& root)
@@ -49,10 +71,22 @@ Json::Value JsonSerializer::readFromFile(std::filesystem::path&& filePath)
 	return root;
 }
 
-Json::Value JsonSerializer::serialize(std::shared_ptr<ISerializable> objToSerialize)
+Json::Value JsonSerializer::serialize(const std::shared_ptr<ISerializable> objToSerialize)
 {
 	Json::Value root;
-	root["type"] = static_cast<int>(objToSerialize->getSerializableType());
+	const int id = findId(objToSerialize);
+	if(id != -1)
+	{
+		//if id != -1 means that this object has been serialized already
+		root["id"] = id;
+		root["SerializableType"] = static_cast<int>(objToSerialize->getSerializableType());
+		return root;
+	}
+	
+	counter++;
+	serializedObjects.emplace(objToSerialize, counter);
+	root["id"] = counter;
+	root["SerializableType"] = static_cast<int>(objToSerialize->getSerializableType());
 	root["object"] = objToSerialize->serialize();
 	return root;
 }
@@ -61,8 +95,13 @@ Json::Value JsonSerializer::serialize(std::shared_ptr<ISerializable> objToSerial
 
 std::shared_ptr<ISerializable> JsonSerializer::deserialize(Json::Value& root)
 {
-	SerializableType type = static_cast<SerializableType>(root["type"].asInt());
-
+	int id = root["id"].asInt();
+	if(const auto obj = findSerializedObject(id); obj != nullptr)
+	{
+		return obj;
+	}
+	
+	SerializableType type = static_cast<SerializableType>(root["SerializableType"].asInt());
 	std::shared_ptr<ISerializable> deserialized;
 	switch(type)
 	{
@@ -73,10 +112,17 @@ std::shared_ptr<ISerializable> JsonSerializer::deserialize(Json::Value& root)
 		deserialized = make<ModelMesh>();
 		break;
 	default: 
-		;
+		throw std::exception("Unsupported SerializableType encountered!");;
 	}
+	serializedObjects.emplace(deserialized, id);
 	deserialized->deserialize(root["object"]);
 	return deserialized;
+}
+
+void JsonSerializer::clearState()
+{
+	serializedObjects.clear();
+	counter = 0;
 }
 
 Json::Value JsonSerializer::serializeVec2(glm::vec2 val)
