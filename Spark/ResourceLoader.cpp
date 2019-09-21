@@ -1,12 +1,10 @@
 #include <ResourceLoader.h>
-
+#include <EngineSystems/ResourceManager.h>
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include <stb_image/stb_image.h>
-#include <Structs.h>
-#include <filesystem>
-#include <EngineSystems/ResourceManager.h>
+#include <Mesh.h>
 
 using Path = std::filesystem::path;
 

@@ -1,7 +1,11 @@
 #include <ModelMesh.h>
+#include <Mesh.h>
+#include <GameObject.h>
+#include <EngineSystems/ResourceManager.h>
 #include <GUI/ImGui/imgui.h>
 #include "GUI/SparkGui.h"
-#include "EngineSystems/ResourceManager.h"
+#include <iostream>
+
 
 ModelMesh::ModelMesh(std::vector<Mesh>& meshes, std::string&& modelName) : Component(modelName)
 {

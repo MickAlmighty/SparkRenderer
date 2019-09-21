@@ -1,10 +1,11 @@
 #include <EngineSystems/SceneManager.h>
-#include <EngineSystems/ResourceManager.h>
 #include <EngineSystems/SparkRenderer.h>
 #include <GUI/ImGui/imgui.h>
 #include <Spark.h>
 #include <JsonSerializer.h>
 #include <algorithm>
+#include <Scene.h>
+
 
 std::shared_ptr<SceneManager> SceneManager::getInstance()
 {

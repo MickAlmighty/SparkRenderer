@@ -5,6 +5,10 @@
 #include <GUI/SparkGui.h>
 #include "JsonSerializer.h"
 #include "GUI/ImGuizmo.h"
+#include <Component.h>
+#include <Scene.h>
+#include <Camera.h>
+#include <glm/gtc/type_ptr.hpp>
 
 std::shared_ptr<GameObject> GameObject::get_ptr()
 {
@@ -134,13 +138,17 @@ void GameObject::drawGUI()
 void GameObject::drawGizmos()
 {
 	static ImGuizmo::OPERATION mCurrentGizmoOperation(ImGuizmo::ROTATE);
-	static ImGuizmo::MODE mCurrentGizmoMode(ImGuizmo::WORLD);
+	static ImGuizmo::MODE mCurrentGizmoMode(ImGuizmo::LOCAL);
 	if (ImGui::IsKeyPressed(GLFW_KEY_T))
 		mCurrentGizmoOperation = ImGuizmo::TRANSLATE;
 	if (ImGui::IsKeyPressed(GLFW_KEY_R))
 		mCurrentGizmoOperation = ImGuizmo::ROTATE;
 	if (ImGui::IsKeyPressed(GLFW_KEY_Y))
+	{
 		mCurrentGizmoOperation = ImGuizmo::SCALE;
+		mCurrentGizmoMode = ImGuizmo::LOCAL;
+	}
+		
 	if (ImGui::RadioButton("Translate", mCurrentGizmoOperation == ImGuizmo::TRANSLATE))
 		mCurrentGizmoOperation = ImGuizmo::TRANSLATE;
 	ImGui::SameLine();
@@ -151,14 +159,6 @@ void GameObject::drawGizmos()
 		mCurrentGizmoOperation = ImGuizmo::SCALE;
 
 	glm::mat4 worldMatrix = getParent()->transform.world.getMatrix() * transform.local.getMatrix();//transform.world.getMatrix();
-
-	//ImGuizmo::DecomposeMatrixToComponents(&worldMatrix[0][0], &pos.x, &rotation.x, &scale.x);
-
-	/*ImGui::DragFloat3("Tr", glm::value_ptr(pos), 0.005f);
-	ImGui::DragFloat3("Sc", glm::value_ptr(scale), 0.005f);
-	ImGui::DragFloat3("Rt", glm::value_ptr(rotation), 0.1f);
-
-	ImGuizmo::RecomposeMatrixFromComponents(&pos.x, &rotation.x, &scale.x, glm::value_ptr(worldMatrix));*/
 
 	if (mCurrentGizmoOperation != ImGuizmo::SCALE)
 	{

@@ -1,12 +1,12 @@
-#pragma once
-#include <map>
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-#include <Structs.h>
-#include <ModelMesh.h>
-#include <Enums.h>
-#include <Shader.h>
+#ifndef RESOURCE_MANAGER_H
+#define RESOURCE_MANAGER_H
 
+#include <map>
+#include <Structs.h>
+#include <Enums.h>
+
+class Mesh;
+class Shader;
 class ResourceManager
 {
 	std::vector<Texture> textures;
@@ -25,3 +25,4 @@ public:
 	void cleanup();
 };
 
+#endif

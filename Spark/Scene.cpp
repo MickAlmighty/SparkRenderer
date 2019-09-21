@@ -1,15 +1,16 @@
 #include <Scene.h>
 #include <list>
 #include <GUI/ImGui/imgui.h>
-#include "Spark.h"
-#include "JsonSerializer.h"
-#include "HID.h"
-#include "GUI/ImGuizmo.h"
-#include <glm/gtc/type_ptr.hpp>
+#include <JsonSerializer.h>
+#include <HID.h>
+#include <Camera.h>
+#include <GameObject.h>
+#include <iostream>
 
 Scene::Scene(std::string&& sceneName) : name(sceneName)
 {
-
+	root = std::make_shared<GameObject>("Root");
+	camera = std::make_shared<Camera>(glm::vec3(0, 0, 5));
 }
 
 Scene::~Scene()
@@ -25,6 +26,7 @@ void Scene::update()
 	
 	camera->ProcessKeyboard();
 	camera->ProcessMouseMovement(HID::mouse.direction.x, -HID::mouse.direction.y);
+	camera->update();
 	root->update();
 }
 
@@ -87,6 +89,7 @@ void Scene::drawGUI()
 		auto gameObject_ptr = gameObjectToPreview.lock();
 		if (gameObject_ptr != nullptr)
 		{
+			camera->setCameraTarget(gameObject_ptr->transform.world.getPosition());
 			if(ImGui::Button("Close Preview"))
 			{
 				gameObjectToPreview.reset();

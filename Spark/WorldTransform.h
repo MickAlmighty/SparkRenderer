@@ -1,4 +1,5 @@
-#pragma once
+#ifndef WORLD_TRANSFORM_H
+#define WORLD_TRANSFORM_H
 #include <glm/glm.hpp>
 #include <json/value.h>
 
@@ -26,3 +27,4 @@ public:
 	~WorldTransform() = default;
 };
 
+#endif

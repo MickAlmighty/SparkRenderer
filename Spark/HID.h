@@ -1,4 +1,6 @@
-#pragma once
+#ifndef HID_H
+#define HID_H
+
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <map>
@@ -24,3 +26,4 @@ public:
 	static bool isKeyHeld(int key);
 };
 
+#endif

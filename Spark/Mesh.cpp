@@ -1,8 +1,7 @@
 #include <Mesh.h>
 #include <iostream>
 #include <EngineSystems/SparkRenderer.h>
-#include <functional>
-
+#include <Shader.h>
 
 Mesh::Mesh(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices, std::map<TextureTarget, Texture>& meshTextures, std::string&& _newName)
 {

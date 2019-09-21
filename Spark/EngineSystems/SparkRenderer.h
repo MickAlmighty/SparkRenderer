@@ -1,14 +1,14 @@
-#pragma once
+#ifndef SPARK_RENDERER_H
+#define SPARK_RENDERER_H
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include <GUI/ImGui/imgui.h>
-#include <GUI/ImGui/imgui_impl_glfw.h>
-#include <GUI/ImGui/imgui_impl_opengl3.h>
 #include <Structs.h>
 #include <Shader.h>
 #include <ModelMesh.h>
 #include <Camera.h>
 #include <functional>
+#include "Enums.h"
 
 class SparkRenderer
 {
@@ -51,3 +51,4 @@ public:
 	static void error_callback(int error, const char* description);
 };
 
+#endif

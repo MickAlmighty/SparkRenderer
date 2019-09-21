@@ -1,5 +1,5 @@
-#pragma once
-#include <iostream>
+#ifndef SPARK_H
+#define	SPARK_H
 #include <filesystem>
 #include <Structs.h>
 
@@ -20,3 +20,4 @@ public:
 	static void clean();
 };
 
+#endif

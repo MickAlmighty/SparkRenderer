@@ -1,5 +1,5 @@
 #include <Clock.h>
-
+#include <GLFW/glfw3.h>
 double Clock::deltaTime = 0;
 
 void Clock::tick()

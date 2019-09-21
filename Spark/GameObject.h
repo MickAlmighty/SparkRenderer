@@ -1,8 +1,8 @@
-#pragma once
+#ifndef GAME_OBJECT_H
+#define GAME_OBJECT_H
+
 #include <list>
 #include <memory>
-#include <Component.h>
-#include <Scene.h>
 #include <Structs.h>
 #include <ISerializable.h>
 
@@ -103,3 +103,4 @@ public:
 	}*/
 };
 
+#endif

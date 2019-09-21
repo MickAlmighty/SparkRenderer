@@ -1,15 +1,22 @@
-#pragma once
+#ifndef JSON_SERIALIZER_H
+#define JSON_SERIALIZER_H
+
 #include <json/value.h>
-#include <filesystem>
 #include <glm/glm.hpp>
-#include "ISerializable.h"
+
+namespace std {
+	namespace filesystem {
+		class path;
+	}
+}
+class ISerializable;
 
 class JsonSerializer
 {
 private:
 	JsonSerializer();
 	~JsonSerializer();
-	inline static std::map<std::shared_ptr<ISerializable>, int> serializedObjects{};
+	static std::map<std::shared_ptr<ISerializable>, int> serializedObjects;
 	inline static int counter = 0;
 
 	static std::shared_ptr<ISerializable> findSerializedObject(const int id);
@@ -34,3 +41,5 @@ public:
 
 template <class T>
 std::shared_ptr<T> make() { return std::make_shared<T>(); };
+
+#endif

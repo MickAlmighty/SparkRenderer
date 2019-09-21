@@ -1,11 +1,12 @@
-#pragma once
+#ifndef MESH_H
+#define MESH_H
+
 #include <Structs.h>
 #include <vector>
-#include <Component.h>
 #include <map>
 #include <Enums.h>
-#include <Shader.h>
 
+class Shader;
 class Mesh
 {
 private:
@@ -26,3 +27,4 @@ public:
 	~Mesh();
 };
 
+#endif

@@ -1,11 +1,17 @@
 #include <EngineSystems/SparkRenderer.h>
 #include <EngineSystems/ResourceManager.h>
+#include <EngineSystems/SceneManager.h>
+#include <Scene.h>
+
 #include <exception>
-#include <iostream>
-#include <ResourceLoader.h>
 #include <HID.h>
 #include <Spark.h>
 #include <GUI/ImGuizmo.h>
+
+#include <GUI/ImGui/imgui.h>
+#include <GUI/ImGui/imgui_impl_glfw.h>
+#include <GUI/ImGui/imgui_impl_opengl3.h>
+#include <iostream>
 
 GLFWwindow* SparkRenderer::window = nullptr;
 std::map<ShaderType, std::list<std::function<void(std::shared_ptr<Shader>&)>>> SparkRenderer::renderQueue;

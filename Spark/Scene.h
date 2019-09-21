@@ -1,21 +1,21 @@
-#pragma once
-#include <GameObject.h>
+#ifndef SCENE_H
+#define SCENE_H
 #include <memory>
 #include <list>
-#include <EngineSystems/SceneManager.h>
-#include <Camera.h>
 #include <functional>
 #include <json/value.h>
+
 class GameObject;
 class Component;
+class Camera;
 class Scene
 {
 private:
 	friend class SceneManager;
 	std::string name = "New Scene";
-	std::shared_ptr<GameObject> root = std::make_shared<GameObject>("Root");
+	std::shared_ptr<GameObject> root{};
 	std::weak_ptr<GameObject> gameObjectToPreview;
-	std::shared_ptr<Camera> camera = std::make_shared<Camera>(glm::vec3(0, 0, 2));
+	std::shared_ptr<Camera> camera{};
 public:
 	std::list < std::function<void()> > toRemove;
 	Scene(std::string&& sceneName);
@@ -33,3 +33,4 @@ public:
 	void drawTreeNode(std::shared_ptr<GameObject> node, bool isRootNode);
 };
 
+#endif

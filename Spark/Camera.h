@@ -1,13 +1,9 @@
-#pragma once
+#ifndef CAMERA_H
+#define CAMERA_H
+
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-// Defines several possible options for camera movement. Used as abstraction to stay away from window-system specific input methods
-enum Camera_Movement {
-	FORWARD,
-	BACKWARD,
-	LEFT,
-	RIGHT
-};
+#include <Component.h>
 
 // Default camera values
 const float YAW = -90.0f;
@@ -17,9 +13,20 @@ const float SENSITIVITY = 0.1f;
 const float ZOOM = 45.0f;
 
 
-// An abstract camera class that processes input and calculates the corresponding Euler Angles, Vectors and Matrices for use in OpenGL
-class Camera
+enum class CameraMode
 {
+	FirstPerson,
+	ThirdPerson
+};
+
+class Camera : public Component
+{
+private:
+	glm::vec3 cameraTarget{ 0 };
+	// Calculates the front vector from the Camera's (updated) Euler Angles
+	void updateCameraVectors();
+	void updateCameraVectorsFirstPerson();
+	void updateCameraVectorsThirdPerson();
 public:
 	// Camera Attributes
 	glm::vec3 Position;
@@ -35,30 +42,37 @@ public:
 	float MouseSensitivity;
 	float Zoom;
 
+	CameraMode cameraMode = CameraMode::FirstPerson;
 	//perspective
 	float fov = 60;
 	float zNear = 0.1f;
 	float zFar = 100.0f;
-	// Constructor with vectors
+
 	Camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f),
 	       float yaw = YAW, float pitch = PITCH);
-	// Constructor with scalar values
+
 	Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch);
 
-	// Returns the view matrix calculated using Euler Angles and the LookAt Matrix
+
 	glm::mat4 GetViewMatrix();
 	glm::mat4 getProjectionMatrix() const;
-	// Processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)
+	void setProjectionMatrix(float fov, float nearPlane, float farPlane);
+	void setCameraTarget(glm::vec3 target);
 	void ProcessKeyboard();
-
-	// Processes input received from a mouse input system. Expects the offset value in both the x and y direction.
+	void processKeyboardFirstPerson();
+	void processKeyboardThirdPerson();
+	
 	void ProcessMouseMovement(float xoffset, float yoffset, bool constrainPitch = true);
+	void processMouseMovementThirdPerson(float xoffset, float yoffset);
 
-	// Processes input received from a mouse scroll-wheel event. Only requires input on the vertical wheel-axis
 	void ProcessMouseScroll(float yoffset);
 
-private:
-	// Calculates the front vector from the Camera's (updated) Euler Angles
-	void updateCameraVectors();
+	SerializableType getSerializableType() override;
+	Json::Value serialize() override;
+	void deserialize(Json::Value& root) override;
+	void update() override;
+	void fixedUpdate() override;
+	void drawGUI() override;
 };
 
+#endif

@@ -1,7 +1,8 @@
-#pragma once
+#ifndef SCENE_MANAGER_H
+#define SCENE_MANAGER_H
+
 #include <list>
 #include <memory>
-#include <Scene.h>
 
 class Scene;
 class SceneManager
@@ -25,3 +26,4 @@ public:
 	~SceneManager() = default;
 };
 
+#endif

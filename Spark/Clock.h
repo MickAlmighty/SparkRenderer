@@ -1,5 +1,5 @@
-#pragma once
-#include <GLFW/glfw3.h>
+#ifndef CLOCK_H
+#define CLOCK_H
 
 class Clock
 {
@@ -13,3 +13,4 @@ public:
 	static int getFPS();
 };
 
+#endif

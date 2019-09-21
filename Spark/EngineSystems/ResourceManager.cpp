@@ -1,8 +1,8 @@
 #include <EngineSystems/ResourceManager.h>
 #include <ResourceLoader.h>
 #include <Spark.h>
-
-
+#include <Shader.h>
+#include <Mesh.h>
 
 Texture ResourceManager::findTexture(const std::string&& path)
 {

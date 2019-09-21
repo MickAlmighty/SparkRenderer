@@ -1,4 +1,5 @@
-#pragma once
+#ifndef STRUCTS_H
+#define STRUCTS_H
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
@@ -110,3 +111,4 @@ struct ScreenQuad
 		glDeleteVertexArrays(1, &vao);
 	}
 };
+#endif

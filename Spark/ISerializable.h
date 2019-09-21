@@ -1,10 +1,13 @@
-#pragma once
+#ifndef ISERIALIZABLE_H
+#define ISERIALIZABLE_H
+
 #include <json/value.h>
 
 enum class SerializableType
 {
 	SGameObject = 1,
-	SModelMesh
+	SModelMesh,
+	SCamera
 };
 
 
@@ -16,3 +19,4 @@ public:
 	virtual void deserialize(Json::Value& root) = 0;
 	virtual ~ISerializable() = default;
 };
+#endif

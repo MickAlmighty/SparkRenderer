@@ -1,10 +1,14 @@
-#pragma once
-#include <iostream>
-#include <assimp/scene.h>
-#include <Mesh.h>
-#include <ModelMesh.h>
+#ifndef RESOURCE_LOADER_H
+#define RESOURCE_LOADER_H
+
 #include <map>
 #include <filesystem>
+#include <Enums.h>
+#include <Structs.h>
+struct aiMesh;
+struct aiScene;
+class MeshModel;
+class Mesh;
 
 const std::vector<std::string> ModelMeshExtensions = {
 	".obj", ".fbx", ".FBX", ".max"
@@ -29,3 +33,5 @@ public:
 	static std::map<std::string, std::vector<Mesh>> loadModels(std::filesystem::path& modelDirectory);
 	static std::vector<Texture> loadTextures(std::filesystem::path& resDirectory);
 };
+
+#endif

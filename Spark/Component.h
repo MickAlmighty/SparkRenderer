@@ -1,8 +1,9 @@
-#pragma once
-#include <iostream>
-#include <GameObject.h>
+#ifndef COMPONENT_H
+#define COMPONENT_H
 #include "GUI/ImGui/imgui.h"
 #include <ISerializable.h>
+#include <EngineSystems/SceneManager.h>
+#include <Scene.h>
 
 class GameObject;
 class Component : public ISerializable
@@ -33,3 +34,4 @@ public:
 	};
 };
 
+#endif

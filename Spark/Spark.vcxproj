@@ -100,6 +100,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)thirdparty\include;$(SolutionDir)\Spark;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <PreprocessorDefinitions>DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PrecompiledHeaderFile />
     </ClCompile>
     <Link>
       <AdditionalDependencies>glfw3.lib;glfw3dll.lib;glm_static.lib;assimp-vc141-mtd.lib;jsoncpp.lib;%(AdditionalDependencies)</AdditionalDependencies>

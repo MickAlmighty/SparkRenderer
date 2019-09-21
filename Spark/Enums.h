@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ENUMS_H
+#define ENUMS_H
 
 enum ShaderType
 {
@@ -12,3 +13,4 @@ enum TextureTarget
 	DIFFUSE_TARGET = 1,
 	NORMAL_TARGET
 };
+#endif

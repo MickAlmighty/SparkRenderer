@@ -1,4 +1,6 @@
-#pragma once
+#ifndef LOCAL_TRANSFORM_H
+#define LOCAL_TRANSFORM_H
+
 #include <glm/glm.hpp>
 #include <json/value.h>
 
@@ -34,3 +36,4 @@ public:
 	void setRotationRadians(float x, float y, float z);
 	void setRotationRadians(glm::vec3 rotationRadians);
 };
+#endif

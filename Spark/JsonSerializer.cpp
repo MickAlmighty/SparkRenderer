@@ -3,8 +3,12 @@
 #include <fstream>
 #include <json/reader.h>
 #include <json/writer.h>
-#include "GameObject.h"
-#include "ModelMesh.h"
+#include <GameObject.h>
+#include <ModelMesh.h>
+#include <filesystem>
+#include <ISerializable.h>
+
+std::map<std::shared_ptr<ISerializable>, int> JsonSerializer::serializedObjects;
 
 JsonSerializer::JsonSerializer()
 {

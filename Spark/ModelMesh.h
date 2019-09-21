@@ -1,10 +1,9 @@
-#pragma once
+#ifndef MODEL_MESH_H
+#define MODEL_MESH_H
 #include <vector>
-#include <Mesh.h>
-#include <memory>
-#include <Enums.h>
-#include <map>
+#include <Component.h>
 
+class Mesh;
 class ModelMesh : public Component
 {
 private:
@@ -23,3 +22,4 @@ public:
 	void deserialize(Json::Value& root) override;
 };
 
+#endif

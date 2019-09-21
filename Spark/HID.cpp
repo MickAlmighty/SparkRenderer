@@ -1,7 +1,4 @@
 #include <HID.h>
-#include <iostream>
-
-#include <Clock.h>
 #include <Spark.h>
 
 Mouse HID::mouse{};

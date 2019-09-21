@@ -1,7 +1,8 @@
-#include <GUI/ImGui/imgui.h>
-#include <Spark.h>
+#ifndef SPARK_GUI_H
+#define SPARK_GUI_H
 #include <Component.h>
 #include "Mesh.h"
+#include <functional>
 #include "ModelMesh.h"
 
 class SparkGui
@@ -14,3 +15,5 @@ public:
 const static std::map<std::string, std::function<std::shared_ptr<Component>()>> componentCreation {
 	{"ModelMesh", []{ return std::make_shared<ModelMesh>(); }}
 };
+
+#endif
