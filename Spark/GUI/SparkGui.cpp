@@ -67,3 +67,35 @@ std::pair<std::string, std::vector<Mesh>> SparkGui::getMeshes()
 	}
 	return meshes;
 }
+
+Texture SparkGui::getTexture()
+{
+	static bool textureWindow = false;
+	Texture tex{0, ""};
+	if (ImGui::Button("Add Texture"))
+	{
+		textureWindow = true;
+	}
+
+	if (textureWindow)
+	{
+
+		if (ImGui::Begin("Textures", &textureWindow))
+		{
+			for (const Texture& texture : ResourceManager::getInstance()->getTextures())
+			{
+				if (ImGui::Button(texture.path.c_str()))
+				{
+					tex = texture;
+					textureWindow = false;
+				}
+			}
+			if (ImGui::Button("Close"))
+			{
+				textureWindow = false;
+			}
+		}
+		ImGui::End();
+	}
+	return tex;
+}

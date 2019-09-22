@@ -150,6 +150,85 @@
 							]
 						}
 					}
+				},
+				{
+					"SerializableType" : 1,
+					"id" : 6,
+					"object" : 
+					{
+						"components" : 
+						[
+							{
+								"SerializableType" : 4,
+								"id" : 7,
+								"object" : 
+								{
+									"1" : "",
+									"name" : "MeshPlane"
+								}
+							},
+							{
+								"SerializableType" : 5,
+								"id" : 8,
+								"object" : 
+								{
+									"name" : "TerrainGenerator"
+								}
+							}
+						],
+						"localTransform" : 
+						{
+							"position" : 
+							[
+								0.0,
+								0.0,
+								0.86500000953674316
+							],
+							"rotationEuler" : 
+							[
+								0.0,
+								0.0,
+								0.0
+							],
+							"scale" : 
+							[
+								1.0,
+								1.0,
+								1.0
+							]
+						},
+						"name" : "GameObject",
+						"worldTransform" : 
+						{
+							"modelMatrix" : 
+							[
+								[
+									1.0,
+									0.0,
+									0.0,
+									0.0
+								],
+								[
+									0.0,
+									1.0,
+									0.0,
+									0.0
+								],
+								[
+									0.0,
+									0.0,
+									1.0,
+									0.0
+								],
+								[
+									0.0,
+									0.0,
+									0.86500000953674316,
+									1.0
+								]
+							]
+						}
+					}
 				}
 			],
 			"localTransform" : 

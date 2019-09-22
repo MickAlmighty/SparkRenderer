@@ -69,7 +69,7 @@ void Mesh::draw(std::shared_ptr<Shader>& shader, glm::mat4 model)
 	glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indices.size()), GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);
 
-	glBindTextures(static_cast<GLuint>(DIFFUSE_TARGET), static_cast<GLsizei>(textures.size()), nullptr);
+	glBindTextures(static_cast<GLuint>(TextureTarget::DIFFUSE_TARGET), static_cast<GLsizei>(textures.size()), nullptr);
 }
 
 void Mesh::cleanup()

@@ -45,6 +45,11 @@ std::shared_ptr<Shader>& ResourceManager::getShader(ShaderType type)
 	throw std::exception("Cannot find shader! Probably shader was not loaded!");
 }
 
+std::vector<Texture> ResourceManager::getTextures()
+{
+	return textures;
+}
+
 ResourceManager* ResourceManager::getInstance()
 {
 	static ResourceManager* resource_manager = nullptr;
@@ -59,9 +64,9 @@ void ResourceManager::loadResources()
 {
 	std::filesystem::path shaderDir = Spark::pathToResources;
 	shaderDir.append("shaders\\");
-	shaders.emplace(DEFAULT_SHADER, std::make_shared<Shader>(shaderDir.string() + "default.vert", shaderDir.string() + "default.frag"));
-	shaders.emplace(SCREEN_SHADER, std::make_shared<Shader>(shaderDir.string() + "screen.vert", shaderDir.string() + "screen.frag"));
-	shaders.emplace(POSTPROCESSING_SHADER, std::make_shared<Shader>(shaderDir.string() + "postprocessing.vert", shaderDir.string() + "postprocessing.frag"));
+	shaders.emplace(ShaderType::DEFAULT_SHADER, std::make_shared<Shader>(shaderDir.string() + "default.vert", shaderDir.string() + "default.frag"));
+	shaders.emplace(ShaderType::SCREEN_SHADER, std::make_shared<Shader>(shaderDir.string() + "screen.vert", shaderDir.string() + "screen.frag"));
+	shaders.emplace(ShaderType::POSTPROCESSING_SHADER, std::make_shared<Shader>(shaderDir.string() + "postprocessing.vert", shaderDir.string() + "postprocessing.frag"));
 
 	textures = ResourceLoader::loadTextures(Spark::pathToResources);
 	models = ResourceLoader::loadModels(Spark::pathToModelMeshes);

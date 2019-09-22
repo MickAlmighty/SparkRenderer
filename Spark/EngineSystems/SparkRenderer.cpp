@@ -159,9 +159,9 @@ void SparkRenderer::createTexture(GLuint& texture, GLuint width, GLuint height, 
 void SparkRenderer::initMembers()
 {
 	screenQuad.setup();
-	mainShader = ResourceManager::getInstance()->getShader(DEFAULT_SHADER);
-	screenShader = ResourceManager::getInstance()->getShader(SCREEN_SHADER);
-	postprocessingShader = ResourceManager::getInstance()->getShader(POSTPROCESSING_SHADER);
+	mainShader = ResourceManager::getInstance()->getShader(ShaderType::DEFAULT_SHADER);
+	screenShader = ResourceManager::getInstance()->getShader(ShaderType::SCREEN_SHADER);
+	postprocessingShader = ResourceManager::getInstance()->getShader(ShaderType::POSTPROCESSING_SHADER);
 
 	createFrameBuffersAndTextures();
 }
@@ -249,11 +249,11 @@ void SparkRenderer::renderPass()
 	shader->use();
 	shader->setMat4("view", view);
 	shader->setMat4("projection", projection);
-	for(auto& function: renderQueue[DEFAULT_SHADER])
+	for(auto& function: renderQueue[ShaderType::DEFAULT_SHADER])
 	{
 		function(shader);
 	}
-	renderQueue[DEFAULT_SHADER].clear();
+	renderQueue[ShaderType::DEFAULT_SHADER].clear();
 
 	postprocessingPass();
 	renderToScreen();

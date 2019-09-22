@@ -14,7 +14,7 @@ private:
 	GLuint vbo{};
 	GLuint ebo{};
 public:
-	ShaderType shaderType = DEFAULT_SHADER;
+	ShaderType shaderType = ShaderType::DEFAULT_SHADER;
 	std::vector<Vertex> vertices;
 	std::vector<unsigned int> indices;
 	std::map<TextureTarget, Texture> textures;

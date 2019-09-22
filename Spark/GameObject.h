@@ -58,7 +58,7 @@ public:
 		});
 		if(component_it != components.end())
 		{
-			return *component_it;
+			return std::dynamic_pointer_cast<T>(*component_it);
 		}
 		return nullptr;
 	}

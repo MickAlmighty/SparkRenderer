@@ -58,7 +58,7 @@ void ModelMesh::drawGUI()
 		ImGui::Text("Vertices:"); ImGui::SameLine(); ImGui::Text(std::to_string(mesh.vertices.size()).c_str());
 		ImGui::Text("Indices:"); ImGui::SameLine(); ImGui::Text(std::to_string(mesh.indices.size()).c_str());
 		ImGui::Text("Textures:"); ImGui::SameLine(); ImGui::Text(std::to_string(mesh.textures.size()).c_str());
-		ImGui::Text("Shader enum:"); ImGui::SameLine(); ImGui::Text(std::to_string(mesh.shaderType).c_str());
+		ImGui::Text("Shader enum:"); ImGui::SameLine(); ImGui::Text(std::to_string(static_cast<int>(mesh.shaderType)).c_str());
 		ImGui::Separator();
 	}
 

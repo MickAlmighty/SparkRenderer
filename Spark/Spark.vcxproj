@@ -164,12 +164,14 @@
     <ClCompile Include="LocalTranform.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Mesh.cpp" />
+    <ClCompile Include="MeshPlane.cpp" />
     <ClCompile Include="ModelMesh.cpp" />
     <ClCompile Include="ResourceLoader.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="Spark.cpp" />
     <ClCompile Include="stb_image.cpp" />
+    <ClCompile Include="TerrainGenerator.cpp" />
     <ClCompile Include="WorldTransform.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -196,12 +198,14 @@
     <ClInclude Include="JsonSerializer.h" />
     <ClInclude Include="LocalTranform.h" />
     <ClInclude Include="Mesh.h" />
+    <ClInclude Include="MeshPlane.h" />
     <ClInclude Include="ModelMesh.h" />
     <ClInclude Include="ResourceLoader.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="Spark.h" />
     <ClInclude Include="Structs.h" />
+    <ClInclude Include="TerrainGenerator.h" />
     <ClInclude Include="WorldTransform.h" />
   </ItemGroup>
   <ItemGroup>

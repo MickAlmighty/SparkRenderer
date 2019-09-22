@@ -111,6 +111,12 @@
     <ClCompile Include="GUI\ImGuizmo.cpp">
       <Filter>GUI</Filter>
     </ClCompile>
+    <ClCompile Include="MeshPlane.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TerrainGenerator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Spark.h">
@@ -202,6 +208,12 @@
     </ClInclude>
     <ClInclude Include="GUI\ImGuizmo.h">
       <Filter>GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshPlane.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TerrainGenerator.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

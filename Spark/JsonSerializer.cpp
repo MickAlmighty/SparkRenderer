@@ -7,6 +7,8 @@
 #include <ModelMesh.h>
 #include <filesystem>
 #include <ISerializable.h>
+#include "MeshPlane.h"
+#include "TerrainGenerator.h"
 
 std::map<std::shared_ptr<ISerializable>, int> JsonSerializer::serializedObjects;
 
@@ -114,6 +116,12 @@ std::shared_ptr<ISerializable> JsonSerializer::deserialize(Json::Value& root)
 		break;
 	case SerializableType::SModelMesh:
 		deserialized = make<ModelMesh>();
+		break;
+	case SerializableType::SMeshPlane:
+		deserialized = make<MeshPlane>();
+		break;
+	case SerializableType::STerrainGenerator:
+		deserialized = make<TerrainGenerator>();
 		break;
 	default: 
 		throw std::exception("Unsupported SerializableType encountered!");;

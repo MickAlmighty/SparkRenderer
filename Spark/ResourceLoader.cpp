@@ -62,7 +62,7 @@ std::map<TextureTarget, Texture> ResourceLoader::findTextures(const std::filesys
 		if( size != std::string::npos)
 		{
 			Texture tex = ResourceManager::getInstance()->findTexture(texture_path.path().string());
-			textures.emplace(DIFFUSE_TARGET, tex);
+			textures.emplace(TextureTarget::DIFFUSE_TARGET, tex);
 			continue;
 		}
 
@@ -70,7 +70,7 @@ std::map<TextureTarget, Texture> ResourceLoader::findTextures(const std::filesys
 		if (size != std::string::npos)
 		{
 			Texture tex = ResourceManager::getInstance()->findTexture(texture_path.path().string());
-			textures.emplace(NORMAL_TARGET, tex);
+			textures.emplace(TextureTarget::NORMAL_TARGET, tex);
 		}
 	}
 

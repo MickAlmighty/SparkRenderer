@@ -7,7 +7,9 @@ enum class SerializableType
 {
 	SGameObject = 1,
 	SModelMesh,
-	SCamera
+	SCamera,
+	SMeshPlane,
+	STerrainGenerator
 };
 
 
