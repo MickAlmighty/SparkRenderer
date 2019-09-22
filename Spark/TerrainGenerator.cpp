@@ -74,35 +74,43 @@ Texture TerrainGenerator::generateTerrain()
 	{
 		for(int j = 0; j < height; ++j)
 		{
-			perlinValues.push_back(glm::clamp(glm::perlin(glm::vec2(x / perlinDivider, y / perlinDivider)), 0.0f, 1.0f));
+			float perlinValue = glm::perlin(glm::vec2(x / perlinDivider, y / perlinDivider));
+			glm::vec3 perlinNoise{ glm::clamp(perlinValue, 0.0f, 1.0f), 0, 0 };
+			perlinValues.push_back(perlinNoise);
 			y += perlinTimeStep;
 		}
 		x += perlinTimeStep;
 	}
+	
+	updateTerrain();
 
-	GLuint id;
-	glGenTextures(1, &id);
-	glBindTexture(GL_TEXTURE_2D, id);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_RED, GL_FLOAT, perlinValues.data());
+	return generatedTerrain;
+}
+
+void TerrainGenerator::updateTerrain()
+{
+	glBindTexture(GL_TEXTURE_2D, generatedTerrain.ID);
+	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, perlinValues.data());
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, terrainSize, terrainSize, GL_RGB, GL_FLOAT, perlinValues.data());
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glBindTexture(GL_TEXTURE_2D, 0);
-	Texture t{id, ""};
-
-	return t;
 }
 
 
 TerrainGenerator::TerrainGenerator(std::string&& newName) : Component(newName)
 {
-
+	glGenTextures(1, &generatedTerrain.ID);
+	glBindTexture(GL_TEXTURE_2D, generatedTerrain.ID);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, terrainSize, terrainSize, 0, GL_RGB, GL_FLOAT, NULL);
 }
 
 
 TerrainGenerator::~TerrainGenerator()
 {
+	glDeleteTextures(1, &generatedTerrain.ID);
 }
 
 

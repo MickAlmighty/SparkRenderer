@@ -9,7 +9,8 @@ enum class SerializableType
 	SModelMesh,
 	SCamera,
 	SMeshPlane,
-	STerrainGenerator
+	STerrainGenerator,
+	SActorAI
 };
 
 

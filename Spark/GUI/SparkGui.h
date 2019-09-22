@@ -6,6 +6,7 @@
 #include "ModelMesh.h"
 #include "MeshPlane.h"
 #include "TerrainGenerator.h"
+#include "ActorAI.h"
 
 class SparkGui
 {
@@ -18,7 +19,8 @@ public:
 const static std::map<std::string, std::function<std::shared_ptr<Component>()>> componentCreation {
 	{"ModelMesh", [] { return std::make_shared<ModelMesh>(); }},
 	{"MeshPlane", [] { return std::make_shared<MeshPlane>(); }},
-	{"TerrainGenerator", [] { return std::make_shared<TerrainGenerator>(); }}
+	{"TerrainGenerator", [] { return std::make_shared<TerrainGenerator>(); }},
+	{"ActorAI", [] { return std::make_shared<ActorAI>(); }}
 };
 
 #endif

@@ -78,10 +78,10 @@ void MeshPlane::draw(std::shared_ptr<Shader>& shader, glm::mat4 model)
 void MeshPlane::setTexture(TextureTarget target, Texture tex)
 {
 	Texture t = textures[target];
-	if(t.ID != ResourceManager::getInstance()->findTexture(static_cast<const std::string>(t.path)).ID)
+	/*if(t.ID != ResourceManager::getInstance()->findTexture(static_cast<const std::string>(t.path)).ID)
 	{
 		glDeleteTextures(1, &t.ID);
-	}
+	}*/
 	textures[target] = tex;
 }
 

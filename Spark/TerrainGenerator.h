@@ -5,11 +5,14 @@
 class TerrainGenerator : public Component
 {
 private:
-	int terrainSize = 20;
+	
 	float perlinDivider = 1.0f;
 	float perlinTimeStep = 1.0f;
-	std::vector<float> perlinValues;
+	Texture generatedTerrain{};
 public:
+	std::vector<glm::vec3> perlinValues;
+	int terrainSize = 20;
+
 	SerializableType getSerializableType() override;
 	Json::Value serialize() override;
 	void deserialize(Json::Value& root) override;
@@ -20,5 +23,6 @@ public:
 	~TerrainGenerator();
 
 	Texture generateTerrain();
+	void updateTerrain();
 };
 

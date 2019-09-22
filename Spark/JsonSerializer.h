@@ -24,8 +24,10 @@ private:
 public:
 	static void writeToFile(std::filesystem::path&& filePath, Json::Value&& root);
 	static Json::Value readFromFile(std::filesystem::path&& filePath);
+
 	static Json::Value serialize(const std::shared_ptr<ISerializable> objToSerialize);
 	static std::shared_ptr<ISerializable> deserialize(Json::Value& root);
+
 	static void clearState();
 	static Json::Value serializeVec2(glm::vec2 val);
 	static glm::vec2 deserializeVec2(Json::Value& root);
