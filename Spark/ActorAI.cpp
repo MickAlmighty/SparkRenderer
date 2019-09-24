@@ -42,9 +42,9 @@ void Node::drawReturnPath(std::vector<glm::vec3>& perlinValues) const
 		parent.lock()->drawReturnPath(perlinValues);
 }
 
-void Node::getPath(std::deque<glm::vec2>& path) const
+void Node::getPath(std::deque<std::pair<bool, glm::vec2>>& path) const
 {
-	path.push_front({ static_cast<float>(position.x), static_cast<float>(position.y) });
+	path.push_front({ false, { static_cast<float>(position.x), static_cast<float>(position.y) } });
 	if (!parent.expired())
 		parent.lock()->getPath(path);
 }
@@ -59,7 +59,7 @@ Node::~Node()
 	//std::cout << "Node destroyed" << std::endl;
 }
 
-std::deque<glm::vec2> ActorAI::findPath()
+std::deque<std::pair<bool, glm::vec2>> ActorAI::findPath()
 {
 	bool isPathFound = false;
 	glm::vec2 finish = endPos;
@@ -95,7 +95,7 @@ std::deque<glm::vec2> ActorAI::findPath()
 
 		}
 	}
-	std::deque<glm::vec2> path;
+	std::deque<std::pair<bool, glm::vec2>> path;
 	if(finishNode)
 	{
 		auto perlinValues = getGameObject()->getComponent<TerrainGenerator>()->getPerlinValues();
@@ -129,41 +129,45 @@ bool ActorAI::isNodeClosed(std::shared_ptr<Node> node)
 	return it != std::end(processedNodes);
 }
 
-void ActorAI::walkToEndOfThePath(std::deque<glm::vec2>& path)
+void ActorAI::walkToEndOfThePath()
 {
-	float deltaTime = Clock::getDeltaTime();
-	glm::vec3 position = getGameObject()->transform.world.getPosition();
-	glm::mat4 worldMatrix = getGameObject()->getParent()->transform.world.getMatrix();
-	if (path.empty() && nodesPassed.empty())
+	
+	if (path.empty())
 		return;
 	
-	if(std::find(nodesPassed.begin(), nodesPassed.end(), false) == nodesPassed.end())
+	const auto wayPoint_it = std::find_if(path.begin(), path.end(), [](const std::pair<bool, glm::vec2>& p)
+	{
+		return !p.first;
+	});
+	if(wayPoint_it == path.end())
 	{
 		path.clear();
-		nodesPassed.clear();
 		isTraveling = false;
 		return;
 	}
 
-	for(int i = 0; i < path.size(); i++)
+	for (auto& wayPoint : path)
 	{
-		if(nodesPassed[i])
+		if(wayPoint.first)
 		{
 			continue;
 		}
 
-		if(!nodesPassed[i])
+		if(!wayPoint.first)
 		{
-			glm::vec3 waypoint = glm::vec3(path[i].x, 0.0f, path[i].y);
-			if(glm::distance(position, waypoint) < 0.1f)
+			const glm::vec3 position = getGameObject()->transform.world.getPosition();
+			glm::vec3 pointOnPath = glm::vec3(wayPoint.second.x, 0.0f, wayPoint.second.y);
+			if(glm::distance(position, pointOnPath) < 0.01f)
 			{
-				nodesPassed[i] = true;
+				wayPoint.first = true;
 			}
 			else
 			{
-				glm::vec3 direction = glm::normalize(waypoint - position);
-				glm::vec3 updatedWorldPosition = position + direction * deltaTime;
-				glm::vec4 localPosition = glm::inverse(worldMatrix) * glm::vec4(updatedWorldPosition, 1);
+				const glm::mat4 worldMatrix = getGameObject()->getParent()->transform.world.getMatrix();
+
+				const glm::vec3 direction = glm::normalize(pointOnPath - position);
+				const glm::vec3 updatedWorldPosition = position + direction * static_cast<float>(Clock::getDeltaTime());
+				const glm::vec4 localPosition = glm::inverse(worldMatrix) * glm::vec4(updatedWorldPosition, 1);
 				getGameObject()->transform.local.setPosition(localPosition);
 				break;
 			}
@@ -219,7 +223,7 @@ void ActorAI::update()
 	
 	if(isTraveling)
 	{
-		walkToEndOfThePath(path);
+		walkToEndOfThePath();
 	}
 	
 }
@@ -248,7 +252,6 @@ void ActorAI::drawGUI()
 	{
 		const float measureStart = glfwGetTime();
 		path = findPath();
-		nodesPassed = std::vector<bool>(path.size());
 		timer = glfwGetTime() - measureStart;
 		isTraveling = true;
 	}

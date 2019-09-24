@@ -13,7 +13,7 @@ public:
 	float distanceToEndPoint(glm::vec2 endPoint) const;
 	std::list<std::shared_ptr<Node>> getNeighbors() const;
 	void drawReturnPath(std::vector<glm::vec3>& perlinValues) const;
-	void getPath(std::deque<glm::vec2>& path) const;
+	void getPath(std::deque<std::pair<bool, glm::vec2>>& path) const;
 	Node() = default;
 	Node(glm::vec2 pos);
 	~Node();
@@ -27,13 +27,12 @@ class ActorAI : public Component
 	std::multimap<float, std::shared_ptr<Node>> nodesToProcess;
 	std::list<std::shared_ptr<Node>> processedNodes;
 	bool isTraveling = false;
-	std::deque<glm::vec2> path;
-	std::vector<bool> nodesPassed;
+	std::deque<std::pair<bool,glm::vec2>> path;
 public:
-	std::deque<glm::vec2> findPath();
+	std::deque<std::pair<bool, glm::vec2>> findPath();
 	std::shared_ptr<Node> getTheNearestNodeFromOpen();
 	bool isNodeClosed(std::shared_ptr<Node> node);
-	void walkToEndOfThePath(std::deque<glm::vec2>& path);
+	void walkToEndOfThePath();
 
 	SerializableType getSerializableType() override;
 	Json::Value serialize() override;
