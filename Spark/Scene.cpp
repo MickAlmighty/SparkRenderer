@@ -23,9 +23,11 @@ Scene::~Scene()
 void Scene::update()
 {
 	removeObjectsFromScene();
-	
-	camera->ProcessKeyboard();
-	camera->ProcessMouseMovement(HID::mouse.direction.x, -HID::mouse.direction.y);
+	if (cameraMovement)
+	{
+		camera->ProcessKeyboard();
+		camera->ProcessMouseMovement(HID::mouse.direction.x, -HID::mouse.direction.y);
+	}
 	camera->update();
 	root->update();
 }
@@ -63,7 +65,9 @@ Json::Value Scene::serialize() const
 {
 	Json::Value serialize;
 	serialize["name"] = name;
-	Json::Value serializeSceneGraph;
+	serialize["cameraMovement"] = cameraMovement;
+	serialize["camera"] = JsonSerializer::serialize(camera);
+	JsonSerializer::clearState();
 	serialize["sceneGraph"] = JsonSerializer::serialize(root);
 	JsonSerializer::clearState();
 	return serialize;
@@ -72,6 +76,9 @@ Json::Value Scene::serialize() const
 void Scene::deserialize(Json::Value& deserializationRoot)
 {
 	name = deserializationRoot.get("name", "Scene").asString();
+	cameraMovement = deserializationRoot.get("cameraMovement", false).asBool();
+	camera = std::static_pointer_cast<Camera>(JsonSerializer::deserialize(deserializationRoot["camera"]));
+	JsonSerializer::clearState();
 	root = std::static_pointer_cast<GameObject>(JsonSerializer::deserialize(deserializationRoot["sceneGraph"]));
 	JsonSerializer::clearState();
 }

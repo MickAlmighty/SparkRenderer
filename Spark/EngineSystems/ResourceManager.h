@@ -15,6 +15,7 @@ class ResourceManager
 	ResourceManager() = default;
 	~ResourceManager() = default;
 public:
+	void addTexture(Texture tex);
 	Texture findTexture(const std::string&& path);
 	std::vector<Mesh> findModelMeshes(const std::string& path);
 	std::vector<std::string> getPathsToModels();

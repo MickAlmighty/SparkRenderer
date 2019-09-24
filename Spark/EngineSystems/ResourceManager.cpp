@@ -4,6 +4,20 @@
 #include <Shader.h>
 #include <Mesh.h>
 
+void ResourceManager::addTexture(Texture tex)
+{
+	auto tex_it = std::find_if(std::begin(textures), std::end(textures), [&tex](const Texture& texture )
+	{
+		return texture.path == tex.path;
+	});
+	if(tex_it != std::end(textures))
+	{
+		textures.erase(tex_it);
+		
+	}
+	textures.push_back(tex);
+}
+
 Texture ResourceManager::findTexture(const std::string&& path)
 {
 	for(auto& tex_it : textures)

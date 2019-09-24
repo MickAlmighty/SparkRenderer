@@ -3,6 +3,12 @@
 #include <MeshPlane.h>
 #include <glm/gtc/noise.hpp>
 #include <glm/gtc/random.hpp>
+#include "EngineSystems/ResourceManager.h"
+
+std::vector<glm::vec3> TerrainGenerator::getPerlinValues()
+{
+	return perlinValues;
+}
 
 SerializableType TerrainGenerator::getSerializableType()
 {
@@ -19,6 +25,8 @@ Json::Value TerrainGenerator::serialize()
 void TerrainGenerator::deserialize(Json::Value& root)
 {
 	name = root.get("name", "TerrainGenerator").asString();
+	Texture tex = generateTerrain();
+	ResourceManager::getInstance()->addTexture(tex);
 }
 
 void TerrainGenerator::update()
@@ -68,7 +76,7 @@ Texture TerrainGenerator::generateTerrain()
 {
 	const int width = terrainSize, height = terrainSize;
 	perlinValues.clear();
-	float y = glm::linearRand(0.0f, 100.0f);
+	float y = glm::linearRand(20.0f, 100.0f);
 	float x = y;
 	for(int i = 0; i < width; ++i)
 	{
@@ -82,23 +90,22 @@ Texture TerrainGenerator::generateTerrain()
 		x += perlinTimeStep;
 	}
 	
-	updateTerrain();
-
+	updateTerrain(perlinValues);
+	generatedTerrain.path = "GeneratedTerrain";
 	return generatedTerrain;
 }
 
-void TerrainGenerator::updateTerrain()
+void TerrainGenerator::updateTerrain(std::vector<glm::vec3> newPerlinValues) const
 {
 	glBindTexture(GL_TEXTURE_2D, generatedTerrain.ID);
 	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, perlinValues.data());
-	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, terrainSize, terrainSize, GL_RGB, GL_FLOAT, perlinValues.data());
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, terrainSize, terrainSize, GL_RGB, GL_FLOAT, newPerlinValues.data());
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
-
 
 TerrainGenerator::TerrainGenerator(std::string&& newName) : Component(newName)
 {

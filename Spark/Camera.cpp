@@ -2,7 +2,15 @@
 #include <Clock.h>
 #include <HID.h>
 #include "Spark.h"
+#include "JsonSerializer.h"
 
+
+Camera::Camera(std::string&& newName) : Component(newName)
+{
+	MovementSpeed = SPEED;
+	MouseSensitivity = SENSITIVITY;
+	Zoom = ZOOM;
+}
 
 Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch): Front(glm::vec3(0.0f, 0.0f, -1.0f)),
                                                                           MovementSpeed(SPEED),
@@ -107,13 +115,13 @@ void Camera::processKeyboardThirdPerson()
 	if (HID::isKeyPressed(GLFW_KEY_S))
 		finalDirection += Front;
 	if (HID::isKeyPressed(GLFW_KEY_A))
-		finalDirection -= Right;
-	if (HID::isKeyPressed(GLFW_KEY_D))
 		finalDirection += Right;
+	if (HID::isKeyPressed(GLFW_KEY_D))
+		finalDirection -= Right;
 	if (HID::isKeyPressed(GLFW_KEY_Q))
-		finalDirection -= Up;
-	if (HID::isKeyPressed(GLFW_KEY_E))
 		finalDirection += Up;
+	if (HID::isKeyPressed(GLFW_KEY_E))
+		finalDirection -= Up;
 
 	if (finalDirection != glm::vec3(0))
 	{
@@ -226,13 +234,37 @@ SerializableType Camera::getSerializableType()
 Json::Value Camera::serialize()
 {
 	Json::Value root;
-
+	root["cameraTarget"] = JsonSerializer::serializeVec3(cameraTarget);
+	root["Position"] = JsonSerializer::serializeVec3(Position);
+	root["Front"] = JsonSerializer::serializeVec3(Front);
+	root["Up"] = JsonSerializer::serializeVec3(Up);
+	root["Right"] = JsonSerializer::serializeVec3(Right);
+	root["Yaw"] = Yaw;
+	root["Pitch"] = Pitch;
+	root["fov"] = fov;
+	root["zNear"] = zNear;
+	root["zFar"] = zFar;
+	root["cameraMode"] = static_cast<int>(cameraMode);
+	
 	return root;
 }
 
 void Camera::deserialize(Json::Value& root)
 {
 	name = root.get("name", "Camera").asString();
+	cameraTarget = JsonSerializer::deserializeVec3(root["cameraTarget"]);
+	Position = JsonSerializer::deserializeVec3(root["Position"]);
+	Front = JsonSerializer::deserializeVec3(root["Front"]);
+	Up = JsonSerializer::deserializeVec3(root["Up"]);
+	Right = JsonSerializer::deserializeVec3(root["Right"]);
+
+	Yaw = root["Yaw"].asFloat();
+	Pitch = root["Pitch"].asFloat();
+	fov = root.get("fov", 60).asFloat();
+	zNear = root.get("zNear", 0.1f).asFloat();
+	zFar = root.get("zFar", 100.0f).asFloat();
+
+	cameraMode = static_cast<CameraMode>(root["cameraMode"].asInt());
 }
 
 void Camera::update()

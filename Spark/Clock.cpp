@@ -6,6 +6,7 @@ void Clock::tick()
 {
 	static double lastTime;
 	deltaTime = glfwGetTime() - lastTime;
+	if (deltaTime > 1.0f / 60.0f) deltaTime = 1.0f / 60.0f;
 	lastTime = glfwGetTime();
 }
 

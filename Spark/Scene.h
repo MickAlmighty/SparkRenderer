@@ -16,6 +16,7 @@ private:
 	std::shared_ptr<GameObject> root{};
 	std::weak_ptr<GameObject> gameObjectToPreview;
 	std::shared_ptr<Camera> camera{};
+	bool cameraMovement = false;
 public:
 	std::list < std::function<void()> > toRemove;
 	Scene(std::string&& sceneName);

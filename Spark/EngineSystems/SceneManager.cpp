@@ -95,7 +95,12 @@ void SceneManager::drawMainMenuGui()
 		}
 		if (ImGui::BeginMenu("SceneManager"))
 		{
-			ImGui::Text("Current Scene:"); ImGui::SameLine(); ImGui::Text(current_scene->name.c_str());
+			std::string menuName = "Current Scene: " + current_scene->name;
+			if (ImGui::BeginMenu(menuName.c_str()))
+			{
+				ImGui::MenuItem("Camera Movement", NULL, &current_scene->cameraMovement);
+				ImGui::EndMenu();
+			}
 			if(ImGui::Button("Save Current Scene"))
 			{
 				JsonSerializer::writeToFile("scene.json",current_scene->serialize());

@@ -3,13 +3,15 @@
 #include <fstream>
 #include <json/reader.h>
 #include <json/writer.h>
+#include <filesystem>
+
 #include <GameObject.h>
 #include <ModelMesh.h>
-#include <filesystem>
 #include <ISerializable.h>
-#include "MeshPlane.h"
-#include "TerrainGenerator.h"
-#include "ActorAI.h"
+#include <MeshPlane.h>
+#include <TerrainGenerator.h>
+#include <ActorAI.h>
+#include <Camera.h>
 
 std::map<std::shared_ptr<ISerializable>, int> JsonSerializer::serializedObjects;
 
@@ -98,8 +100,6 @@ Json::Value JsonSerializer::serialize(const std::shared_ptr<ISerializable> objTo
 	return root;
 }
 
-
-
 std::shared_ptr<ISerializable> JsonSerializer::deserialize(Json::Value& root)
 {
 	int id = root["id"].asInt();
@@ -126,6 +126,9 @@ std::shared_ptr<ISerializable> JsonSerializer::deserialize(Json::Value& root)
 		break;
 	case SerializableType::SActorAI:
 		deserialized = make<ActorAI>();
+		break;
+	case SerializableType::SCamera:
+		deserialized = make<Camera>();
 		break;
 	default: 
 		throw std::exception("Unsupported SerializableType encountered!");;

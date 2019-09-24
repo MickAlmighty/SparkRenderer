@@ -9,8 +9,9 @@ private:
 	float perlinDivider = 1.0f;
 	float perlinTimeStep = 1.0f;
 	Texture generatedTerrain{};
-public:
 	std::vector<glm::vec3> perlinValues;
+public:
+	std::vector<glm::vec3> getPerlinValues();
 	int terrainSize = 20;
 
 	SerializableType getSerializableType() override;
@@ -23,6 +24,6 @@ public:
 	~TerrainGenerator();
 
 	Texture generateTerrain();
-	void updateTerrain();
+	void updateTerrain(std::vector<glm::vec3> newPerlinValues) const;
 };
 

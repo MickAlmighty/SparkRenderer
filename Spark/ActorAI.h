@@ -2,51 +2,39 @@
 #define ACTOR_AI_H
 #include <Component.h>
 #include <glm/glm.hpp>
+#include <deque>
 
 class Node
 {
 public:
-	Node() = default;
-	Node(glm::vec2 pos)
-	{
-		position = pos;
-	};
-	~Node() = default;
-	Node* parent = nullptr;
-	glm::vec2 position{};
+	std::weak_ptr<Node> parent;
+	glm::ivec2 position{};
 
-	float distanceToEndPoint(glm::vec2 endPoint) const
-	{
-		return glm::distance(position, endPoint);
-	}
-	std::list<Node*> getNeighbors() const
-	{
-		std::list<Node*> neighbors;
-		if (position.x - 1 >= 0)
-			neighbors.push_back(new Node(glm::vec2(position.x - 1, position.y)));
-		if (position.x + 1 <= 20)
-			neighbors.push_back(new Node(glm::vec2(position.x + 1, position.y)));
-		if (position.y - 1 >= 0)
-			neighbors.push_back(new Node(glm::vec2(position.x, position.y - 1)));
-		if (position.y + 1 <= 20)
-			neighbors.push_back(new Node(glm::vec2(position.x, position.y + 1)));
-		return neighbors;
-	}
+	float distanceToEndPoint(glm::vec2 endPoint) const;
+	std::list<std::shared_ptr<Node>> getNeighbors() const;
 	void drawReturnPath(std::vector<glm::vec3>& perlinValues) const;
+	void getPath(std::deque<glm::vec2>& path) const;
+	Node() = default;
+	Node(glm::vec2 pos);
+	~Node();
 };
 
 class ActorAI : public Component
 {
 	glm::ivec2 startPos{};
 	glm::ivec2 endPos{};
-	std::multimap<float, Node*> nodesToProcess;
-	std::list<Node*> processedNodes;
-	Node map[20][20] = {};
+	float timer = 0.0f;
+	std::multimap<float, std::shared_ptr<Node>> nodesToProcess;
+	std::list<std::shared_ptr<Node>> processedNodes;
+	bool isTraveling = false;
+	std::deque<glm::vec2> path;
+	std::vector<bool> nodesPassed;
 public:
-	void findPath();
-	void createMap();
-	Node* getTheNearestNodeFromOpen();
-	bool isNodeClosed(Node* node);
+	std::deque<glm::vec2> findPath();
+	std::shared_ptr<Node> getTheNearestNodeFromOpen();
+	bool isNodeClosed(std::shared_ptr<Node> node);
+	void walkToEndOfThePath(std::deque<glm::vec2>& path);
+
 	SerializableType getSerializableType() override;
 	Json::Value serialize() override;
 	void deserialize(Json::Value& root) override;
