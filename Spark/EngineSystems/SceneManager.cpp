@@ -101,11 +101,11 @@ void SceneManager::drawMainMenuGui()
 				ImGui::MenuItem("Camera Movement", NULL, &current_scene->cameraMovement);
 				ImGui::EndMenu();
 			}
-			if(ImGui::Button("Save Current Scene"))
+			if(ImGui::MenuItem("Save Current Scene"))
 			{
-				JsonSerializer::writeToFile("scene.json",current_scene->serialize());
+				JsonSerializer::writeToFile("scene.json", current_scene->serialize());
 			}
-			if (ImGui::Button("Load main scene"))
+			if (ImGui::MenuItem("Load main scene"))
 			{
 				Json::Value root = JsonSerializer::readFromFile("scene.json");
 				current_scene->deserialize(root);

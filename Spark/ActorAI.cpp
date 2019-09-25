@@ -4,6 +4,7 @@
 #include "TerrainGenerator.h"
 #include <deque>
 #include "Clock.h"
+#include <glm/gtc/random.inl>
 
 float Node::distanceToEndPoint(glm::vec2 endPoint) const
 {
@@ -59,14 +60,12 @@ Node::~Node()
 	//std::cout << "Node destroyed" << std::endl;
 }
 
-std::deque<std::pair<bool, glm::vec2>> ActorAI::findPath()
+void ActorAI::findPath()
 {
-	bool isPathFound = false;
-	glm::vec2 finish = endPos;
-	
-	nodesToProcess.emplace(0, new Node(startPos));
+	path.clear();
+	nodesToProcess.emplace(0, std::make_shared<Node>(startPos));
 	std::shared_ptr<Node> finishNode = nullptr;
-	while (!isPathFound)
+	while (true)
 	{
 		if (nodesToProcess.empty())
 		{
@@ -78,7 +77,6 @@ std::deque<std::pair<bool, glm::vec2>> ActorAI::findPath()
 		if(closedNode->position == endPos)
 		{
 			finishNode = closedNode;
-			isPathFound = true;
 			break;
 		}
 		processedNodes.push_back(closedNode);
@@ -95,7 +93,6 @@ std::deque<std::pair<bool, glm::vec2>> ActorAI::findPath()
 
 		}
 	}
-	std::deque<std::pair<bool, glm::vec2>> path;
 	if(finishNode)
 	{
 		auto perlinValues = getGameObject()->getComponent<TerrainGenerator>()->getPerlinValues();
@@ -105,7 +102,6 @@ std::deque<std::pair<bool, glm::vec2>> ActorAI::findPath()
 	}
 	nodesToProcess.clear();
 	processedNodes.clear();
-	return path;
 }
 
 std::shared_ptr<Node> ActorAI::getTheNearestNodeFromOpen()
@@ -135,10 +131,11 @@ void ActorAI::walkToEndOfThePath()
 	if (path.empty())
 		return;
 	
-	const auto wayPoint_it = std::find_if(path.begin(), path.end(), [](const std::pair<bool, glm::vec2>& p)
-	{
-		return !p.first;
-	});
+	const auto wayPoint_it = std::find_if(path.begin(), path.end(), 
+		[](const std::pair<bool, glm::vec2>& p)
+		{
+			return !p.first;
+		});
 	if(wayPoint_it == path.end())
 	{
 		path.clear();
@@ -166,7 +163,7 @@ void ActorAI::walkToEndOfThePath()
 				const glm::mat4 worldMatrix = getGameObject()->getParent()->transform.world.getMatrix();
 
 				const glm::vec3 direction = glm::normalize(pointOnPath - position);
-				const glm::vec3 updatedWorldPosition = position + direction * static_cast<float>(Clock::getDeltaTime());
+				const glm::vec3 updatedWorldPosition = position + direction * static_cast<float>(Clock::getDeltaTime()) * movementSpeed;
 				const glm::vec4 localPosition = glm::inverse(worldMatrix) * glm::vec4(updatedWorldPosition, 1);
 				getGameObject()->transform.local.setPosition(localPosition);
 				break;
@@ -184,12 +181,14 @@ Json::Value ActorAI::serialize()
 {
 	Json::Value root;
 	root["name"] = name;
+	root["movementSpeed"] = movementSpeed;
 	return root;
 }
 
 void ActorAI::deserialize(Json::Value& root)
 {
 	name = root.get("name", "ActorAI").asString();
+	movementSpeed = root.get("movementSpeed", 1.0f).asFloat();
 }
 
 void ActorAI::update()
@@ -220,7 +219,16 @@ void ActorAI::update()
 	{
 		startPos.y = static_cast<int>(pos.z + 1);
 	}
-	
+
+	if(!isTraveling)
+	{
+		endPos = { static_cast<int>(glm::linearRand(0.0f, 20.0f)), static_cast<int>(glm::linearRand(0.0f, 20.0f)) };
+		const float measureStart = glfwGetTime();
+		findPath();
+		timer = glfwGetTime() - measureStart;
+		isTraveling = true;
+	}
+
 	if(isTraveling)
 	{
 		walkToEndOfThePath();
@@ -247,11 +255,12 @@ void ActorAI::drawGUI()
 
 	ImGui::DragInt2("startPos", &startPos.x);
 	ImGui::DragInt2("endPos", &endPos.x);
+	ImGui::DragFloat("movementSpeed", &movementSpeed, 0.1f);
 	ImGui::InputFloat("PathFindingTimeDuration", &timer, 0, 0, "%.8f");
 	if(ImGui::Button("FindPath"))
 	{
 		const float measureStart = glfwGetTime();
-		path = findPath();
+		findPath();
 		timer = glfwGetTime() - measureStart;
 		isTraveling = true;
 	}

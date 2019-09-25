@@ -24,12 +24,13 @@ class ActorAI : public Component
 	glm::ivec2 startPos{};
 	glm::ivec2 endPos{};
 	float timer = 0.0f;
+	float movementSpeed = 1.0f;
 	std::multimap<float, std::shared_ptr<Node>> nodesToProcess;
 	std::list<std::shared_ptr<Node>> processedNodes;
 	bool isTraveling = false;
 	std::deque<std::pair<bool,glm::vec2>> path;
 public:
-	std::deque<std::pair<bool, glm::vec2>> findPath();
+	void findPath();
 	std::shared_ptr<Node> getTheNearestNodeFromOpen();
 	bool isNodeClosed(std::shared_ptr<Node> node);
 	void walkToEndOfThePath();
