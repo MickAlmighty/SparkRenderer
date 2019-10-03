@@ -1,9 +1,12 @@
 #ifndef HID_H
 #define HID_H
 
+#include <map>
+
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
-#include <map>
+
+namespace spark {
 
 struct Mouse
 {
@@ -26,4 +29,5 @@ public:
 	static bool isKeyHeld(int key);
 };
 
+}
 #endif

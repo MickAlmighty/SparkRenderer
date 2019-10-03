@@ -1,8 +1,11 @@
 #include "MeshPlane.h"
-#include "EngineSystems/SparkRenderer.h"
-#include <GameObject.h>
-#include "GUI/SparkGui.h"
+
 #include "EngineSystems/ResourceManager.h"
+#include "EngineSystems/SparkRenderer.h"
+#include "GameObject.h"
+#include "GUI/SparkGui.h"
+
+namespace spark {
 
 MeshPlane::MeshPlane(std::string&& newName) : Component(newName)
 {
@@ -18,11 +21,11 @@ void MeshPlane::setup()
 		{{-1.0f, -1.0f, 0.0f},	{0.0f, 0.0f}}
 	};
 
-	indices = { 0,1,2, 2,3,0};
+	indices = { 0,1,2, 2,3,0 };
 
 	glCreateVertexArrays(1, &vao);
 	glBindVertexArray(vao);
-	
+
 	glCreateBuffers(1, &vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(QuadVertex), vertices.data(), GL_STATIC_DRAW);
@@ -94,7 +97,7 @@ Json::Value MeshPlane::serialize()
 {
 	Json::Value root;
 	root["name"] = name;
-	for(const auto& tex_it : textures)
+	for (const auto& tex_it : textures)
 	{
 		root[std::to_string(static_cast<int>(tex_it.first))] = tex_it.second.path;
 	}
@@ -138,7 +141,7 @@ void MeshPlane::drawGUI()
 		ImGui::Text("MeshPlane");
 		ImGui::EndMenuBar();
 	}
-	
+
 	ImGui::Text("Vertices:"); ImGui::SameLine(); ImGui::Text(std::to_string(vertices.size()).c_str());
 	ImGui::Text("Indices:"); ImGui::SameLine(); ImGui::Text(std::to_string(indices.size()).c_str());
 	ImGui::Text("Textures:"); ImGui::SameLine(); ImGui::Text(std::to_string(textures.size()).c_str());
@@ -160,4 +163,6 @@ void MeshPlane::drawGUI()
 	ImGui::EndChild();
 	ImGui::PopStyleVar();
 	ImGui::PopID();
+}
+
 }

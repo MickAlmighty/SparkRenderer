@@ -3,7 +3,10 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <Component.h>
+
+#include "Component.h"
+
+namespace spark {
 
 // Default camera values
 const float YAW = -90.0f;
@@ -33,7 +36,7 @@ public:
 	glm::vec3 Front{};
 	glm::vec3 Up{};
 	glm::vec3 Right{};
-	glm::vec3 WorldUp{0.0f, 1.0f, 0.0f};
+	glm::vec3 WorldUp{ 0.0f, 1.0f, 0.0f };
 	// Euler Angles
 	float Yaw{ YAW };
 	float Pitch{ PITCH };
@@ -50,7 +53,7 @@ public:
 
 	Camera(std::string&& newName = "Camera");
 	Camera(glm::vec3 position, glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f),
-	       float yaw = YAW, float pitch = PITCH);
+		float yaw = YAW, float pitch = PITCH);
 
 	Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch);
 
@@ -62,7 +65,7 @@ public:
 	void ProcessKeyboard();
 	void processKeyboardFirstPerson();
 	void processKeyboardThirdPerson();
-	
+
 	void ProcessMouseMovement(float xoffset, float yoffset, bool constrainPitch = true);
 	void processMouseMovementThirdPerson(float xoffset, float yoffset);
 
@@ -76,4 +79,5 @@ public:
 	void drawGUI() override;
 };
 
+}
 #endif

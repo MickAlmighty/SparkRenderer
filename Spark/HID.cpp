@@ -1,5 +1,8 @@
-#include <HID.h>
-#include <Spark.h>
+#include "HID.h"
+
+#include "Spark.h"
+
+namespace spark {
 
 Mouse HID::mouse{};
 std::map<int, int> HID::keyStates;
@@ -36,7 +39,7 @@ void HID::key_callback(GLFWwindow* window, int key, int scancode, int action, in
 void HID::cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
 {
 	static double lastXpos = Spark::WIDTH * 0.5f, lastYPos = Spark::HEIGHT * 0.5f;
-	
+
 	mouse.direction.x = static_cast<float>(xpos - lastXpos);
 	mouse.direction.y = static_cast<float>(ypos - lastYPos);
 	//mouse.direction *= Clock::getDeltaTime();
@@ -60,7 +63,7 @@ void HID::clearStates()
 bool HID::isKeyPressed(int key)
 {
 	const auto key_it = keyStates.find(key);
-	if(key_it != keyStates.end())
+	if (key_it != keyStates.end())
 	{
 		return key_it->second == GLFW_PRESS;
 	}
@@ -85,4 +88,6 @@ bool HID::isKeyHeld(int key)
 		return key_it->second == GLFW_REPEAT;
 	}
 	return false;
+}
+
 }

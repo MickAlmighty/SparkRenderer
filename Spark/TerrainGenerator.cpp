@@ -1,9 +1,13 @@
-#include <TerrainGenerator.h>
-#include <GameObject.h>
-#include <MeshPlane.h>
+#include "TerrainGenerator.h"
+
 #include <glm/gtc/noise.hpp>
 #include <glm/gtc/random.hpp>
+
 #include "EngineSystems/ResourceManager.h"
+#include "GameObject.h"
+#include "MeshPlane.h"
+
+namespace spark {
 
 std::vector<glm::vec3> TerrainGenerator::getPerlinValues()
 {
@@ -55,11 +59,11 @@ void TerrainGenerator::drawGUI()
 	ImGui::DragFloat("PerlinDivider", &perlinDivider, 0.003f);
 	ImGui::DragFloat("PerlinTimeStep", &perlinTimeStep, 0.1f);
 
-	if(ImGui::Button("Generate Terrain"))
+	if (ImGui::Button("Generate Terrain"))
 	{
 		Texture tex = generateTerrain();
 		auto meshPlane = getGameObject()->getComponent<MeshPlane>();
-		if(meshPlane != nullptr)
+		if (meshPlane != nullptr)
 		{
 			meshPlane->setTexture(TextureTarget::DIFFUSE_TARGET, tex);
 		}
@@ -78,9 +82,9 @@ Texture TerrainGenerator::generateTerrain()
 	perlinValues.clear();
 	float y = glm::linearRand(20.0f, 100.0f);
 	float x = y;
-	for(int i = 0; i < width; ++i)
+	for (int i = 0; i < width; ++i)
 	{
-		for(int j = 0; j < height; ++j)
+		for (int j = 0; j < height; ++j)
 		{
 			float perlinValue = glm::perlin(glm::vec2(x / perlinDivider, y / perlinDivider));
 			glm::vec3 perlinNoise{ glm::clamp(perlinValue, 0.0f, 1.0f), 0, 0 };
@@ -89,7 +93,7 @@ Texture TerrainGenerator::generateTerrain()
 		}
 		x += perlinTimeStep;
 	}
-	
+
 	updateTerrain(perlinValues);
 	generatedTerrain.path = "GeneratedTerrain";
 	return generatedTerrain;
@@ -119,5 +123,4 @@ TerrainGenerator::~TerrainGenerator()
 {
 	glDeleteTextures(1, &generatedTerrain.ID);
 }
-
-
+}

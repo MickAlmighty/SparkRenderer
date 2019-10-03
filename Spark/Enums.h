@@ -1,16 +1,20 @@
 #ifndef ENUMS_H
 #define ENUMS_H
 
-enum class ShaderType
+namespace spark {
+
+enum class ShaderType : uint16_t
 {
 	DEFAULT_SHADER = 0,
 	POSTPROCESSING_SHADER,
 	SCREEN_SHADER
 };
 
-enum class TextureTarget
+enum class TextureTarget : uint16_t
 {
 	DIFFUSE_TARGET = 1,
 	NORMAL_TARGET
 };
+
+}
 #endif

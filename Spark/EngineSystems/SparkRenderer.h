@@ -3,12 +3,13 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include <Structs.h>
-#include <Shader.h>
-#include <ModelMesh.h>
-#include <Camera.h>
-#include <functional>
+
 #include "Enums.h"
+#include "ModelMesh.h"
+#include "Structs.h"
+#include "Shader.h"
+
+namespace spark {
 
 class SparkRenderer
 {
@@ -17,7 +18,7 @@ private:
 
 	GLuint mainFramebuffer{}, colorTexture{}, positionTexture{}, normalsTexture{};
 	GLuint postprocessingFramebuffer{}, postProcessingTexture{};
-	
+
 	std::weak_ptr<Shader> mainShader;
 	std::weak_ptr<Shader> screenShader;
 	std::weak_ptr<Shader> postprocessingShader;
@@ -35,12 +36,12 @@ private:
 public:
 	static GLFWwindow* window;
 	static std::map<ShaderType, std::list<std::function<void(std::shared_ptr<Shader>&)>>> renderQueue;
-	
+
 	static SparkRenderer* getInstance();
 	static void resizeWindow(GLuint width, GLuint height);
 	SparkRenderer(const SparkRenderer&) = delete;
 	SparkRenderer operator=(const SparkRenderer&) = delete;
-	
+
 	static void initOpenGL();
 	void setup();
 	void renderPass();
@@ -50,5 +51,5 @@ public:
 
 	static void error_callback(int error, const char* description);
 };
-
+}
 #endif

@@ -4,6 +4,8 @@
 #include <glm/glm.hpp>
 #include <json/value.h>
 
+namespace spark {
+
 class LocalTransform
 {
 private:
@@ -36,4 +38,6 @@ public:
 	void setRotationRadians(float x, float y, float z);
 	void setRotationRadians(glm::vec3 rotationRadians);
 };
+
+}
 #endif

@@ -1,6 +1,8 @@
 #ifndef CLOCK_H
 #define CLOCK_H
 
+namespace spark {
+	
 class Clock
 {
 private:
@@ -13,4 +15,5 @@ public:
 	static int getFPS();
 };
 
+}
 #endif

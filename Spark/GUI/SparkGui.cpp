@@ -1,20 +1,23 @@
-#include <GUI/SparkGui.h>
-#include "EngineSystems/SparkRenderer.h"
+#include "GUI/SparkGui.h"
+
 #include "JsonSerializer.h"
 #include "EngineSystems/ResourceManager.h"
+#include "EngineSystems/SparkRenderer.h"
+
+namespace spark {
 
 std::shared_ptr<Component> SparkGui::addComponent()
 {
 	static bool componentWindowAddition = false;
 	std::shared_ptr<Component> component = nullptr;
-	if(ImGui::Button("Add Component"))
+	if (ImGui::Button("Add Component"))
 	{
 		componentWindowAddition = true;
 	}
 
-	if (componentWindowAddition) 
+	if (componentWindowAddition)
 	{
-		
+
 		if (ImGui::Begin("Components", &componentWindowAddition))
 		{
 			for (const auto& componentType : componentCreation)
@@ -71,7 +74,7 @@ std::pair<std::string, std::vector<Mesh>> SparkGui::getMeshes()
 Texture SparkGui::getTexture()
 {
 	static bool textureWindow = false;
-	Texture tex{0, ""};
+	Texture tex{ 0, "" };
 	if (ImGui::Button("Add Texture"))
 	{
 		textureWindow = true;
@@ -98,4 +101,6 @@ Texture SparkGui::getTexture()
 		ImGui::End();
 	}
 	return tex;
+}
+
 }

@@ -1,9 +1,13 @@
 #ifndef SCENE_H
 #define SCENE_H
+
 #include <memory>
 #include <list>
 #include <functional>
+
 #include <json/value.h>
+
+namespace spark {
 
 class GameObject;
 class Component;
@@ -34,4 +38,5 @@ public:
 	void drawTreeNode(std::shared_ptr<GameObject> node, bool isRootNode);
 };
 
+}
 #endif

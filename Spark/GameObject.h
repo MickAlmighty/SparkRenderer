@@ -3,8 +3,11 @@
 
 #include <list>
 #include <memory>
-#include <Structs.h>
-#include <ISerializable.h>
+
+#include "ISerializable.h"
+#include "Structs.h"
+
+namespace spark {
 
 class Component;
 class GameObject : public std::enable_shared_from_this<GameObject>, public ISerializable
@@ -56,7 +59,7 @@ public:
 			T* comp_ptr = dynamic_cast<T*>(component.get());
 			return comp_ptr != nullptr;
 		});
-		if(component_it != components.end())
+		if (component_it != components.end())
 		{
 			return std::dynamic_pointer_cast<T>(*component_it);
 		}
@@ -68,7 +71,7 @@ public:
 	{
 		auto component_it = std::find_if(std::begin(components), std::end(components), [&name](std::shared_ptr<Component> component)
 		{
-			if(dynamic_cast<T*>(component.get()))
+			if (dynamic_cast<T*>(component.get()))
 			{
 				return component->name == name;
 			}
@@ -103,4 +106,5 @@ public:
 	}*/
 };
 
+}
 #endif

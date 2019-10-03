@@ -9,6 +9,9 @@ namespace std {
 		class path;
 	}
 }
+
+namespace spark {
+
 class ISerializable;
 
 class JsonSerializer
@@ -44,4 +47,5 @@ public:
 template <class T>
 std::shared_ptr<T> make() { return std::make_shared<T>(); };
 
+}
 #endif

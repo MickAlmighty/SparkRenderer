@@ -1,7 +1,11 @@
 #ifndef MODEL_MESH_H
 #define MODEL_MESH_H
+
 #include <vector>
-#include <Component.h>
+
+#include "Component.h"
+
+namespace spark {
 
 class Mesh;
 class ModelMesh : public Component
@@ -22,4 +26,5 @@ public:
 	void deserialize(Json::Value& root) override;
 };
 
+}
 #endif

@@ -1,11 +1,15 @@
-#pragma once
-#include <Component.h>
+#ifndef TERRAIN_GENERATOR_H
+#define TERRAIN_GENERATOR_H
+
+#include "Component.h"
 #include "Structs.h"
+
+namespace spark {
 
 class TerrainGenerator : public Component
 {
 private:
-	
+
 	float perlinDivider = 1.0f;
 	float perlinTimeStep = 1.0f;
 	Texture generatedTerrain{};
@@ -27,3 +31,6 @@ public:
 	void updateTerrain(std::vector<glm::vec3> newPerlinValues) const;
 };
 
+}
+
+#endif

@@ -1,8 +1,12 @@
-#include <Shader.h>
+#include "Shader.h"
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
+
 #include <glm/gtc/type_ptr.hpp>
+
+namespace spark {
 
 Shader::Shader(const std::string& vertexShaderPath, const std::string& fragmentShaderPath)
 {
@@ -85,7 +89,7 @@ void Shader::linkProgram(GLuint vertexShader, GLuint fragmentShader)
 	glAttachShader(ID, vertexShader);
 	glAttachShader(ID, fragmentShader);
 	glLinkProgram(ID);
-	
+
 	GLint success;
 	GLchar infoLog[512];
 	glGetProgramiv(ID, GL_LINK_STATUS, &success);
@@ -145,4 +149,6 @@ void Shader::setMat4(const std::string& name, glm::mat4 value) const
 {
 	GLuint location = glGetUniformLocation(ID, name.c_str());
 	glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(value));
+}
+
 }

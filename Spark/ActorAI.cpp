@@ -1,10 +1,15 @@
 #include "ActorAI.h"
-#include <GameObject.h>
+
 #include <iostream>
-#include "TerrainGenerator.h"
 #include <deque>
-#include "Clock.h"
+
 #include <glm/gtc/random.inl>
+
+#include "Clock.h"
+#include "GameObject.h"
+#include "TerrainGenerator.h"
+
+namespace spark {
 
 float Node::distanceToEndPoint(glm::vec2 endPoint) const
 {
@@ -74,7 +79,7 @@ void ActorAI::findPath()
 		}
 
 		const auto& closedNode = getTheNearestNodeFromOpen();
-		if(closedNode->position == endPos)
+		if (closedNode->position == endPos)
 		{
 			finishNode = closedNode;
 			break;
@@ -93,7 +98,7 @@ void ActorAI::findPath()
 
 		}
 	}
-	if(finishNode)
+	if (finishNode)
 	{
 		auto perlinValues = getGameObject()->getComponent<TerrainGenerator>()->getPerlinValues();
 		finishNode->drawReturnPath(perlinValues);
@@ -107,7 +112,7 @@ void ActorAI::findPath()
 std::shared_ptr<Node> ActorAI::getTheNearestNodeFromOpen()
 {
 	const auto node_it = std::begin(nodesToProcess);
-	if(node_it != std::end(nodesToProcess))
+	if (node_it != std::end(nodesToProcess))
 	{
 		std::shared_ptr<Node> n = node_it->second;
 		nodesToProcess.erase(node_it);
@@ -127,16 +132,16 @@ bool ActorAI::isNodeClosed(std::shared_ptr<Node> node)
 
 void ActorAI::walkToEndOfThePath()
 {
-	
+
 	if (path.empty())
 		return;
-	
-	const auto wayPoint_it = std::find_if(path.begin(), path.end(), 
+
+	const auto wayPoint_it = std::find_if(path.begin(), path.end(),
 		[](const std::pair<bool, glm::vec2>& p)
-		{
-			return !p.first;
-		});
-	if(wayPoint_it == path.end())
+	{
+		return !p.first;
+	});
+	if (wayPoint_it == path.end())
 	{
 		path.clear();
 		isTraveling = false;
@@ -145,16 +150,16 @@ void ActorAI::walkToEndOfThePath()
 
 	for (auto& wayPoint : path)
 	{
-		if(wayPoint.first)
+		if (wayPoint.first)
 		{
 			continue;
 		}
 
-		if(!wayPoint.first)
+		if (!wayPoint.first)
 		{
 			const glm::vec3 position = getGameObject()->transform.world.getPosition();
 			glm::vec3 pointOnPath = glm::vec3(wayPoint.second.x, 0.0f, wayPoint.second.y);
-			if(glm::distance(position, pointOnPath) < 0.01f)
+			if (glm::distance(position, pointOnPath) < 0.01f)
 			{
 				wayPoint.first = true;
 			}
@@ -220,7 +225,7 @@ void ActorAI::update()
 		startPos.y = static_cast<int>(pos.z + 1);
 	}
 
-	if(!isTraveling)
+	if (!isTraveling)
 	{
 		endPos = { static_cast<int>(glm::linearRand(0.0f, 20.0f)), static_cast<int>(glm::linearRand(0.0f, 20.0f)) };
 		const float measureStart = glfwGetTime();
@@ -229,11 +234,11 @@ void ActorAI::update()
 		isTraveling = true;
 	}
 
-	if(isTraveling)
+	if (isTraveling)
 	{
 		walkToEndOfThePath();
 	}
-	
+
 }
 
 void ActorAI::fixedUpdate()
@@ -257,7 +262,7 @@ void ActorAI::drawGUI()
 	ImGui::DragInt2("endPos", &endPos.x);
 	ImGui::DragFloat("movementSpeed", &movementSpeed, 0.1f);
 	ImGui::InputFloat("PathFindingTimeDuration", &timer, 0, 0, "%.8f");
-	if(ImGui::Button("FindPath"))
+	if (ImGui::Button("FindPath"))
 	{
 		const float measureStart = glfwGetTime();
 		findPath();
@@ -278,4 +283,6 @@ ActorAI::ActorAI(std::string&& newName) : Component(newName)
 
 ActorAI::~ActorAI()
 {
+}
+
 }

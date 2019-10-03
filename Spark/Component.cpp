@@ -1,8 +1,9 @@
-#include <Component.h>
+#include "Component.h"
 
-Component::Component(std::string& componentName)
+namespace spark
 {
-	name = componentName;
+	Component::Component(std::string& componentName)
+	{
+		name = componentName;
+	}
 }
-
-

@@ -1,9 +1,13 @@
 #ifndef COMPONENT_H
 #define COMPONENT_H
-#include "GUI/ImGui/imgui.h"
-#include <ISerializable.h>
-#include <EngineSystems/SceneManager.h>
-#include <Scene.h>
+
+#include <GUI/ImGui/imgui.h>
+
+#include "EngineSystems/SceneManager.h"
+#include "ISerializable.h"
+#include "Scene.h"
+
+namespace spark {
 
 class GameObject;
 class Component : public ISerializable
@@ -34,4 +38,5 @@ public:
 	};
 };
 
+}
 #endif

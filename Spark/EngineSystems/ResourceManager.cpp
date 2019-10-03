@@ -1,26 +1,29 @@
-#include <EngineSystems/ResourceManager.h>
-#include <ResourceLoader.h>
-#include <Spark.h>
-#include <Shader.h>
-#include <Mesh.h>
+#include "EngineSystems/ResourceManager.h"
+
+#include "Mesh.h"
+#include "ResourceLoader.h"
+#include "Shader.h"
+#include "Spark.h"
+
+namespace spark {
 
 void ResourceManager::addTexture(Texture tex)
 {
-	auto tex_it = std::find_if(std::begin(textures), std::end(textures), [&tex](const Texture& texture )
+	auto tex_it = std::find_if(std::begin(textures), std::end(textures), [&tex](const Texture& texture)
 	{
 		return texture.path == tex.path;
 	});
-	if(tex_it != std::end(textures))
+	if (tex_it != std::end(textures))
 	{
 		textures.erase(tex_it);
-		
+
 	}
 	textures.push_back(tex);
 }
 
 Texture ResourceManager::findTexture(const std::string&& path)
 {
-	for(auto& tex_it : textures)
+	for (auto& tex_it : textures)
 	{
 		if (tex_it.path == path)
 			return tex_it;
@@ -67,7 +70,7 @@ std::vector<Texture> ResourceManager::getTextures()
 ResourceManager* ResourceManager::getInstance()
 {
 	static ResourceManager* resource_manager = nullptr;
-	if(resource_manager == nullptr)
+	if (resource_manager == nullptr)
 	{
 		resource_manager = new ResourceManager();
 	}
@@ -88,19 +91,21 @@ void ResourceManager::loadResources()
 
 void ResourceManager::cleanup()
 {
-	for(auto& tex_it : textures)
+	for (auto& tex_it : textures)
 	{
 		glDeleteTextures(1, &tex_it.ID);
 	}
 	textures.clear();
-	for(auto& model_it: models)
+	for (auto& model_it : models)
 	{
 		//std::vector<Mesh> meshes = model_it.second;
-		for(Mesh& mesh : model_it.second)
+		for (Mesh& mesh : model_it.second)
 		{
 			mesh.cleanup();
 		}
 	}
 	models.clear();
 	shaders.clear();
+}
+
 }

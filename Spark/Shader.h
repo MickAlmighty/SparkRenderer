@@ -1,8 +1,12 @@
 #ifndef SHADER_H
 #define SHADER_H
-#include <glad/glad.h>
+
 #include <string>
+
+#include <glad/glad.h>
 #include <glm/glm.hpp>
+
+namespace spark {
 
 class Shader
 {
@@ -14,7 +18,7 @@ public:
 	GLuint compileVertexShader(const char* vertexShaderSource);
 	GLuint compileFragmentShader(const char* fragmentShaderSource);
 	void linkProgram(GLuint vertexShader, GLuint fragmentShader);
-	
+
 	void use();
 
 	void setBool(const std::string &name, bool value) const;
@@ -25,4 +29,5 @@ public:
 	void setMat4(const std::string &name, glm::mat4 value) const;
 };
 
+}
 #endif

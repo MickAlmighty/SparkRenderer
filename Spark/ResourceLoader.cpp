@@ -1,10 +1,14 @@
-#include <ResourceLoader.h>
-#include <EngineSystems/ResourceManager.h>
+#include "ResourceLoader.h"
+
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include <stb_image/stb_image.h>
-#include <Mesh.h>
+
+#include "EngineSystems/ResourceManager.h"
+#include "Mesh.h"
+
+namespace spark {
 
 using Path = std::filesystem::path;
 
@@ -13,7 +17,7 @@ std::map<std::string, std::vector<Mesh>> ResourceLoader::loadModels(std::filesys
 	std::map<std::string, std::vector<Mesh>> models;
 	for (auto& path_it : std::filesystem::recursive_directory_iterator(modelDirectory))
 	{
-		if(checkExtension(path_it.path().extension().string(), ModelMeshExtensions))
+		if (checkExtension(path_it.path().extension().string(), ModelMeshExtensions))
 		{
 			models.emplace(path_it.path().string(), loadModel(path_it.path()));
 		}
@@ -27,7 +31,7 @@ std::vector<Mesh> ResourceLoader::loadModel(const Path& path)
 	Assimp::Importer importer;
 	const aiScene *scene = importer.ReadFile(path.string(), aiProcessPreset_TargetRealtime_Fast | aiProcess_FlipUVs);
 
-	if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
+	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
 	{
 		throw std::exception(importer.GetErrorString());
 	}
@@ -59,7 +63,7 @@ std::map<TextureTarget, Texture> ResourceLoader::findTextures(const std::filesys
 	for (auto& texture_path : std::filesystem::recursive_directory_iterator(modelDirectory))
 	{
 		size_t size = texture_path.path().string().find("_Diffuse");
-		if( size != std::string::npos)
+		if (size != std::string::npos)
 		{
 			Texture tex = ResourceManager::getInstance()->findTexture(texture_path.path().string());
 			textures.emplace(TextureTarget::DIFFUSE_TARGET, tex);
@@ -139,21 +143,21 @@ Texture ResourceLoader::loadTexture(std::string&& path)
 	unsigned char* pixels = nullptr;
 	pixels = stbi_load(path.c_str(), &tex_width, &tex_height, &nr_channels, 0);
 
-	if(pixels == nullptr )
+	if (pixels == nullptr)
 	{
 		std::string error = "Texture from path: " + path + " cannot be loaded!";
 		throw std::exception(error.c_str());
 	}
 
 	GLenum format{};
-	switch(nr_channels)
+	switch (nr_channels)
 	{
-		case(1): format = GL_RED; break;
-		case(2): format = GL_RG; break;
-		case(3): format = GL_RGB; break;
-		case(4): format = GL_RGBA; break;
+	case(1): format = GL_RED; break;
+	case(2): format = GL_RG; break;
+	case(3): format = GL_RGB; break;
+	case(4): format = GL_RGBA; break;
 	}
-	
+
 	GLuint texture;
 	glCreateTextures(GL_TEXTURE_2D, 1, &texture);
 	glBindTexture(GL_TEXTURE_2D, texture);
@@ -167,5 +171,6 @@ Texture ResourceLoader::loadTexture(std::string&& path)
 
 	stbi_image_free(pixels);
 
-	return {texture, path};
+	return { texture, path };
+}
 }

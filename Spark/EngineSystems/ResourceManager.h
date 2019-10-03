@@ -2,8 +2,11 @@
 #define RESOURCE_MANAGER_H
 
 #include <map>
-#include <Structs.h>
-#include <Enums.h>
+
+#include "Structs.h"
+#include "Enums.h"
+
+namespace spark {
 
 class Mesh;
 class Shader;
@@ -27,4 +30,5 @@ public:
 	void cleanup();
 };
 
+}
 #endif

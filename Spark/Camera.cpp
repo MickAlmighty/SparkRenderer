@@ -1,9 +1,11 @@
-#include <Camera.h>
-#include <Clock.h>
-#include <HID.h>
-#include "Spark.h"
-#include "JsonSerializer.h"
+#include "Camera.h"
 
+#include "JsonSerializer.h"
+#include "Clock.h"
+#include "HID.h"
+#include "Spark.h"
+
+namespace spark {
 
 Camera::Camera(std::string&& newName) : Component(newName)
 {
@@ -12,9 +14,9 @@ Camera::Camera(std::string&& newName) : Component(newName)
 	Zoom = ZOOM;
 }
 
-Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch): Front(glm::vec3(0.0f, 0.0f, -1.0f)),
-                                                                          MovementSpeed(SPEED),
-                                                                          MouseSensitivity(SENSITIVITY), Zoom(ZOOM)
+Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch) : Front(glm::vec3(0.0f, 0.0f, -1.0f)),
+	MovementSpeed(SPEED),
+	MouseSensitivity(SENSITIVITY), Zoom(ZOOM)
 {
 	Position = position;
 	WorldUp = up;
@@ -23,7 +25,7 @@ Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch): Front(
 	updateCameraVectors();
 }
 
-Camera::Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch):
+Camera::Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch) :
 	Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY), Zoom(ZOOM)
 {
 	Position = glm::vec3(posX, posY, posZ);
@@ -54,7 +56,7 @@ void Camera::setProjectionMatrix(float fov, float nearPlane, float farPlane)
 
 void Camera::setCameraTarget(glm::vec3 target)
 {
-	if(cameraMode == CameraMode::ThirdPerson)
+	if (cameraMode == CameraMode::ThirdPerson)
 	{
 		cameraTarget = target;
 	}
@@ -62,11 +64,11 @@ void Camera::setCameraTarget(glm::vec3 target)
 
 void Camera::ProcessKeyboard()
 {
-	if(cameraMode == CameraMode::FirstPerson)
+	if (cameraMode == CameraMode::FirstPerson)
 	{
 		processKeyboardFirstPerson();
 	}
-	if(cameraMode == CameraMode::ThirdPerson)
+	if (cameraMode == CameraMode::ThirdPerson)
 	{
 		processKeyboardThirdPerson();
 	}
@@ -133,7 +135,7 @@ void Camera::processKeyboardThirdPerson()
 void Camera::ProcessMouseMovement(float xoffset, float yoffset, bool constrainPitch)
 {
 	static bool cameraRotation = false;
-	if(HID::isKeyPressed(GLFW_KEY_SPACE))
+	if (HID::isKeyPressed(GLFW_KEY_SPACE))
 	{
 		cameraRotation = !cameraRotation;
 	}
@@ -155,7 +157,7 @@ void Camera::ProcessMouseMovement(float xoffset, float yoffset, bool constrainPi
 			Pitch = -89.0f;
 	}
 
-	if(cameraMode == CameraMode::ThirdPerson)
+	if (cameraMode == CameraMode::ThirdPerson)
 	{
 		processMouseMovementThirdPerson(xoffset, yoffset);
 	}
@@ -169,7 +171,7 @@ void Camera::processMouseMovementThirdPerson(float xoffset, float yoffset)
 
 	const float speed = 10;
 	glm::vec3 finalDirection(0);
-	finalDirection += Right * xoffset ;
+	finalDirection += Right * xoffset;
 	finalDirection += Up * yoffset;
 
 	if (finalDirection != glm::vec3(0))
@@ -191,12 +193,12 @@ void Camera::ProcessMouseScroll(float yoffset)
 
 void Camera::updateCameraVectors()
 {
-	if(cameraMode == CameraMode::FirstPerson)
+	if (cameraMode == CameraMode::FirstPerson)
 	{
 		updateCameraVectorsFirstPerson();
 	}
 
-	if(cameraMode == CameraMode::ThirdPerson)
+	if (cameraMode == CameraMode::ThirdPerson)
 	{
 		updateCameraVectorsThirdPerson();
 	}
@@ -245,7 +247,7 @@ Json::Value Camera::serialize()
 	root["zNear"] = zNear;
 	root["zFar"] = zFar;
 	root["cameraMode"] = static_cast<int>(cameraMode);
-	
+
 	return root;
 }
 
@@ -269,7 +271,7 @@ void Camera::deserialize(Json::Value& root)
 
 void Camera::update()
 {
-	
+
 	if (HID::isKeyPressed(GLFW_KEY_1))
 		cameraMode = CameraMode::FirstPerson;
 	if (HID::isKeyPressed(GLFW_KEY_2))
@@ -284,5 +286,7 @@ void Camera::fixedUpdate()
 
 void Camera::drawGUI()
 {
+
+}
 
 }

@@ -1,7 +1,11 @@
-#include <Mesh.h>
+#include "Mesh.h"
+
 #include <iostream>
-#include <EngineSystems/SparkRenderer.h>
-#include <Shader.h>
+
+#include "EngineSystems/SparkRenderer.h"
+#include "Shader.h"
+
+namespace spark {
 
 Mesh::Mesh(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices, std::map<TextureTarget, Texture>& meshTextures, std::string&& _newName)
 {
@@ -85,4 +89,6 @@ void Mesh::cleanup()
 
 Mesh::~Mesh()
 {
+}
+
 }

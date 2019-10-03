@@ -1,9 +1,13 @@
 #ifndef MESH_PLANE_H
 #define MESH_PLANE_H
+
 #include <vector>
-#include <Structs.h>
-#include <Enums.h>
-#include <Component.h>
+
+#include "Component.h"
+#include "Enums.h"
+#include "Structs.h"
+
+namespace spark {
 
 class Shader;
 class MeshPlane : public Component
@@ -29,4 +33,5 @@ public:
 	void drawGUI() override;
 };
 
+}
 #endif

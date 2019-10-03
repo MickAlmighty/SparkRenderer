@@ -4,6 +4,8 @@
 #include <list>
 #include <memory>
 
+namespace spark {
+
 class Scene;
 class SceneManager
 {
@@ -25,5 +27,7 @@ public:
 	SceneManager() = default;
 	~SceneManager() = default;
 };
+
+}
 
 #endif

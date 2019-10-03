@@ -1,20 +1,21 @@
 #pragma once
 #include <iostream>
-#include <Spark.h>
-#include <Structs.h>
-#include <JsonSerializer.h>
+
+#include "JsonSerializer.h"
+#include "Spark.h"
+#include "Structs.h"
 
 int main()
 {
-	Json::Value initVariables = JsonSerializer::readFromFile("settings.json");
-	
-	InitializationVariables variables;
+	Json::Value initVariables = spark::JsonSerializer::readFromFile("settings.json");
+
+	spark::InitializationVariables variables;
 	variables.deserialize(initVariables);
 	try
 	{
-		Spark::setup(variables);
-		Spark::run();
-		Spark::clean();
+		spark::Spark::setup(variables);
+		spark::Spark::run();
+		spark::Spark::clean();
 	}
 	catch (std::exception& e)
 	{

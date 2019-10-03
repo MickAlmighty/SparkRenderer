@@ -1,10 +1,12 @@
-#include <EngineSystems/SparkRenderer.h>
-#include <EngineSystems/ResourceManager.h>
-#include <EngineSystems/SceneManager.h>
-#include <Spark.h>
-#include <Clock.h>
-#include <HID.h>
+#include "Spark.h"
 
+#include "Clock.h"
+#include "EngineSystems/SparkRenderer.h"
+#include "EngineSystems/ResourceManager.h"
+#include "EngineSystems/SceneManager.h"
+#include "HID.h"
+
+namespace spark {
 
 unsigned int Spark::WIDTH, Spark::HEIGHT;
 std::filesystem::path Spark::pathToModelMeshes;
@@ -17,7 +19,7 @@ void Spark::setup(InitializationVariables& variables)
 	HEIGHT = variables.height;
 	pathToModelMeshes = variables.pathToModels;
 	pathToResources = variables.pathToResources;
-	
+
 	SparkRenderer::initOpenGL();
 	ResourceManager::getInstance()->loadResources();
 	SceneManager::getInstance()->setup();
@@ -27,7 +29,7 @@ void Spark::setup(InitializationVariables& variables)
 
 void Spark::run()
 {
-	while(SparkRenderer::isWindowOpened() && runProgram)
+	while (SparkRenderer::isWindowOpened() && runProgram)
 	{
 		Clock::tick();
 		glfwPollEvents();
@@ -45,4 +47,6 @@ void Spark::clean()
 	SparkRenderer::getInstance()->cleanup();
 	SceneManager::getInstance()->cleanup();
 	ResourceManager::getInstance()->cleanup();
+}
+
 }

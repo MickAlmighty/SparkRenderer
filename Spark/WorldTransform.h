@@ -1,7 +1,10 @@
 #ifndef WORLD_TRANSFORM_H
 #define WORLD_TRANSFORM_H
+
 #include <glm/glm.hpp>
 #include <json/value.h>
+
+namespace spark {
 
 class WorldTransform
 {
@@ -27,4 +30,5 @@ public:
 	~WorldTransform() = default;
 };
 
+}
 #endif

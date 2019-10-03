@@ -1,14 +1,18 @@
 #ifndef STRUCTS_H
 #define STRUCTS_H
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
 
-#include <glm/glm.hpp>
 #include <vector>
 #include <filesystem>
-#include <LocalTranform.h>
-#include <WorldTransform.h>
+
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
 #include <json/value.h>
+
+#include "LocalTranform.h"
+#include "WorldTransform.h"
+
+namespace spark {
 
 struct Transform
 {
@@ -111,4 +115,6 @@ struct ScreenQuad
 		glDeleteVertexArrays(1, &vao);
 	}
 };
+
+}
 #endif

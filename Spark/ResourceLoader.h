@@ -1,22 +1,27 @@
 #ifndef RESOURCE_LOADER_H
 #define RESOURCE_LOADER_H
 
-#include <map>
 #include <filesystem>
-#include <Enums.h>
-#include <Structs.h>
+#include <map>
+
+#include "Enums.h"
+#include "Structs.h"
+
 struct aiMesh;
 struct aiScene;
+
+namespace spark {
+
 class MeshModel;
 class Mesh;
 
 const std::vector<std::string> ModelMeshExtensions = {
 	".obj", ".fbx", ".FBX", ".max"
-	};
+};
 
 const std::vector<std::string> textureExtensions = {
 	".jpg", ".png"
-	};
+};
 
 class ResourceLoader
 {
@@ -33,5 +38,7 @@ public:
 	static std::map<std::string, std::vector<Mesh>> loadModels(std::filesystem::path& modelDirectory);
 	static std::vector<Texture> loadTextures(std::filesystem::path& resDirectory);
 };
+
+}
 
 #endif

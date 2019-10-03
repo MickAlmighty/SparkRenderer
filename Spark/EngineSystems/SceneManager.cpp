@@ -1,16 +1,20 @@
-#include <EngineSystems/SceneManager.h>
-#include <EngineSystems/SparkRenderer.h>
-#include <GUI/ImGui/imgui.h>
-#include <Spark.h>
-#include <JsonSerializer.h>
-#include <algorithm>
-#include <Scene.h>
+#include "EngineSystems/SceneManager.h"
 
+#include <algorithm>
+
+#include <GUI/ImGui/imgui.h>
+
+#include "EngineSystems/SparkRenderer.h"
+#include "JsonSerializer.h"
+#include "Scene.h"
+#include "Spark.h"
+
+namespace spark {
 
 std::shared_ptr<SceneManager> SceneManager::getInstance()
 {
 	static std::shared_ptr<SceneManager> scene_manager = nullptr;
-	if(scene_manager == nullptr)
+	if (scene_manager == nullptr)
 	{
 		scene_manager = std::make_shared<SceneManager>();
 	}
@@ -54,8 +58,8 @@ bool SceneManager::setCurrentScene(std::string&& sceneName)
 	};
 
 	const auto scene_it = std::find_if(std::begin(scenes), std::end(scenes), searchingFunction);
-	
-	if(scene_it != std::end(scenes))
+
+	if (scene_it != std::end(scenes))
 	{
 		current_scene = *scene_it;
 		return true;
@@ -101,7 +105,7 @@ void SceneManager::drawMainMenuGui()
 				ImGui::MenuItem("Camera Movement", NULL, &current_scene->cameraMovement);
 				ImGui::EndMenu();
 			}
-			if(ImGui::MenuItem("Save Current Scene"))
+			if (ImGui::MenuItem("Save Current Scene"))
 			{
 				JsonSerializer::writeToFile("scene.json", current_scene->serialize());
 			}
@@ -177,4 +181,6 @@ int SceneManager::checkCurrentItem(const char** items) const
 			return i;
 	}
 	return 0;
+}
+
 }

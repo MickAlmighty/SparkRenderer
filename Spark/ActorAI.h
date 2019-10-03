@@ -1,8 +1,13 @@
 #ifndef ACTOR_AI_H
 #define ACTOR_AI_H
-#include <Component.h>
-#include <glm/glm.hpp>
+
 #include <deque>
+
+#include <glm/glm.hpp>
+
+#include <Component.h>
+
+namespace spark {
 
 class Node
 {
@@ -28,7 +33,7 @@ class ActorAI : public Component
 	std::multimap<float, std::shared_ptr<Node>> nodesToProcess;
 	std::list<std::shared_ptr<Node>> processedNodes;
 	bool isTraveling = false;
-	std::deque<std::pair<bool,glm::vec2>> path;
+	std::deque<std::pair<bool, glm::vec2>> path;
 public:
 	void findPath();
 	std::shared_ptr<Node> getTheNearestNodeFromOpen();
@@ -45,4 +50,5 @@ public:
 	~ActorAI();
 };
 
+}
 #endif

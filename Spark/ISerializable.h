@@ -3,7 +3,9 @@
 
 #include <json/value.h>
 
-enum class SerializableType
+namespace spark {
+
+enum class SerializableType : uint16_t
 {
 	SGameObject = 1,
 	SModelMesh,
@@ -22,4 +24,6 @@ public:
 	virtual void deserialize(Json::Value& root) = 0;
 	virtual ~ISerializable() = default;
 };
+
+}
 #endif

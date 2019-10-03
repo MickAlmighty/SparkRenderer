@@ -1,7 +1,10 @@
 #ifndef SPARK_H
 #define	SPARK_H
+
 #include <filesystem>
-#include <Structs.h>
+
+#include "Structs.h"
+namespace spark {
 
 class Spark
 {
@@ -19,5 +22,5 @@ public:
 	static void run();
 	static void clean();
 };
-
+}
 #endif

@@ -1,11 +1,15 @@
-#include <ModelMesh.h>
-#include <Mesh.h>
-#include <GameObject.h>
-#include <EngineSystems/ResourceManager.h>
-#include <GUI/ImGui/imgui.h>
-#include "GUI/SparkGui.h"
+#include "ModelMesh.h"
+
 #include <iostream>
 
+#include <GUI/ImGui/imgui.h>
+
+#include "EngineSystems/ResourceManager.h"
+#include "GameObject.h"
+#include "GUI/SparkGui.h"
+#include "Mesh.h"
+
+namespace spark {
 
 ModelMesh::ModelMesh(std::vector<Mesh>& meshes, std::string&& modelName) : Component(modelName)
 {
@@ -32,7 +36,7 @@ ModelMesh::~ModelMesh()
 void ModelMesh::update()
 {
 	glm::mat4 model = getGameObject()->transform.world.getMatrix();
-	for(Mesh& mesh: meshes)
+	for (Mesh& mesh : meshes)
 	{
 		mesh.addToRenderQueue(model);
 	}
@@ -53,7 +57,7 @@ void ModelMesh::drawGUI()
 		ImGui::Text("ModelMesh");
 		ImGui::EndMenuBar();
 	}
-	for(Mesh& mesh: meshes)
+	for (Mesh& mesh : meshes)
 	{
 		ImGui::Text("Vertices:"); ImGui::SameLine(); ImGui::Text(std::to_string(mesh.vertices.size()).c_str());
 		ImGui::Text("Indices:"); ImGui::SameLine(); ImGui::Text(std::to_string(mesh.indices.size()).c_str());
@@ -62,7 +66,7 @@ void ModelMesh::drawGUI()
 		ImGui::Separator();
 	}
 
-	if(meshes.empty())
+	if (meshes.empty())
 	{
 		const auto model = SparkGui::getMeshes();
 		modelPath = model.first;
@@ -92,4 +96,5 @@ void ModelMesh::deserialize(Json::Value& root)
 {
 	modelPath = root.get("modelPath", "").asString();
 	meshes = ResourceManager::getInstance()->findModelMeshes(modelPath);
+}
 }

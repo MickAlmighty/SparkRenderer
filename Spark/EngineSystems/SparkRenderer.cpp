@@ -1,17 +1,22 @@
-#include <EngineSystems/SparkRenderer.h>
-#include <EngineSystems/ResourceManager.h>
-#include <EngineSystems/SceneManager.h>
-#include <Scene.h>
+#include "EngineSystems/SparkRenderer.h"
 
+#include <iostream>
 #include <exception>
-#include <HID.h>
-#include <Spark.h>
-#include <GUI/ImGuizmo.h>
+#include <functional>
 
+#include <GUI/ImGuizmo.h>
 #include <GUI/ImGui/imgui.h>
 #include <GUI/ImGui/imgui_impl_glfw.h>
 #include <GUI/ImGui/imgui_impl_opengl3.h>
-#include <iostream>
+
+#include "Camera.h"
+#include "EngineSystems/ResourceManager.h"
+#include "EngineSystems/SceneManager.h"
+#include "HID.h"
+#include "Scene.h"
+#include "Spark.h"
+
+namespace spark {
 
 GLFWwindow* SparkRenderer::window = nullptr;
 std::map<ShaderType, std::list<std::function<void(std::shared_ptr<Shader>&)>>> SparkRenderer::renderQueue;
@@ -66,7 +71,7 @@ void APIENTRY glDebugOutput(GLenum source,
 SparkRenderer* SparkRenderer::getInstance()
 {
 	static SparkRenderer* spark_renderer = nullptr;
-	if(spark_renderer == nullptr)
+	if (spark_renderer == nullptr)
 	{
 		spark_renderer = new SparkRenderer();
 	}
@@ -95,7 +100,7 @@ void SparkRenderer::initOpenGL()
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	//glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-	
+
 	window = glfwCreateWindow(Spark::WIDTH, Spark::HEIGHT, "Spark", NULL, NULL);
 	if (!window)
 	{
@@ -217,19 +222,19 @@ void SparkRenderer::deleteFrameBuffersAndTextures() const
 
 void SparkRenderer::renderPass()
 {
-	
+
 	int width, height;
 	glfwGetWindowSize(window, &width, &height);
-	if(Spark::WIDTH != width || Spark::HEIGHT != height)
+	if (Spark::WIDTH != width || Spark::HEIGHT != height)
 	{
 		Spark::WIDTH = width;
 		Spark::HEIGHT = height;
 		deleteFrameBuffersAndTextures();
 		createFrameBuffersAndTextures();
 	}
-	
+
 	glViewport(0, 0, Spark::WIDTH, Spark::HEIGHT);
-	
+
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
 	ImGuizmo::BeginFrame();
@@ -249,7 +254,7 @@ void SparkRenderer::renderPass()
 	shader->use();
 	shader->setMat4("view", view);
 	shader->setMat4("projection", projection);
-	for(auto& function: renderQueue[ShaderType::DEFAULT_SHADER])
+	for (auto& function : renderQueue[ShaderType::DEFAULT_SHADER])
 	{
 		function(shader);
 	}
@@ -313,4 +318,6 @@ bool SparkRenderer::isWindowOpened()
 void SparkRenderer::error_callback(int error, const char* description)
 {
 	fprintf(stderr, "Error: %s/n", description);
+}
+
 }

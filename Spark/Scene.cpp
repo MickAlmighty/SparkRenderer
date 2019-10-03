@@ -1,11 +1,16 @@
-#include <Scene.h>
-#include <list>
-#include <GUI/ImGui/imgui.h>
-#include <JsonSerializer.h>
-#include <HID.h>
-#include <Camera.h>
-#include <GameObject.h>
+#include "Scene.h"
+
 #include <iostream>
+#include <list>
+
+#include <GUI/ImGui/imgui.h>
+
+#include <Camera.h>
+#include <HID.h>
+#include <GameObject.h>
+#include <JsonSerializer.h>
+
+namespace spark {
 
 Scene::Scene(std::string&& sceneName) : name(sceneName)
 {
@@ -88,16 +93,16 @@ void Scene::drawGUI()
 	drawSceneGraph();
 	static bool opened = false;
 	ImGuiIO& io = ImGui::GetIO();
-	
-	ImGui::SetNextWindowPos({ io.DisplaySize.x - 5, 25 }, ImGuiCond_Always, {1, 0} );
+
+	ImGui::SetNextWindowPos({ io.DisplaySize.x - 5, 25 }, ImGuiCond_Always, { 1, 0 });
 	ImGui::SetNextWindowSizeConstraints(ImVec2(250, 120), ImVec2(FLT_MAX, io.DisplaySize.y - 50)); // Width = 250, Height > 100
-	if (ImGui::Begin("GameObject", &opened, {0, 0}, -1, ImGuiWindowFlags_AlwaysAutoResize))
+	if (ImGui::Begin("GameObject", &opened, { 0, 0 }, -1, ImGuiWindowFlags_AlwaysAutoResize))
 	{
 		auto gameObject_ptr = gameObjectToPreview.lock();
 		if (gameObject_ptr != nullptr)
 		{
 			camera->setCameraTarget(gameObject_ptr->transform.world.getPosition());
-			if(ImGui::Button("Close Preview"))
+			if (ImGui::Button("Close Preview"))
 			{
 				gameObjectToPreview.reset();
 			}
@@ -146,7 +151,7 @@ void Scene::drawTreeNode(std::shared_ptr<GameObject> node, bool isRootNode)
 			ImGui::CloseCurrentPopup();
 		}
 
-		if(!isRootNode)
+		if (!isRootNode)
 		{
 			if (ImGui::Button("Delete"))
 			{
@@ -181,4 +186,6 @@ void Scene::drawTreeNode(std::shared_ptr<GameObject> node, bool isRootNode)
 		}
 	}
 	ImGui::PopID();
+}
+
 }

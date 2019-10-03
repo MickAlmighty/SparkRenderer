@@ -1,7 +1,12 @@
-#include <WorldTransform.h>
-#include <glm/gtx/euler_angles.hpp>
-#include "JsonSerializer.h"
+#include "WorldTransform.h"
+
 #include <iostream>
+
+#include <glm/gtx/euler_angles.hpp>
+
+#include "JsonSerializer.h"
+
+namespace spark {
 
 glm::mat4 WorldTransform::getMatrix() const
 {
@@ -96,4 +101,4 @@ WorldTransform::WorldTransform(glm::mat4 mat) : modelMatrix(mat)
 {
 }
 
-
+}

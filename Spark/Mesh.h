@@ -1,10 +1,13 @@
 #ifndef MESH_H
 #define MESH_H
 
-#include <Structs.h>
 #include <vector>
 #include <map>
-#include <Enums.h>
+
+#include "Enums.h"
+#include "Structs.h"
+
+namespace spark {
 
 class Shader;
 class Mesh
@@ -27,4 +30,5 @@ public:
 	~Mesh();
 };
 
+}
 #endif

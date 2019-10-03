@@ -1,5 +1,9 @@
-#include <Clock.h>
+#include "Clock.h"
+
 #include <GLFW/glfw3.h>
+
+namespace spark {
+
 double Clock::deltaTime = 0;
 
 void Clock::tick()
@@ -18,4 +22,6 @@ double Clock::getDeltaTime()
 int Clock::getFPS()
 {
 	return static_cast<int>(1 / deltaTime);
+}
+
 }
