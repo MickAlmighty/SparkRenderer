@@ -16,14 +16,6 @@ class ISerializable;
 
 class JsonSerializer
 {
-private:
-	JsonSerializer();
-	~JsonSerializer();
-	static std::map<std::shared_ptr<ISerializable>, int> serializedObjects;
-	inline static int counter = 0;
-
-	static std::shared_ptr<ISerializable> findSerializedObject(const int id);
-	static int findId(const std::shared_ptr<ISerializable>& serializableObject);
 public:
 	static void writeToFile(std::filesystem::path&& filePath, Json::Value&& root);
 	static Json::Value readFromFile(std::filesystem::path&& filePath);
@@ -42,6 +34,16 @@ public:
 	static glm::mat3 deserializeMat3(Json::Value& root);
 	static Json::Value serializeMat4(glm::mat4 val);
 	static glm::mat4 deserializeMat4(Json::Value& root);
+
+private:
+	inline static int counter = 0;
+	static std::map<std::shared_ptr<ISerializable>, int> serializedObjects;
+
+	JsonSerializer() = default;
+	~JsonSerializer() = default;
+
+	static std::shared_ptr<ISerializable> findSerializedObject(const int id);
+	static int findId(const std::shared_ptr<ISerializable>& serializableObject);
 };
 
 template <class T>

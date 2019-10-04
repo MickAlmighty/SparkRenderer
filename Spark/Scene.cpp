@@ -30,8 +30,8 @@ void Scene::update()
 	removeObjectsFromScene();
 	if (cameraMovement)
 	{
-		camera->ProcessKeyboard();
-		camera->ProcessMouseMovement(HID::mouse.direction.x, -HID::mouse.direction.y);
+		camera->processKeyboard();
+		camera->processMouseMovement(HID::mouse.direction.x, -HID::mouse.direction.y);
 	}
 	camera->update();
 	root->update();
@@ -49,16 +49,6 @@ void Scene::removeObjectsFromScene()
 		f();
 	});
 	toRemove.clear();
-}
-
-void Scene::addGameObject(std::shared_ptr<GameObject> game_object)
-{
-	root->addChild(game_object, root);
-}
-
-void Scene::addComponentToGameObject(std::shared_ptr<Component>& component, std::shared_ptr<GameObject> game_object)
-{
-	game_object->addComponent(component, game_object);
 }
 
 std::shared_ptr<Camera> Scene::getCamera() const
@@ -177,7 +167,7 @@ void Scene::drawTreeNode(std::shared_ptr<GameObject> node, bool isRootNode)
 		ImGui::SameLine();
 		if (ImGui::TreeNode("Children"))
 		{
-			for (auto gameObject : node->children)
+			for (const auto& gameObject : node->children)
 			{
 				drawTreeNode(gameObject, false);
 			}

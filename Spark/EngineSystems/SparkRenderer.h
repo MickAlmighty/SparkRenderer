@@ -13,6 +13,18 @@ namespace spark {
 
 class SparkRenderer
 {
+public:
+	std::map<ShaderType, std::list<std::function<void(std::shared_ptr<Shader>&)>>> renderQueue;
+	
+	SparkRenderer(const SparkRenderer&) = delete;
+	SparkRenderer operator=(const SparkRenderer&) = delete;
+
+	void setup();
+	void renderPass();
+	void cleanup();
+
+	static SparkRenderer* getInstance();
+
 private:
 	ScreenQuad screenQuad{};
 
@@ -23,33 +35,15 @@ private:
 	std::weak_ptr<Shader> screenShader;
 	std::weak_ptr<Shader> postprocessingShader;
 
-	void createTexture(GLuint& texture, GLuint width, GLuint height, GLenum internalFormat, GLenum format, GLenum pixelFormat, GLenum textureWrapping, GLenum textureSampling);
+	~SparkRenderer() = default;
+	SparkRenderer() = default;
 
+	void createTexture(GLuint& texture, GLuint width, GLuint height, GLenum internalFormat, GLenum format, GLenum pixelFormat, GLenum textureWrapping, GLenum textureSampling);
 	void postprocessingPass();
 	void renderToScreen();
-
 	void initMembers();
 	void createFrameBuffersAndTextures();
 	void deleteFrameBuffersAndTextures() const;
-	~SparkRenderer() = default;
-	SparkRenderer() = default;
-public:
-	static GLFWwindow* window;
-	static std::map<ShaderType, std::list<std::function<void(std::shared_ptr<Shader>&)>>> renderQueue;
-
-	static SparkRenderer* getInstance();
-	static void resizeWindow(GLuint width, GLuint height);
-	SparkRenderer(const SparkRenderer&) = delete;
-	SparkRenderer operator=(const SparkRenderer&) = delete;
-
-	static void initOpenGL();
-	void setup();
-	void renderPass();
-	void cleanup();
-
-	static bool isWindowOpened();
-
-	static void error_callback(int error, const char* description);
 };
 }
 #endif

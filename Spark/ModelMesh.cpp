@@ -16,10 +16,6 @@ ModelMesh::ModelMesh(std::vector<Mesh>& meshes, std::string&& modelName) : Compo
 	this->meshes = meshes;
 }
 
-ModelMesh::ModelMesh()
-{
-}
-
 void ModelMesh::setModel(std::pair<std::string, std::vector<Mesh>> model)
 {
 	modelPath = model.first;

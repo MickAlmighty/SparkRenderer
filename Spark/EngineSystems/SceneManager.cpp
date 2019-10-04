@@ -67,7 +67,7 @@ bool SceneManager::setCurrentScene(std::string&& sceneName)
 	return false;
 }
 
-std::shared_ptr<Scene> SceneManager::getCurrentScene()
+std::shared_ptr<Scene> SceneManager::getCurrentScene() const
 {
 	return current_scene;
 }
@@ -143,19 +143,19 @@ void SceneManager::drawSparkSettings(bool* p_open)
 	{
 		if (current_item == 0)
 		{
-			SparkRenderer::resizeWindow(1280, 720);
+			Spark::resizeWindow(1280, 720);
 		}
 		else if (current_item == 1)
 		{
-			SparkRenderer::resizeWindow(1600, 900);
+			Spark::resizeWindow(1600, 900);
 		}
 		else if (current_item == 2)
 		{
-			SparkRenderer::resizeWindow(1920, 1080);
+			Spark::resizeWindow(1920, 1080);
 		}
 		else if (current_item == 3)
 		{
-			SparkRenderer::resizeWindow(1920, 1055);
+			Spark::resizeWindow(1920, 1055);
 		}
 	}
 

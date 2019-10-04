@@ -15,30 +15,21 @@ public:
 	std::weak_ptr<Node> parent;
 	glm::ivec2 position{};
 
-	float distanceToEndPoint(glm::vec2 endPoint) const;
-	std::list<std::shared_ptr<Node>> getNeighbors() const;
-	void drawReturnPath(std::vector<glm::vec3>& perlinValues) const;
-	void getPath(std::deque<std::pair<bool, glm::vec2>>& path) const;
 	Node() = default;
 	Node(glm::vec2 pos);
 	~Node();
+
+	float distanceToEndPoint(glm::vec2 endPoint) const;
+	std::list<std::shared_ptr<Node>> getNeighbors() const;
+	void drawReturnPath(std::vector<glm::vec3>& perlinValues) const;
+	void getPath(std::deque<std::pair<bool, glm::ivec2>>& path) const;
 };
 
 class ActorAI : public Component
 {
-	glm::ivec2 startPos{};
-	glm::ivec2 endPos{};
-	float timer = 0.0f;
-	float movementSpeed = 1.0f;
-	std::multimap<float, std::shared_ptr<Node>> nodesToProcess;
-	std::list<std::shared_ptr<Node>> processedNodes;
-	bool isTraveling = false;
-	std::deque<std::pair<bool, glm::vec2>> path;
 public:
-	void findPath();
-	std::shared_ptr<Node> getTheNearestNodeFromOpen();
-	bool isNodeClosed(std::shared_ptr<Node> node);
-	void walkToEndOfThePath();
+	ActorAI(std::string&& newName = "ActorAI");
+	~ActorAI();
 
 	SerializableType getSerializableType() override;
 	Json::Value serialize() override;
@@ -46,9 +37,21 @@ public:
 	void update() override;
 	void fixedUpdate() override;
 	void drawGUI() override;
-	ActorAI(std::string&& newName = "ActorAI");
-	~ActorAI();
-};
 
+private:
+	double timer = 0.0f;
+	float movementSpeed = 1.0f;
+	bool isTraveling = false;
+	glm::ivec2 startPos{};
+	glm::ivec2 endPos{};
+	std::multimap<float, std::shared_ptr<Node>> nodesToProcess;
+	std::list<std::shared_ptr<Node>> processedNodes;
+	std::deque<std::pair<bool, glm::ivec2>> path;
+
+	void findPath();
+	std::shared_ptr<Node> getTheNearestNodeFromOpen();
+	bool isNodeClosed(std::shared_ptr<Node> node);
+	void walkToEndOfThePath();
+};
 }
 #endif

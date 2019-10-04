@@ -12,18 +12,19 @@ namespace spark {
 class GameObject;
 class Component : public ISerializable
 {
-private:
-	std::weak_ptr<GameObject> gameObject;
 public:
 	std::string name = "Component";
+	
 	Component() = default;
 	Component(std::string& componentName);
-	std::shared_ptr<GameObject> getGameObject() const { return gameObject.lock(); }
 	virtual ~Component() = default;
+
+	std::shared_ptr<GameObject> getGameObject() const { return gameObject.lock(); }
 	virtual void update() = 0;
 	virtual void fixedUpdate() = 0;
 	virtual void setGameObject(std::shared_ptr<GameObject>& game_object) { gameObject = game_object; };
 	virtual void drawGUI() = 0;
+	
 	template <class T>
 	void removeComponentGUI()
 	{
@@ -36,6 +37,9 @@ public:
 			SceneManager::getInstance()->getCurrentScene()->toRemove.push_back(remove);
 		}
 	};
+
+private:
+	std::weak_ptr<GameObject> gameObject;
 };
 
 }

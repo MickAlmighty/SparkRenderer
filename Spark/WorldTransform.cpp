@@ -8,6 +8,10 @@
 
 namespace spark {
 
+WorldTransform::WorldTransform(glm::mat4 mat) : modelMatrix(mat)
+{
+}
+
 glm::mat4 WorldTransform::getMatrix() const
 {
 	return modelMatrix;
@@ -95,10 +99,6 @@ void WorldTransform::setScale(glm::vec3 scale)
 {
 	modelMatrix = glm::scale(modelMatrix, scale);
 	dirty = true;
-}
-
-WorldTransform::WorldTransform(glm::mat4 mat) : modelMatrix(mat)
-{
 }
 
 }

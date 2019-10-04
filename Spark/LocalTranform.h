@@ -8,16 +8,10 @@ namespace spark {
 
 class LocalTransform
 {
-private:
-	glm::vec3 position = glm::vec3(0);
-	glm::vec3 rotationEuler = glm::vec3(0);
-	glm::vec3 scale = glm::vec3(0);
-	glm::mat4 modelMatrix = glm::mat4(1);
-	bool dirty = true;
-	glm::mat4 recreateMatrix() const;
 public:
 	LocalTransform(glm::vec3 pos = glm::vec3(0), glm::vec3 scale = glm::vec3(1), glm::vec3 rotation = glm::vec3(0));
 	~LocalTransform() = default;
+
 	void drawGUI();
 	Json::Value serialize() const;
 	void deserialize(Json::Value& root);
@@ -37,6 +31,14 @@ public:
 	void setRotationDegrees(glm::vec3 rotationDegrees);
 	void setRotationRadians(float x, float y, float z);
 	void setRotationRadians(glm::vec3 rotationRadians);
+
+private:
+	glm::vec3 position = glm::vec3(0);
+	glm::vec3 rotationEuler = glm::vec3(0);
+	glm::vec3 scale = glm::vec3(0);
+	glm::mat4 modelMatrix = glm::mat4(1);
+	bool dirty = true;
+	glm::mat4 recreateMatrix() const;
 };
 
 }

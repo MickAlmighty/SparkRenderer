@@ -7,15 +7,6 @@ namespace spark {
 Mouse HID::mouse{};
 std::map<int, int> HID::keyStates;
 
-HID::HID()
-{
-}
-
-
-HID::~HID()
-{
-}
-
 void HID::key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
 	static bool mouseDisabled = false;

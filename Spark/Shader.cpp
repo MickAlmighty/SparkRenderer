@@ -115,40 +115,46 @@ void Shader::use()
 	glUseProgram(ID);
 }
 
+GLuint Shader::getLocation(const std::string& name) const
+{
+	const auto location_it = uniformLocations.find(name);
+	if(location_it != std::end(uniformLocations))
+	{
+		return location_it->second;
+	}
+
+	uniformLocations[name] = glGetUniformLocation(ID, name.c_str());
+	return uniformLocations[name];
+}
+
 void Shader::setBool(const std::string& name, bool value) const
 {
-	GLuint location = glGetUniformLocation(ID, name.c_str());
-	glUniform1i(location, value);
+	glUniform1i(getLocation(name), value);
 }
 
 void Shader::setInt(const std::string& name, int value) const
 {
-	GLuint location = glGetUniformLocation(ID, name.c_str());
-	glUniform1i(location, value);
+	glUniform1i(getLocation(name), value);
 }
 
 void Shader::setFloat(const std::string& name, float value) const
 {
-	GLuint location = glGetUniformLocation(ID, name.c_str());
-	glUniform1fv(ID, 1, &value);
+	glUniform1f(getLocation(name), value);
 }
 
 void Shader::setVec2(const std::string& name, glm::vec2 value) const
 {
-	GLuint location = glGetUniformLocation(ID, name.c_str());
-	glUniform2fv(location, 1, glm::value_ptr(value));
+	glUniform2fv(getLocation(name), 1, glm::value_ptr(value));
 }
 
 void Shader::setVec3(const std::string& name, glm::vec3 value) const
 {
-	GLuint location = glGetUniformLocation(ID, name.c_str());
-	glUniform3fv(location, 1, glm::value_ptr(value));
+	glUniform3fv(getLocation(name), 1, glm::value_ptr(value));
 }
 
 void Shader::setMat4(const std::string& name, glm::mat4 value) const
 {
-	GLuint location = glGetUniformLocation(ID, name.c_str());
-	glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(value));
+	glUniformMatrix4fv(getLocation(name), 1, GL_FALSE, glm::value_ptr(value));
 }
 
 }

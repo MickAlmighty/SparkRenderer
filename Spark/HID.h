@@ -15,10 +15,7 @@ struct Mouse
 };
 
 class HID
-{
-	HID();
-	~HID();
-	static std::map<int, int> keyStates;
+{	
 public:
 	static Mouse mouse;
 	static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
@@ -27,6 +24,12 @@ public:
 	static bool isKeyPressed(int key);
 	static bool isKeyReleased(int key);
 	static bool isKeyHeld(int key);
+
+private:
+	static std::map<int, int> keyStates;
+
+	HID() = default;
+	~HID() = default;
 };
 
 }

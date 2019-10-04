@@ -8,14 +8,13 @@ namespace spark {
 
 class WorldTransform
 {
-	glm::mat4 modelMatrix = glm::mat4(1);
-	bool dirty = true;
 public:
+	WorldTransform(glm::mat4 mat = glm::mat4(1));
+	~WorldTransform() = default;
+
 	glm::mat4 getMatrix() const;
 	glm::vec3 getPosition() const;
-	Json::Value serialize() const;
-	void deserialize(Json::Value& root);
-
+	
 	void setMatrix(glm::mat4 mat);
 	void setPosition(glm::vec3 position);
 	void setPosition(float x, float y, float z);
@@ -26,8 +25,13 @@ public:
 	void setRotationDegrees(glm::vec3& degrees);
 	void setRotationDegrees(float x, float y, float z);
 	void setScale(glm::vec3 scale);
-	WorldTransform(glm::mat4 mat = glm::mat4(1));
-	~WorldTransform() = default;
+
+	Json::Value serialize() const;
+	void deserialize(Json::Value& root);
+
+private:
+	glm::mat4 modelMatrix = glm::mat4(1);
+	bool dirty = true;
 };
 
 }

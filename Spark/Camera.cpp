@@ -35,7 +35,7 @@ Camera::Camera(float posX, float posY, float posZ, float upX, float upY, float u
 	updateCameraVectors();
 }
 
-glm::mat4 Camera::GetViewMatrix()
+glm::mat4 Camera::getViewMatrix() const
 {
 	//return glm::lookAt(Position, Position + Front, Up);
 	//cameraTarget = Position + Front;
@@ -62,7 +62,7 @@ void Camera::setCameraTarget(glm::vec3 target)
 	}
 }
 
-void Camera::ProcessKeyboard()
+void Camera::processKeyboard()
 {
 	if (cameraMode == CameraMode::FirstPerson)
 	{
@@ -76,7 +76,7 @@ void Camera::ProcessKeyboard()
 
 void Camera::processKeyboardFirstPerson()
 {
-	float velocity = MovementSpeed * Clock::getDeltaTime();
+	float velocity = MovementSpeed * static_cast<float>(Clock::getDeltaTime());
 	if (HID::isKeyPressed(GLFW_KEY_LEFT_SHIFT))
 		velocity *= 1.5f;
 	glm::vec3 front = glm::normalize(glm::vec3(Front.x, 0, Front.z));
@@ -106,7 +106,7 @@ void Camera::processKeyboardFirstPerson()
 
 void Camera::processKeyboardThirdPerson()
 {
-	float velocity = MovementSpeed * Clock::getDeltaTime();
+	float velocity = MovementSpeed * static_cast<float>(Clock::getDeltaTime());
 	if (HID::isKeyPressed(GLFW_KEY_LEFT_SHIFT))
 		velocity *= 1.5f;
 
@@ -132,7 +132,7 @@ void Camera::processKeyboardThirdPerson()
 	}
 }
 
-void Camera::ProcessMouseMovement(float xoffset, float yoffset, bool constrainPitch)
+void Camera::processMouseMovement(float xoffset, float yoffset, bool constrainPitch)
 {
 	static bool cameraRotation = false;
 	if (HID::isKeyPressed(GLFW_KEY_SPACE))
@@ -165,7 +165,7 @@ void Camera::ProcessMouseMovement(float xoffset, float yoffset, bool constrainPi
 
 void Camera::processMouseMovementThirdPerson(float xoffset, float yoffset)
 {
-	float velocity = MovementSpeed * Clock::getDeltaTime();
+	float velocity = MovementSpeed * static_cast<float>(Clock::getDeltaTime());
 	if (HID::isKeyPressed(GLFW_KEY_LEFT_SHIFT))
 		velocity *= 1.5f;
 
@@ -181,7 +181,7 @@ void Camera::processMouseMovementThirdPerson(float xoffset, float yoffset)
 	}
 }
 
-void Camera::ProcessMouseScroll(float yoffset)
+void Camera::processMouseScroll(float yoffset)
 {
 	if (Zoom >= 1.0f && Zoom <= 45.0f)
 		Zoom -= yoffset;

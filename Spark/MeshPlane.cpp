@@ -51,17 +51,17 @@ MeshPlane::~MeshPlane()
 	glDeleteVertexArrays(1, &vao);
 }
 
-void MeshPlane::addToRenderQueue()
+void MeshPlane::addToRenderQueue() const
 {
 	glm::mat4 model = getGameObject()->transform.world.getMatrix();
 	auto f = [this, model](std::shared_ptr<Shader>& shader)
 	{
 		draw(shader, model);
 	};
-	SparkRenderer::renderQueue[shaderType].push_back(f);
+	SparkRenderer::getInstance()->renderQueue[shaderType].push_back(f);
 }
 
-void MeshPlane::draw(std::shared_ptr<Shader>& shader, glm::mat4 model)
+void MeshPlane::draw(std::shared_ptr<Shader>& shader, glm::mat4 model) const
 {
 	shader->setMat4("model", model);
 
@@ -72,7 +72,7 @@ void MeshPlane::draw(std::shared_ptr<Shader>& shader, glm::mat4 model)
 
 	glBindVertexArray(vao);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+	glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indices.size()), GL_UNSIGNED_INT, nullptr);
 	glBindVertexArray(0);
 
 	glBindTextures(static_cast<GLuint>(TextureTarget::DIFFUSE_TARGET), static_cast<GLsizei>(textures.size()), nullptr);

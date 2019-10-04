@@ -48,7 +48,7 @@ void Node::drawReturnPath(std::vector<glm::vec3>& perlinValues) const
 		parent.lock()->drawReturnPath(perlinValues);
 }
 
-void Node::getPath(std::deque<std::pair<bool, glm::vec2>>& path) const
+void Node::getPath(std::deque<std::pair<bool, glm::ivec2>>& path) const
 {
 	path.push_front({ false, { static_cast<float>(position.x), static_cast<float>(position.y) } });
 	if (!parent.expired())
@@ -68,7 +68,7 @@ Node::~Node()
 void ActorAI::findPath()
 {
 	path.clear();
-	nodesToProcess.emplace(0, std::make_shared<Node>(startPos));
+	nodesToProcess.emplace(0.0f, std::make_shared<Node>(startPos));
 	std::shared_ptr<Node> finishNode = nullptr;
 	while (true)
 	{
@@ -100,10 +100,14 @@ void ActorAI::findPath()
 	}
 	if (finishNode)
 	{
-		auto perlinValues = getGameObject()->getComponent<TerrainGenerator>()->getPerlinValues();
-		finishNode->drawReturnPath(perlinValues);
-		finishNode->getPath(path);
-		getGameObject()->getComponent<TerrainGenerator>()->updateTerrain(perlinValues);
+		auto terrainGenerator = getGameObject()->getComponent<TerrainGenerator>();
+		if (terrainGenerator != nullptr)
+		{
+			auto perlinValues = terrainGenerator->getPerlinValues();
+			finishNode->drawReturnPath(perlinValues);
+			finishNode->getPath(path);
+			terrainGenerator->updateTerrain(perlinValues);
+		}
 	}
 	nodesToProcess.clear();
 	processedNodes.clear();
@@ -228,7 +232,7 @@ void ActorAI::update()
 	if (!isTraveling)
 	{
 		endPos = { static_cast<int>(glm::linearRand(0.0f, 20.0f)), static_cast<int>(glm::linearRand(0.0f, 20.0f)) };
-		const float measureStart = glfwGetTime();
+		const double measureStart = glfwGetTime();
 		findPath();
 		timer = glfwGetTime() - measureStart;
 		isTraveling = true;
@@ -261,10 +265,10 @@ void ActorAI::drawGUI()
 	ImGui::DragInt2("startPos", &startPos.x);
 	ImGui::DragInt2("endPos", &endPos.x);
 	ImGui::DragFloat("movementSpeed", &movementSpeed, 0.1f);
-	ImGui::InputFloat("PathFindingTimeDuration", &timer, 0, 0, "%.8f");
+	ImGui::InputDouble("PathFindingTimeDuration", &timer, 0, 0, "%.8f");
 	if (ImGui::Button("FindPath"))
 	{
-		const float measureStart = glfwGetTime();
+		const double measureStart = glfwGetTime();
 		findPath();
 		timer = glfwGetTime() - measureStart;
 		isTraveling = true;

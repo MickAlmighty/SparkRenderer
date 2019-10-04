@@ -6,24 +6,19 @@
 
 #include "ISerializable.h"
 #include "Structs.h"
+#include "Component.h"
 
 namespace spark {
 
-class Component;
+
 class GameObject : public std::enable_shared_from_this<GameObject>, public ISerializable
 {
-private:
-	friend class Scene;
-	std::string name = "GameObject";
-	std::weak_ptr<GameObject> parent;
-	std::list<std::shared_ptr<GameObject>> children;
-	std::list<std::shared_ptr<Component>> components;
-	std::shared_ptr<GameObject> get_ptr();
-	void update();
-	void fixedUpdate();
-	void drawGizmos();
 public:
 	Transform transform;
+
+	GameObject(std::string&& _name = "GameObject");
+	~GameObject();
+	
 	std::shared_ptr<GameObject> getParent() const;
 	void setParent(const std::shared_ptr<GameObject> newParent);
 	void addChild(const std::shared_ptr<GameObject>& newChild, const std::shared_ptr<GameObject>& parent);
@@ -31,8 +26,10 @@ public:
 	bool removeChild(std::string&& gameObjectName);
 	bool removeChild(std::shared_ptr<GameObject> child);
 	void drawGUI();
-	GameObject(std::string&& _name = "GameObject");
-	~GameObject();
+	
+	SerializableType getSerializableType() override;
+	Json::Value serialize() override;
+	void deserialize(Json::Value& root) override;
 
 	template <class T>
 	bool removeFirstComponentOfType()
@@ -85,11 +82,6 @@ public:
 		return false;
 	}
 
-	SerializableType getSerializableType() override;
-	Json::Value serialize() override;
-	void deserialize(Json::Value& root) override;
-
-
 	/*template <class T>
 	bool removeComponentsOfType()
 	{
@@ -104,6 +96,18 @@ public:
 		}
 		return false;
 	}*/
+
+private:
+	friend class Scene;
+	std::string name = "GameObject";
+	std::weak_ptr<GameObject> parent;
+	std::list<std::shared_ptr<GameObject>> children;
+	std::list<std::shared_ptr<Component>> components;
+	std::shared_ptr<GameObject> get_ptr();
+	void update();
+	void fixedUpdate();
+	void drawGizmos();
+
 };
 
 }

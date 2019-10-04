@@ -9,7 +9,7 @@
 
 namespace spark {
 
-std::vector<glm::vec3> TerrainGenerator::getPerlinValues()
+std::vector<glm::vec3> TerrainGenerator::getPerlinValues() const
 {
 	return perlinValues;
 }

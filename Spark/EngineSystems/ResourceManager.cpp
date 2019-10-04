@@ -7,9 +7,15 @@
 
 namespace spark {
 
+ResourceManager* ResourceManager::getInstance()
+{
+	static auto resource_manager = new ResourceManager();
+	return resource_manager;
+}
+
 void ResourceManager::addTexture(Texture tex)
 {
-	auto tex_it = std::find_if(std::begin(textures), std::end(textures), [&tex](const Texture& texture)
+	const auto tex_it = std::find_if(std::begin(textures), std::end(textures), [&tex](const Texture& texture)
 	{
 		return texture.path == tex.path;
 	});
@@ -21,7 +27,7 @@ void ResourceManager::addTexture(Texture tex)
 	textures.push_back(tex);
 }
 
-Texture ResourceManager::findTexture(const std::string&& path)
+Texture ResourceManager::findTexture(const std::string&& path) const
 {
 	for (auto& tex_it : textures)
 	{
@@ -31,7 +37,7 @@ Texture ResourceManager::findTexture(const std::string&& path)
 	return {};
 }
 
-std::vector<Mesh> ResourceManager::findModelMeshes(const std::string& path)
+std::vector<Mesh> ResourceManager::findModelMeshes(const std::string& path) const
 {
 	const auto& it = models.find(path);
 	if (it != models.end())
@@ -41,7 +47,7 @@ std::vector<Mesh> ResourceManager::findModelMeshes(const std::string& path)
 	return {};
 }
 
-std::vector<std::string> ResourceManager::getPathsToModels()
+std::vector<std::string> ResourceManager::getPathsToModels() const
 {
 	std::vector<std::string> paths;
 	for (auto& element : models)
@@ -51,7 +57,7 @@ std::vector<std::string> ResourceManager::getPathsToModels()
 	return paths;
 }
 
-std::shared_ptr<Shader>& ResourceManager::getShader(ShaderType type)
+std::shared_ptr<Shader> ResourceManager::getShader(const ShaderType& type) const
 {
 	const auto& it = shaders.find(type);
 	if (it != shaders.end())
@@ -62,19 +68,9 @@ std::shared_ptr<Shader>& ResourceManager::getShader(ShaderType type)
 	throw std::exception("Cannot find shader! Probably shader was not loaded!");
 }
 
-std::vector<Texture> ResourceManager::getTextures()
+std::vector<Texture> ResourceManager::getTextures() const
 {
 	return textures;
-}
-
-ResourceManager* ResourceManager::getInstance()
-{
-	static ResourceManager* resource_manager = nullptr;
-	if (resource_manager == nullptr)
-	{
-		resource_manager = new ResourceManager();
-	}
-	return resource_manager;
 }
 
 void ResourceManager::loadResources()

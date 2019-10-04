@@ -102,7 +102,7 @@ struct ScreenQuad
 		glBindVertexArray(0);
 	}
 
-	void draw()
+	void draw() const
 	{
 		glBindVertexArray(vao);
 		glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(vertices.size()));

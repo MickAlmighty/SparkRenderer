@@ -7,7 +7,7 @@
 
 namespace spark {
 
-Mesh::Mesh(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices, std::map<TextureTarget, Texture>& meshTextures, std::string&& _newName)
+Mesh::Mesh(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices, std::map<TextureTarget, Texture>& meshTextures, std::string&& newName_)
 {
 	this->vertices = std::move(vertices);
 	this->indices = std::move(indices);
@@ -55,7 +55,7 @@ void Mesh::addToRenderQueue(glm::mat4 model)
 	{
 		draw(shader, model);
 	};
-	SparkRenderer::renderQueue[shaderType].push_back(f);
+	SparkRenderer::getInstance()->renderQueue[shaderType].push_back(f);
 }
 
 
@@ -76,7 +76,7 @@ void Mesh::draw(std::shared_ptr<Shader>& shader, glm::mat4 model)
 	glBindTextures(static_cast<GLuint>(TextureTarget::DIFFUSE_TARGET), static_cast<GLsizei>(textures.size()), nullptr);
 }
 
-void Mesh::cleanup()
+void Mesh::cleanup() const
 {
 	glDeleteBuffers(1, &vbo);
 	glDeleteBuffers(1, &ebo);
@@ -85,10 +85,6 @@ void Mesh::cleanup()
 #ifdef DEBUG
 	std::cout << "Mesh deleted!" << std::endl;
 #endif
-}
-
-Mesh::~Mesh()
-{
 }
 
 }

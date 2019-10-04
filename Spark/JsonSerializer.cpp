@@ -14,19 +14,11 @@
 #include "MeshPlane.h"
 #include "ModelMesh.h"
 #include "TerrainGenerator.h"
+#include "Mesh.h"
 
 namespace spark {
 
 std::map<std::shared_ptr<ISerializable>, int> JsonSerializer::serializedObjects;
-
-JsonSerializer::JsonSerializer()
-{
-}
-
-
-JsonSerializer::~JsonSerializer()
-{
-}
 
 std::shared_ptr<ISerializable> JsonSerializer::findSerializedObject(const int id)
 {
