@@ -8,98 +8,85 @@ namespace spark {
 
 std::shared_ptr<Component> SparkGui::addComponent()
 {
-	static bool componentWindowAddition = false;
 	std::shared_ptr<Component> component = nullptr;
 	if (ImGui::Button("Add Component"))
 	{
-		componentWindowAddition = true;
+		ImGui::OpenPopup("Components");
 	}
 
-	if (componentWindowAddition)
+	if (ImGui::BeginPopupModal("Components", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
 	{
-
-		if (ImGui::Begin("Components", &componentWindowAddition))
+		for (const auto& componentType : componentCreation)
 		{
-			for (const auto& componentType : componentCreation)
+			if (ImGui::Button(componentType.first.c_str()))
 			{
-				if (ImGui::Button(componentType.first.c_str()))
-				{
-					component = componentType.second();
-					componentWindowAddition = false;
-				}
-			}
-			if (ImGui::Button("Close"))
-			{
-				componentWindowAddition = false;
+				component = componentType.second();
+				ImGui::CloseCurrentPopup();
 			}
 		}
-		ImGui::End();
+		if (ImGui::Button("Close"))
+		{
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::EndPopup();
 	}
 	return component;
 }
 
 std::pair<std::string, std::vector<Mesh>> SparkGui::getMeshes()
 {
-	static bool componentWindowAddition = false;
 	std::pair<std::string, std::vector<Mesh>> meshes;
 	if (ImGui::Button("Add Model Meshes"))
 	{
-		componentWindowAddition = true;
+		ImGui::OpenPopup("Models");
 	}
 
-	if (componentWindowAddition)
+	if (ImGui::BeginPopupModal("Models", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
 	{
-		if (ImGui::Begin("Models", &componentWindowAddition))
+		std::vector<std::string> pathsToModels = ResourceManager::getInstance()->getPathsToModels();
+		for (const std::string& path : pathsToModels)
 		{
-			std::vector<std::string> pathsToModels = ResourceManager::getInstance()->getPathsToModels();
-			for (const std::string& path : pathsToModels)
+			if (ImGui::Button(path.c_str()))
 			{
-				if (ImGui::Button(path.c_str()))
-				{
-					meshes.first = path;
-					meshes.second = ResourceManager::getInstance()->findModelMeshes(path);
-					componentWindowAddition = false;
-				}
-			}
-			if (ImGui::Button("Close"))
-			{
-				componentWindowAddition = false;
+				meshes.first = path;
+				meshes.second = ResourceManager::getInstance()->findModelMeshes(path);
+				ImGui::CloseCurrentPopup();
 			}
 		}
-		ImGui::End();
+		if (ImGui::Button("Close"))
+		{
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::EndPopup();
 	}
 	return meshes;
 }
 
 Texture SparkGui::getTexture()
 {
-	static bool textureWindow = false;
 	Texture tex{ 0, "" };
 	if (ImGui::Button("Add Texture"))
 	{
-		textureWindow = true;
+		ImGui::OpenPopup("Textures");
 	}
 
-	if (textureWindow)
+	if (ImGui::BeginPopupModal("Textures", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
 	{
-
-		if (ImGui::Begin("Textures", &textureWindow))
+		for (const Texture& texture : ResourceManager::getInstance()->getTextures())
 		{
-			for (const Texture& texture : ResourceManager::getInstance()->getTextures())
+			if (ImGui::Button(texture.path.c_str()))
 			{
-				if (ImGui::Button(texture.path.c_str()))
-				{
-					tex = texture;
-					textureWindow = false;
-				}
-			}
-			if (ImGui::Button("Close"))
-			{
-				textureWindow = false;
+				tex = texture;
+				ImGui::CloseCurrentPopup();
 			}
 		}
-		ImGui::End();
+		if (ImGui::Button("Close"))
+		{
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::EndPopup();
 	}
+	
 	return tex;
 }
 

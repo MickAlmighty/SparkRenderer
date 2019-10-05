@@ -17,15 +17,16 @@ public:
 	inline static bool runProgram = true;
 
 	static void setup(InitializationVariables& variables);
-	static void initOpenGL();
 	static void run();
 	static void resizeWindow(GLuint width, GLuint height);
 	static void clean();
-	static void destroyOpenGLContext();
 
 private:
 	~Spark() = default;
 	Spark() = default;
+
+	static void initOpenGL();
+	static void destroyOpenGLContext();
 };
 }
 #endif

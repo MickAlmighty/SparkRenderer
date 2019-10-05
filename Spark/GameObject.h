@@ -15,6 +15,7 @@ class GameObject : public std::enable_shared_from_this<GameObject>, public ISeri
 {
 public:
 	Transform transform;
+	std::string name = "GameObject";
 
 	GameObject(std::string&& _name = "GameObject");
 	~GameObject();
@@ -99,7 +100,6 @@ public:
 
 private:
 	friend class Scene;
-	std::string name = "GameObject";
 	std::weak_ptr<GameObject> parent;
 	std::list<std::shared_ptr<GameObject>> children;
 	std::list<std::shared_ptr<Component>> components;

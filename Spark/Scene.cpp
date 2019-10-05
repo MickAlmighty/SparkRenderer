@@ -129,6 +129,14 @@ void Scene::drawTreeNode(std::shared_ptr<GameObject> node, bool isRootNode)
 	ImGui::PushID(node.get());
 	bool opened = node == gameObjectToPreview.lock();
 	ImGui::Selectable(node->name.c_str(), opened, 0, { node->name.length() * 7.1f, 0.0f });
+
+	if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None) && !isRootNode)
+	{
+		ImGui::SetDragDropPayload("OBJECT_DRAG_AND_DROP", &node, sizeof(std::shared_ptr<GameObject>));        // Set payload to carry the index of our item (could be anything)
+		ImGui::Text("Getting reference to %s", node->name.c_str());
+		ImGui::EndDragDropSource();
+	}
+
 	ImGui::OpenPopupOnItemClick("GraphNode_operations", 1);
 
 	if (ImGui::BeginPopup("GraphNode_operations"))

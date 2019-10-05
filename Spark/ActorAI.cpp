@@ -7,6 +7,7 @@
 
 #include "Clock.h"
 #include "GameObject.h"
+#include "GUI/SparkGui.h"
 #include "TerrainGenerator.h"
 
 namespace spark {
@@ -261,6 +262,8 @@ void ActorAI::drawGUI()
 		ImGui::Text("ActorAI");
 		ImGui::EndMenuBar();
 	}
+
+	terrainGenerator = SparkGui::getObject("terrainGenerator", terrainGenerator.lock());
 
 	ImGui::DragInt2("startPos", &startPos.x);
 	ImGui::DragInt2("endPos", &endPos.x);

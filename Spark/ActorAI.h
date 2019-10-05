@@ -25,6 +25,7 @@ public:
 	void getPath(std::deque<std::pair<bool, glm::ivec2>>& path) const;
 };
 
+class TerrainGenerator;
 class ActorAI : public Component
 {
 public:
@@ -47,6 +48,7 @@ private:
 	std::multimap<float, std::shared_ptr<Node>> nodesToProcess;
 	std::list<std::shared_ptr<Node>> processedNodes;
 	std::deque<std::pair<bool, glm::ivec2>> path;
+	std::weak_ptr<TerrainGenerator> terrainGenerator;
 
 	void findPath();
 	std::shared_ptr<Node> getTheNearestNodeFromOpen();
