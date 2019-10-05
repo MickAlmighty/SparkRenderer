@@ -17,7 +17,7 @@ public:
 	
 	Component() = default;
 	Component(std::string& componentName);
-	virtual ~Component() = default;
+	virtual ~Component();
 
 	std::shared_ptr<GameObject> getGameObject() const { return gameObject.lock(); }
 	virtual void update() = 0;

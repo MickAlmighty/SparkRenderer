@@ -14,9 +14,9 @@
 			"Pitch" : -51.099937438964844,
 			"Position" : 
 			[
-				12.139717102050781,
-				10.330654144287109,
-				19.884481430053711
+				11.32125186920166,
+				10.505167007446289,
+				19.867597579956055
 			],
 			"Right" : 
 			[
@@ -34,9 +34,9 @@
 			"cameraMode" : 0,
 			"cameraTarget" : 
 			[
-				12.16163444519043,
-				9.5524120330810547,
-				19.256900787353516
+				11.343169212341309,
+				9.7269248962402344,
+				19.240016937255859
 			],
 			"fov" : 60.0,
 			"zFar" : 100.0,
@@ -204,20 +204,21 @@
 						"components" : 
 						[
 							{
-								"SerializableType" : 5,
+								"SerializableType" : 6,
 								"id" : 7,
 								"object" : 
 								{
-									"name" : "TerrainGenerator"
-								}
-							},
-							{
-								"SerializableType" : 6,
-								"id" : 8,
-								"object" : 
-								{
 									"movementSpeed" : 2.7000000476837158,
-									"name" : "ActorAI"
+									"name" : "ActorAI",
+									"terrainGenerator" : 
+									{
+										"SerializableType" : 5,
+										"id" : 8,
+										"object" : 
+										{
+											"name" : "TerrainGenerator"
+										}
+									}
 								}
 							},
 							{
@@ -233,9 +234,9 @@
 						{
 							"position" : 
 							[
-								14.994138717651367,
+								8.4843482971191406,
 								0.0,
-								14.994138717651367
+								12.0
 							],
 							"rotationEuler" : 
 							[
@@ -274,9 +275,9 @@
 									0.0
 								],
 								[
-									14.994138717651367,
+									8.5032196044921875,
 									0.0,
-									14.994138717651367,
+									12.0,
 									1.0
 								]
 							]
@@ -298,6 +299,10 @@
 									"1" : "GeneratedTerrain",
 									"name" : "MeshPlane"
 								}
+							},
+							{
+								"SerializableType" : 5,
+								"id" : 8
 							}
 						],
 						"localTransform" : 
@@ -348,6 +353,90 @@
 									9.4226646423339844,
 									-0.49500000476837158,
 									9.4068536758422852,
+									1.0
+								]
+							]
+						}
+					}
+				},
+				{
+					"SerializableType" : 1,
+					"id" : 12,
+					"object" : 
+					{
+						"components" : 
+						[
+							{
+								"SerializableType" : 2,
+								"id" : 13,
+								"object" : 
+								{
+									"modelPath" : "C:\\Studia\\Semestr6\\SparkRenderer\\res\\models\\box\\box.obj"
+								}
+							},
+							{
+								"SerializableType" : 6,
+								"id" : 14,
+								"object" : 
+								{
+									"movementSpeed" : 4.0999999046325684,
+									"name" : "ActorAI",
+									"terrainGenerator" : 
+									{
+										"SerializableType" : 5,
+										"id" : 8
+									}
+								}
+							}
+						],
+						"localTransform" : 
+						{
+							"position" : 
+							[
+								16.0,
+								0.0,
+								16.981367111206055
+							],
+							"rotationEuler" : 
+							[
+								0.0,
+								0.0,
+								0.0
+							],
+							"scale" : 
+							[
+								1.0,
+								1.0,
+								1.0
+							]
+						},
+						"name" : "Actor2",
+						"worldTransform" : 
+						{
+							"modelMatrix" : 
+							[
+								[
+									1.0,
+									0.0,
+									0.0,
+									0.0
+								],
+								[
+									0.0,
+									1.0,
+									0.0,
+									0.0
+								],
+								[
+									0.0,
+									0.0,
+									1.0,
+									0.0
+								],
+								[
+									16.0,
+									0.0,
+									17.01002311706543,
 									1.0
 								]
 							]

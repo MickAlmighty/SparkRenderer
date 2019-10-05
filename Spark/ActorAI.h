@@ -8,24 +8,26 @@
 #include <Component.h>
 
 namespace spark {
+	
+class TerrainGenerator;
 
 class Node
 {
 public:
 	std::weak_ptr<Node> parent;
-	glm::ivec2 position{};
+	const glm::ivec2 position;
+	unsigned int depth = 0;
 
-	Node() = default;
-	Node(glm::vec2 pos);
+	Node(const glm::ivec2 pos, const unsigned int depth_);
+	Node(const Node& rhs);
 	~Node();
 
 	float distanceToEndPoint(glm::vec2 endPoint) const;
-	std::list<std::shared_ptr<Node>> getNeighbors() const;
-	void drawReturnPath(std::vector<glm::vec3>& perlinValues) const;
+	std::list<std::shared_ptr<Node>> getNeighbors(const std::shared_ptr<TerrainGenerator>& terrainGenerator) const;
+	void drawReturnPath(std::shared_ptr<TerrainGenerator>& terrainGenerator) const;
 	void getPath(std::deque<std::pair<bool, glm::ivec2>>& path) const;
 };
 
-class TerrainGenerator;
 class ActorAI : public Component
 {
 public:
@@ -52,7 +54,7 @@ private:
 
 	void findPath();
 	std::shared_ptr<Node> getTheNearestNodeFromOpen();
-	bool isNodeClosed(std::shared_ptr<Node> node);
+	bool isNodeClosed(const std::shared_ptr<Node>& node);
 	void walkToEndOfThePath();
 };
 }

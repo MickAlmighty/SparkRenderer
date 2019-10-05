@@ -79,6 +79,12 @@ Json::Value JsonSerializer::readFromFile(std::filesystem::path&& filePath)
 Json::Value JsonSerializer::serialize(const std::shared_ptr<ISerializable> objToSerialize)
 {
 	Json::Value root;
+	if(objToSerialize == nullptr)
+	{
+		root["id"] = -1;
+		return root;
+	}
+
 	const int id = findId(objToSerialize);
 	if (id != -1)
 	{
@@ -98,13 +104,18 @@ Json::Value JsonSerializer::serialize(const std::shared_ptr<ISerializable> objTo
 
 std::shared_ptr<ISerializable> JsonSerializer::deserialize(Json::Value& root)
 {
-	int id = root["id"].asInt();
+	int id = root.get("id", -1).asInt();
+	if(id == -1)
+	{
+		return nullptr;
+	}
+
 	if (const auto obj = findSerializedObject(id); obj != nullptr)
 	{
 		return obj;
 	}
 
-	SerializableType type = static_cast<SerializableType>(root["SerializableType"].asInt());
+	const auto type = static_cast<SerializableType>(root["SerializableType"].asInt());
 	std::shared_ptr<ISerializable> deserialized;
 	switch (type)
 	{

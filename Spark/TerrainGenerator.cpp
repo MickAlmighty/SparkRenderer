@@ -2,17 +2,14 @@
 
 #include <glm/gtc/noise.hpp>
 #include <glm/gtc/random.hpp>
+#include <stb_image/stb_image.h>
 
 #include "EngineSystems/ResourceManager.h"
 #include "GameObject.h"
 #include "MeshPlane.h"
+#include "JsonSerializer.h"
 
 namespace spark {
-
-std::vector<glm::vec3> TerrainGenerator::getPerlinValues() const
-{
-	return perlinValues;
-}
 
 SerializableType TerrainGenerator::getSerializableType()
 {
@@ -23,12 +20,14 @@ Json::Value TerrainGenerator::serialize()
 {
 	Json::Value root;
 	root["name"] = name;
+	root["terrainSize"] = terrainSize;
 	return root;
 }
 
 void TerrainGenerator::deserialize(Json::Value& root)
 {
 	name = root.get("name", "TerrainGenerator").asString();
+	terrainSize = root.get("terrainSize", 20).asInt();
 	Texture tex = generateTerrain();
 	ResourceManager::getInstance()->addTexture(tex);
 }
@@ -76,39 +75,70 @@ void TerrainGenerator::drawGUI()
 	ImGui::PopID();
 }
 
+int TerrainGenerator::getTerrainNodeIndex(const int x, const int y) const
+{
+	return y * terrainSize + x;
+}
+
 Texture TerrainGenerator::generateTerrain()
 {
 	const int width = terrainSize, height = terrainSize;
-	perlinValues.clear();
+	terrain.clear();
 	float y = glm::linearRand(20.0f, 100.0f);
 	float x = y;
 	for (int i = 0; i < width; ++i)
 	{
 		for (int j = 0; j < height; ++j)
 		{
-			float perlinValue = glm::perlin(glm::vec2(x / perlinDivider, y / perlinDivider));
-			glm::vec3 perlinNoise{ glm::clamp(perlinValue, 0.0f, 1.0f), 0, 0 };
-			perlinValues.push_back(perlinNoise);
+			const float perlinValue = glm::perlin(glm::vec2(x / perlinDivider, y / perlinDivider));
+			const glm::vec3 perlinNoise{ glm::clamp(perlinValue, 0.0f, 1.0f), 0, 0 };
+			terrain.push_back(TerrainNode{ 0, perlinNoise });
 			y += perlinTimeStep;
 		}
 		x += perlinTimeStep;
 	}
 
-	updateTerrain(perlinValues);
+	updateTerrain();
 	generatedTerrain.path = "GeneratedTerrain";
 	return generatedTerrain;
 }
 
-void TerrainGenerator::updateTerrain(std::vector<glm::vec3> newPerlinValues) const
+void TerrainGenerator::updateTerrain() const
 {
+	std::vector<glm::vec3> pixels;
+	for(const auto terrainNode : terrain)
+	{
+		pixels.push_back(terrainNode.nodeData);
+	}
 	glBindTexture(GL_TEXTURE_2D, generatedTerrain.ID);
 	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, perlinValues.data());
-	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, terrainSize, terrainSize, GL_RGB, GL_FLOAT, newPerlinValues.data());
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, terrainSize, terrainSize, GL_RGB, GL_FLOAT, pixels.data());
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void TerrainGenerator::markNodeAsPartOfPath(int x, int y)
+{
+	terrain[getTerrainNodeIndex(x, y)].nodeData.y = 1.0f;
+	terrain[getTerrainNodeIndex(x, y)].numberOfActorsPassingThrough++;
+}
+
+void TerrainGenerator::unMarkNodeAsPartOfPath(int x, int y)
+{
+	terrain[getTerrainNodeIndex(x, y)].numberOfActorsPassingThrough--;
+	if(terrain[getTerrainNodeIndex(x, y)].numberOfActorsPassingThrough == 0)
+	{
+		terrain[getTerrainNodeIndex(x, y)].nodeData.y = 0.0f;
+	}
+}
+
+float TerrainGenerator::getTerrainValue(const int x, const int y)
+{
+	const unsigned int index = getTerrainNodeIndex(x, y);
+	return terrain[index].nodeData.x;
 }
 
 TerrainGenerator::TerrainGenerator(std::string&& newName) : Component(newName)

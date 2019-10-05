@@ -52,7 +52,7 @@ public:
 					return std::dynamic_pointer_cast<T>(gameObject);
 				}
 
-				return gameObject->getComponent<T>();
+				return gameObject->getComponent<T>(); // return nullptr if there is not any type T component
 			}
 			ImGui::EndDragDropTarget();
 		}
