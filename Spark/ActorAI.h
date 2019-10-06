@@ -10,29 +10,13 @@
 namespace spark {
 	
 class TerrainGenerator;
-
-class Node
-{
-public:
-	std::weak_ptr<Node> parent;
-	const glm::ivec2 position;
-	unsigned int depth = 0;
-
-	Node(const glm::ivec2 pos, const unsigned int depth_);
-	Node(const Node& rhs);
-	~Node();
-
-	float distanceToEndPoint(glm::vec2 endPoint) const;
-	std::list<std::shared_ptr<Node>> getNeighbors(const std::shared_ptr<TerrainGenerator>& terrainGenerator) const;
-	void drawReturnPath(std::shared_ptr<TerrainGenerator>& terrainGenerator) const;
-	void getPath(std::deque<std::pair<bool, glm::ivec2>>& path) const;
-};
+class NodeAI;
 
 class ActorAI : public Component
 {
 public:
 	ActorAI(std::string&& newName = "ActorAI");
-	~ActorAI();
+	~ActorAI() = default;
 
 	SerializableType getSerializableType() override;
 	Json::Value serialize() override;
@@ -47,15 +31,23 @@ private:
 	bool isTraveling = false;
 	glm::ivec2 startPos{};
 	glm::ivec2 endPos{};
-	std::multimap<float, std::shared_ptr<Node>> nodesToProcess;
-	std::list<std::shared_ptr<Node>> processedNodes;
+	std::multimap<float, std::shared_ptr<NodeAI>> nodesToProcess;
+	std::multimap<float, NodeAI> nodesToProcessStack;
+	
+	std::list<std::shared_ptr<NodeAI>> processedNodes;
+	std::list<NodeAI> processedNodesStack;
+
 	std::deque<std::pair<bool, glm::ivec2>> path;
 	std::weak_ptr<TerrainGenerator> terrainGenerator;
 
 	void findPath();
-	std::shared_ptr<Node> getTheNearestNodeFromOpen();
-	bool isNodeClosed(const std::shared_ptr<Node>& node);
+	std::shared_ptr<NodeAI> getTheNearestNodeFromOpen();
+	bool isNodeClosed(const std::shared_ptr<NodeAI>& node);
 	void walkToEndOfThePath();
+
+	void findPathStack();
+	NodeAI getTheNearestNodeFromOpenStack();
+	bool isNodeClosedStack(const NodeAI& node);
 };
 }
 #endif

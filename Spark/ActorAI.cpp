@@ -8,96 +8,76 @@
 #include "Clock.h"
 #include "GameObject.h"
 #include "GUI/SparkGui.h"
-#include "TerrainGenerator.h"
 #include "JsonSerializer.h"
+#include "NodeAI.h"
+#include "TerrainGenerator.h"
+
 
 namespace spark {
 
-float Node::distanceToEndPoint(glm::vec2 endPoint) const
+void ActorAI::update()
 {
-	return glm::pow(position.x - endPoint.x, 2) + glm::pow(position.y - endPoint.y, 2);
-	//return glm::distance(position, endPoint);
-}
-
-std::list<std::shared_ptr<Node>> Node::getNeighbors(const std::shared_ptr<TerrainGenerator>& terrainGenerator) const
-{
-	std::list<std::shared_ptr<Node>> neighbors;
-	if (position.x - 1 >= 0)
+	glm::vec3 pos = getGameObject()->transform.world.getPosition();
+	if (pos.x < 0)
+		pos.x = 0;
+	if (pos.z < 0)
+		pos.z = 0;
+	if (pos.x > 19)
+		pos.x = 19;
+	if (pos.z > 19)
+		pos.z = 19;
+	if (pos.x - static_cast<int>(pos.x) < 0.5)
 	{
-		if(const glm::ivec2 pos(position.x - 1, position.y); terrainGenerator->getTerrainValue(pos.x, pos.y) != 1.0f)
+		startPos.x = static_cast<int>(pos.x);
+	}
+	else
+	{
+		startPos.x = static_cast<int>(pos.x + 1);
+	}
+
+	if (pos.z - static_cast<int>(pos.z) < 0.5)
+	{
+		startPos.y = static_cast<int>(pos.z);
+	}
+	else
+	{
+		startPos.y = static_cast<int>(pos.z + 1);
+	}
+
+	if (!isTraveling)
+	{
+		do
 		{
-			neighbors.push_back(std::make_shared<Node>(pos, this->depth + 1));
+			endPos = { static_cast<int>(glm::linearRand(0.0f, 20.0f)), static_cast<int>(glm::linearRand(0.0f, 20.0f)) };
+		} while (terrainGenerator.lock()->getTerrainValue(endPos.x, endPos.y) == 1.0f);
+
+		const double measureStart = glfwGetTime();
+		//findPath();
+		findPathStack();
+		timer = glfwGetTime() - measureStart;
+		std::cout << timer << std::endl;
+		if (!path.empty())
+		{
+			isTraveling = true;
 		}
 	}
-		
-	if (position.x + 1 < 20) 
+
+	if (isTraveling)
 	{
-		if (const glm::ivec2 pos(position.x + 1, position.y); terrainGenerator->getTerrainValue(pos.x, pos.y) != 1.0f)
-		{
-			neighbors.push_back(std::make_shared<Node>(pos, this->depth + 1));
-		}
+		walkToEndOfThePath();
 	}
-	if (position.y - 1 >= 0)
-	{
-		if (const glm::ivec2 pos(position.x, position.y - 1); terrainGenerator->getTerrainValue(pos.x, pos.y) != 1.0f)
-		{
-			neighbors.push_back(std::make_shared<Node>(pos, this->depth + 1));
-		}
-	}
-	if (position.y + 1 < 20)
-	{
-		if (const glm::ivec2 pos(position.x, position.y + 1); terrainGenerator->getTerrainValue(pos.x, pos.y) != 1.0f)
-		{
-			neighbors.push_back(std::make_shared<Node>(pos, this->depth + 1));
-		}
-	}
-	/*if (position.x - 1 >= 0 && position.y - 1 >= 0)
-		neighbors.push_back(std::make_shared<Node>(glm::ivec2(position.x - 1, position.y - 1)));
-	if (position.x + 1 < 20 && position.y - 1 >= 0)
-		neighbors.push_back(std::make_shared<Node>(glm::ivec2(position.x + 1, position.y - 1)));
-	if (position.x + 1 < 20 && position.y + 1 < 20)
-		neighbors.push_back(std::make_shared<Node>(glm::ivec2(position.x + 1, position.y + 1)));
-	if (position.x - 1 >= 0 && position.y + 1 < 20)
-		neighbors.push_back(std::make_shared<Node>(glm::ivec2(position.x - 1, position.y - 1)));*/
-	return neighbors;
 }
 
-void Node::drawReturnPath(std::shared_ptr<TerrainGenerator>& terrainGenerator) const
+void ActorAI::fixedUpdate()
 {
-	//std::cout << position.x << " " << position.y << std::endl;
-	const int index = position.y * 20 + position.x;
-	terrainGenerator->markNodeAsPartOfPath(position.x, position.y);
-	if (!parent.expired())
-		parent.lock()->drawReturnPath(terrainGenerator);
-}
 
-void Node::getPath(std::deque<std::pair<bool, glm::ivec2>>& path) const
-{
-	path.push_front({ false, { static_cast<float>(position.x), static_cast<float>(position.y) } });
-	if (!parent.expired())
-		parent.lock()->getPath(path);
-}
-
-Node::Node(const glm::ivec2 pos, const unsigned int depth_) : position(pos), depth(depth_)
-{
-	std::cout << "Node Constructor!" << std::endl;
-}
-
-Node::Node(const Node& rhs) : parent(rhs.parent), position(rhs.position), depth(rhs.depth)
-{
-	
-}
-
-Node::~Node()
-{
-	//std::cout << "Node destroyed" << std::endl;
 }
 
 void ActorAI::findPath()
 {
 	path.clear();
-	nodesToProcess.emplace(0.0f, std::make_shared<Node>(startPos, 0));
-	std::shared_ptr<Node> finishNode = nullptr;
+	nodesToProcess.emplace(0.0f, std::make_shared<NodeAI>(startPos, 0.0f));
+	std::shared_ptr<NodeAI> finishNode = nullptr;
 	while (true)
 	{
 		if (nodesToProcess.empty())
@@ -113,9 +93,9 @@ void ActorAI::findPath()
 			break;
 		}
 		processedNodes.push_back(closedNode);
-		std::list<std::shared_ptr<Node>> neighbors = closedNode->getNeighbors(terrainGenerator.lock());
+		std::list<std::shared_ptr<NodeAI>> neighbors = closedNode->getNeighbors(terrainGenerator.lock());
 
-		for (const std::shared_ptr<Node>& neighbor : neighbors)
+		for (const std::shared_ptr<NodeAI>& neighbor : neighbors)
 		{
 			if (isNodeClosed(neighbor))
 				continue;
@@ -124,10 +104,9 @@ void ActorAI::findPath()
 
 			const float distance = neighbor->distanceToEndPoint(endPos);
 			const float terrainValue = terrainGenerator.lock()->getTerrainValue(neighbor->position.x, neighbor->position.y);
-			float heuristicsValue = terrainValue * (distance + neighbor->depth);
+			float heuristicsValue = (1 - terrainValue) * (distance + neighbor->depth);
 			
-			nodesToProcess.insert({heuristicsValue, neighbor});
-			//nodesToProcess.emplace(heuristicsValue, neighbor);
+			nodesToProcess.emplace(heuristicsValue, neighbor);
 		}
 	}
 	if (finishNode)
@@ -143,21 +122,21 @@ void ActorAI::findPath()
 	processedNodes.clear();
 }
 
-std::shared_ptr<Node> ActorAI::getTheNearestNodeFromOpen()
+std::shared_ptr<NodeAI> ActorAI::getTheNearestNodeFromOpen()
 {
 	const auto node_it = std::begin(nodesToProcess);
 	if (node_it != std::end(nodesToProcess))
 	{
-		std::shared_ptr<Node> n = node_it->second;
+		std::shared_ptr<NodeAI> n = node_it->second;
 		nodesToProcess.erase(node_it);
 		return n;
 	}
 	return nullptr;
 }
 
-bool ActorAI::isNodeClosed(const std::shared_ptr<Node>& node)
+bool ActorAI::isNodeClosed(const std::shared_ptr<NodeAI>& node)
 {
-	const auto& it = std::find_if(std::begin(processedNodes), std::end(processedNodes), [&node](const std::shared_ptr<Node>& n)
+	const auto& it = std::find_if(std::begin(processedNodes), std::end(processedNodes), [&node](const std::shared_ptr<NodeAI>& n)
 	{
 		return n->position == node->position;
 	});
@@ -212,6 +191,79 @@ void ActorAI::walkToEndOfThePath()
 	}
 }
 
+void ActorAI::findPathStack()
+{
+	path.clear();
+	nodesToProcessStack.emplace( 0.0f, NodeAI(startPos, 0.0f));
+	NodeAI* finishNode = nullptr;
+	while (true)
+	{
+		if (nodesToProcessStack.empty())
+		{
+			isTraveling = false;
+			std::cout << "Path hasn't been found" << std::endl;
+			break;
+		}
+
+		const auto closedNode = getTheNearestNodeFromOpenStack();
+		processedNodesStack.push_back(closedNode);
+		
+		if (closedNode.position == endPos)
+		{
+			finishNode = &(*std::prev(processedNodesStack.end()));
+			break;
+		}
+		
+		std::list<NodeAI> neighbors = closedNode.getNeighborsStack(terrainGenerator.lock());
+		for (NodeAI& neighbor : neighbors)
+		{
+			if (isNodeClosedStack(neighbor))
+				continue;
+			
+			neighbor.parentAddress = &(*std::prev(processedNodesStack.end()));
+
+			const float distance = neighbor.distanceToEndPoint(endPos);
+			const float terrainValue = terrainGenerator.lock()->getTerrainValue(neighbor.position.x, neighbor.position.y);
+			float heuristicsValue = (1 - terrainValue) * (distance + neighbor.depth);
+
+			nodesToProcessStack.emplace(heuristicsValue, std::move(neighbor));
+		}
+	}
+	if (finishNode)
+	{
+		if (auto terrain_g = terrainGenerator.lock(); terrain_g != nullptr)
+		{
+			finishNode->drawReturnPathStack(terrain_g);
+			finishNode->getPathStack(path);
+			terrain_g->updateTerrain();
+		}
+	}
+	
+	nodesToProcessStack.clear();
+	processedNodesStack.clear();
+}
+
+NodeAI ActorAI::getTheNearestNodeFromOpenStack()
+{
+	const auto node_it = std::begin(nodesToProcessStack);
+	if (node_it != std::end(nodesToProcessStack))
+	{
+		NodeAI n = node_it->second;
+		nodesToProcessStack.erase(node_it);
+		return n;
+	}
+	return {};
+}
+
+bool ActorAI::isNodeClosedStack(const NodeAI& node)
+{
+	const auto& it = std::find_if(std::begin(processedNodesStack), std::end(processedNodesStack), [&node](const NodeAI& n)
+	{
+		return n.position == node.position;
+	});
+	return it != std::end(processedNodesStack);
+}
+
 SerializableType ActorAI::getSerializableType()
 {
 	return SerializableType::SActorAI;
@@ -231,60 +283,6 @@ void ActorAI::deserialize(Json::Value& root)
 	name = root.get("name", "ActorAI").asString();
 	movementSpeed = root.get("movementSpeed", 1.0f).asFloat();
 	terrainGenerator = std::dynamic_pointer_cast<TerrainGenerator>(JsonSerializer::deserialize(root["terrainGenerator"]));
-}
-
-void ActorAI::update()
-{
-	glm::vec3 pos = getGameObject()->transform.world.getPosition();
-	if (pos.x < 0)
-		pos.x = 0;
-	if (pos.z < 0)
-		pos.z = 0;
-	if (pos.x > 19)
-		pos.x = 19;
-	if (pos.z > 19)
-		pos.z = 19;
-	if (pos.x - static_cast<int>(pos.x) < 0.5)
-	{
-		startPos.x = static_cast<int>(pos.x);
-	}
-	else
-	{
-		startPos.x = static_cast<int>(pos.x + 1);
-	}
-
-	if (pos.z - static_cast<int>(pos.z) < 0.5)
-	{
-		startPos.y = static_cast<int>(pos.z);
-	}
-	else
-	{
-		startPos.y = static_cast<int>(pos.z + 1);
-	}
-
-	if (!isTraveling)
-	{
-		do
-		{
-			endPos = { static_cast<int>(glm::linearRand(0.0f, 20.0f)), static_cast<int>(glm::linearRand(0.0f, 20.0f)) };
-		} while (terrainGenerator.lock()->getTerrainValue(endPos.x, endPos.y) == 1);
-		
-		const double measureStart = glfwGetTime();
-		findPath();
-		timer = glfwGetTime() - measureStart;
-		isTraveling = true;
-	}
-
-	if (isTraveling)
-	{
-		walkToEndOfThePath();
-	}
-
-}
-
-void ActorAI::fixedUpdate()
-{
-
 }
 
 void ActorAI::drawGUI()
@@ -320,11 +318,6 @@ void ActorAI::drawGUI()
 }
 
 ActorAI::ActorAI(std::string&& newName) : Component(newName)
-{
-}
-
-
-ActorAI::~ActorAI()
 {
 }
 

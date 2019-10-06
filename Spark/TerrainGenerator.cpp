@@ -28,8 +28,33 @@ void TerrainGenerator::deserialize(Json::Value& root)
 {
 	name = root.get("name", "TerrainGenerator").asString();
 	terrainSize = root.get("terrainSize", 20).asInt();
-	Texture tex = generateTerrain();
-	ResourceManager::getInstance()->addTexture(tex);
+	
+	int tex_width, tex_height, nr_channels;
+	unsigned char* pixels;
+	pixels = stbi_load("map.png", &tex_width, &tex_height, &nr_channels, 0);
+
+	std::vector<glm::vec3> pix;
+	pix.reserve(tex_width * tex_height);
+	for (int i = 0; i < tex_width * tex_height * nr_channels; i += 3)
+	{
+		glm::vec3 pixel;
+		pixel.x = *(pixels + i);
+		pixel.y = *(pixels + i + 1);
+		pixel.z = *(pixels + i + 2);
+		if(pixel != glm::vec3(0))
+			pix.push_back(glm::normalize(pixel));
+		else
+			pix.push_back(pixel);
+	}
+
+	terrain = std::vector<TerrainNode>(400);
+	for (int i = 0; i < terrainSize * terrainSize; i++)
+	{
+		terrain[i].nodeData.x = pix[i].x;
+	}
+	updateTerrain();
+	generatedTerrain.path = "GeneratedTerrain";
+	ResourceManager::getInstance()->addTexture(generatedTerrain);
 }
 
 void TerrainGenerator::update()
@@ -57,6 +82,34 @@ void TerrainGenerator::drawGUI()
 	ImGui::DragInt("TerrainSize", &terrainSize, 1);
 	ImGui::DragFloat("PerlinDivider", &perlinDivider, 0.003f);
 	ImGui::DragFloat("PerlinTimeStep", &perlinTimeStep, 0.1f);
+
+	if(ImGui::Button("Map from .bmp"))
+	{
+		int tex_width, tex_height, nr_channels;
+		unsigned char* pixels;
+		pixels = stbi_load("map.png", &tex_width, &tex_height, &nr_channels, 0);
+
+		std::vector<glm::vec3> pix;
+		pix.reserve(tex_width * tex_height);
+		for(int i = 0; i < tex_width * tex_height * nr_channels; i += 3)
+		{
+			glm::vec3 pixel;
+			pixel.x = *(pixels + i);
+			pixel.y = *(pixels + i + 1);
+			pixel.z = *(pixels + i + 2);
+			if (pixel != glm::vec3(0))
+				pix.push_back(glm::normalize(pixel));
+			else
+				pix.push_back(pixel);
+		}
+
+		for(int i = 0; i < terrainSize * terrainSize; i++)
+		{
+			terrain[i].nodeData.x = pix[i].x;
+		}
+		updateTerrain();
+	}
+
 
 	if (ImGui::Button("Generate Terrain"))
 	{
