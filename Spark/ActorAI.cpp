@@ -1,7 +1,8 @@
 #include "ActorAI.h"
 
-#include <iostream>
 #include <deque>
+#include <iostream>
+#include <math.h>
 
 #include <glm/gtc/random.inl>
 
@@ -17,32 +18,13 @@ namespace spark {
 
 void ActorAI::update()
 {
-	glm::vec3 pos = getGameObject()->transform.world.getPosition();
-	if (pos.x < 0)
-		pos.x = 0;
-	if (pos.z < 0)
-		pos.z = 0;
-	if (pos.x > 19)
-		pos.x = 19;
-	if (pos.z > 19)
-		pos.z = 19;
-	if (pos.x - static_cast<int>(pos.x) < 0.5)
-	{
-		startPos.x = static_cast<int>(pos.x);
-	}
-	else
-	{
-		startPos.x = static_cast<int>(pos.x + 1);
-	}
+	if(terrainGenerator.expired())
+		return;
 
-	if (pos.z - static_cast<int>(pos.z) < 0.5)
-	{
-		startPos.y = static_cast<int>(pos.z);
-	}
-	else
-	{
-		startPos.y = static_cast<int>(pos.z + 1);
-	}
+	glm::vec3 pos = getGameObject()->transform.world.getPosition();
+	
+	validateActorPosition(pos);
+	setStartPosition(pos);
 
 	if (!isTraveling)
 	{
@@ -55,7 +37,7 @@ void ActorAI::update()
 		//findPath();
 		findPathStack();
 		timer = glfwGetTime() - measureStart;
-		std::cout << timer << std::endl;
+		std::cout << timer * 1000.0 << " ms" << std::endl;
 		if (!path.empty())
 		{
 			isTraveling = true;
@@ -65,6 +47,35 @@ void ActorAI::update()
 	if (isTraveling)
 	{
 		walkToEndOfThePath();
+	}
+}
+
+void ActorAI::validateActorPosition(glm::vec3& position) const
+{
+	if (position.x < 0) position.x = 0;
+	if (position.z < 0) position.z = 0;
+	if (position.x > 19) position.x = 19;
+	if (position.z > 19) position.z = 19;
+}
+
+void ActorAI::setStartPosition(glm::vec3& position)
+{
+	if (position.x - static_cast<int>(position.x) < 0.5)
+	{
+		startPos.x = static_cast<int>(position.x);
+	}
+	else
+	{
+		startPos.x = static_cast<int>(position.x + 1);
+	}
+
+	if (position.z - static_cast<int>(position.z) < 0.5)
+	{
+		startPos.y = static_cast<int>(position.z);
+	}
+	else
+	{
+		startPos.y = static_cast<int>(position.z + 1);
 	}
 }
 

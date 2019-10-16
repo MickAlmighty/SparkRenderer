@@ -48,6 +48,9 @@ private:
 	void findPathStack();
 	NodeAI getTheNearestNodeFromOpenStack();
 	bool isNodeClosedStack(const NodeAI& node);
+
+	void validateActorPosition(glm::vec3& position) const;
+	void setStartPosition(glm::vec3& startPosition);
 };
 }
 #endif

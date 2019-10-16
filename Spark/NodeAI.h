@@ -21,7 +21,7 @@ public:
 
 	NodeAI(const glm::ivec2 pos, const float depth_);
 	NodeAI(const NodeAI& rhs);
-	NodeAI(const NodeAI&& rhs);
+	NodeAI(const NodeAI&& rhs) noexcept;
 	NodeAI();
 	~NodeAI() = default;
 

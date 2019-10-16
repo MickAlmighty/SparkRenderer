@@ -17,7 +17,7 @@ NodeAI::NodeAI(const NodeAI& rhs) : position(rhs.position), depth(rhs.depth), pa
 	}
 }
 
-NodeAI::NodeAI(const NodeAI&& rhs) : position(rhs.position), depth(rhs.depth), parentAddress(rhs.parentAddress)
+NodeAI::NodeAI(const NodeAI&& rhs) noexcept : position(rhs.position), depth(rhs.depth), parentAddress(rhs.parentAddress)
 {
 }
 
