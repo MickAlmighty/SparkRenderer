@@ -6,10 +6,11 @@
 
 #include <glad/glad.h>
 #include <glm/glm.hpp>
-
+#include <list>
 
 namespace spark {
 
+struct Uniform;
 class Shader
 {
 public:
@@ -17,9 +18,11 @@ public:
 	~Shader();
 	GLuint compileVertexShader(const char* vertexShaderSource);
 	GLuint compileFragmentShader(const char* fragmentShaderSource);
+	std::list<Uniform> gatherUniforms(std::stringstream& stream) const;
 	void linkProgram(GLuint vertexShader, GLuint fragmentShader);
+	void queryUniformLocations(const std::list<Uniform>& uniforms);
 
-	void use();
+	void use() const;
 
 	GLuint getLocation(const std::string& name) const;
 	void setBool(const std::string &name, bool value) const;
@@ -30,7 +33,7 @@ public:
 	void setMat4(const std::string &name, glm::mat4 value) const;
 private:
 	GLuint ID {0};
-	mutable std::map<std::string, GLuint> uniformLocations;
+	std::map<Uniform, GLuint> uniformLocations;
 };
 
 }

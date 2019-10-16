@@ -20,6 +20,20 @@ struct Transform
 	WorldTransform world;
 };
 
+struct Uniform
+{
+	std::string type;
+	std::string name;
+	bool operator!=(const Uniform& rhs) const
+	{
+		return this->name != rhs.name || this->type != rhs.type;
+	}
+	bool operator<(const Uniform& rhs) const
+	{
+		return this->name < rhs.name;
+	}
+};
+
 struct InitializationVariables
 {
 	unsigned int width;

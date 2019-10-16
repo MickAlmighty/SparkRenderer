@@ -1,4 +1,4 @@
-#include "Shader.h"
+ï»¿#include "Shader.h"
 
 #include <iostream>
 #include <fstream>
@@ -6,50 +6,54 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
+#include "Structs.h"
+
 namespace spark {
 
 Shader::Shader(const std::string& vertexShaderPath, const std::string& fragmentShaderPath)
 {
-	// 1. pobierz kod Ÿród³owy Vertex/Fragment Shadera z filePath  
-	std::string vertexCode;
-	std::string fragmentCode;
-	std::ifstream vShaderFile;
-	std::ifstream fShaderFile;
-	// zapewnij by obiekt ifstream móg³ rzucaæ wyj¹tkami  
-	vShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-	fShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+	// 1. pobierz kod Å¸rÃ³dÂ³owy Vertex/Fragment Shadera z filePath  
+	std::list<Uniform> uniforms;
+	std::string vertexCode, fragmentCode;
+	std::stringstream vShaderStream, fShaderStream;
 	try
 	{
-		// otwórz pliki  
+		
+		std::ifstream vShaderFile;
+		vShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
 		vShaderFile.open(vertexShaderPath);
-		fShaderFile.open(fragmentShaderPath);
-		std::stringstream vShaderStream, fShaderStream;
-		// zapisz zawartoœæ bufora pliku do strumieni  
 		vShaderStream << vShaderFile.rdbuf();
-		fShaderStream << fShaderFile.rdbuf();
-		// zamknij uchtywy do plików  
 		vShaderFile.close();
+
+		std::ifstream fShaderFile;
+		fShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+		fShaderFile.open(fragmentShaderPath);
+		fShaderStream << fShaderFile.rdbuf();
 		fShaderFile.close();
-		// zamieñ strumieñ w ³añcuch znaków  
+
 		vertexCode = vShaderStream.str();
 		fragmentCode = fShaderStream.str();
+
+		uniforms = gatherUniforms(vShaderStream);
+		uniforms.merge(gatherUniforms(fShaderStream), [](const Uniform& lhs, const Uniform& rhs) { return lhs.name < rhs.name && lhs.type < rhs.type; });
 	}
-	catch (std::ifstream::failure e)
+	catch (const std::ifstream::failure& e)
 	{
-		std::cout << "ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ" << std::endl;
+		std::cout << "ERROR::SHADER::FILE_NOT_SUCCESSFULLY_READ, cause: " << e.what() << std::endl;
 	}
 	const char* vShaderCode = vertexCode.c_str();
 	const char* fShaderCode = fragmentCode.c_str();
-
-	GLuint vertex = compileVertexShader(vShaderCode);
-	GLuint fragment = compileFragmentShader(fShaderCode);
+	const GLuint vertex = compileVertexShader(vShaderCode);
+	const GLuint fragment = compileFragmentShader(fShaderCode);
 	linkProgram(vertex, fragment);
+
+	queryUniformLocations(uniforms);
 }
 
 GLuint Shader::compileVertexShader(const char* vertexShaderSource)
 {
-	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
+	const GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+	glShaderSource(vertexShader, 1, &vertexShaderSource, nullptr);
 	glCompileShader(vertexShader);
 	GLint success;
 	GLchar infoLog[512];
@@ -57,7 +61,7 @@ GLuint Shader::compileVertexShader(const char* vertexShaderSource)
 
 	if (!success)
 	{
-		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
+		glGetShaderInfoLog(vertexShader, 512, nullptr, infoLog);
 		std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED/n" << infoLog << std::endl;
 	}
 
@@ -66,8 +70,8 @@ GLuint Shader::compileVertexShader(const char* vertexShaderSource)
 
 GLuint Shader::compileFragmentShader(const char* fragmentShaderSource)
 {
-	GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
+	const GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(fragmentShader, 1, &fragmentShaderSource, nullptr);
 	glCompileShader(fragmentShader);
 
 	GLint success;
@@ -75,11 +79,34 @@ GLuint Shader::compileFragmentShader(const char* fragmentShaderSource)
 	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
 	if (!success)
 	{
-		glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
+		glGetShaderInfoLog(fragmentShader, 512, nullptr, infoLog);
 		std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED/n" << infoLog << std::endl;
 	}
 
 	return fragmentShader;
+}
+
+std::list<Uniform> Shader::gatherUniforms(std::stringstream& stream) const
+{
+	std::list<Uniform> uniforms;
+	for (std::string line; std::getline(stream, line); )
+	{
+		std::stringstream line2(line);
+		std::string word;
+		for (; std::getline(line2, word, ' ');)
+		{
+			if (word == "uniform")
+			{
+				Uniform uniform;
+				std::string type;
+				std::getline(line2, uniform.type, ' ');
+				std::string uniformName;
+				std::getline(line2, uniform.name, ';');
+				uniforms.push_back(uniform);
+			}
+		}
+	}
+	return uniforms;
 }
 
 void Shader::linkProgram(GLuint vertexShader, GLuint fragmentShader)
@@ -102,6 +129,14 @@ void Shader::linkProgram(GLuint vertexShader, GLuint fragmentShader)
 	glDeleteShader(fragmentShader);
 }
 
+void Shader::queryUniformLocations(const std::list<Uniform>& uniforms)
+{
+	for (const auto& uniform : uniforms)
+	{
+		uniformLocations.emplace(uniform, glGetUniformLocation(ID, uniform.name.c_str()));
+	}	
+}
+
 Shader::~Shader()
 {
 	glDeleteProgram(ID);
@@ -110,21 +145,24 @@ Shader::~Shader()
 #endif
 }
 
-void Shader::use()
+void Shader::use() const
 {
 	glUseProgram(ID);
 }
 
 GLuint Shader::getLocation(const std::string& name) const
 {
-	const auto location_it = uniformLocations.find(name);
-	if(location_it != std::end(uniformLocations))
-	{
-		return location_it->second;
-	}
+	const auto uniform_it = std::find_if(std::begin(uniformLocations), std::end(uniformLocations),
+		[&name](const std::pair<Uniform, GLuint>& pair)
+		{
+			return pair.first.name == name;
+		});
 
-	uniformLocations[name] = glGetUniformLocation(ID, name.c_str());
-	return uniformLocations[name];
+	if (uniform_it != std::end(uniformLocations))
+	{
+		return uniform_it->second;
+	}
+	return 0;
 }
 
 void Shader::setBool(const std::string& name, bool value) const
