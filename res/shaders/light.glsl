@@ -26,11 +26,11 @@ layout (binding = 4) uniform sampler2D metalnessTexture;
 
 struct DirLight {
     vec3 color;
-    vec3 direction;
+    vec3 position;
 };
 
 
-uniform DirLight dirLight = DirLight(vec3(1,0,0), vec3(0, -1, 0));
+uniform DirLight dirLight = DirLight(vec3(1,1,1), vec3(0, 10, 0));
 uniform vec3 camPos;
 
 float normalDistribution(vec3 N, vec3 H, float alfa)
@@ -38,18 +38,18 @@ float normalDistribution(vec3 N, vec3 H, float alfa)
     float alfaSquared = pow(alfa, 2);
     float nom = alfaSquared;
     float denom = M_PI * pow( (pow(dot(N, H), 2) * (alfaSquared - 1) + 1) , 2);
-    return nom / denom;
+    return nom / max(denom, 0.001);
 }
 
 float fresnelSchlick(vec3 V, vec3 H, float metalness)
 {
     float F0 = metalness;
-    return F0 + (1 - F0) * (1 - pow(dot(V, H), 5));
+    return F0 + (1 - F0) * pow(1 - clamp(dot(H, V), 0.0, 1.0), 5);
 }
 
 float geometrySchlickGGX(vec3 V, vec3 N, float alfa)
 {
-    float NdotV = dot(N, V);
+    float NdotV = max(dot(N, V), 0.0);
     float k = alfa * 0.5;
     float nom = NdotV;
     float denom = NdotV * (1 - k) + k;
@@ -70,8 +70,8 @@ void main()
 
     float A = roughness * roughness; // alfa
     vec3 V = normalize(camPos - pos);
-    vec3 L = normalize(dirLight.direction);
-    vec3 N = texture(diffuseTexture, texCoords).xyz;
+    vec3 L = normalize( dirLight.position - pos);
+    vec3 N = normalize(texture(normalTexture, texCoords).xyz);
     vec3 H = normalize(V + L);
 
     vec3 L0 = {0, 0, 0};
@@ -83,10 +83,10 @@ void main()
         float VdotN = dot(V, N);
         float LdotN = dot(L, N);
 
-        float kDiffuse = 1.0;
+        float kDiffuse = 1.0 - F;
         vec3 diffuseColor =  kDiffuse * albedo / M_PI;
-        float specularColor = (D * F * G) / (4 * VdotN * LdotN);
-        L0 += (diffuseColor + specularColor) * LdotN;
+        float specularColor = (D * F * G) / max((4 * max(VdotN, 0.0) * max(LdotN, 0.0)), 0.001);
+        L0 += (diffuseColor + specularColor) * dirLight.color * max(LdotN, 0.0);
     }
     FragColor = vec4(L0 , 1);
 }
