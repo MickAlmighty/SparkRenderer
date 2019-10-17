@@ -29,11 +29,13 @@ private:
 	ScreenQuad screenQuad{};
 
 	GLuint mainFramebuffer{}, colorTexture{}, positionTexture{}, normalsTexture{}, roughnessTexture{}, metalnessTexture{};
+	GLuint lightFrameBuffer{}, lightColorTexture{};
 	GLuint postprocessingFramebuffer{}, postProcessingTexture{};
 
 	std::weak_ptr<Shader> mainShader;
 	std::weak_ptr<Shader> screenShader;
 	std::weak_ptr<Shader> postprocessingShader;
+	std::weak_ptr<Shader> lightShader;
 
 	~SparkRenderer() = default;
 	SparkRenderer() = default;

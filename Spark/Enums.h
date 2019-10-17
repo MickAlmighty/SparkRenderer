@@ -6,6 +6,7 @@ namespace spark {
 enum class ShaderType : uint16_t
 {
 	DEFAULT_SHADER = 0,
+	LIGHT_SHADER,
 	POSTPROCESSING_SHADER,
 	SCREEN_SHADER
 };

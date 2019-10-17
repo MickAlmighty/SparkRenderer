@@ -47,6 +47,11 @@ glm::mat4 Camera::getProjectionMatrix() const
 	return glm::perspectiveFov(glm::radians(fov), 1.0f * Spark::WIDTH, 1.0f * Spark::HEIGHT, zNear, zFar);
 }
 
+glm::vec3 Camera::getPosition() const
+{
+	return Position;
+}
+
 void Camera::setProjectionMatrix(float fov, float nearPlane, float farPlane)
 {
 	this->fov = fov;

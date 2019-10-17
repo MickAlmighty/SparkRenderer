@@ -52,7 +52,7 @@ void SparkRenderer::initMembers()
 	mainShader = ResourceManager::getInstance()->getShader(ShaderType::DEFAULT_SHADER);
 	screenShader = ResourceManager::getInstance()->getShader(ShaderType::SCREEN_SHADER);
 	postprocessingShader = ResourceManager::getInstance()->getShader(ShaderType::POSTPROCESSING_SHADER);
-
+	lightShader = ResourceManager::getInstance()->getShader(ShaderType::LIGHT_SHADER);
 	createFrameBuffersAndTextures();
 }
 
@@ -86,12 +86,26 @@ void SparkRenderer::createFrameBuffersAndTextures()
 	}
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+	glCreateFramebuffers(1, &lightFrameBuffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, lightFrameBuffer);
+	createTexture(lightColorTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, lightColorTexture, 0);
+	GLenum attachments2[1] = { GL_COLOR_ATTACHMENT0 };
+	glDrawBuffers(1, attachments2);
+
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+	{
+		throw std::exception("Postprocessing framebuffer incomplete!");
+	}
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
 	glCreateFramebuffers(1, &postprocessingFramebuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, postprocessingFramebuffer);
 	createTexture(postProcessingTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, postProcessingTexture, 0);
-	GLenum attachments2[1] = { GL_COLOR_ATTACHMENT0 };
-	glDrawBuffers(1, attachments2);
+	GLenum attachments3[1] = { GL_COLOR_ATTACHMENT0 };
+	glDrawBuffers(1, attachments3);
 
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 	{
@@ -102,11 +116,11 @@ void SparkRenderer::createFrameBuffersAndTextures()
 
 void SparkRenderer::deleteFrameBuffersAndTextures() const
 {
-	GLuint textures[6] = { colorTexture, positionTexture, normalsTexture, roughnessTexture, metalnessTexture, postProcessingTexture };
-	glDeleteTextures(6, textures);
+	GLuint textures[7] = { colorTexture, positionTexture, normalsTexture, roughnessTexture, metalnessTexture,lightColorTexture, postProcessingTexture };
+	glDeleteTextures(7, textures);
 
-	GLuint frameBuffers[2] = { mainFramebuffer, postprocessingFramebuffer };
-	glDeleteFramebuffers(2, frameBuffers);
+	GLuint frameBuffers[3] = { mainFramebuffer, lightFrameBuffer, postprocessingFramebuffer };
+	glDeleteFramebuffers(3, frameBuffers);
 }
 
 void SparkRenderer::renderPass()
@@ -148,6 +162,20 @@ void SparkRenderer::renderPass()
 	}
 	renderQueue[ShaderType::DEFAULT_SHADER].clear();
 
+	std::string light = "light";
+	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, light.size(), light.c_str());
+	glBindFramebuffer(GL_FRAMEBUFFER, lightFrameBuffer);
+	glClearColor(0, 0, 0, 1);
+	glClear(GL_COLOR_BUFFER_BIT);
+	const std::shared_ptr<Shader> lShader = lightShader.lock();
+	lShader->use();
+	lShader->setVec3("camPos", camera->getPosition());
+	GLuint textures[5] = {positionTexture, colorTexture, normalsTexture, roughnessTexture, metalnessTexture};
+	glBindTextures(0, 5, textures);
+	screenQuad.draw();
+	glBindTextures(0, 5, nullptr);
+
+	glPopDebugGroup();
 	postprocessingPass();
 	renderToScreen();
 
@@ -179,7 +207,7 @@ void SparkRenderer::postprocessingPass()
 	postprocessingShader.lock()->use();
 	postprocessingShader.lock()->setVec2("inversedScreenSize", { 1.0f / Spark::WIDTH, 1.0f / Spark::HEIGHT });
 
-	glBindTextureUnit(0, colorTexture);
+	glBindTextureUnit(0, lightColorTexture);
 
 	screenQuad.draw();
 }

@@ -31,7 +31,7 @@ void main()
 layout (location = 0) out vec3 Position;
 layout (location = 1) out vec4 FragColor;
 layout (location = 2) out vec3 Normal;
-layout (location = 3) out float Rougness;
+layout (location = 3) out float Roughness;
 layout (location = 4) out float Metalness;
 
 layout (binding = 1) uniform sampler2D diffuseTexture;
@@ -52,6 +52,6 @@ void main()
     FragColor = texture(diffuseTexture, tex_coords);
     //Normal = to_textures.normal;
     Normal = texture(normalTexture, tex_coords).xyz;
-	Rougness = texture(roughnessTexture, tex_coords).x;
+	Roughness = texture(roughnessTexture, tex_coords).x;
 	Metalness = texture(metalnessTexture, tex_coords).x;
 }
