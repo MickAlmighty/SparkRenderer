@@ -28,7 +28,7 @@ public:
 private:
 	ScreenQuad screenQuad{};
 
-	GLuint mainFramebuffer{}, colorTexture{}, positionTexture{}, normalsTexture{};
+	GLuint mainFramebuffer{}, colorTexture{}, positionTexture{}, normalsTexture{}, roughnessTexture{}, metalnessTexture{};
 	GLuint postprocessingFramebuffer{}, postProcessingTexture{};
 
 	std::weak_ptr<Shader> mainShader;
