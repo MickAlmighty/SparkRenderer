@@ -69,16 +69,6 @@ void TerrainGenerator::fixedUpdate()
 
 void TerrainGenerator::drawGUI()
 {
-	ImGui::PushID(this);
-	ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 5.0f);
-	ImGui::SetNextWindowSizeConstraints(ImVec2(250, 0), ImVec2(FLT_MAX, 150)); // Width = 250, Height > 100
-	ImGui::BeginChild("TerrainGenerator", { 0, 0 }, true, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_AlwaysAutoResize);
-	if (ImGui::BeginMenuBar())
-	{
-		ImGui::Text("TerrainGenerator");
-		ImGui::EndMenuBar();
-	}
-
 	ImGui::DragInt("TerrainSize", &terrainSize, 1);
 	ImGui::DragFloat("PerlinDivider", &perlinDivider, 0.003f);
 	ImGui::DragFloat("PerlinTimeStep", &perlinTimeStep, 0.1f);
@@ -86,8 +76,7 @@ void TerrainGenerator::drawGUI()
 	if(ImGui::Button("Map from .bmp"))
 	{
 		int tex_width, tex_height, nr_channels;
-		unsigned char* pixels;
-		pixels = stbi_load("map.png", &tex_width, &tex_height, &nr_channels, 0);
+		unsigned char* pixels = stbi_load("map.png", &tex_width, &tex_height, &nr_channels, 0);
 
 		std::vector<glm::vec3> pix;
 		pix.reserve(tex_width * tex_height);
@@ -109,8 +98,7 @@ void TerrainGenerator::drawGUI()
 		}
 		updateTerrain();
 	}
-
-
+	
 	if (ImGui::Button("Generate Terrain"))
 	{
 		Texture tex = generateTerrain();
@@ -122,10 +110,6 @@ void TerrainGenerator::drawGUI()
 	}
 
 	removeComponentGUI<TerrainGenerator>();
-
-	ImGui::EndChild();
-	ImGui::PopStyleVar();
-	ImGui::PopID();
 }
 
 int TerrainGenerator::getTerrainNodeIndex(const int x, const int y) const

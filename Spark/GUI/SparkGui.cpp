@@ -90,4 +90,31 @@ Texture SparkGui::getTexture()
 	return tex;
 }
 
+std::shared_ptr<Shader> SparkGui::getShader()
+{
+	std::shared_ptr<Shader> ptr = nullptr;
+	if (ImGui::Button("Get Shader"))
+	{
+		ImGui::OpenPopup("Shaders");
+	}
+
+	if (ImGui::BeginPopupModal("Shaders", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		for (const auto& shaderName : ResourceManager::getInstance()->getShaderNames())
+		{
+			if (ImGui::Button(shaderName.c_str()))
+			{
+				ptr = ResourceManager::getInstance()->getShader(shaderName);
+				ImGui::CloseCurrentPopup();
+			}
+		}
+		if (ImGui::Button("Close"))
+		{
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::EndPopup();
+	}
+	return ptr;
+}
+
 }

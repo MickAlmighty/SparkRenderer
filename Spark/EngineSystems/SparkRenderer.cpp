@@ -138,9 +138,9 @@ void SparkRenderer::renderPass()
 	shader->use();
 	shader->setMat4("view", view);
 	shader->setMat4("projection", projection);
-	for (auto& function : renderQueue[ShaderType::DEFAULT_SHADER])
+	for (auto& drawMesh : renderQueue[ShaderType::DEFAULT_SHADER])
 	{
-		function(shader);
+		drawMesh(shader);
 	}
 	renderQueue[ShaderType::DEFAULT_SHADER].clear();
 

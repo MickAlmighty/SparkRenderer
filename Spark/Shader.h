@@ -7,6 +7,7 @@
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <list>
+#include <vector>
 
 namespace spark {
 
@@ -14,12 +15,18 @@ struct Uniform;
 class Shader
 {
 public:
+	std::string name;
+
+	static GLenum shaderTypeFromString(const std::string& type);
+
 	Shader(const std::string& vertexShaderPath, const std::string& fragmentShaderPath);
+	Shader(const std::string& shaderPath);
 	~Shader();
-	GLuint compileVertexShader(const char* vertexShaderSource);
-	GLuint compileFragmentShader(const char* fragmentShaderSource);
-	std::list<Uniform> gatherUniforms(std::stringstream& stream) const;
-	void linkProgram(GLuint vertexShader, GLuint fragmentShader);
+	std::string loadShader(const std::string& shaderPath);
+	std::map<GLenum, std::string> preProcess(const std::string& shaderPath);
+	std::vector<GLuint> compileShaders(std::map<GLenum, std::string> shaders) const;
+	std::list<Uniform> gatherUniforms(std::stringstream&& stream) const;
+	void linkProgram(const std::vector<GLuint>& ids);
 	void queryUniformLocations(const std::list<Uniform>& uniforms);
 
 	void use() const;

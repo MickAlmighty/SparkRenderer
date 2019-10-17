@@ -20,6 +20,8 @@ public:
 	std::vector<Mesh> findModelMeshes(const std::string& path) const;
 	std::vector<std::string> getPathsToModels() const;
 	std::shared_ptr<Shader> getShader(const ShaderType& type) const;
+	std::shared_ptr<Shader> getShader(const std::string& name) const;
+	std::vector<std::string> getShaderNames() const;
 	std::vector<Texture> getTextures() const;
 	void loadResources();
 	void cleanup();

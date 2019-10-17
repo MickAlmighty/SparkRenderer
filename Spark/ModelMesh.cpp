@@ -44,22 +44,13 @@ void ModelMesh::fixedUpdate()
 
 void ModelMesh::drawGUI()
 {
-	ImGui::PushID(this);
-	ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 5.0f);
-	ImGui::SetNextWindowSizeConstraints(ImVec2(250, 0), ImVec2(FLT_MAX, 150)); // Width = 250, Height > 100
-	ImGui::BeginChild("ModelMesh", { 0, 0 }, true, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_AlwaysAutoResize);
-	if (ImGui::BeginMenuBar())
-	{
-		ImGui::Text("ModelMesh");
-		ImGui::EndMenuBar();
-	}
 	for (Mesh& mesh : meshes)
 	{
 		ImGui::Text("Vertices:"); ImGui::SameLine(); ImGui::Text(std::to_string(mesh.vertices.size()).c_str());
 		ImGui::Text("Indices:"); ImGui::SameLine(); ImGui::Text(std::to_string(mesh.indices.size()).c_str());
 		ImGui::Text("Textures:"); ImGui::SameLine(); ImGui::Text(std::to_string(mesh.textures.size()).c_str());
 		ImGui::Text("Shader enum:"); ImGui::SameLine(); ImGui::Text(std::to_string(static_cast<int>(mesh.shaderType)).c_str());
-		ImGui::Separator();
+		SparkGui::getShader();
 	}
 
 	if (meshes.empty())
@@ -70,10 +61,6 @@ void ModelMesh::drawGUI()
 	}
 
 	removeComponentGUI<ModelMesh>();
-
-	ImGui::EndChild();
-	ImGui::PopStyleVar();
-	ImGui::PopID();
 }
 
 SerializableType ModelMesh::getSerializableType()
@@ -85,12 +72,14 @@ Json::Value ModelMesh::serialize()
 {
 	Json::Value root;
 	root["modelPath"] = modelPath;
+	root["name"] = name;
 	return root;
 }
 
 void ModelMesh::deserialize(Json::Value& root)
 {
 	modelPath = root.get("modelPath", "").asString();
+	name = root.get("name", "ModelMesh").asString();
 	meshes = ResourceManager::getInstance()->findModelMeshes(modelPath);
 }
 }

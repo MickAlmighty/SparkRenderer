@@ -76,6 +76,20 @@ std::map<TextureTarget, Texture> ResourceLoader::findTextures(const std::filesys
 			Texture tex = ResourceManager::getInstance()->findTexture(texture_path.path().string());
 			textures.emplace(TextureTarget::NORMAL_TARGET, tex);
 		}
+		
+		size = texture_path.path().string().find("_Roughness");
+		if (size != std::string::npos)
+		{
+			Texture tex = ResourceManager::getInstance()->findTexture(texture_path.path().string());
+			textures.emplace(TextureTarget::ROUGHNESS_TARGET, tex);
+		}
+		
+		size = texture_path.path().string().find("_Metalness");
+		if (size != std::string::npos)
+		{
+			Texture tex = ResourceManager::getInstance()->findTexture(texture_path.path().string());
+			textures.emplace(TextureTarget::METALNESS_TARGET, tex);
+		}
 	}
 
 	return textures;

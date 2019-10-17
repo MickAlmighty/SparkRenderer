@@ -132,16 +132,6 @@ void MeshPlane::fixedUpdate()
 
 void MeshPlane::drawGUI()
 {
-	ImGui::PushID(this);
-	ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 5.0f);
-	ImGui::SetNextWindowSizeConstraints(ImVec2(250, 0), ImVec2(FLT_MAX, 150)); // Width = 250, Height > 100
-	ImGui::BeginChild("MeshPlane", { 0, 0 }, true, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_AlwaysAutoResize);
-	if (ImGui::BeginMenuBar())
-	{
-		ImGui::Text("MeshPlane");
-		ImGui::EndMenuBar();
-	}
-
 	ImGui::Text("Vertices:"); ImGui::SameLine(); ImGui::Text(std::to_string(vertices.size()).c_str());
 	ImGui::Text("Indices:"); ImGui::SameLine(); ImGui::Text(std::to_string(indices.size()).c_str());
 	ImGui::Text("Textures:"); ImGui::SameLine(); ImGui::Text(std::to_string(textures.size()).c_str());
@@ -159,10 +149,6 @@ void MeshPlane::drawGUI()
 	}
 
 	removeComponentGUI<MeshPlane>();
-
-	ImGui::EndChild();
-	ImGui::PopStyleVar();
-	ImGui::PopID();
 }
 
 }

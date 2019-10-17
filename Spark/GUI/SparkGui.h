@@ -17,6 +17,7 @@ public:
 	static std::shared_ptr<Component> addComponent();
 	static std::pair<std::string, std::vector<Mesh>> getMeshes();
 	static Texture getTexture();
+	static std::shared_ptr<Shader> getShader();
 
 	template <typename T>
 	static std::shared_ptr<T> getObject(const std::string&& variableName, std::shared_ptr<T> object)

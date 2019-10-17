@@ -33,7 +33,10 @@ void GameObject::update()
 
 	for (auto& component : components)
 	{
-		component->update();
+		if(component->getActive())
+		{
+			component->update();
+		}
 	}
 
 	for (auto& child : children)
@@ -131,8 +134,9 @@ void GameObject::drawGUI()
 	transform.local.drawGUI();
 	drawGizmos();
 	for (auto& component : components)
-		component->drawGUI();
+		component->drawComponentGUI();
 
+	ImGui::NewLine();
 	const std::shared_ptr<Component> componentToAdd = SparkGui::addComponent();
 	if (componentToAdd != nullptr)
 	{

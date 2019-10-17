@@ -85,8 +85,8 @@ void Scene::drawGUI()
 	ImGuiIO& io = ImGui::GetIO();
 
 	ImGui::SetNextWindowPos({ io.DisplaySize.x - 5, 25 }, ImGuiCond_Always, { 1, 0 });
-	ImGui::SetNextWindowSizeConstraints(ImVec2(250, 120), ImVec2(FLT_MAX, io.DisplaySize.y - 50)); // Width = 250, Height > 100
-	if (ImGui::Begin("GameObject", &opened, { 0, 0 }, -1, ImGuiWindowFlags_AlwaysAutoResize))
+	ImGui::SetNextWindowSizeConstraints(ImVec2(350, 20), ImVec2(350, io.DisplaySize.y - 50));
+	if (ImGui::Begin("GameObject", &opened, { 0, 0 }, -1, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_AlwaysHorizontalScrollbar))
 	{
 		auto gameObject_ptr = gameObjectToPreview.lock();
 		if (gameObject_ptr != nullptr)

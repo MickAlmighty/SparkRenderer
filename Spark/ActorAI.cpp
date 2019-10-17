@@ -298,16 +298,6 @@ void ActorAI::deserialize(Json::Value& root)
 
 void ActorAI::drawGUI()
 {
-	ImGui::PushID(this);
-	ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 5.0f);
-	ImGui::SetNextWindowSizeConstraints(ImVec2(250, 0), ImVec2(FLT_MAX, 150)); // Width = 250, Height > 100
-	ImGui::BeginChild("ActorAI", { 0, 0 }, true, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_AlwaysAutoResize);
-	if (ImGui::BeginMenuBar())
-	{
-		ImGui::Text("ActorAI");
-		ImGui::EndMenuBar();
-	}
-
 	terrainGenerator = SparkGui::getObject("terrainGenerator", terrainGenerator.lock());
 
 	ImGui::DragInt2("startPos", &startPos.x);
@@ -322,10 +312,6 @@ void ActorAI::drawGUI()
 		isTraveling = true;
 	}
 	removeComponentGUI<ActorAI>();
-
-	ImGui::EndChild();
-	ImGui::PopStyleVar();
-	ImGui::PopID();
 }
 
 ActorAI::ActorAI(std::string&& newName) : Component(newName)

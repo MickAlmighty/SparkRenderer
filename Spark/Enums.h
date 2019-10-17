@@ -13,7 +13,9 @@ enum class ShaderType : uint16_t
 enum class TextureTarget : uint16_t
 {
 	DIFFUSE_TARGET = 1,
-	NORMAL_TARGET
+	NORMAL_TARGET,
+	ROUGHNESS_TARGET,
+	METALNESS_TARGET
 };
 
 }

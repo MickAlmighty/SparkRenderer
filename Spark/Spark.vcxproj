@@ -215,12 +215,9 @@
     <ClInclude Include="WorldTransform.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\res\shaders\default.frag" />
-    <None Include="..\res\shaders\default.vert" />
-    <None Include="..\res\shaders\postprocessing.frag" />
-    <None Include="..\res\shaders\postprocessing.vert" />
-    <None Include="..\res\shaders\screen.frag" />
-    <None Include="..\res\shaders\screen.vert" />
+    <None Include="..\res\shaders\default.glsl" />
+    <None Include="..\res\shaders\postprocessing.glsl" />
+    <None Include="..\res\shaders\screen.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -18,12 +18,18 @@ public:
 	Component() = default;
 	Component(std::string& componentName);
 	virtual ~Component();
-
-	std::shared_ptr<GameObject> getGameObject() const { return gameObject.lock(); }
 	virtual void update() = 0;
 	virtual void fixedUpdate() = 0;
-	virtual void setGameObject(std::shared_ptr<GameObject>& game_object) { gameObject = game_object; };
+	
+	void drawComponentGUI();
+	void beginDrawingWindow();
 	virtual void drawGUI() = 0;
+	void endDrawingWindow();
+
+	std::shared_ptr<GameObject> getGameObject() const;
+	bool getActive() const;
+	void setGameObject(std::shared_ptr<GameObject>& game_object);
+	void setActive(bool active_);
 	
 	template <class T>
 	void removeComponentGUI()
@@ -40,6 +46,7 @@ public:
 
 private:
 	std::weak_ptr<GameObject> gameObject;
+	bool active = true;
 };
 
 }
