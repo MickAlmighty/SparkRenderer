@@ -27,14 +27,14 @@ layout(binding = 5) uniform sampler2D metalnessTexture;
 
 struct DirLight {
 	vec3 color;
-	vec3 position;
+	vec3 direction;
 };
 
 
-uniform DirLight dirLight = DirLight(vec3(1, 1, 1), vec3(0, 10, 0));
+uniform DirLight dirLight = DirLight(vec3(1, 1, 2), vec3(0, -1, 0));
 uniform vec3 camPos;
 
-float normalDistribution(vec3 N, vec3 H, float roughness)
+float normalDistributionGGX(vec3 N, vec3 H, float roughness)
 {
 	float a = roughness * roughness;
 	float a2 = a * a;
@@ -42,7 +42,7 @@ float normalDistribution(vec3 N, vec3 H, float roughness)
 	float NdotH2 = NdotH * NdotH;
 	float nom = a2;
 	float denom = M_PI * pow(NdotH2 * (a2 - 1.0) + 1.0, 2);
-	return nom / max(denom, 0.001);
+	return nom / denom;
 }
 
 vec3 fresnelSchlick(vec3 V, vec3 H, vec3 F0)
@@ -54,7 +54,7 @@ float geometrySchlickGGX(vec3 V, vec3 N, float roughness)
 {
 	float NdotV = max(dot(N, V), 0.0);
 	float r = roughness;
-	float k = (r*r) / 8.0;
+	float k = (r*r) / 2.0;
 	float nom = NdotV;
 	float denom = NdotV * (1.0 - k) + k;
 	return nom / denom;
@@ -74,7 +74,7 @@ void main()
 	float metalness = texture(metalnessTexture, texCoords).x;
 
 	vec3 V = normalize(camPos - pos);
-	vec3 L = normalize(dirLight.position - pos);
+	vec3 L = normalize(-dirLight.direction);
 	//vec3 N = normalize(texture(modelNormalTexture, texCoords).xyz);
 	vec3 N = texture(normalTexture, texCoords).xyz;
 	vec3 H = normalize(V + L);
@@ -84,15 +84,15 @@ void main()
 
 	vec3 L0 = { 0, 0, 0 };
 	{
-		float D = normalDistribution(N, H, roughness);
+		float D = normalDistributionGGX(N, H, roughness);
 		vec3 F = fresnelSchlick(V, H, F0);
 		float G = geometrySmith(L, V, N, roughness);
 
 		float VdotN = max(dot(V, N), 0.0f);
 		float LdotN = max(dot(L, N), 0.0f);
 
-		vec3 kDiffuse = vec3(1.0);// -F;
-		//kDiffuse *= 1.0 - metalness;
+		vec3 kDiffuse = vec3(1.0) - F;
+		kDiffuse *= 1.0- metalness;
 		vec3 diffuseColor = kDiffuse * albedo / M_PI;
 		vec3 specularColor = (D * F * G) / max((4 * VdotN * LdotN), 0.001);
 		L0 += (diffuseColor + specularColor) * dirLight.color * LdotN;
