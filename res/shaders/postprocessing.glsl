@@ -136,7 +136,7 @@ void main()
     //vec3 color = pow(texture(inputTexture, tex_coords).xyz, vec3(2.2f));
     vec3 color = texture(inputTexture, tex_coords).xyz;
 	//vec3 fxaaColor = FXAA(vec4(color, 1)).xyz;
-	//vec3 resultColor = uncharted2Tonemap(color);
-	vec3 resultColor = reinhardTonemapping(color);
+	vec3 resultColor = uncharted2Tonemap(color);
+	//vec3 resultColor = reinhardTonemapping(color);
     FragColor = vec4(resultColor, 1);
 }

@@ -122,6 +122,16 @@ Mesh ResourceLoader::loadMesh(aiMesh* assimpMesh, const std::filesystem::path& m
 		else
 			v.texCoords = glm::vec2(0.0f, 0.0f);
 
+		if (assimpMesh->HasTangentsAndBitangents())
+		{
+			v.tangent.x = assimpMesh->mTangents->x;
+			v.tangent.y = assimpMesh->mTangents->y;
+			v.tangent.z = assimpMesh->mTangents->z;
+
+			v.bitangent.x = assimpMesh->mBitangents->x;
+			v.bitangent.y = assimpMesh->mBitangents->y;
+			v.bitangent.z = assimpMesh->mBitangents->z;
+		}
 		vertices[i] = v;
 	}
 

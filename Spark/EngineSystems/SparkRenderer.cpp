@@ -61,15 +61,17 @@ void SparkRenderer::createFrameBuffersAndTextures()
 	glCreateFramebuffers(1, &mainFramebuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, mainFramebuffer);
 	createTexture(colorTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
-	createTexture(positionTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
-	createTexture(normalsTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
+	createTexture(positionTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+	createTexture(modelNormalsTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+	createTexture(normalsTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
 	createTexture(roughnessTexture, Spark::WIDTH, Spark::HEIGHT, GL_R16F, GL_RED, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
 	createTexture(metalnessTexture, Spark::WIDTH, Spark::HEIGHT, GL_R16F, GL_RED, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, positionTexture, 0);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, colorTexture, 0);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, normalsTexture, 0);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, roughnessTexture, 0);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT4, GL_TEXTURE_2D, metalnessTexture, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, modelNormalsTexture, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, normalsTexture, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT4, GL_TEXTURE_2D, roughnessTexture, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT5, GL_TEXTURE_2D, metalnessTexture, 0);
 
 	GLuint renderbuffer;
 	glCreateRenderbuffers(1, &renderbuffer);
@@ -77,8 +79,8 @@ void SparkRenderer::createFrameBuffersAndTextures()
 	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, Spark::WIDTH, Spark::HEIGHT);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, renderbuffer);
 
-	GLenum attachments[5] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4 };
-	glDrawBuffers(5, attachments);
+	GLenum attachments[6] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4, GL_COLOR_ATTACHMENT5 };
+	glDrawBuffers(6, attachments);
 
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 	{
@@ -116,8 +118,8 @@ void SparkRenderer::createFrameBuffersAndTextures()
 
 void SparkRenderer::deleteFrameBuffersAndTextures() const
 {
-	GLuint textures[7] = { colorTexture, positionTexture, normalsTexture, roughnessTexture, metalnessTexture,lightColorTexture, postProcessingTexture };
-	glDeleteTextures(7, textures);
+	GLuint textures[8] = { colorTexture, positionTexture, modelNormalsTexture, normalsTexture, roughnessTexture, metalnessTexture, lightColorTexture, postProcessingTexture };
+	glDeleteTextures(8, textures);
 
 	GLuint frameBuffers[3] = { mainFramebuffer, lightFrameBuffer, postprocessingFramebuffer };
 	glDeleteFramebuffers(3, frameBuffers);
@@ -170,10 +172,10 @@ void SparkRenderer::renderPass()
 	const std::shared_ptr<Shader> lShader = lightShader.lock();
 	lShader->use();
 	lShader->setVec3("camPos", camera->getPosition());
-	GLuint textures[5] = {positionTexture, colorTexture, normalsTexture, roughnessTexture, metalnessTexture};
-	glBindTextures(0, 5, textures);
+	GLuint textures[7] = { positionTexture, colorTexture, modelNormalsTexture, normalsTexture, roughnessTexture, metalnessTexture };
+	glBindTextures(0, 7, textures);
 	screenQuad.draw();
-	glBindTextures(0, 5, nullptr);
+	glBindTextures(0, 7, nullptr);
 
 	glPopDebugGroup();
 	postprocessingPass();
