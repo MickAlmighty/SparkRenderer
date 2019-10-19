@@ -30,14 +30,15 @@ struct DirLight {
 };
 
 
-uniform DirLight dirLight = DirLight(vec3(1,1,1), vec3(0, 10, 0));
+uniform DirLight dirLight = DirLight(vec3(1, 1, 1), vec3(0, 10, 0));
 uniform vec3 camPos;
 
 float normalDistribution(vec3 N, vec3 H, float alfa)
 {
+	float NdotH = max(dot(N, H), 0.0f);
     float alfaSquared = pow(alfa, 2);
     float nom = alfaSquared;
-    float denom = M_PI * pow( (pow(dot(N, H), 2) * (alfaSquared - 1) + 1) , 2);
+    float denom = M_PI * pow( (pow(NdotH, 2) * (alfaSquared - 1) + 1) , 2);
     return nom / max(denom, 0.001);
 }
 
@@ -80,13 +81,15 @@ void main()
         float F = fresnelSchlick(V, H, metalness);
         float G = geometrySmith(L, V, N, A); 
 
-        float VdotN = dot(V, N);
-        float LdotN = dot(L, N);
+        float VdotN = max(dot(V, N), 0.0f);
+        float LdotN = max(dot(L, N), 0.0f);
 
-        float kDiffuse = 1.0 - F;
+		float kDiffuse = 1.0;// -F;
+		//kDiffuse *= 1.0 - metalness;
         vec3 diffuseColor =  kDiffuse * albedo / M_PI;
-        float specularColor = (D * F * G) / max((4 * max(VdotN, 0.0) * max(LdotN, 0.0)), 0.001);
-        L0 += (diffuseColor + specularColor) * dirLight.color * max(LdotN, 0.0);
+        float specularColor = (D * F * G) / max((4 * VdotN * LdotN), 0.001);
+        L0 += (diffuseColor + specularColor) * dirLight.color * LdotN;
     }
-    FragColor = vec4(L0 , 1);
+	vec3 ambient = vec3(0.001) * albedo;
+    FragColor = vec4(L0 + ambient, 1);
 }

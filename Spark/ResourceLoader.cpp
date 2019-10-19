@@ -29,7 +29,7 @@ std::map<std::string, std::vector<Mesh>> ResourceLoader::loadModels(std::filesys
 std::vector<Mesh> ResourceLoader::loadModel(const Path& path)
 {
 	Assimp::Importer importer;
-	const aiScene *scene = importer.ReadFile(path.string(), aiProcessPreset_TargetRealtime_Fast | aiProcess_FlipUVs);
+	const aiScene *scene = importer.ReadFile(path.string(), aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
 
 	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
 	{

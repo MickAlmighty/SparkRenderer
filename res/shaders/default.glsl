@@ -17,13 +17,15 @@ out TO_TEXTURES {
 
 void main()
 {
-	mat3 normalMatrix = transpose(inverse(mat3(view * model)));
 	vec4 worldPosition = model * vec4(position, 1);
-	to_textures.normal = normalMatrix * normal;
 
-	to_textures.position = vec3(worldPosition.xyz);
-    gl_Position = projection * view * worldPosition;
-    tex_coords = texture_coords;
+	mat3 normalMatrix = transpose(inverse(mat3(model)));
+	to_textures.normal = normalMatrix * normal;
+	to_textures.position = worldPosition.xyz;
+   
+	tex_coords = texture_coords;
+
+	gl_Position = projection * view * worldPosition;
 }
 
 #type fragment
@@ -49,9 +51,9 @@ in TO_TEXTURES {
 void main()
 {
 	Position = to_textures.position;
-    FragColor = texture(diffuseTexture, tex_coords);
-    //Normal = to_textures.normal;
-    Normal = texture(normalTexture, tex_coords).xyz;
+    FragColor = pow(texture(diffuseTexture, tex_coords), vec4(2.2));
+    Normal = normalize(to_textures.normal);
+	//Normal = normalize(texture(normalTexture, tex_coords).xyz);// *0.5 + 0.5); // transforms from [-1,1] to [0,1]  
 	Roughness = texture(roughnessTexture, tex_coords).x;
 	Metalness = texture(metalnessTexture, tex_coords).x;
 }

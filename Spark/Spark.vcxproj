@@ -216,6 +216,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\res\shaders\default.glsl" />
+    <None Include="..\res\shaders\light.glsl" />
     <None Include="..\res\shaders\postprocessing.glsl" />
     <None Include="..\res\shaders\screen.glsl" />
   </ItemGroup>

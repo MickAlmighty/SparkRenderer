@@ -238,5 +238,8 @@
     <None Include="..\res\shaders\screen.glsl">
       <Filter>shaders</Filter>
     </None>
+    <None Include="..\res\shaders\light.glsl">
+      <Filter>shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

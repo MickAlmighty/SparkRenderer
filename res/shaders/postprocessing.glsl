@@ -100,8 +100,43 @@ vec4 FXAA(vec4 color)
 	//return vec4(1, 0, 0, 1); debug
 }
 
+float A = 0.15;
+float B = 0.50;
+float C = 0.10;
+float D = 0.20;
+float E = 0.02;
+float F = 0.30;
+float W = 11.2;
+
+vec3 tonemapCalculations(vec3 x)
+{
+	return ((x*(A*x + C * B) + D * E) / (x*(A*x + B) + D * F)) - E / F;
+}
+
+vec3 uncharted2Tonemap(vec3 inColor)
+{
+	//inColor *= 16.0f;
+
+	float exposureBias = 2.0f;
+	vec3 curr = tonemapCalculations(exposureBias * inColor);
+
+	vec3 whiteScale = vec3(1.0f) / tonemapCalculations(vec3(W));
+	vec3 color = curr * whiteScale;
+
+	return pow(color, vec3(1 / 2.2f));
+}
+
+vec3 reinhardTonemapping(vec3 color)
+{
+	return pow(color / (color + vec3(1)), vec3(1 / 2.2f));
+}
+
 void main()
 {
-    vec4 color = texture(inputTexture, tex_coords);
-    FragColor = FXAA(color);
+    //vec3 color = pow(texture(inputTexture, tex_coords).xyz, vec3(2.2f));
+    vec3 color = texture(inputTexture, tex_coords).xyz;
+	//vec3 fxaaColor = FXAA(vec4(color, 1)).xyz;
+	//vec3 resultColor = uncharted2Tonemap(color);
+	vec3 resultColor = reinhardTonemapping(color);
+    FragColor = vec4(resultColor, 1);
 }
