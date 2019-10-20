@@ -14,121 +14,133 @@
 
 namespace spark {
 
-struct Transform
-{
-	LocalTransform local;
-	WorldTransform world;
-};
-
-struct Uniform
-{
-	std::string type;
-	std::string name;
-	bool operator!=(const Uniform& rhs) const
+	struct Transform
 	{
-		return this->name != rhs.name || this->type != rhs.type;
-	}
-	bool operator<(const Uniform& rhs) const
-	{
-		return this->name < rhs.name;
-	}
-};
-
-struct InitializationVariables
-{
-	unsigned int width;
-	unsigned int height;
-	std::filesystem::path pathToModels;
-	std::filesystem::path pathToResources;
-
-	Json::Value serialize() const
-	{
-		Json::Value root;
-		root["width"] = width;
-		root["height"] = height;
-		root["pathToModels"] = pathToModels.string();
-		root["pathToResources"] = pathToResources.string();
-		return root;
-	}
-
-	void deserialize(Json::Value& root)
-	{
-		width = root.get("width", 1280).asInt();
-		height = root.get("height", 720).asInt();
-		pathToModels = root["pathToModels"].asString();
-		pathToResources = root["pathToResources"].asString();
-	}
-};
-
-struct Texture
-{
-	GLuint ID;
-	std::string path;
-};
-
-struct Vertex
-{
-	glm::vec3 pos;
-	glm::vec3 normal;
-	glm::vec2 texCoords;
-	glm::vec3 tangent;
-	glm::vec3 bitangent;
-};
-
-struct QuadVertex
-{
-	glm::vec3 pos;
-	glm::vec2 texCoords;
-};
-
-
-struct ScreenQuad
-{
-	GLuint vao{};
-	GLuint vbo{};
-
-	std::vector<QuadVertex> vertices =
-	{
-		{{-1.0f, 1.0f, 0.0f},	{0.0f, 1.0f}},
-		{{1.0f, 1.0f, 0.0f},	{1.0f, 1.0f }},
-		{{1.0f, -1.0f, 0.0f},	{1.0f, 0.0f}},
-
-		{{-1.0f, 1.0f, 0.0f},	{0.0f, 1.0f}},
-		{{1.0f, -1.0f, 0.0f},	{1.0f, 0.0f}},
-		{{-1.0f, -1.0f, 0.0f},	{0.0f, 0.0f}}
+		LocalTransform local;
+		WorldTransform world;
 	};
 
-	void setup()
+	struct Uniform
 	{
-		glGenVertexArrays(1, &vao);
-		glBindVertexArray(vao);
+		std::string type;
+		std::string name;
+		bool operator!=(const Uniform& rhs) const
+		{
+			return this->name != rhs.name || this->type != rhs.type;
+		}
+		bool operator<(const Uniform& rhs) const
+		{
+			return this->name < rhs.name;
+		}
+	};
 
-		glGenBuffers(1, &vbo);
-		glBindBuffer(GL_ARRAY_BUFFER, vbo);
-		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(QuadVertex), &vertices[0], GL_STATIC_DRAW);
-
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(QuadVertex), reinterpret_cast<void*>(offsetof(QuadVertex, pos)));
-
-		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(QuadVertex), reinterpret_cast<void*>(offsetof(QuadVertex, texCoords)));
-
-		glBindVertexArray(0);
-	}
-
-	void draw() const
+	struct InitializationVariables
 	{
-		glBindVertexArray(vao);
-		glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(vertices.size()));
-		glBindVertexArray(0);
-	}
+		unsigned int width;
+		unsigned int height;
+		std::filesystem::path pathToModels;
+		std::filesystem::path pathToResources;
 
-	~ScreenQuad()
+		Json::Value serialize() const
+		{
+			Json::Value root;
+			root["width"] = width;
+			root["height"] = height;
+			root["pathToModels"] = pathToModels.string();
+			root["pathToResources"] = pathToResources.string();
+			return root;
+		}
+
+		void deserialize(Json::Value& root)
+		{
+			width = root.get("width", 1280).asInt();
+			height = root.get("height", 720).asInt();
+			pathToModels = root["pathToModels"].asString();
+			pathToResources = root["pathToResources"].asString();
+		}
+	};
+
+	struct Texture
 	{
-		glDeleteBuffers(1, &vbo);
-		glDeleteVertexArrays(1, &vao);
-	}
-};
+		GLuint ID;
+		std::string path;
+	};
+
+	struct Vertex
+	{
+		glm::vec3 pos;
+		glm::vec3 normal;
+		glm::vec2 texCoords;
+		glm::vec3 tangent;
+		glm::vec3 bitangent;
+	};
+
+	struct QuadVertex
+	{
+		glm::vec3 pos;
+		glm::vec2 texCoords;
+	};
+
+
+	struct ScreenQuad
+	{
+		GLuint vao{};
+		GLuint vbo{};
+
+		std::vector<QuadVertex> vertices =
+		{
+			{{-1.0f, 1.0f, 0.0f},	{0.0f, 1.0f}},
+			{{1.0f, 1.0f, 0.0f},	{1.0f, 1.0f }},
+			{{1.0f, -1.0f, 0.0f},	{1.0f, 0.0f}},
+
+			{{-1.0f, 1.0f, 0.0f},	{0.0f, 1.0f}},
+			{{1.0f, -1.0f, 0.0f},	{1.0f, 0.0f}},
+			{{-1.0f, -1.0f, 0.0f},	{0.0f, 0.0f}}
+		};
+
+		void setup()
+		{
+			glGenVertexArrays(1, &vao);
+			glBindVertexArray(vao);
+
+			glGenBuffers(1, &vbo);
+			glBindBuffer(GL_ARRAY_BUFFER, vbo);
+			glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(QuadVertex), &vertices[0], GL_STATIC_DRAW);
+
+			glEnableVertexAttribArray(0);
+			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(QuadVertex), reinterpret_cast<void*>(offsetof(QuadVertex, pos)));
+
+			glEnableVertexAttribArray(1);
+			glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(QuadVertex), reinterpret_cast<void*>(offsetof(QuadVertex, texCoords)));
+
+			glBindVertexArray(0);
+		}
+
+		void draw() const
+		{
+			glBindVertexArray(vao);
+			glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(vertices.size()));
+			glBindVertexArray(0);
+		}
+
+		~ScreenQuad()
+		{
+			glDeleteBuffers(1, &vbo);
+			glDeleteVertexArrays(1, &vao);
+		}
+	};
+
+	struct DirectionalLightData
+	{
+		glm::vec3 direction;
+		glm::vec3 color;
+	};
+
+	struct PointLightData
+	{
+		glm::vec3 position;
+		glm::vec3 color;
+	};
 
 }
 #endif

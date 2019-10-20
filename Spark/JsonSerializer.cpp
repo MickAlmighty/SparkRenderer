@@ -9,12 +9,14 @@
 
 #include "ActorAI.h"
 #include "Camera.h"
+#include "DirectionalLight.h"
 #include "GameObject.h"
 #include "ISerializable.h"
+#include "Mesh.h"
 #include "MeshPlane.h"
 #include "ModelMesh.h"
 #include "TerrainGenerator.h"
-#include "Mesh.h"
+
 
 namespace spark {
 
@@ -136,6 +138,9 @@ std::shared_ptr<ISerializable> JsonSerializer::deserialize(Json::Value& root)
 		break;
 	case SerializableType::SCamera:
 		deserialized = make<Camera>();
+		break;
+	case SerializableType::SDirectionalLight:
+		deserialized = make<DirectionalLight>();
 		break;
 	default:
 		throw std::exception("Unsupported SerializableType encountered!");;

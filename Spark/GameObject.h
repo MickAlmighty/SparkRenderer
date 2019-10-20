@@ -67,11 +67,30 @@ public:
 	template <class T>
 	bool removeComponent(std::string& name)
 	{
-		auto component_it = std::find_if(std::begin(components), std::end(components), [&name](std::shared_ptr<Component> component)
+		auto component_it = std::find_if(std::begin(components), std::end(components), [&name](const std::shared_ptr<Component>& component)
 		{
 			if (dynamic_cast<T*>(component.get()))
 			{
 				return component->name == name;
+			}
+			return false;
+		});
+		if (component_it != components.end())
+		{
+			components.erase(component_it);
+			return true;
+		}
+		return false;
+	}
+
+	template <class T>
+	bool removeComponent(const std::shared_ptr<T>& c)
+	{
+		auto component_it = std::find_if(std::begin(components), std::end(components), [&c](const std::shared_ptr<Component>& component)
+		{
+			if (dynamic_cast<T*>(component.get()))
+			{
+				return component.get() == c.get();
 			}
 			return false;
 		});

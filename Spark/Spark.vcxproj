@@ -149,6 +149,7 @@
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Clock.cpp" />
     <ClCompile Include="Component.cpp" />
+    <ClCompile Include="DirectionalLight.cpp" />
     <ClCompile Include="EngineSystems\ResourceManager.cpp" />
     <ClCompile Include="EngineSystems\SceneManager.cpp" />
     <ClCompile Include="EngineSystems\SparkRenderer.cpp" />
@@ -164,6 +165,7 @@
     <ClCompile Include="GUI\SparkGui.cpp" />
     <ClCompile Include="HID.cpp" />
     <ClCompile Include="JsonSerializer.cpp" />
+    <ClCompile Include="LightManager.cpp" />
     <ClCompile Include="LocalTranform.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Mesh.cpp" />
@@ -183,6 +185,7 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Clock.h" />
     <ClInclude Include="Component.h" />
+    <ClInclude Include="DirectionalLight.h" />
     <ClInclude Include="EngineSystems\ResourceManager.h" />
     <ClInclude Include="EngineSystems\SceneManager.h" />
     <ClInclude Include="EngineSystems\SparkRenderer.h" />
@@ -201,6 +204,7 @@
     <ClInclude Include="HID.h" />
     <ClInclude Include="ISerializable.h" />
     <ClInclude Include="JsonSerializer.h" />
+    <ClInclude Include="LightManager.h" />
     <ClInclude Include="LocalTranform.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="MeshPlane.h" />

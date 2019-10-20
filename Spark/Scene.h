@@ -7,6 +7,8 @@
 
 #include <json/value.h>
 
+#include "LightManager.h"
+
 namespace spark {
 
 class GameObject;
@@ -16,7 +18,7 @@ class Scene
 {
 public:
 	std::list < std::function<void()> > toRemove;
-	
+	std::unique_ptr<LightManager> lightManager = std::make_unique<LightManager>();
 	Scene(std::string&& sceneName);
 	~Scene();
 	

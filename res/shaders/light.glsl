@@ -31,7 +31,7 @@ struct DirLight {
 };
 
 
-uniform DirLight dirLight = DirLight(vec3(1, 1, 2), vec3(0, -1, 0));
+uniform DirLight dirLight = DirLight(vec3(20, 20, 20), vec3(0, -1, 0));
 uniform vec3 camPos;
 
 float normalDistributionGGX(vec3 N, vec3 H, float roughness)

@@ -165,7 +165,7 @@ void SparkRenderer::renderPass()
 	renderQueue[ShaderType::DEFAULT_SHADER].clear();
 
 	std::string light = "light";
-	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, light.size(), light.c_str());
+	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, static_cast<GLsizei>(light.size()), light.c_str());
 	glBindFramebuffer(GL_FRAMEBUFFER, lightFrameBuffer);
 	glClearColor(0, 0, 0, 1);
 	glClear(GL_COLOR_BUFFER_BIT);

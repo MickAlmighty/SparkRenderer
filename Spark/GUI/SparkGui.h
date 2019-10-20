@@ -3,6 +3,7 @@
 
 #include "ActorAI.h"
 #include "Component.h"
+#include "DirectionalLight.h"
 #include "GameObject.h"
 #include "Mesh.h"
 #include "MeshPlane.h"
@@ -65,7 +66,8 @@ const static std::map<std::string, std::function<std::shared_ptr<Component>()>> 
 	{"ModelMesh", [] { return std::make_shared<ModelMesh>(); }},
 	{"MeshPlane", [] { return std::make_shared<MeshPlane>(); }},
 	{"TerrainGenerator", [] { return std::make_shared<TerrainGenerator>(); }},
-	{"ActorAI", [] { return std::make_shared<ActorAI>(); }}
+	{"ActorAI", [] { return std::make_shared<ActorAI>(); }},
+	{"DirectionalLight", [] {return std::make_shared<DirectionalLight>(); }}
 };
 
 }
