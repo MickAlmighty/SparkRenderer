@@ -167,10 +167,11 @@ void SparkRenderer::renderPass()
 	std::string light = "light";
 	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, static_cast<GLsizei>(light.size()), light.c_str());
 	glBindFramebuffer(GL_FRAMEBUFFER, lightFrameBuffer);
-	glClearColor(0, 0, 0, 1);
+	glClearColor(0, 0, 0, 0);
 	glClear(GL_COLOR_BUFFER_BIT);
 	const std::shared_ptr<Shader> lShader = lightShader.lock();
 	lShader->use();
+	lShader->bindSSBO("DirLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->dirLightSSBO);
 	lShader->setVec3("camPos", camera->getPosition());
 	GLuint textures[7] = { positionTexture, colorTexture, modelNormalsTexture, normalsTexture, roughnessTexture, metalnessTexture };
 	glBindTextures(0, 7, textures);
@@ -202,7 +203,7 @@ void SparkRenderer::renderPass()
 void SparkRenderer::postprocessingPass()
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, postprocessingFramebuffer);
-	glClearColor(0, 0, 0, 1);
+	glClearColor(0, 0, 0, 0);
 	glClear(GL_COLOR_BUFFER_BIT);
 	glDisable(GL_DEPTH_TEST);
 
@@ -218,7 +219,7 @@ void SparkRenderer::postprocessingPass()
 void SparkRenderer::renderToScreen()
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glClearColor(0, 0, 0, 1);
+	glClearColor(0, 0, 0, 0);
 	glClear(GL_COLOR_BUFFER_BIT);
 	glDisable(GL_DEPTH_TEST);
 

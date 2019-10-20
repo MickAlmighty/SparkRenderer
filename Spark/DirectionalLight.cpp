@@ -13,7 +13,7 @@ namespace spark {
 	DirectionalLightData DirectionalLight::getLightData()
 	{
 		dirty = false;
-		return { direction, color };
+		return { direction, color * colorStrength };
 	}
 
 	bool DirectionalLight::getDirty() const
@@ -31,6 +31,16 @@ namespace spark {
 		return color;
 	}
 
+	float DirectionalLight::getColorStrength() const
+	{
+		return colorStrength;
+	}
+
+	void DirectionalLight::resetDirty()
+	{
+		dirty = false;
+	}
+
 	void DirectionalLight::setDirection(glm::vec3 direction_)
 	{
 		dirty = true;
@@ -41,6 +51,12 @@ namespace spark {
 	{
 		dirty = true;
 		color = color_;
+	}
+
+	void DirectionalLight::setColorStrength(float strength)
+	{
+		dirty = true;
+		colorStrength = strength;
 	}
 
 	DirectionalLight::DirectionalLight(std::string name_) : Component(name_)
@@ -65,6 +81,7 @@ namespace spark {
 		root["name"] = name;
 		root["direction"] = JsonSerializer::serializeVec3(direction);
 		root["color"] = JsonSerializer::serializeVec3(color);
+		root["colorStrength"] = colorStrength;
 		return root;
 	}
 
@@ -73,14 +90,15 @@ namespace spark {
 		name = root.get("name", "DirectionalLight").asString();
 		direction = JsonSerializer::deserializeVec3(root["direction"]);
 		color = JsonSerializer::deserializeVec3(root["color"]);
+		colorStrength = root.get("colorStrength", 1.0f).asFloat();
 	}
 
 	void DirectionalLight::update()
 	{
-		if(!addedToLigtManager)
+		if(!addedToLightManager)
 		{
 			SceneManager::getInstance()->getCurrentScene()->lightManager->addDirectionalLight(shared_from_base<DirectionalLight>());
-			addedToLigtManager = true;
+			addedToLightManager = true;
 		}
 		
 	}
@@ -94,8 +112,15 @@ namespace spark {
 	{
 		glm::vec3 colorToEdit = getColor();
 		glm::vec3 directionToEdit = getDirection();
+		float colorStrengthToEdit = getColorStrength();
 		ImGui::ColorEdit3("color", glm::value_ptr(colorToEdit));
+		ImGui::DragFloat("colorStrength", &colorStrengthToEdit, 0.01f);
 		ImGui::SliderFloat3("direction", glm::value_ptr(directionToEdit), -1.0f, 1.0f);
+
+		if (colorStrengthToEdit < 0)
+		{
+			colorStrengthToEdit = 0;
+		}
 
 		if (directionToEdit != getDirection())
 		{
@@ -104,6 +129,10 @@ namespace spark {
 		if (colorToEdit != getColor())
 		{
 			setColor(colorToEdit);
+		}
+		if (colorStrengthToEdit != getColorStrength())
+		{
+			setColorStrength(colorStrengthToEdit);
 		}
 		removeComponentGUI<DirectionalLight>();
 	}

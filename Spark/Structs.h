@@ -132,14 +132,14 @@ namespace spark {
 
 	struct DirectionalLightData
 	{
-		glm::vec3 direction;
-		glm::vec3 color;
+		alignas(16) glm::vec3 direction;
+		alignas(16) glm::vec3 color;
 	};
 
 	struct PointLightData
 	{
-		glm::vec3 position;
-		glm::vec3 color;
+		glm::vec4 position;
+		glm::vec4 color;
 	};
 
 }

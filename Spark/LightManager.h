@@ -5,18 +5,22 @@
 #include <memory>
 #include <vector>
 
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+
 namespace spark {
 	class DirectionalLight;
 
 	class LightManager
 	{
 	public:
+		GLuint dirLightSSBO{};
+
 		void addDirectionalLight(const std::shared_ptr<DirectionalLight>& directionalLight);
 		void updateLightBuffers();
-
-
-		LightManager() = default;
-		~LightManager() = default;
+		
+		LightManager();
+		~LightManager();
 		LightManager(const LightManager& lightManager) = delete;
 		LightManager(const LightManager&& lightManager) = delete;
 		LightManager& operator=(const LightManager& lightManager) = delete;
@@ -25,19 +29,19 @@ namespace spark {
 
 	private:
 		std::vector<std::weak_ptr<DirectionalLight>> directionalLights;
+		bool updateBuffer = false;
 
 		template <typename T>
-		std::vector<std::weak_ptr<T>> findDirtyLights(const std::vector<std::weak_ptr<T>>& lightContainer)
+		bool findDirtyLight(const std::vector<std::weak_ptr<T>>& lightContainer)
 		{
-			std::vector<std::weak_ptr<T>> dirtyLights;
 			for(const std::weak_ptr<T>& light : lightContainer)
 			{
-				if(light.lock()->getActive())
+				if(light.lock()->getDirty())
 				{
-					dirtyLights.push_back(light);
+					return true;
 				}
 			}
-			return dirtyLights;
+			return false;
 		}
 
 		template <typename T>
@@ -78,12 +82,18 @@ namespace spark {
 			else
 			{
 				std::vector<N> bufferData;
-				const auto dirtyLights = findDirtyLights(lightContainer);
-				for (const auto& light : dirtyLights)
+				updateBuffer = findDirtyLight(lightContainer);
+				if (updateBuffer)
 				{
-					bufferData.push_back(light.lock()->getLightData());
+					for (const auto& light : lightContainer)
+					{
+						light.lock()->resetDirty();
+						if (light.lock()->getActive())
+						{
+							bufferData.push_back(light.lock()->getLightData());
+						}
+					}
 				}
-
 				return bufferData;
 			}
 		}

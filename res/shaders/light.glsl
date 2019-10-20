@@ -26,12 +26,18 @@ layout(binding = 4) uniform sampler2D roughnessTexture;
 layout(binding = 5) uniform sampler2D metalnessTexture;
 
 struct DirLight {
-	vec3 color;
 	vec3 direction;
+	float nothing;
+	vec3 color;
+	float nothing2;
 };
 
+layout(std430) buffer DirLightData
+{
+	DirLight dirLights[];
+} dirLightData;
 
-uniform DirLight dirLight = DirLight(vec3(20, 20, 20), vec3(0, -1, 0));
+//uniform DirLight dirLight = DirLight(vec3(20, 20, 20), vec3(0, -1, 0));
 uniform vec3 camPos;
 
 float normalDistributionGGX(vec3 N, vec3 H, float roughness)
@@ -68,35 +74,41 @@ float geometrySmith(vec3 L, vec3 V, vec3 N, float roughness)
 void main()
 {
 	vec3 pos = texture(positionTexture, texCoords).xyz;
-	vec3 albedo = pow(texture(diffuseTexture, texCoords).xyz, vec3(2.2));
-	//vec3 albedo = texture(diffuseTexture, texCoords).xyz;
-	float roughness = texture(roughnessTexture, texCoords).x;
-	float metalness = texture(metalnessTexture, texCoords).x;
-
-	vec3 V = normalize(camPos - pos);
-	vec3 L = normalize(-dirLight.direction);
-	//vec3 N = normalize(texture(modelNormalTexture, texCoords).xyz);
-	vec3 N = texture(normalTexture, texCoords).xyz;
-	vec3 H = normalize(V + L);
-
-	vec3 F0 = vec3(0.04);
-	F0 = mix(F0, albedo, metalness);
-
-	vec3 L0 = { 0, 0, 0 };
+	if (pos == vec3(0))
 	{
-		float D = normalDistributionGGX(N, H, roughness);
-		vec3 F = fresnelSchlick(V, H, F0);
-		float G = geometrySmith(L, V, N, roughness);
-
-		float VdotN = max(dot(V, N), 0.0f);
-		float LdotN = max(dot(L, N), 0.0f);
-
-		vec3 kDiffuse = vec3(1.0) - F;
-		kDiffuse *= 1.0- metalness;
-		vec3 diffuseColor = kDiffuse * albedo / M_PI;
-		vec3 specularColor = (D * F * G) / max((4 * VdotN * LdotN), 0.001);
-		L0 += (diffuseColor + specularColor) * dirLight.color * LdotN;
+		discard;
 	}
-	vec3 ambient = vec3(0.001) * albedo;
+	vec3 albedo = pow(texture(diffuseTexture, texCoords).xyz, vec3(2.2));
+	 //vec3 albedo = texture(diffuseTexture, texCoords).xyz;
+	 float roughness = texture(roughnessTexture, texCoords).x;
+	 float metalness = texture(metalnessTexture, texCoords).x;
+
+	 //vec3 N = normalize(texture(modelNormalTexture, texCoords).xyz);
+	 vec3 N = texture(normalTexture, texCoords).xyz;
+	 vec3 V = normalize(camPos - pos);
+
+	 vec3 F0 = vec3(0.04);
+	 F0 = mix(F0, albedo, metalness);
+
+	 vec3 L0 = { 0, 0, 0 };
+	 for (uint i = 0; i < dirLightData.dirLights.length(); ++i)
+	 {
+	 	vec3 L = normalize(-dirLightData.dirLights[i].direction);
+	 	vec3 H = normalize(V + L);
+
+	 	float D = normalDistributionGGX(N, H, roughness);
+	 	vec3 F = fresnelSchlick(V, H, F0);
+	 	float G = geometrySmith(L, V, N, roughness);
+
+	 	float VdotN = max(dot(V, N), 0.0f);
+	 	float LdotN = max(dot(L, N), 0.0f);
+
+	 	vec3 kDiffuse = vec3(1.0) - F;
+	 	kDiffuse *= 1.0 - metalness;
+	 	vec3 diffuseColor = kDiffuse * albedo / M_PI;
+	 	vec3 specularColor = (D * F * G) / max((4 * VdotN * LdotN), 0.001);
+	 	L0 += (diffuseColor + specularColor) * dirLightData.dirLights[i].color * LdotN;
+	 }
+	 vec3 ambient = vec3(0.001) * albedo;
 	FragColor = vec4(L0 + ambient, 1);
 }

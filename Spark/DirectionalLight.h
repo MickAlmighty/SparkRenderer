@@ -17,8 +17,11 @@ namespace spark {
 		bool getDirty() const;
 		glm::vec3 getDirection() const;
 		glm::vec3 getColor() const;
+		float getColorStrength() const;
+		void resetDirty();
 		void setDirection(glm::vec3 direction_);
 		void setColor(glm::vec3 color_);
+		void setColorStrength(float strength);
 
 		DirectionalLight(std::string name_ = "DirectionalLight");
 		virtual ~DirectionalLight() = default;
@@ -33,9 +36,10 @@ namespace spark {
 
 	private:
 		bool dirty = true;
-		bool addedToLigtManager = false;
-		glm::vec3 direction{0};
+		bool addedToLightManager = false;
+		glm::vec3 direction{0.0f, -1.0f, 0.0f};
 		glm::vec3 color{0};
+		float colorStrength{ 1 };
 	};
 }
 
