@@ -14,11 +14,13 @@ namespace spark {
 class GameObject;
 class Component;
 class Camera;
+class LightManager;
+
 class Scene
 {
 public:
 	std::list < std::function<void()> > toRemove;
-	std::unique_ptr<LightManager> lightManager = std::make_unique<LightManager>();
+	std::unique_ptr<LightManager> lightManager;
 	Scene(std::string&& sceneName);
 	~Scene();
 	

@@ -1,8 +1,7 @@
 #include "LightManager.h"
 
-#include <algorithm>
-
 #include "DirectionalLight.h"
+#include "Structs.h"
 
 namespace spark {
 
@@ -13,7 +12,14 @@ namespace spark {
 
 	void LightManager::updateLightBuffers()
 	{
+		const auto lightDataBuffer = getLightDataBuffer<DirectionalLightData, DirectionalLight>(directionalLights);
 
+		if (!lightDataBuffer.empty())
+		{
+			float f = 5;
+			//#todo: update buffer
+		}
 	}
+
 }
 

@@ -16,6 +16,7 @@ Scene::Scene(std::string&& sceneName) : name(sceneName)
 {
 	root = std::make_shared<GameObject>("Root");
 	camera = std::make_shared<Camera>(glm::vec3(0, 0, 5));
+	lightManager = std::make_unique<LightManager>();
 }
 
 Scene::~Scene()
@@ -35,6 +36,7 @@ void Scene::update()
 	}
 	camera->update();
 	root->update();
+	lightManager->updateLightBuffers();
 }
 
 void Scene::fixedUpdate()
