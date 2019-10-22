@@ -10,13 +10,15 @@
 
 namespace spark {
 	class DirectionalLight;
+	class PointLight;
 
 	class LightManager
 	{
 	public:
-		GLuint dirLightSSBO{};
+		GLuint dirLightSSBO{}, pointLightSSBO{};
 
 		void addDirectionalLight(const std::shared_ptr<DirectionalLight>& directionalLight);
+		void addPointLight(const std::shared_ptr<PointLight>& pointLight);
 		void updateLightBuffers();
 		
 		LightManager();
@@ -29,7 +31,21 @@ namespace spark {
 
 	private:
 		std::vector<std::weak_ptr<DirectionalLight>> directionalLights;
+		std::vector<std::weak_ptr<PointLight>> pointLights;
 		bool updateBuffer = false;
+
+		template <typename T>
+		void updateBufferIfNecessary(const std::vector<T>& bufferLightData, GLuint ssbo)
+		{
+			if (updateBuffer)
+			{
+				const GLuint size = sizeof(T);
+				glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
+				glBufferData(GL_SHADER_STORAGE_BUFFER, bufferLightData.size() * size, bufferLightData.data(), GL_DYNAMIC_DRAW);
+				glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+				updateBuffer = false;
+			}
+		}
 
 		template <typename T>
 		bool findDirtyLight(const std::vector<std::weak_ptr<T>>& lightContainer)
@@ -66,10 +82,14 @@ namespace spark {
 			bool expiredPointer = false;
 			do {
 				expiredPointer = findAndRemoveExpiredPointer(lightContainer);
+				if(expiredPointer)
+				{
+					updateBuffer = true;
+				}
 			} while (expiredPointer);
 
 
-			if (expiredPointer)
+			if (updateBuffer)
 			{
 				std::vector<N> bufferData;
 				for (const auto& light : lightContainer)

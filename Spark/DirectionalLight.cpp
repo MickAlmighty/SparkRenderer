@@ -10,9 +10,8 @@
 namespace spark {
 
 
-	DirectionalLightData DirectionalLight::getLightData()
+	DirectionalLightData DirectionalLight::getLightData() const
 	{
-		dirty = false;
 		return { direction, color * colorStrength };
 	}
 

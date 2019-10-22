@@ -15,7 +15,6 @@ out mat3 TBN_matrix;
 
 out TO_TEXTURES {
 	vec3 position;
-	vec3 normal;
 } to_textures;
 
 void main()
@@ -31,7 +30,6 @@ void main()
 	mat3 TBN = mat3(T, B, N);
 	TBN_matrix = TBN;
 
-	to_textures.normal = normalMatrix * normal;
 	to_textures.position = worldPosition.xyz;
    
 	tex_coords = texture_coords;
@@ -43,10 +41,9 @@ void main()
 #version 450
 layout (location = 0) out vec3 Position;
 layout (location = 1) out vec4 FragColor;
-layout (location = 2) out vec3 ModelNormal;
-layout (location = 3) out vec3 Normal;
-layout (location = 4) out float Roughness;
-layout (location = 5) out float Metalness;
+layout (location = 2) out vec3 Normal;
+layout (location = 3) out float Roughness;
+layout (location = 4) out float Metalness;
 
 layout (binding = 1) uniform sampler2D diffuseTexture;
 layout (binding = 2) uniform sampler2D normalTexture;
@@ -58,14 +55,12 @@ in mat3 TBN_matrix;
 
 in TO_TEXTURES {
 	vec3 position;
-	vec3 normal;
 } to_textures;
 
 void main()
 {
 	Position = to_textures.position;
     FragColor = texture(diffuseTexture, tex_coords);
-	ModelNormal = normalize(to_textures.normal);
 
 	vec3 normalFromTexture = texture(normalTexture, tex_coords).xyz;
 	normalFromTexture = normalize(normalFromTexture * 2.0 - 1.0);

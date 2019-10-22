@@ -15,6 +15,7 @@
 #include "Mesh.h"
 #include "MeshPlane.h"
 #include "ModelMesh.h"
+#include "PointLight.h"
 #include "TerrainGenerator.h"
 
 
@@ -141,6 +142,9 @@ std::shared_ptr<ISerializable> JsonSerializer::deserialize(Json::Value& root)
 		break;
 	case SerializableType::SDirectionalLight:
 		deserialized = make<DirectionalLight>();
+		break;
+	case SerializableType::SPointLight:
+		deserialized = make<PointLight>();
 		break;
 	default:
 		throw std::exception("Unsupported SerializableType encountered!");;

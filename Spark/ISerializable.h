@@ -13,7 +13,8 @@ enum class SerializableType : uint16_t
 	SMeshPlane,
 	STerrainGenerator,
 	SActorAI,
-	SDirectionalLight
+	SDirectionalLight,
+	SPointLight
 };
 
 

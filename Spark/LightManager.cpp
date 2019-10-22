@@ -1,43 +1,48 @@
 #include "LightManager.h"
 
 #include "DirectionalLight.h"
+#include "PointLight.h"
 #include "Structs.h"
-#include <iostream>
 
 namespace spark {
 
 	void LightManager::addDirectionalLight(const std::shared_ptr<DirectionalLight>& directionalLight)
 	{
 		directionalLights.push_back(directionalLight);
-		glBindBuffer(GL_SHADER_STORAGE_BUFFER, dirLightSSBO);
-		glBufferData(GL_SHADER_STORAGE_BUFFER, 0, nullptr, GL_DYNAMIC_DRAW);
-		glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+	}
+
+	void LightManager::addPointLight(const std::shared_ptr<PointLight>& pointLight)
+	{
+		pointLights.push_back(pointLight);
 	}
 
 	void LightManager::updateLightBuffers()
 	{
-		const auto lightDataBuffer = getLightDataBuffer<DirectionalLightData, DirectionalLight>(directionalLights);
+		const auto dirLightDataBuffer = getLightDataBuffer<DirectionalLightData, DirectionalLight>(directionalLights);
+		updateBufferIfNecessary(dirLightDataBuffer, dirLightSSBO);
 
-		if (updateBuffer)
-		{
-			//std::cout << "SSBO update!\n";
-			const GLuint size = sizeof(DirectionalLightData);
-			glBindBuffer(GL_SHADER_STORAGE_BUFFER, dirLightSSBO);
-			glBufferData(GL_SHADER_STORAGE_BUFFER, lightDataBuffer.size() * size, lightDataBuffer.data(), GL_DYNAMIC_DRAW);
-			glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-			//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, dirLightSSBO);
-			updateBuffer = false;
-		}
+		const auto pointLightDataBuffer = getLightDataBuffer<PointLightData, PointLight>(pointLights);
+		updateBufferIfNecessary(pointLightDataBuffer, pointLightSSBO);
 	}
 
 	LightManager::LightManager()
 	{
 		glGenBuffers(1, &dirLightSSBO);
+		glGenBuffers(1, &pointLightSSBO);
+
+		glBindBuffer(GL_SHADER_STORAGE_BUFFER, dirLightSSBO);
+		glBufferData(GL_SHADER_STORAGE_BUFFER, 0, nullptr, GL_DYNAMIC_DRAW);
+		glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+		glBindBuffer(GL_SHADER_STORAGE_BUFFER, pointLightSSBO);
+		glBufferData(GL_SHADER_STORAGE_BUFFER, 0, nullptr, GL_DYNAMIC_DRAW);
+		glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 	}
 
 	LightManager::~LightManager()
 	{
 		glDeleteBuffers(1, &dirLightSSBO);
+		glDeleteBuffers(1, &pointLightSSBO);
 	}
 
 }

@@ -28,7 +28,7 @@ public:
 private:
 	ScreenQuad screenQuad{};
 
-	GLuint mainFramebuffer{}, colorTexture{}, positionTexture{}, modelNormalsTexture{}, normalsTexture{}, roughnessTexture{}, metalnessTexture{};
+	GLuint mainFramebuffer{}, colorTexture{}, positionTexture{}, normalsTexture{}, roughnessTexture{}, metalnessTexture{};
 	GLuint lightFrameBuffer{}, lightColorTexture{};
 	GLuint postprocessingFramebuffer{}, postProcessingTexture{};
 

@@ -12,7 +12,7 @@ namespace spark {
 	class DirectionalLight : public Component
 	{
 	public:
-		DirectionalLightData getLightData();
+		DirectionalLightData getLightData() const;
 
 		bool getDirty() const;
 		glm::vec3 getDirection() const;
