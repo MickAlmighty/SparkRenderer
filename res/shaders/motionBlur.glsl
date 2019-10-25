@@ -26,6 +26,8 @@ uniform mat4 viewProjectionMatrix;
 uniform mat4 previousViewProjectionMatrix;
 uniform float currentFPS;
 
+#define MAX_SAMPLES 12
+
 void main()
 {
     vec3 pos = texture(positionTexture, texCoords).xyz;
@@ -38,18 +40,16 @@ void main()
     vec4 previousPos = previousViewProjectionMatrix * vec4(pos, 1.0);
 
     currentPos = currentPos / currentPos.w;
-	//currentPos = currentPos * 0.5 + 0.5;
-
     previousPos = previousPos / previousPos.w;
-	//previousPos = previousPos * 0.5 + 0.5;
 
 	float mblurScale = currentFPS / 60.0; // divided by target fps
-	vec2 velocity = (currentPos.xy - previousPos.xy) / 2.0;
+	vec2 velocity = (currentPos.xy - previousPos.xy) * 0.5;
 	velocity *= mblurScale;
 
 	vec3 color = texture(colorTexture, texCoords).rgb;
-	int numSamples = 16;
-	
+	float speed = length(velocity / texelSize);
+   	
+    int numSamples = clamp(int(speed), 1, MAX_SAMPLES);
 	for ( uint i = 1; i < numSamples; ++i)
 	{
 		vec2 offset = velocity * (float(i) / float(numSamples - 1) - 0.5);

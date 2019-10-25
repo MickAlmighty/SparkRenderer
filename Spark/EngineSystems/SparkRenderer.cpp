@@ -197,7 +197,7 @@ void SparkRenderer::renderPass()
 
 	{
 		std::string message = "motion blur";
-		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, static_cast<GLsizei>(light.size()), light.c_str());
+		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, static_cast<GLsizei>(message.size()), message.c_str());
 		const std::shared_ptr<Shader> motionBlurShaderS = motionBlurShader.lock();
 		glBindFramebuffer(GL_FRAMEBUFFER, motionBlurFramebuffer);
 		glClearColor(0, 0, 0, 0);
@@ -206,12 +206,11 @@ void SparkRenderer::renderPass()
 		motionBlurShaderS->use();
 		motionBlurShaderS->setMat4("viewProjectionMatrix", projection * view);
 		motionBlurShaderS->setMat4("previousViewProjectionMatrix", prevProjectionView);
-		motionBlurShaderS->setFloat("currentFPS", Clock::getFPS());
+		motionBlurShaderS->setFloat("currentFPS", static_cast<float>(Clock::getFPS()));
 		std::array<GLuint, 2> textures2{ postProcessingTexture, positionTexture };
 		glBindTextures(0, static_cast<GLsizei>(textures2.size()), textures2.data());
 		screenQuad.draw();
 		glBindTextures(0, static_cast<GLsizei>(textures2.size()), nullptr);
-
 		glPopDebugGroup();
 		prevProjectionView = projection * view;
 	}
