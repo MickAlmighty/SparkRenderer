@@ -31,11 +31,13 @@ private:
 	GLuint mainFramebuffer{}, colorTexture{}, positionTexture{}, normalsTexture{}, roughnessTexture{}, metalnessTexture{};
 	GLuint lightFrameBuffer{}, lightColorTexture{};
 	GLuint postprocessingFramebuffer{}, postProcessingTexture{};
+	GLuint motionBlurFramebuffer{}, motionBlurTexture{};
 
 	std::weak_ptr<Shader> mainShader;
 	std::weak_ptr<Shader> screenShader;
 	std::weak_ptr<Shader> postprocessingShader;
 	std::weak_ptr<Shader> lightShader;
+	std::weak_ptr<Shader> motionBlurShader;
 
 	~SparkRenderer() = default;
 	SparkRenderer() = default;

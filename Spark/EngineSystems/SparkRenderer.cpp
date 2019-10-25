@@ -15,6 +15,7 @@
 #include "HID.h"
 #include "Scene.h"
 #include "Spark.h"
+#include "Clock.h"
 
 namespace spark {
 
@@ -53,6 +54,7 @@ void SparkRenderer::initMembers()
 	screenShader = ResourceManager::getInstance()->getShader(ShaderType::SCREEN_SHADER);
 	postprocessingShader = ResourceManager::getInstance()->getShader(ShaderType::POSTPROCESSING_SHADER);
 	lightShader = ResourceManager::getInstance()->getShader(ShaderType::LIGHT_SHADER);
+	motionBlurShader = ResourceManager::getInstance()->getShader(ShaderType::MOTION_BLUR_SHADER);
 	createFrameBuffersAndTextures();
 }
 
@@ -112,15 +114,28 @@ void SparkRenderer::createFrameBuffersAndTextures()
 		throw std::exception("Postprocessing framebuffer incomplete!");
 	}
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	glCreateFramebuffers(1, &motionBlurFramebuffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, motionBlurFramebuffer);
+	createTexture(motionBlurTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, motionBlurTexture, 0);
+	GLenum attachments4[1] = { GL_COLOR_ATTACHMENT0 };
+	glDrawBuffers(1, attachments3);
+
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+	{
+		throw std::exception("Motion Blur framebuffer incomplete!");
+	}
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void SparkRenderer::deleteFrameBuffersAndTextures() const
 {
-	GLuint textures[8] = { colorTexture, positionTexture, normalsTexture, roughnessTexture, metalnessTexture, lightColorTexture, postProcessingTexture };
-	glDeleteTextures(8, textures);
+	GLuint textures[9] = { colorTexture, positionTexture, normalsTexture, roughnessTexture, metalnessTexture, lightColorTexture, postProcessingTexture, motionBlurTexture };
+	glDeleteTextures(9, textures);
 
-	GLuint frameBuffers[3] = { mainFramebuffer, lightFrameBuffer, postprocessingFramebuffer };
-	glDeleteFramebuffers(3, frameBuffers);
+	GLuint frameBuffers[4] = { mainFramebuffer, lightFrameBuffer, postprocessingFramebuffer, motionBlurFramebuffer };
+	glDeleteFramebuffers(4, frameBuffers);
 }
 
 void SparkRenderer::renderPass()
@@ -150,7 +165,7 @@ void SparkRenderer::renderPass()
 
 	const glm::mat4 view = camera->getViewMatrix();
 	const glm::mat4 projection = camera->getProjectionMatrix();
-
+	static glm::mat4 prevProjectionView = projection * view;
 
 	std::shared_ptr<Shader> shader = mainShader.lock();
 	shader->use();
@@ -179,6 +194,27 @@ void SparkRenderer::renderPass()
 
 	glPopDebugGroup();
 	postprocessingPass();
+
+	{
+		std::string message = "motion blur";
+		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, static_cast<GLsizei>(light.size()), light.c_str());
+		const std::shared_ptr<Shader> motionBlurShaderS = motionBlurShader.lock();
+		glBindFramebuffer(GL_FRAMEBUFFER, motionBlurFramebuffer);
+		glClearColor(0, 0, 0, 0);
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		motionBlurShaderS->use();
+		motionBlurShaderS->setMat4("viewProjectionMatrix", projection * view);
+		motionBlurShaderS->setMat4("previousViewProjectionMatrix", prevProjectionView);
+		motionBlurShaderS->setFloat("currentFPS", Clock::getFPS());
+		std::array<GLuint, 2> textures2{ postProcessingTexture, positionTexture };
+		glBindTextures(0, static_cast<GLsizei>(textures2.size()), textures2.data());
+		screenQuad.draw();
+		glBindTextures(0, static_cast<GLsizei>(textures2.size()), nullptr);
+
+		glPopDebugGroup();
+		prevProjectionView = projection * view;
+	}
 	renderToScreen();
 
 	SceneManager::getInstance()->drawGUI();
@@ -224,7 +260,7 @@ void SparkRenderer::renderToScreen()
 
 	screenShader.lock()->use();
 
-	glBindTextureUnit(0, postProcessingTexture);
+	glBindTextureUnit(0, motionBlurTexture);
 
 	screenQuad.draw();
 }

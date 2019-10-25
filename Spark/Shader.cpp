@@ -192,7 +192,7 @@ namespace spark {
 			if (!success)
 			{
 				glGetShaderInfoLog(shader, 512, nullptr, infoLog);
-				std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED/n" << infoLog << std::endl;
+				std::runtime_error("ERROR::SHADER::COMPILATION_FAILED/n");
 			}
 			shaderIds.push_back(shader);
 		}

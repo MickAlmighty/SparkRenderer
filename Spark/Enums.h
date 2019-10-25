@@ -8,7 +8,8 @@ enum class ShaderType : uint16_t
 	DEFAULT_SHADER = 0,
 	LIGHT_SHADER,
 	POSTPROCESSING_SHADER,
-	SCREEN_SHADER
+	SCREEN_SHADER,
+	MOTION_BLUR_SHADER
 };
 
 enum class TextureTarget : uint16_t

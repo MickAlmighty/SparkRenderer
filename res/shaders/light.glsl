@@ -109,7 +109,7 @@ vec3 directionalLightAddition(vec3 V, vec3 N, Material m)
 		float G = geometrySmith(NdotL, NdotV, m.roughness);
 
 		vec3 kD = mix(vec3(1.0) - F, vec3(0.0), m.metalness);
-		vec3 diffuseColor = kD * m.albedo;
+		vec3 diffuseColor = kD * m.albedo / M_PI;
 
 		vec3 specularColor = (F * D * G) / max(4 * NdotV * NdotL, 0.00001);
 		L0 += (diffuseColor + specularColor) * dirLightData.dirLights[i].color * NdotL;
@@ -139,7 +139,7 @@ vec3 pointLightAddition(vec3 V, vec3 N, vec3 Pos, Material m)
 		vec3 radiance = pointLightData.pointLights[i].color * calculateAttenuation(pointLightData.pointLights[i], Pos);
 
 		vec3 kD = mix(vec3(1.0) - F, vec3(0.0), m.metalness);
-		vec3 diffuseColor = kD * m.albedo;
+		vec3 diffuseColor = kD * m.albedo / M_PI;
 
 		vec3 specularColor = (F * D * G) / max(4 * NdotV * NdotL, 0.00001);
 
