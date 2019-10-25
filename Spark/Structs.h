@@ -142,5 +142,14 @@ namespace spark {
 		alignas(16) glm::vec3 color;
 	};
 
+	struct SpotLightData
+	{
+		alignas(16) glm::vec3 position;
+		float cutOff;
+		glm::vec3 color;
+		float outerCutOff;
+		glm::vec3 direction;
+	};
+
 }
 #endif

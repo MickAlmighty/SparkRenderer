@@ -38,6 +38,14 @@ struct PointLight {
 	float nothing2;
 };
 
+struct SpotLight {
+	vec3 position;
+	float cutOff;
+	vec3 color;
+	float outerCutOff;
+	vec3 direction;
+};
+
 layout(std430) buffer DirLightData
 {
 	DirLight dirLights[];
@@ -48,13 +56,18 @@ layout(std430) buffer PointLightData
 	PointLight pointLights[];
 } pointLightData;
 
+layout(std430) buffer SpotLightData
+{
+	SpotLight spotLights[];
+} spotLightData;
+
 uniform vec3 camPos;
 
 float normalDistributionGGX(vec3 N, vec3 H, float roughness);
 vec3 fresnelSchlick(vec3 V, vec3 H, vec3 F0);
 float geometrySchlickGGX(float cosTheta, float k);
 float geometrySmith(float NdotL, float NdotV, float roughness);
-float calculateAttenuation(PointLight p, vec3 Pos);
+float calculateAttenuation(vec3 lightPos, vec3 Pos);
 
 struct Material
 {
@@ -65,6 +78,7 @@ struct Material
 
 vec3 directionalLightAddition(vec3 V, vec3 N, Material m);
 vec3 pointLightAddition(vec3 V, vec3 N, vec3 Pos, Material m);
+vec3 spotLightAddition(vec3 V, vec3 N, vec3 Pos, Material m);
 
 void main()
 {
@@ -85,6 +99,7 @@ void main()
 
 	vec3 L0 = directionalLightAddition(V, N, material);
 	L0 += pointLightAddition(V, N, pos, material);
+	L0 += spotLightAddition(V, N, pos, material);
 	vec3 ambient = vec3(0.001) * material.albedo;
 	FragColor = vec4(L0 + ambient, 1);
 }
@@ -136,7 +151,45 @@ vec3 pointLightAddition(vec3 V, vec3 N, vec3 Pos, Material m)
 		float D = normalDistributionGGX(N, H, m.roughness);
 		float G = geometrySmith(NdotV, NdotL, m.roughness);
 		
-		vec3 radiance = pointLightData.pointLights[i].color * calculateAttenuation(pointLightData.pointLights[i], Pos);
+		vec3 radiance = pointLightData.pointLights[i].color * calculateAttenuation(pointLightData.pointLights[i].position, Pos);
+
+		vec3 kD = mix(vec3(1.0) - F, vec3(0.0), m.metalness);
+		vec3 diffuseColor = kD * m.albedo / M_PI;
+
+		vec3 specularColor = (F * D * G) / max(4 * NdotV * NdotL, 0.00001);
+
+		L0 += (diffuseColor + specularColor) * radiance * NdotL;
+	}
+	return L0;
+}
+
+vec3 spotLightAddition(vec3 V, vec3 N, vec3 Pos, Material m)
+{
+	vec3 F0 = vec3(0.04);
+	F0 = mix(F0, m.albedo, m.metalness);
+
+	float NdotV = max(dot(N, V), 0.0f);
+
+	vec3 L0 = { 0, 0, 0 };
+	for (uint i = 0; i < spotLightData.spotLights.length(); ++i)
+	{
+		vec3 directionToLight = normalize(-spotLightData.spotLights[i].direction);
+		vec3 L = normalize(spotLightData.spotLights[i].position - Pos);
+
+		float theta = dot(directionToLight, L);
+		float epsilon = max(spotLightData.spotLights[i].cutOff - spotLightData.spotLights[i].outerCutOff, 0.0);
+		float intensity = clamp((theta - spotLightData.spotLights[i].outerCutOff) / epsilon, 0.0, 1.0);  
+
+		vec3 H = normalize(V + L);
+
+		float NdotL = max(dot(N, L), 0.0f);
+
+		vec3 F = fresnelSchlick(V, H, F0);
+		float D = normalDistributionGGX(N, H, m.roughness);
+		float G = geometrySmith(NdotV, NdotL, m.roughness);
+		
+		vec3 radiance = spotLightData.spotLights[i].color * calculateAttenuation(spotLightData.spotLights[i].position, Pos);
+		radiance *= intensity;
 
 		vec3 kD = mix(vec3(1.0) - F, vec3(0.0), m.metalness);
 		vec3 diffuseColor = kD * m.albedo / M_PI;
@@ -177,9 +230,9 @@ float geometrySmith(float NdotL, float NdotV, float roughness)
 	return geometrySchlickGGX(NdotL, k) * geometrySchlickGGX(NdotV, k);
 }
 
-float calculateAttenuation(PointLight p, vec3 Pos)
+float calculateAttenuation(vec3 lightPos, vec3 Pos)
 {
-	float distance    = length(p.position - Pos);
+	float distance    = length(lightPos - Pos);
     float attenuation = 1.0 / (distance * distance);
     return attenuation; 
 }

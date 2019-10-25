@@ -16,8 +16,8 @@
 #include "MeshPlane.h"
 #include "ModelMesh.h"
 #include "PointLight.h"
+#include "SpotLight.h"
 #include "TerrainGenerator.h"
-
 
 namespace spark {
 
@@ -145,6 +145,9 @@ std::shared_ptr<ISerializable> JsonSerializer::deserialize(Json::Value& root)
 		break;
 	case SerializableType::SPointLight:
 		deserialized = make<PointLight>();
+		break;
+	case SerializableType::SSpotLight:
+		deserialized = make<SpotLight>();
 		break;
 	default:
 		throw std::exception("Unsupported SerializableType encountered!");;

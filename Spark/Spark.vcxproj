@@ -177,6 +177,7 @@
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="Spark.cpp" />
+    <ClCompile Include="SpotLight.cpp" />
     <ClCompile Include="stb_image.cpp" />
     <ClCompile Include="TerrainGenerator.cpp" />
     <ClCompile Include="WorldTransform.cpp" />
@@ -216,6 +217,7 @@
     <ClInclude Include="Scene.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="Spark.h" />
+    <ClInclude Include="SpotLight.h" />
     <ClInclude Include="Structs.h" />
     <ClInclude Include="TerrainGenerator.h" />
     <ClInclude Include="WorldTransform.h" />

@@ -11,14 +11,16 @@
 namespace spark {
 	class DirectionalLight;
 	class PointLight;
+	class SpotLight;
 
 	class LightManager
 	{
 	public:
-		GLuint dirLightSSBO{}, pointLightSSBO{};
+		GLuint dirLightSSBO{}, pointLightSSBO{}, spotLightSSBO{};
 
 		void addDirectionalLight(const std::shared_ptr<DirectionalLight>& directionalLight);
 		void addPointLight(const std::shared_ptr<PointLight>& pointLight);
+		void addSpotLight(const std::shared_ptr<SpotLight>& spotLight);
 		void updateLightBuffers();
 		
 		LightManager();
@@ -32,6 +34,7 @@ namespace spark {
 	private:
 		std::vector<std::weak_ptr<DirectionalLight>> directionalLights;
 		std::vector<std::weak_ptr<PointLight>> pointLights;
+		std::vector<std::weak_ptr<SpotLight>> spotLights;
 		bool updateBuffer = false;
 
 		template <typename T>

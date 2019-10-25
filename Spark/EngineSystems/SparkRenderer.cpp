@@ -186,6 +186,7 @@ void SparkRenderer::renderPass()
 	lShader->use();
 	lShader->bindSSBO("DirLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->dirLightSSBO);
 	lShader->bindSSBO("PointLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->pointLightSSBO);
+	lShader->bindSSBO("SpotLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->spotLightSSBO);
 	lShader->setVec3("camPos", camera->getPosition());
 	std::array<GLuint, 5> textures{ positionTexture, colorTexture, normalsTexture, roughnessTexture, metalnessTexture };
 	glBindTextures(0, static_cast<GLsizei>(textures.size()), textures.data());
