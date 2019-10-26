@@ -4,6 +4,7 @@
 #include "ResourceLoader.h"
 #include "Shader.h"
 #include "Spark.h"
+#include "Timer.h"
 
 namespace spark {
 
@@ -107,6 +108,7 @@ void ResourceManager::loadResources()
 	shaders.emplace(ShaderType::LIGHT_SHADER, std::make_shared<Shader>(shaderDir.string() + "light.glsl"));
 	shaders.emplace(ShaderType::MOTION_BLUR_SHADER, std::make_shared<Shader>(shaderDir.string() + "motionBlur.glsl"));
 
+	Timer timer("ResourceManager::loadResources");
 	textures = ResourceLoader::loadTextures(Spark::pathToResources);
 	models = ResourceLoader::loadModels(Spark::pathToModelMeshes);
 }
