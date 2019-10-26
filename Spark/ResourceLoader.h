@@ -5,7 +5,6 @@
 #include <map>
 
 #include "Enums.h"
-#include "Structs.h"
 
 struct aiMesh;
 struct aiScene;
@@ -14,13 +13,14 @@ namespace spark {
 
 class MeshModel;
 class Mesh;
+struct Texture;
 
 const std::vector<std::string> ModelMeshExtensions = {
 	".obj", ".fbx", ".FBX", ".max"
 };
 
 const std::vector<std::string> textureExtensions = {
-	".jpg", ".png"
+	".DDS"//".jpg", ".png"
 };
 
 class ResourceLoader
@@ -41,7 +41,7 @@ private:
 	static std::vector<Mesh> loadMeshes(const aiScene * scene, const std::filesystem::path& modelPath);
 	static Mesh loadMesh(aiMesh* assimpMesh, const std::filesystem::path& modelPath);
 	static std::map<TextureTarget, Texture> findTextures(const std::filesystem::path& modelDirectory);
-	static Texture loadTexture(std::string&& path);
+	static Texture loadTexture(const std::string& path);
 };
 
 }
