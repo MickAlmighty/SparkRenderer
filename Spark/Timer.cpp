@@ -1,4 +1,5 @@
 #include "Timer.h"
+#include <future>
 
 namespace spark {
 	double Timer::getMeasurement(const std::string&& measurementName)
@@ -23,6 +24,10 @@ namespace spark {
 
 		std::chrono::duration<double, std::milli> duration = t2 - startTime;
 		measurements[name] = duration.count();
-		std::cout << name.c_str() << ", duration: " << duration.count() << " ms" << std::endl;
+
+		const auto future = std::async(std::launch::async, [this, &duration]()
+		{
+			std::cout << name.c_str() << ", duration: " << duration.count() << " ms" << std::endl;
+		});
 	}
 }

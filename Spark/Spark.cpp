@@ -73,6 +73,8 @@ void Spark::initOpenGL()
 	glDebugMessageCallback(glDebugOutput, nullptr);
 #endif
 
+	glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAnisotropicFiltering);
+
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); (void)io;

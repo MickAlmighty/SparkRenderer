@@ -103,14 +103,24 @@ void ResourceManager::loadResources()
 	Timer timer("ResourceManager::loadResources");
 	std::filesystem::path shaderDir = Spark::pathToResources;
 	shaderDir.append("shaders\\");
-	shaders.emplace(ShaderType::DEFAULT_SHADER, std::make_shared<Shader>(shaderDir.string() + "default.glsl"));
-	shaders.emplace(ShaderType::SCREEN_SHADER, std::make_shared<Shader>(shaderDir.string() + "screen.glsl"));
-	shaders.emplace(ShaderType::POSTPROCESSING_SHADER, std::make_shared<Shader>(shaderDir.string() + "postprocessing.glsl"));
-	shaders.emplace(ShaderType::LIGHT_SHADER, std::make_shared<Shader>(shaderDir.string() + "light.glsl"));
-	shaders.emplace(ShaderType::MOTION_BLUR_SHADER, std::make_shared<Shader>(shaderDir.string() + "motionBlur.glsl"));
+	{
+		Timer timer2("ResourceManager::loadResources -> shaders");
+		shaders.emplace(ShaderType::DEFAULT_SHADER, std::make_shared<Shader>(shaderDir.string() + "default.glsl"));
+		shaders.emplace(ShaderType::SCREEN_SHADER, std::make_shared<Shader>(shaderDir.string() + "screen.glsl"));
+		shaders.emplace(ShaderType::POSTPROCESSING_SHADER, std::make_shared<Shader>(shaderDir.string() + "postprocessing.glsl"));
+		shaders.emplace(ShaderType::LIGHT_SHADER, std::make_shared<Shader>(shaderDir.string() + "light.glsl"));
+		shaders.emplace(ShaderType::MOTION_BLUR_SHADER, std::make_shared<Shader>(shaderDir.string() + "motionBlur.glsl"));
+	}
+	
+	{
+		Timer timer3("ResourceManager::loadResources -> textures");
+		textures = ResourceLoader::loadTextures(Spark::pathToResources);
+	}
 
-	textures = ResourceLoader::loadTextures(Spark::pathToResources);
-	models = ResourceLoader::loadModels(Spark::pathToModelMeshes);
+	{
+		Timer timer3("ResourceManager::loadResources -> models");
+		models = ResourceLoader::loadModels(Spark::pathToModelMeshes);
+	}
 }
 
 void ResourceManager::cleanup()

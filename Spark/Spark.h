@@ -15,6 +15,7 @@ public:
 	inline static std::filesystem::path pathToResources;
 	inline static GLFWwindow* window = nullptr;
 	inline static bool runProgram = true;
+	inline static float maxAnisotropicFiltering = 1.0f;
 
 	static void setup(InitializationVariables& variables);
 	static void run();
