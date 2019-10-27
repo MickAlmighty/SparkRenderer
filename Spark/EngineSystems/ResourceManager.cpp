@@ -100,6 +100,7 @@ std::vector<Texture> ResourceManager::getTextures() const
 
 void ResourceManager::loadResources()
 {
+	Timer timer("ResourceManager::loadResources");
 	std::filesystem::path shaderDir = Spark::pathToResources;
 	shaderDir.append("shaders\\");
 	shaders.emplace(ShaderType::DEFAULT_SHADER, std::make_shared<Shader>(shaderDir.string() + "default.glsl"));
@@ -108,7 +109,6 @@ void ResourceManager::loadResources()
 	shaders.emplace(ShaderType::LIGHT_SHADER, std::make_shared<Shader>(shaderDir.string() + "light.glsl"));
 	shaders.emplace(ShaderType::MOTION_BLUR_SHADER, std::make_shared<Shader>(shaderDir.string() + "motionBlur.glsl"));
 
-	Timer timer("ResourceManager::loadResources");
 	textures = ResourceLoader::loadTextures(Spark::pathToResources);
 	models = ResourceLoader::loadModels(Spark::pathToModelMeshes);
 }
