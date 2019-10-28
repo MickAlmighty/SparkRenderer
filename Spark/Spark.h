@@ -4,6 +4,8 @@
 #include <filesystem>
 
 #include "Structs.h"
+#include "GUI/SparkGui.h"
+
 namespace spark {
 
 class Spark
@@ -16,13 +18,15 @@ public:
 	inline static GLFWwindow* window = nullptr;
 	inline static bool runProgram = true;
 	inline static float maxAnisotropicFiltering = 1.0f;
-
+	
 	static void setup(InitializationVariables& variables);
 	static void run();
 	static void resizeWindow(GLuint width, GLuint height);
 	static void clean();
 
 private:
+	inline static SparkGui sparkGui{};
+
 	~Spark() = default;
 	Spark() = default;
 

@@ -35,12 +35,18 @@ namespace spark {
 	std::vector<Mesh> ResourceLoader::loadModel(const Path& path)
 	{
 		Timer timer("ResourceLoader::loadModel( " + path.string() + " )");
+		
 		Assimp::Importer importer;
-		const aiScene *scene = importer.ReadFile(path.string(), aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
-
-		if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
+		const aiScene* scene = nullptr;
 		{
-			throw std::exception(importer.GetErrorString());
+			Timer timer2("	Loading mesh from file and mesh postprocessing");
+			
+			scene = importer.ReadFile(path.string(), aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
+			
+			if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
+			{
+				throw std::exception(importer.GetErrorString());
+			}
 		}
 
 		std::vector<Mesh> meshes = loadMeshes(scene, path);
@@ -157,13 +163,22 @@ namespace spark {
 
 	std::vector<Texture> ResourceLoader::loadTextures(std::filesystem::path& resDirectory)
 	{
+		std::vector<Texture> textures;
 		std::vector<std::string> paths;
 		for (auto& path_it : std::filesystem::recursive_directory_iterator(resDirectory))
 		{
 			if (checkExtension(path_it.path().extension().string(), textureExtensions))
 			{
-				//textures.push_back(loadTexture(path_it.path().string()));
 				paths.push_back(path_it.path().string());
+				continue;
+			}
+
+			if (checkExtension(path_it.path().extension().string(), {".hdr"}))
+			{
+				if (const auto result = loadHdrTexture(path_it.path().string()); result)
+				{
+					textures.emplace_back(result.value());
+				}
 			}
 		}
 
@@ -176,9 +191,6 @@ namespace spark {
 				return loadTextureFromFile(path);
 			}));
 		}
-
-		std::vector<Texture> textures;
-		textures.reserve(paths.size());
 		
 		unsigned int texturesLoaded = 0;
 		while (texturesLoaded < paths.size())
@@ -189,19 +201,14 @@ namespace spark {
 					continue;
 
 				const auto[path, texture] = future.get();
-				textures.emplace_back(loadTexture(path, texture));
-				++texturesLoaded;
+				if(const auto optionalResult = loadTexture(path, texture); optionalResult)
+				{
+					textures.emplace_back(optionalResult.value());
+					++texturesLoaded;
+				}
 			}
 		}
 		return textures;
-	}
-
-	void ResourceLoader::loadTextureFromFile(std::vector<std::pair<std::string, gli::texture>>& loadedFiles, const std::string& path)
-	{
-		static std::mutex m;
-		gli::texture t = gli::load(path);
-		std::lock_guard<std::mutex> lock(m);
-		loadedFiles.emplace_back(path, t);
 	}
 
 	std::pair<std::string, gli::texture> ResourceLoader::loadTextureFromFile(const std::string& path)
@@ -209,7 +216,7 @@ namespace spark {
 		return { path, gli::load(path) };
 	}
 
-	Texture ResourceLoader::loadTexture(const std::string& path)
+	std::optional<Texture> ResourceLoader::loadTexture(const std::string& path)
 	{
 		
 		int tex_width, tex_height, nr_channels;
@@ -219,7 +226,7 @@ namespace spark {
 		if (pixels == nullptr)
 		{
 			std::string error = "Texture from path: " + path + " cannot be loaded!";
-			throw std::exception(error.c_str());
+			return std::nullopt;
 		}
 
 		GLenum format{};
@@ -259,14 +266,41 @@ namespace spark {
 		glBindTexture(GL_TEXTURE_2D, 0);
 
 		stbi_image_free(pixels);
-
-		return { texture, path };
+		Texture tex{ texture, path };
+		return tex;
 	}
 
-	Texture ResourceLoader::loadTexture(const std::string& path, const gli::texture& texture)
+	std::optional<Texture> ResourceLoader::loadHdrTexture(const std::string& path)
+	{
+		stbi_set_flip_vertically_on_load(true);
+		int width, height, nrComponents;
+		float *data = stbi_loadf(path.c_str(), &width, &height, &nrComponents, 0);
+		
+		if (!data)
+		{
+			std::cout << "Failed to load HDR image." << std::endl;
+			return std::nullopt;
+		}
+		GLuint hdrTexture{0};
+		glGenTextures(1, &hdrTexture);
+		glBindTexture(GL_TEXTURE_2D, hdrTexture);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT, width, height, 0, GL_RGB, GL_FLOAT, data);
+		
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		stbi_image_free(data);
+		
+		Texture tex{hdrTexture, path};
+		return tex;
+	}
+
+	std::optional<Texture> ResourceLoader::loadTexture(const std::string& path, const gli::texture& texture)
 	{
 		if (texture.empty())
-			return { 0, path };
+			return std::nullopt;
 
 		gli::gl GL(gli::gl::PROFILE_GL33);
 		gli::gl::format const Format = GL.translate(texture.format(), texture.swizzles());
@@ -383,6 +417,7 @@ namespace spark {
 				}
 			}
 		}
-		return { TextureName, path };
+		Texture tex{ TextureName, path };
+		return tex;
 	}
 }

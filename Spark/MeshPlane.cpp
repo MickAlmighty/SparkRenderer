@@ -142,10 +142,12 @@ void MeshPlane::drawGUI()
 	if (ImGui::RadioButton("Diffuse", mode == static_cast<int>(TextureTarget::DIFFUSE_TARGET))) { mode = static_cast<int>(TextureTarget::DIFFUSE_TARGET); } ImGui::SameLine();
 	if (ImGui::RadioButton("Normal", mode == static_cast<int>(TextureTarget::NORMAL_TARGET))) { mode = static_cast<int>(TextureTarget::NORMAL_TARGET); }
 
-	Texture tex = SparkGui::getTexture();
-	if (tex.ID != 0)
+	std::string name = "texture: " + std::to_string(textures[static_cast<TextureTarget>(mode)].ID);
+	ImGui::Text(name.c_str());
+	const auto optionalResult = SparkGui::getDraggedObject<Texture>("TEXTURE");
+	if (optionalResult)
 	{
-		textures[static_cast<TextureTarget>(mode)] = tex;
+		textures[static_cast<TextureTarget>(mode)] = optionalResult.value();
 	}
 
 	removeComponentGUI<MeshPlane>();

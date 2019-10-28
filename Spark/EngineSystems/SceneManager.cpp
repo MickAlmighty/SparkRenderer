@@ -23,7 +23,7 @@ std::shared_ptr<SceneManager> SceneManager::getInstance()
 
 void SceneManager::setup()
 {
-	auto scene = std::make_shared<Scene>("MainScene");
+	const auto scene = std::make_shared<Scene>("MainScene");
 	addScene(scene);
 	setCurrentScene("MainScene");
 
@@ -72,115 +72,29 @@ std::shared_ptr<Scene> SceneManager::getCurrentScene() const
 	return current_scene;
 }
 
-void SceneManager::drawGUI()
+void SceneManager::drawGui() const
 {
-	bool show = true;
-	ImGui::ShowDemoWindow(&show);
-
-	drawMainMenuGui();
+	if (ImGui::BeginMenu("SceneManager"))
+	{
+		std::string menuName = "Current Scene: " + current_scene->name;
+		if (ImGui::BeginMenu(menuName.c_str()))
+		{
+			ImGui::MenuItem("Camera Movement", NULL, &current_scene->cameraMovement);
+			ImGui::EndMenu();
+		}
+		if (ImGui::MenuItem("Save Current Scene"))
+		{
+			JsonSerializer::writeToFile("scene.json", current_scene->serialize());
+		}
+		if (ImGui::MenuItem("Load main scene"))
+		{
+			Json::Value root = JsonSerializer::readFromFile("scene.json");
+			current_scene->deserialize(root);
+		}
+		ImGui::EndMenu();
+	}
 
 	current_scene->drawGUI();
-}
-
-void SceneManager::drawMainMenuGui()
-{
-	static bool showEngineSettings = false;
-	if (ImGui::BeginMainMenuBar())
-	{
-		if (ImGui::BeginMenu("Engine"))
-		{
-			ImGui::MenuItem("Spark Settings", NULL, &showEngineSettings);
-			ImGui::Separator();
-			if (ImGui::MenuItem("Exit", "Esc"))
-			{
-				Spark::runProgram = false;
-			}
-			ImGui::EndMenu();
-		}
-		if (ImGui::BeginMenu("SceneManager"))
-		{
-			std::string menuName = "Current Scene: " + current_scene->name;
-			if (ImGui::BeginMenu(menuName.c_str()))
-			{
-				ImGui::MenuItem("Camera Movement", NULL, &current_scene->cameraMovement);
-				ImGui::EndMenu();
-			}
-			if (ImGui::MenuItem("Save Current Scene"))
-			{
-				JsonSerializer::writeToFile("scene.json", current_scene->serialize());
-			}
-			if (ImGui::MenuItem("Load main scene"))
-			{
-				Json::Value root = JsonSerializer::readFromFile("scene.json");
-				current_scene->deserialize(root);
-			}
-			ImGui::EndMenu();
-		}
-		ImGui::EndMainMenuBar();
-	}
-
-	if (showEngineSettings)	drawSparkSettings(&showEngineSettings);
-}
-
-void SceneManager::drawSparkSettings(bool* p_open)
-{
-	if (!ImGui::Begin("Spark Settings", p_open, ImGuiWindowFlags_AlwaysAutoResize))
-	{
-		ImGui::End();
-		return;
-	}
-	/*static char buf1[128];
-	static char buf2[128];
-	ImGui::InputTextWithHint("Path to Models", Spark::pathToModelMeshes.string().c_str(), buf1, 128);
-	ImGui::InputTextWithHint("Path to Resources", Spark::pathToResources.string().c_str(), buf2, 128);*/
-
-	ImGui::Text("Path to models:"); ImGui::SameLine(); ImGui::Text(Spark::pathToModelMeshes.string().c_str());
-	ImGui::Text("Path to resources:"); ImGui::SameLine(); ImGui::Text(Spark::pathToResources.string().c_str());
-
-	static const char* items[4] = { "1280x720", "1600x900", "1920x1080", "1920x1055" };
-	static int current_item = checkCurrentItem(items);
-	if (ImGui::Combo("Resolution", &current_item, items, IM_ARRAYSIZE(items)))
-	{
-		if (current_item == 0)
-		{
-			Spark::resizeWindow(1280, 720);
-		}
-		else if (current_item == 1)
-		{
-			Spark::resizeWindow(1600, 900);
-		}
-		else if (current_item == 2)
-		{
-			Spark::resizeWindow(1920, 1080);
-		}
-		else if (current_item == 3)
-		{
-			Spark::resizeWindow(1920, 1055);
-		}
-	}
-
-	if (ImGui::Button("Save settings"))
-	{
-		InitializationVariables variables;
-		variables.width = Spark::WIDTH;
-		variables.height = Spark::HEIGHT;
-		variables.pathToResources = Spark::pathToResources;
-		variables.pathToModels = Spark::pathToModelMeshes;
-		JsonSerializer::writeToFile("settings.json", variables.serialize());
-	}
-	ImGui::End();
-}
-
-int SceneManager::checkCurrentItem(const char** items) const
-{
-	const std::string resolution = std::to_string(Spark::WIDTH) + "x" + std::to_string(Spark::HEIGHT);
-	for (int i = 0; i < 4; i++)
-	{
-		std::string item(items[i]);
-		if (item == resolution)
-			return i;
-	}
-	return 0;
 }
 
 }

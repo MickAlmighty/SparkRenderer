@@ -22,15 +22,10 @@ public:
 	void addScene(const std::shared_ptr<Scene>& scene);
 	bool setCurrentScene(std::string&& sceneName);
 	std::shared_ptr<Scene> getCurrentScene() const;
-	void drawGUI();
+	void drawGui() const;
 private:
 	std::list<std::shared_ptr<Scene>> scenes;
 	std::shared_ptr<Scene> current_scene = nullptr;
-
-	void drawMainMenuGui();
-	void drawSparkSettings(bool *p_open);
-	int checkCurrentItem(const char** items) const;
-
 };
 
 }

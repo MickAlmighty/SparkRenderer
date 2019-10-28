@@ -3,6 +3,7 @@
 
 #include <filesystem>
 #include <map>
+#include <optional>
 
 #include "Enums.h"
 
@@ -44,10 +45,10 @@ private:
 	static std::vector<Mesh> loadMeshes(const aiScene * scene, const std::filesystem::path& modelPath);
 	static Mesh loadMesh(aiMesh* assimpMesh, const std::filesystem::path& modelPath);
 	static std::map<TextureTarget, Texture> findTextures(const std::filesystem::path& modelDirectory);
-	static void loadTextureFromFile(std::vector<std::pair<std::string, gli::texture>>& loadedFiles, const std::string& path);
 	static std::pair<std::string, gli::texture> loadTextureFromFile(const std::string& path);
-	static Texture loadTexture(const std::string& path);
-	static Texture loadTexture(const std::string& path, const gli::texture& texture);
+	static std::optional<Texture> loadTexture(const std::string& path);
+	static std::optional<Texture> loadHdrTexture(const std::string& path);
+	static std::optional<Texture> loadTexture(const std::string& path, const gli::texture& texture);
 };
 
 }

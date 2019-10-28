@@ -152,10 +152,6 @@ void SparkRenderer::renderPass()
 
 	glViewport(0, 0, Spark::WIDTH, Spark::HEIGHT);
 
-	ImGui_ImplGlfw_NewFrame();
-	ImGui::NewFrame();
-	ImGuizmo::BeginFrame();
-
 	const auto camera = SceneManager::getInstance()->getCurrentScene()->getCamera();
 
 	glBindFramebuffer(GL_FRAMEBUFFER, mainFramebuffer);
@@ -216,19 +212,6 @@ void SparkRenderer::renderPass()
 		prevProjectionView = projection * view;
 	}
 	renderToScreen();
-
-	SceneManager::getInstance()->drawGUI();
-
-	//if(ImGui::Begin("EditorWindow", 0, ImGuiWindowFlags_NoScrollbar))
-	//{
-	//	auto size = ImGui::GetWindowSize();
-	//	//size.x -= 35;
-	//	size.y -= 40;
-	//	ImGui::Image((void*)(intptr_t)postProcessingTexture, ImVec2(size.y / (9.0f / 16.0f) - 30, size.y), ImVec2(0,1), ImVec2(1,0));
-
-	//	
-	//}
-	//ImGui::End();
 
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

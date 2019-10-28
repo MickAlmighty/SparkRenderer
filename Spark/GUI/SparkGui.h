@@ -11,68 +11,107 @@
 #include "PointLight.h"
 #include "SpotLight.h"
 #include "TerrainGenerator.h"
+#include <optional>
 
 namespace spark {
 
-class SparkGui
-{
-public:
-	static std::shared_ptr<Component> addComponent();
-	static std::pair<std::string, std::vector<Mesh>> getMeshes();
-	static Texture getTexture();
-	static std::shared_ptr<Shader> getShader();
-
-	template <typename T>
-	static std::shared_ptr<T> getObject(const std::string&& variableName, std::shared_ptr<T> object)
+	class SparkGui
 	{
-		if (object == nullptr)
-		{
-			std::string objectName = variableName + ": " + "nullptr";
-			ImGui::Text(objectName.c_str());
-		}
+	public:
+		void drawGui();
 
-		if (object != nullptr)
-		{
-			if (Component* c = dynamic_cast<Component*>(object.get()); c != nullptr)
-			{
-				std::string objectName = variableName + ": " + c->name + " (" + typeid(c).name() + ")";
-				ImGui::Text(objectName.c_str());
-			}
-			if (GameObject* g = dynamic_cast<GameObject*>(object.get()); g != nullptr)
-			{
-				std::string objectName = variableName + ": " + g->name + " (" + typeid(g).name() + ")";
-				ImGui::Text(objectName.c_str());
-			}
-		}
+		SparkGui() = default;
+		~SparkGui() = default;
 		
-		if (ImGui::BeginDragDropTarget())
+		static std::shared_ptr<Component> addComponent();
+		static std::pair<std::string, std::vector<Mesh>> getMeshes();
+		static Texture getTexture();
+		static std::shared_ptr<Shader> getShader();
+
+		template <typename T>
+		static std::optional<T> getDraggedObject(std::string&& payloadName)
 		{
-			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("OBJECT_DRAG_AND_DROP"))
+			/*if (object == nullptr)
 			{
-				IM_ASSERT(payload->DataSize == sizeof(std::shared_ptr<GameObject>));
-				std::shared_ptr<GameObject> gameObject = *static_cast<const std::shared_ptr<GameObject>*>(payload->Data);
-				if(dynamic_cast<T*>(gameObject.get()) != nullptr)
-				{
-					return std::dynamic_pointer_cast<T>(gameObject);
-				}
-
-				return gameObject->getComponent<T>(); // return nullptr if there is not any type T component
+				std::string objectName = variableName + ": " + "nullptr";
+				ImGui::Text(objectName.c_str());
 			}
-			ImGui::EndDragDropTarget();
+
+			if (object != nullptr)
+			{
+				std::string objectName = variableName + ": " + "(" + typeid(object).name() + ")";
+				ImGui::Text(objectName.c_str());
+			}*/
+
+			if (ImGui::BeginDragDropTarget())
+			{
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(payloadName.c_str()))
+				{
+					IM_ASSERT(payload->DataSize == sizeof(T));
+					T draggedObject = *static_cast<const T*>(payload->Data);
+					return draggedObject;
+					
+				}
+				ImGui::EndDragDropTarget();
+			}
+			return std::nullopt;
 		}
-		return object;
-	}
-};
 
-const static std::map<std::string, std::function<std::shared_ptr<Component>()>> componentCreation{
-	{"ModelMesh", [] { return std::make_shared<ModelMesh>(); }},
-	{"MeshPlane", [] { return std::make_shared<MeshPlane>(); }},
-	{"TerrainGenerator", [] { return std::make_shared<TerrainGenerator>(); }},
-	{"ActorAI", [] { return std::make_shared<ActorAI>(); }},
-	{"DirectionalLight", [] {return std::make_shared<DirectionalLight>(); }},
-	{"PointLight", [] {return std::make_shared<PointLight>(); }},
-	{"SpotLight", [] {return std::make_shared<SpotLight>(); }}
-};
+		template <typename T>
+		static std::shared_ptr<T> getObject(const std::string&& variableName, std::shared_ptr<T> object)
+		{
+			if (object == nullptr)
+			{
+				std::string objectName = variableName + ": " + "nullptr";
+				ImGui::Text(objectName.c_str());
+			}
 
+			if (object != nullptr)
+			{
+				if (Component* c = dynamic_cast<Component*>(object.get()); c != nullptr)
+				{
+					std::string objectName = variableName + ": " + c->name + " (" + typeid(c).name() + ")";
+					ImGui::Text(objectName.c_str());
+				}
+				if (GameObject* g = dynamic_cast<GameObject*>(object.get()); g != nullptr)
+				{
+					std::string objectName = variableName + ": " + g->name + " (" + typeid(g).name() + ")";
+					ImGui::Text(objectName.c_str());
+				}
+			}
+			
+			if (ImGui::BeginDragDropTarget())
+			{
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("OBJECT_DRAG_AND_DROP"))
+				{
+					IM_ASSERT(payload->DataSize == sizeof(std::shared_ptr<GameObject>));
+					std::shared_ptr<GameObject> gameObject = *static_cast<const std::shared_ptr<GameObject>*>(payload->Data);
+					if(dynamic_cast<T*>(gameObject.get()) != nullptr)
+					{
+						return std::dynamic_pointer_cast<T>(gameObject);
+					}
+
+					return gameObject->getComponent<T>(); // return nullptr if there is not any type T component
+				}
+				ImGui::EndDragDropTarget();
+			}
+			return object;
+		}
+
+	private:
+		const inline static std::map<std::string, std::function<std::shared_ptr<Component>()>> componentCreation{
+		{"ModelMesh", [] { return std::make_shared<ModelMesh>(); }},
+		{"MeshPlane", [] { return std::make_shared<MeshPlane>(); }},
+		{"TerrainGenerator", [] { return std::make_shared<TerrainGenerator>(); }},
+		{"ActorAI", [] { return std::make_shared<ActorAI>(); }},
+		{"DirectionalLight", [] {return std::make_shared<DirectionalLight>(); }},
+		{"PointLight", [] {return std::make_shared<PointLight>(); }},
+		{"SpotLight", [] {return std::make_shared<SpotLight>(); }}
+		};
+
+		void drawMainMenuGui();
+		void drawSparkSettings(bool *p_open);
+		int checkCurrentItem(const char** items) const;
+	};
 }
 #endif

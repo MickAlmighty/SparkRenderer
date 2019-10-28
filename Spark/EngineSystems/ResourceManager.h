@@ -23,6 +23,7 @@ public:
 	std::shared_ptr<Shader> getShader(const std::string& name) const;
 	std::vector<std::string> getShaderNames() const;
 	std::vector<Texture> getTextures() const;
+	void drawGui();
 	void loadResources();
 	void cleanup();
 
