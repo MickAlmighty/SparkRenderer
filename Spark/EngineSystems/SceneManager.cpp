@@ -23,10 +23,9 @@ std::shared_ptr<SceneManager> SceneManager::getInstance()
 
 void SceneManager::setup()
 {
-	const auto scene = std::make_shared<Scene>("MainScene");
-	addScene(scene);
-	setCurrentScene("MainScene");
-
+	//const auto scene = std::make_shared<Scene>("MainScene");
+	addScene(current_scene);
+	//setCurrentScene("MainScene");
 }
 
 void SceneManager::update() const
@@ -80,6 +79,11 @@ void SceneManager::drawGui() const
 		if (ImGui::BeginMenu(menuName.c_str()))
 		{
 			ImGui::MenuItem("Camera Movement", NULL, &current_scene->cameraMovement);
+			const auto cubemapPtr = SparkGui::getCubemapTexture();
+			if(cubemapPtr)
+			{
+				current_scene->cubemap = cubemapPtr;
+			}
 			ImGui::EndMenu();
 		}
 		if (ImGui::MenuItem("Save Current Scene"))

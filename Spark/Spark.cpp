@@ -75,6 +75,7 @@ namespace spark {
 	#endif
 
 		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAnisotropicFiltering);
+		glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();

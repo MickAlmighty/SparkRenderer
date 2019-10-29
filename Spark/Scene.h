@@ -15,12 +15,15 @@ class GameObject;
 class Component;
 class Camera;
 class LightManager;
+struct PbrCubemapTexture;
 
 class Scene
 {
 public:
 	std::list < std::function<void()> > toRemove;
 	std::unique_ptr<LightManager> lightManager;
+	std::shared_ptr<PbrCubemapTexture> cubemap;
+
 	Scene(std::string&& sceneName);
 	~Scene();
 	

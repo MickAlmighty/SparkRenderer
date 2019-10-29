@@ -32,12 +32,15 @@ private:
 	GLuint lightFrameBuffer{}, lightColorTexture{};
 	GLuint postprocessingFramebuffer{}, postProcessingTexture{};
 	GLuint motionBlurFramebuffer{}, motionBlurTexture{};
+	GLuint cubemapFramebuffer{};
 
 	std::weak_ptr<Shader> mainShader;
 	std::weak_ptr<Shader> screenShader;
 	std::weak_ptr<Shader> postprocessingShader;
 	std::weak_ptr<Shader> lightShader;
 	std::weak_ptr<Shader> motionBlurShader;
+	std::weak_ptr<Shader> cubemapShader;
+	Cube cube = Cube();
 
 	~SparkRenderer() = default;
 	SparkRenderer() = default;

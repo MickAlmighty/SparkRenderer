@@ -28,6 +28,11 @@ namespace spark {
 		textures.push_back(tex);
 	}
 
+	void ResourceManager::addCubemapTexturePath(const std::string& path)
+	{
+		cubemapTexturePaths.emplace_back(path);
+	}
+
 	Texture ResourceManager::findTexture(const std::string&& path) const
 	{
 		for (auto& tex_it : textures)
@@ -98,6 +103,11 @@ namespace spark {
 		return textures;
 	}
 
+	const std::vector<std::string>& ResourceManager::getCubemapTexturePaths() const
+	{
+		return cubemapTexturePaths;
+	}
+
 	void ResourceManager::drawGui()
 	{
 		
@@ -151,6 +161,11 @@ namespace spark {
 			shaders.emplace(ShaderType::POSTPROCESSING_SHADER, std::make_shared<Shader>(shaderDir.string() + "postprocessing.glsl"));
 			shaders.emplace(ShaderType::LIGHT_SHADER, std::make_shared<Shader>(shaderDir.string() + "light.glsl"));
 			shaders.emplace(ShaderType::MOTION_BLUR_SHADER, std::make_shared<Shader>(shaderDir.string() + "motionBlur.glsl"));
+			shaders.emplace(ShaderType::EQUIRECTANGULAR_TO_CUBEMAP_SHADER, std::make_shared<Shader>(shaderDir.string() + "equirectangularToCubemap.glsl"));
+			shaders.emplace(ShaderType::CUBEMAP_SHADER, std::make_shared<Shader>(shaderDir.string() + "cubemap.glsl"));
+			shaders.emplace(ShaderType::IRRADIANCE_SHADER, std::make_shared<Shader>(shaderDir.string() + "irradiance.glsl"));
+			shaders.emplace(ShaderType::PREFILTER_SHADER, std::make_shared<Shader>(shaderDir.string() + "prefilter.glsl"));
+			shaders.emplace(ShaderType::BRDF_SHADER, std::make_shared<Shader>(shaderDir.string() + "brdf.glsl"));
 		}
 		
 		{

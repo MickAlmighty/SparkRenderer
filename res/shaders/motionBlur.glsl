@@ -31,9 +31,12 @@ uniform float currentFPS;
 void main()
 {
     vec3 pos = texture(positionTexture, texCoords).xyz;
+    vec3 color = texture(colorTexture, texCoords).rgb;
     if (pos == vec3(0))
-        discard;
-
+    {
+        FragColor = color;//discard;
+        return;
+    }
     vec2 texelSize = 1.0 / vec2(textureSize(colorTexture, 0));
 
     vec4 currentPos = viewProjectionMatrix * vec4(pos, 1.0);
@@ -46,7 +49,7 @@ void main()
 	vec2 velocity = (currentPos.xy - previousPos.xy) * 0.5;
 	velocity *= mblurScale;
 
-	vec3 color = texture(colorTexture, texCoords).rgb;
+	
 	float speed = length(velocity / texelSize);
    	
     int numSamples = clamp(int(speed), 1, MAX_SAMPLES);

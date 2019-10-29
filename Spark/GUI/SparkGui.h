@@ -26,6 +26,7 @@ namespace spark {
 		static std::shared_ptr<Component> addComponent();
 		static std::pair<std::string, std::vector<Mesh>> getMeshes();
 		static Texture getTexture();
+		static std::shared_ptr<PbrCubemapTexture> getCubemapTexture();
 		static std::shared_ptr<Shader> getShader();
 
 		template <typename T>
@@ -99,7 +100,12 @@ namespace spark {
 		}
 
 	private:
-		const inline static std::map<std::string, std::function<std::shared_ptr<Component>()>> componentCreation{
+		void drawMainMenuGui();
+		void drawSparkSettings(bool *p_open);
+		int checkCurrentItem(const char** items) const;
+	};
+
+	const static std::map<std::string, std::function<std::shared_ptr<Component>()>> componentCreation{
 		{"ModelMesh", [] { return std::make_shared<ModelMesh>(); }},
 		{"MeshPlane", [] { return std::make_shared<MeshPlane>(); }},
 		{"TerrainGenerator", [] { return std::make_shared<TerrainGenerator>(); }},
@@ -107,11 +113,6 @@ namespace spark {
 		{"DirectionalLight", [] {return std::make_shared<DirectionalLight>(); }},
 		{"PointLight", [] {return std::make_shared<PointLight>(); }},
 		{"SpotLight", [] {return std::make_shared<SpotLight>(); }}
-		};
-
-		void drawMainMenuGui();
-		void drawSparkSettings(bool *p_open);
-		int checkCurrentItem(const char** items) const;
 	};
 }
 #endif

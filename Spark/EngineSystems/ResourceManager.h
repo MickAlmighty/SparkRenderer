@@ -16,6 +16,7 @@ public:
 	static ResourceManager* getInstance();
 
 	void addTexture(Texture tex);
+	void addCubemapTexturePath(const std::string& path);
 	Texture findTexture(const std::string&& path) const;
 	std::vector<Mesh> findModelMeshes(const std::string& path) const;
 	std::vector<std::string> getPathsToModels() const;
@@ -23,6 +24,7 @@ public:
 	std::shared_ptr<Shader> getShader(const std::string& name) const;
 	std::vector<std::string> getShaderNames() const;
 	std::vector<Texture> getTextures() const;
+	const std::vector<std::string>& getCubemapTexturePaths() const;
 	void drawGui();
 	void loadResources();
 	void cleanup();
@@ -31,6 +33,7 @@ private:
 	std::vector<Texture> textures;
 	std::map<std::string, std::vector<Mesh>> models;
 	std::map<ShaderType, std::shared_ptr<Shader>> shaders;
+	std::vector<std::string> cubemapTexturePaths;
 
 	ResourceManager() = default;
 	~ResourceManager() = default;

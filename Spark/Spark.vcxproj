@@ -179,6 +179,7 @@
     <ClCompile Include="Spark.cpp" />
     <ClCompile Include="SpotLight.cpp" />
     <ClCompile Include="stb_image.cpp" />
+    <ClCompile Include="Structs.cpp" />
     <ClCompile Include="TerrainGenerator.cpp" />
     <ClCompile Include="Timer.cpp" />
     <ClCompile Include="WorldTransform.cpp" />

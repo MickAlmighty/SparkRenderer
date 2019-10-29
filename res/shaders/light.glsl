@@ -23,6 +23,10 @@ layout(binding = 1) uniform sampler2D diffuseTexture;
 layout(binding = 2) uniform sampler2D normalTexture;
 layout(binding = 3) uniform sampler2D roughnessTexture;
 layout(binding = 4) uniform sampler2D metalnessTexture;
+layout(binding = 5) uniform samplerCube irradianceMap;
+layout(binding = 6) uniform samplerCube prefilterMap;
+layout(binding = 7) uniform sampler2D brdfLUT;
+
 
 struct DirLight {
 	vec3 direction;
@@ -65,6 +69,7 @@ uniform vec3 camPos;
 
 float normalDistributionGGX(vec3 N, vec3 H, float roughness);
 vec3 fresnelSchlick(vec3 V, vec3 H, vec3 F0);
+vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness);
 float geometrySchlickGGX(float cosTheta, float k);
 float geometrySmith(float NdotL, float NdotV, float roughness);
 float calculateAttenuation(vec3 lightPos, vec3 Pos);
@@ -74,6 +79,7 @@ struct Material
 	vec3 albedo;
 	float roughness;
 	float metalness;
+	vec3 F0;
 };
 
 vec3 directionalLightAddition(vec3 V, vec3 N, Material m);
@@ -88,11 +94,16 @@ void main()
 		discard;
 	}
 
+
 	Material material = {
 		pow(texture(diffuseTexture, texCoords).xyz, vec3(2.2)),
 		texture(roughnessTexture, texCoords).x,
-		texture(metalnessTexture, texCoords).x
+		texture(metalnessTexture, texCoords).x,
+		vec3(0)
 	};
+
+	vec3 F0 = vec3(0.04);
+	material.F0 = mix(F0, material.albedo, material.metalness);
 
 	vec3 N = texture(normalTexture, texCoords).xyz;
 	vec3 V = normalize(camPos - pos);
@@ -100,15 +111,27 @@ void main()
 	vec3 L0 = directionalLightAddition(V, N, material);
 	L0 += pointLightAddition(V, N, pos, material);
 	L0 += spotLightAddition(V, N, pos, material);
-	vec3 ambient = vec3(0.001) * material.albedo;
+	//vec3 ambient = vec3(0.001) * material.albedo;
+///// 
+	vec3 kS = fresnelSchlick(N, V, material.F0);
+    vec3 kD = 1.0 - kS;
+    vec3 irradiance = texture(irradianceMap, N).rgb;
+    vec3 diffuse    = irradiance * material.albedo * 0.05;
+
+	vec3 R = reflect(-V, N);
+	vec3 F = fresnelSchlickRoughness(max(dot(N, V), 0.0), material.F0, material.roughness);
+	const float MAX_REFLECTION_LOD = 4.0;
+
+	vec3 prefilteredColor = textureLod(prefilterMap, R, material.roughness * MAX_REFLECTION_LOD).rgb;    
+    vec2 brdf = texture(brdfLUT, vec2(max(dot(N, V), 0.0), material.roughness)).rg;
+    vec3 specular = prefilteredColor * (F * brdf.x + brdf.y);
+	
+	vec3 ambient = (kD * diffuse + specular);
 	FragColor = vec4(L0 + ambient, 1);
 }
 
 vec3 directionalLightAddition(vec3 V, vec3 N, Material m)
 {
-	vec3 F0 = vec3(0.04);
-	F0 = mix(F0, m.albedo, m.metalness);
-
 	float NdotV = max(dot(N, V), 0.0f);
 
 	vec3 L0 = { 0, 0, 0 };
@@ -119,7 +142,7 @@ vec3 directionalLightAddition(vec3 V, vec3 N, Material m)
 
 		float NdotL = max(dot(N, L), 0.0f);
 
-		vec3 F = fresnelSchlick(V, H, F0);
+		vec3 F = fresnelSchlick(V, H, m.F0);
 		float D = normalDistributionGGX(N, H, m.roughness);
 		float G = geometrySmith(NdotL, NdotV, m.roughness);
 
@@ -134,9 +157,6 @@ vec3 directionalLightAddition(vec3 V, vec3 N, Material m)
 
 vec3 pointLightAddition(vec3 V, vec3 N, vec3 Pos, Material m)
 {
-	vec3 F0 = vec3(0.04);
-	F0 = mix(F0, m.albedo, m.metalness);
-
 	float NdotV = max(dot(N, V), 0.0f);
 
 	vec3 L0 = { 0, 0, 0 };
@@ -147,7 +167,7 @@ vec3 pointLightAddition(vec3 V, vec3 N, vec3 Pos, Material m)
 
 		float NdotL = max(dot(N, L), 0.0f);
 
-		vec3 F = fresnelSchlick(V, H, F0);
+		vec3 F = fresnelSchlick(V, H, m.F0);
 		float D = normalDistributionGGX(N, H, m.roughness);
 		float G = geometrySmith(NdotV, NdotL, m.roughness);
 		
@@ -165,9 +185,6 @@ vec3 pointLightAddition(vec3 V, vec3 N, vec3 Pos, Material m)
 
 vec3 spotLightAddition(vec3 V, vec3 N, vec3 Pos, Material m)
 {
-	vec3 F0 = vec3(0.04);
-	F0 = mix(F0, m.albedo, m.metalness);
-
 	float NdotV = max(dot(N, V), 0.0f);
 
 	vec3 L0 = { 0, 0, 0 };
@@ -184,7 +201,7 @@ vec3 spotLightAddition(vec3 V, vec3 N, vec3 Pos, Material m)
 
 		float NdotL = max(dot(N, L), 0.0f);
 
-		vec3 F = fresnelSchlick(V, H, F0);
+		vec3 F = fresnelSchlick(V, H, m.F0);
 		float D = normalDistributionGGX(N, H, m.roughness);
 		float G = geometrySmith(NdotV, NdotL, m.roughness);
 		
@@ -218,6 +235,11 @@ vec3 fresnelSchlick(vec3 V, vec3 H, vec3 F0)
 	return F0 + (vec3(1.0) - F0) * pow(1.0 - cosTheta, 5);
 }
 
+vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
+{
+    return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(1.0 - cosTheta, 5.0);
+}
+
 float geometrySchlickGGX(float cosTheta, float k)
 {
 	return cosTheta / (cosTheta * (1.0 - k) + k);
@@ -225,8 +247,8 @@ float geometrySchlickGGX(float cosTheta, float k)
 
 float geometrySmith(float NdotL, float NdotV, float roughness)
 {
-	float r = roughness;
-	float k = (r * r) / 2.0;
+	float r = (roughness + 1.0);
+	float k = (r * r) / 8.0;
 	return geometrySchlickGGX(NdotL, k) * geometrySchlickGGX(NdotV, k);
 }
 

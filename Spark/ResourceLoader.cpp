@@ -10,8 +10,9 @@
 
 #include "EngineSystems/ResourceManager.h"
 #include "Mesh.h"
-#include "Structs.h"
+#include "Shader.h"
 #include "Spark.h"
+#include "Structs.h"
 #include "Timer.h"
 
 namespace spark {
@@ -175,10 +176,7 @@ namespace spark {
 
 			if (checkExtension(path_it.path().extension().string(), {".hdr"}))
 			{
-				if (const auto result = loadHdrTexture(path_it.path().string()); result)
-				{
-					textures.emplace_back(result.value());
-				}
+				ResourceManager::getInstance()->addCubemapTexturePath(path_it.path().string());
 			}
 		}
 
@@ -270,7 +268,7 @@ namespace spark {
 		return tex;
 	}
 
-	std::optional<Texture> ResourceLoader::loadHdrTexture(const std::string& path)
+	std::optional<std::shared_ptr<PbrCubemapTexture>> ResourceLoader::loadHdrTexture(const std::string& path)
 	{
 		stbi_set_flip_vertically_on_load(true);
 		int width, height, nrComponents;
@@ -284,7 +282,7 @@ namespace spark {
 		GLuint hdrTexture{0};
 		glGenTextures(1, &hdrTexture);
 		glBindTexture(GL_TEXTURE_2D, hdrTexture);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT, width, height, 0, GL_RGB, GL_FLOAT, data);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, data);
 		
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -292,8 +290,9 @@ namespace spark {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 		stbi_image_free(data);
-		
-		Texture tex{hdrTexture, path};
+
+		auto tex = std::make_shared<PbrCubemapTexture>(hdrTexture, 1024);
+		glDeleteTextures(1, &hdrTexture);
 		return tex;
 	}
 

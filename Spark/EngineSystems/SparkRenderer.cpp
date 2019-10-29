@@ -55,6 +55,7 @@ void SparkRenderer::initMembers()
 	postprocessingShader = ResourceManager::getInstance()->getShader(ShaderType::POSTPROCESSING_SHADER);
 	lightShader = ResourceManager::getInstance()->getShader(ShaderType::LIGHT_SHADER);
 	motionBlurShader = ResourceManager::getInstance()->getShader(ShaderType::MOTION_BLUR_SHADER);
+	cubemapShader = ResourceManager::getInstance()->getShader(ShaderType::CUBEMAP_SHADER);
 	createFrameBuffersAndTextures();
 }
 
@@ -115,12 +116,24 @@ void SparkRenderer::createFrameBuffersAndTextures()
 	}
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+	glCreateFramebuffers(1, &cubemapFramebuffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, cubemapFramebuffer);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, lightColorTexture, 0);
+	GLenum attachments4[1] = { GL_COLOR_ATTACHMENT0 };
+	glDrawBuffers(1, attachments4);
+
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+	{
+		throw std::exception("Cubemap framebuffer incomplete!");
+	}
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
 	glCreateFramebuffers(1, &motionBlurFramebuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, motionBlurFramebuffer);
 	createTexture(motionBlurTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, motionBlurTexture, 0);
-	GLenum attachments4[1] = { GL_COLOR_ATTACHMENT0 };
-	glDrawBuffers(1, attachments3);
+	GLenum attachments5[1] = { GL_COLOR_ATTACHMENT0 };
+	glDrawBuffers(1, attachments5);
 
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 	{
@@ -131,11 +144,11 @@ void SparkRenderer::createFrameBuffersAndTextures()
 
 void SparkRenderer::deleteFrameBuffersAndTextures() const
 {
-	GLuint textures[9] = { colorTexture, positionTexture, normalsTexture, roughnessTexture, metalnessTexture, lightColorTexture, postProcessingTexture, motionBlurTexture };
-	glDeleteTextures(9, textures);
+	GLuint textures[8] = { colorTexture, positionTexture, normalsTexture, roughnessTexture, metalnessTexture, lightColorTexture, postProcessingTexture, motionBlurTexture };
+	glDeleteTextures(8, textures);
 
-	GLuint frameBuffers[4] = { mainFramebuffer, lightFrameBuffer, postprocessingFramebuffer, motionBlurFramebuffer };
-	glDeleteFramebuffers(4, frameBuffers);
+	GLuint frameBuffers[5] = { mainFramebuffer, lightFrameBuffer, postprocessingFramebuffer, motionBlurFramebuffer, cubemapFramebuffer };
+	glDeleteFramebuffers(5, frameBuffers);
 }
 
 void SparkRenderer::renderPass()
@@ -154,14 +167,16 @@ void SparkRenderer::renderPass()
 
 	const auto camera = SceneManager::getInstance()->getCurrentScene()->getCamera();
 
-	glBindFramebuffer(GL_FRAMEBUFFER, mainFramebuffer);
-	glClearColor(0, 0, 0, 1);
-	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-	glEnable(GL_DEPTH_TEST);
+	
 
 	const glm::mat4 view = camera->getViewMatrix();
 	const glm::mat4 projection = camera->getProjectionMatrix();
 	static glm::mat4 prevProjectionView = projection * view;
+
+	glBindFramebuffer(GL_FRAMEBUFFER, mainFramebuffer);
+	glClearColor(0, 0, 0, 1);
+	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+	glEnable(GL_DEPTH_TEST);
 
 	std::shared_ptr<Shader> shader = mainShader.lock();
 	shader->use();
@@ -173,22 +188,54 @@ void SparkRenderer::renderPass()
 	}
 	renderQueue[ShaderType::DEFAULT_SHADER].clear();
 
+	glDepthMask(GL_FALSE);
+	glBindFramebuffer(GL_FRAMEBUFFER, cubemapFramebuffer);
+	glClearColor(0, 0, 0, 1);
+	glClear(GL_COLOR_BUFFER_BIT);
+	const auto cubemapShaderPtr = cubemapShader.lock();
+	cubemapShaderPtr->use();
+	cubemapShaderPtr->setMat4("view", view);
+	cubemapShaderPtr->setMat4("projection", projection);
+	const auto cubemap = SceneManager::getInstance()->getCurrentScene()->cubemap;
+	if(cubemap)
+	{
+		glBindTextureUnit(0, cubemap->cubemap);
+	}
+	else
+	{
+		glBindTextureUnit(0, 0);
+	}
+	cube.draw();
+	glBindTextures(0, 1, nullptr);
+	glDepthMask(GL_TRUE);
+
 	std::string light = "light";
 	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, static_cast<GLsizei>(light.size()), light.c_str());
 	glBindFramebuffer(GL_FRAMEBUFFER, lightFrameBuffer);
-	glClearColor(0, 0, 0, 0);
-	glClear(GL_COLOR_BUFFER_BIT);
 	const std::shared_ptr<Shader> lShader = lightShader.lock();
 	lShader->use();
 	lShader->bindSSBO("DirLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->dirLightSSBO);
 	lShader->bindSSBO("PointLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->pointLightSSBO);
 	lShader->bindSSBO("SpotLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->spotLightSSBO);
 	lShader->setVec3("camPos", camera->getPosition());
-	std::array<GLuint, 5> textures{ positionTexture, colorTexture, normalsTexture, roughnessTexture, metalnessTexture };
-	glBindTextures(0, static_cast<GLsizei>(textures.size()), textures.data());
-	screenQuad.draw();
-	glBindTextures(0, static_cast<GLsizei>(textures.size()), nullptr);
-
+	if(cubemap)
+	{
+		std::array<GLuint, 8> textures{ positionTexture, colorTexture, normalsTexture,
+		roughnessTexture, metalnessTexture, cubemap->irradianceCubemap,
+		cubemap->prefilteredCubemap,
+		cubemap->brdfLUTTexture };
+		glBindTextures(0, static_cast<GLsizei>(textures.size()), textures.data());
+		screenQuad.draw();
+		glBindTextures(0, static_cast<GLsizei>(textures.size()), nullptr);
+	}
+	else
+	{
+		std::array<GLuint, 8> textures{ positionTexture, colorTexture, normalsTexture,
+		roughnessTexture, metalnessTexture, 0, 0, 0};
+		glBindTextures(0, static_cast<GLsizei>(textures.size()), textures.data());
+		screenQuad.draw();
+		glBindTextures(0, static_cast<GLsizei>(textures.size()), nullptr);
+	}
 	glPopDebugGroup();
 	postprocessingPass();
 
@@ -237,8 +284,8 @@ void SparkRenderer::postprocessingPass()
 void SparkRenderer::renderToScreen()
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glClearColor(0, 0, 0, 0);
-	glClear(GL_COLOR_BUFFER_BIT);
+	//glClearColor(0, 0, 0, 0);
+	//glClear(GL_COLOR_BUFFER_BIT);
 	glDisable(GL_DEPTH_TEST);
 
 	screenShader.lock()->use();
