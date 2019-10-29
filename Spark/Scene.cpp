@@ -56,28 +56,6 @@ std::shared_ptr<Camera> Scene::getCamera() const
 	return camera;
 }
 
-Json::Value Scene::serialize() const
-{
-	Json::Value serialize;
-	serialize["name"] = name;
-	serialize["cameraMovement"] = cameraMovement;
-	serialize["camera"] = JsonSerializer::serialize(camera);
-	JsonSerializer::clearState();
-	serialize["sceneGraph"] = JsonSerializer::serialize(root);
-	JsonSerializer::clearState();
-	return serialize;
-}
-
-void Scene::deserialize(Json::Value& deserializationRoot)
-{
-	name = deserializationRoot.get("name", "Scene").asString();
-	cameraMovement = deserializationRoot.get("cameraMovement", false).asBool();
-	camera = std::static_pointer_cast<Camera>(JsonSerializer::deserialize(deserializationRoot["camera"]));
-	JsonSerializer::clearState();
-	root = std::static_pointer_cast<GameObject>(JsonSerializer::deserialize(deserializationRoot["sceneGraph"]));
-	JsonSerializer::clearState();
-}
-
 void Scene::drawGUI()
 {
 	drawSceneGraph();

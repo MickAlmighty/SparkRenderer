@@ -11,7 +11,7 @@
 namespace spark {
 
 
-class GameObject : public std::enable_shared_from_this<GameObject>, public ISerializable
+class GameObject final : public std::enable_shared_from_this<GameObject>
 {
 public:
 	Transform transform;
@@ -19,18 +19,18 @@ public:
 
 	GameObject(std::string&& _name = "GameObject");
 	~GameObject();
+	GameObject(GameObject&) = delete;
+	GameObject(GameObject&&) = delete;
+	GameObject& operator=(const GameObject&) = delete;
+	GameObject& operator=(GameObject&&) = delete;
 	
 	std::shared_ptr<GameObject> getParent() const;
 	void setParent(const std::shared_ptr<GameObject> newParent);
 	void addChild(const std::shared_ptr<GameObject>& newChild, const std::shared_ptr<GameObject>& parent);
-	void addComponent(std::shared_ptr<Component> component, std::shared_ptr<GameObject> gameObject);
+	void addComponent(std::shared_ptr<Component> component);
 	bool removeChild(std::string&& gameObjectName);
 	bool removeChild(std::shared_ptr<GameObject> child);
 	void drawGUI();
-	
-	SerializableType getSerializableType() override;
-	Json::Value serialize() override;
-	void deserialize(Json::Value& root) override;
 
 	template <class T>
 	bool removeFirstComponentOfType()
@@ -103,7 +103,6 @@ private:
 	std::weak_ptr<GameObject> parent;
 	std::list<std::shared_ptr<GameObject>> children;
 	std::list<std::shared_ptr<Component>> components;
-	std::shared_ptr<GameObject> get_ptr();
 	void update();
 	void fixedUpdate();
 	void drawGizmos();

@@ -275,27 +275,6 @@ bool ActorAI::isNodeClosedStack(const NodeAI& node)
 	return it != std::end(processedNodesStack);
 }
 
-SerializableType ActorAI::getSerializableType()
-{
-	return SerializableType::SActorAI;
-}
-
-Json::Value ActorAI::serialize()
-{
-	Json::Value root;
-	root["name"] = name;
-	root["movementSpeed"] = movementSpeed;
-	root["terrainGenerator"] = JsonSerializer::serialize(terrainGenerator.lock());
-	return root;
-}
-
-void ActorAI::deserialize(Json::Value& root)
-{
-	name = root.get("name", "ActorAI").asString();
-	movementSpeed = root.get("movementSpeed", 1.0f).asFloat();
-	terrainGenerator = std::dynamic_pointer_cast<TerrainGenerator>(JsonSerializer::deserialize(root["terrainGenerator"]));
-}
-
 void ActorAI::drawGUI()
 {
 	terrainGenerator = SparkGui::getObject("terrainGenerator", terrainGenerator.lock());

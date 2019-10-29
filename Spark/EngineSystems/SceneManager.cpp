@@ -107,12 +107,12 @@ void SceneManager::drawMainMenuGui()
 			}
 			if (ImGui::MenuItem("Save Current Scene"))
 			{
-				JsonSerializer::writeToFile("scene.json", current_scene->serialize());
+				//JsonSerializer::writeToFile("scene.json", current_scene->serialize());
 			}
 			if (ImGui::MenuItem("Load main scene"))
 			{
-				Json::Value root = JsonSerializer::readFromFile("scene.json");
-				current_scene->deserialize(root);
+				//Json::Value root = JsonSerializer::readFromFile("scene.json");
+				//current_scene->deserialize(root);
 			}
 			ImGui::EndMenu();
 		}

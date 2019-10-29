@@ -233,50 +233,8 @@ void Camera::updateCameraVectorsThirdPerson()
 	Up = glm::normalize(glm::cross(Front, Right));
 }
 
-SerializableType Camera::getSerializableType()
-{
-	return SerializableType::SCamera;
-}
-
-Json::Value Camera::serialize()
-{
-	Json::Value root;
-	root["cameraTarget"] = JsonSerializer::serializeVec3(cameraTarget);
-	root["Position"] = JsonSerializer::serializeVec3(Position);
-	root["Front"] = JsonSerializer::serializeVec3(Front);
-	root["Up"] = JsonSerializer::serializeVec3(Up);
-	root["Right"] = JsonSerializer::serializeVec3(Right);
-	root["Yaw"] = Yaw;
-	root["Pitch"] = Pitch;
-	root["fov"] = fov;
-	root["zNear"] = zNear;
-	root["zFar"] = zFar;
-	root["cameraMode"] = static_cast<int>(cameraMode);
-
-	return root;
-}
-
-void Camera::deserialize(Json::Value& root)
-{
-	name = root.get("name", "Camera").asString();
-	cameraTarget = JsonSerializer::deserializeVec3(root["cameraTarget"]);
-	Position = JsonSerializer::deserializeVec3(root["Position"]);
-	Front = JsonSerializer::deserializeVec3(root["Front"]);
-	Up = JsonSerializer::deserializeVec3(root["Up"]);
-	Right = JsonSerializer::deserializeVec3(root["Right"]);
-
-	Yaw = root["Yaw"].asFloat();
-	Pitch = root["Pitch"].asFloat();
-	fov = root.get("fov", 60).asFloat();
-	zNear = root.get("zNear", 0.1f).asFloat();
-	zFar = root.get("zFar", 100.0f).asFloat();
-
-	cameraMode = static_cast<CameraMode>(root["cameraMode"].asInt());
-}
-
 void Camera::update()
 {
-
 	if (HID::isKeyPressed(GLFW_KEY_1))
 		cameraMode = CameraMode::FirstPerson;
 	if (HID::isKeyPressed(GLFW_KEY_2))

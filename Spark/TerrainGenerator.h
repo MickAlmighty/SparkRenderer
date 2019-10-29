@@ -29,9 +29,6 @@ public:
 	void unMarkNodeAsPartOfPath(int x, int y);
 	float getTerrainValue(const int x, const int y);
 
-	SerializableType getSerializableType() override;
-	Json::Value serialize() override;
-	void deserialize(Json::Value& root) override;
 	void update() override;
 	void fixedUpdate() override;
 	void drawGUI() override;

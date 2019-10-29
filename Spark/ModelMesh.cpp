@@ -62,24 +62,4 @@ void ModelMesh::drawGUI()
 
 	removeComponentGUI<ModelMesh>();
 }
-
-SerializableType ModelMesh::getSerializableType()
-{
-	return SerializableType::SModelMesh;
-}
-
-Json::Value ModelMesh::serialize()
-{
-	Json::Value root;
-	root["modelPath"] = modelPath;
-	root["name"] = name;
-	return root;
-}
-
-void ModelMesh::deserialize(Json::Value& root)
-{
-	modelPath = root.get("modelPath", "").asString();
-	name = root.get("name", "ModelMesh").asString();
-	meshes = ResourceManager::getInstance()->findModelMeshes(modelPath);
-}
 }

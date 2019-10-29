@@ -18,31 +18,31 @@
 
 namespace spark {
 
-std::map<std::shared_ptr<ISerializable>, int> JsonSerializer::serializedObjects;
-
-std::shared_ptr<ISerializable> JsonSerializer::findSerializedObject(const int id)
-{
-	for (const auto& it : serializedObjects)
-	{
-		if (it.second == id)
-		{
-			return it.first;
-		}
-	}
-	return nullptr;
-}
-
-int JsonSerializer::findId(const std::shared_ptr<ISerializable>& serializableObject)
-{
-	for (auto it : serializedObjects)
-	{
-		if (it.first == serializableObject)
-		{
-			return it.second;
-		}
-	}
-	return -1;
-}
+//std::map<std::shared_ptr<ISerializable>, int> JsonSerializer::serializedObjects;
+//
+//std::shared_ptr<ISerializable> JsonSerializer::findSerializedObject(const int id)
+//{
+//	for (const auto& it : serializedObjects)
+//	{
+//		if (it.second == id)
+//		{
+//			return it.first;
+//		}
+//	}
+//	return nullptr;
+//}
+//
+//int JsonSerializer::findId(const std::shared_ptr<ISerializable>& serializableObject)
+//{
+//	for (auto it : serializedObjects)
+//	{
+//		if (it.first == serializableObject)
+//		{
+//			return it.second;
+//		}
+//	}
+//	return -1;
+//}
 
 void JsonSerializer::writeToFile(std::filesystem::path&& filePath, Json::Value&& root)
 {
@@ -76,78 +76,78 @@ Json::Value JsonSerializer::readFromFile(std::filesystem::path&& filePath)
 	return root;
 }
 
-Json::Value JsonSerializer::serialize(const std::shared_ptr<ISerializable> objToSerialize)
-{
-	Json::Value root;
-	if(objToSerialize == nullptr)
-	{
-		root["id"] = -1;
-		return root;
-	}
-
-	const int id = findId(objToSerialize);
-	if (id != -1)
-	{
-		//if id != -1 means that this object has been serialized already
-		root["id"] = id;
-		root["SerializableType"] = static_cast<int>(objToSerialize->getSerializableType());
-		return root;
-	}
-
-	counter++;
-	serializedObjects.emplace(objToSerialize, counter);
-	root["id"] = counter;
-	root["SerializableType"] = static_cast<int>(objToSerialize->getSerializableType());
-	root["object"] = objToSerialize->serialize();
-	return root;
-}
-
-std::shared_ptr<ISerializable> JsonSerializer::deserialize(Json::Value& root)
-{
-	int id = root.get("id", -1).asInt();
-	if(id == -1)
-	{
-		return nullptr;
-	}
-
-	if (const auto obj = findSerializedObject(id); obj != nullptr)
-	{
-		return obj;
-	}
-
-	const auto type = static_cast<SerializableType>(root["SerializableType"].asInt());
-	std::shared_ptr<ISerializable> deserialized;
-	switch (type)
-	{
-	case SerializableType::SGameObject:
-		deserialized = make<GameObject>();
-		break;
-	case SerializableType::SModelMesh:
-		deserialized = make<ModelMesh>();
-		break;
-	case SerializableType::SMeshPlane:
-		deserialized = make<MeshPlane>();
-		break;
-	case SerializableType::STerrainGenerator:
-		deserialized = make<TerrainGenerator>();
-		break;
-	case SerializableType::SActorAI:
-		deserialized = make<ActorAI>();
-		break;
-	case SerializableType::SCamera:
-		deserialized = make<Camera>();
-		break;
-	default:
-		throw std::exception("Unsupported SerializableType encountered!");;
-	}
-	serializedObjects.emplace(deserialized, id);
-	deserialized->deserialize(root["object"]);
-	return deserialized;
-}
+//Json::Value JsonSerializer::serialize(const std::shared_ptr<ISerializable> objToSerialize)
+//{
+//	Json::Value root;
+//	if(objToSerialize == nullptr)
+//	{
+//		root["id"] = -1;
+//		return root;
+//	}
+//
+//	const int id = findId(objToSerialize);
+//	if (id != -1)
+//	{
+//		//if id != -1 means that this object has been serialized already
+//		root["id"] = id;
+//		//root["SerializableType"] = static_cast<int>(objToSerialize->getSerializableType());
+//		return root;
+//	}
+//
+//	counter++;
+//	serializedObjects.emplace(objToSerialize, counter);
+//	root["id"] = counter;
+//	//root["SerializableType"] = static_cast<int>(objToSerialize->getSerializableType());
+//	//root["object"] = objToSerialize->serialize();
+//	return root;
+//}
+//
+//std::shared_ptr<ISerializable> JsonSerializer::deserialize(Json::Value& root)
+//{
+//	int id = root.get("id", -1).asInt();
+//	if(id == -1)
+//	{
+//		return nullptr;
+//	}
+//
+//	if (const auto obj = findSerializedObject(id); obj != nullptr)
+//	{
+//		return obj;
+//	}
+//
+//	const auto type = static_cast<SerializableType>(root["SerializableType"].asInt());
+//	std::shared_ptr<ISerializable> deserialized;
+//	switch (type)
+//	{
+//	case SerializableType::SGameObject:
+//		deserialized = make<GameObject>();
+//		break;
+//	case SerializableType::SModelMesh:
+//		deserialized = make<ModelMesh>();
+//		break;
+//	case SerializableType::SMeshPlane:
+//		deserialized = make<MeshPlane>();
+//		break;
+//	case SerializableType::STerrainGenerator:
+//		deserialized = make<TerrainGenerator>();
+//		break;
+//	case SerializableType::SActorAI:
+//		deserialized = make<ActorAI>();
+//		break;
+//	case SerializableType::SCamera:
+//		deserialized = make<Camera>();
+//		break;
+//	default:
+//		throw std::exception("Unsupported SerializableType encountered!");;
+//	}
+//	serializedObjects.emplace(deserialized, id);
+//	//deserialized->deserialize(root["object"]);
+//	return deserialized;
+//}
 
 void JsonSerializer::clearState()
 {
-	serializedObjects.clear();
+	//serializedObjects.clear();
 	counter = 0;
 }
 

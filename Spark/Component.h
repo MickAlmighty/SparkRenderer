@@ -1,53 +1,54 @@
 #ifndef COMPONENT_H
 #define COMPONENT_H
 
-#include <GUI/ImGui/imgui.h>
-
 #include "EngineSystems/SceneManager.h"
 #include "ISerializable.h"
 #include "Scene.h"
 
+#include <nameof.hpp>
+#include <rttr/registration_friend>
+#include <rttr/registration>
+#include <GUI/ImGui/imgui.h>
+
 namespace spark {
 
-class GameObject;
-class Component : public ISerializable
-{
-public:
-	std::string name = "Component";
-	
-	Component() = default;
-	Component(std::string& componentName);
-	virtual ~Component();
-	virtual void update() = 0;
-	virtual void fixedUpdate() = 0;
-	
-	void drawComponentGUI();
-	void beginDrawingWindow();
-	virtual void drawGUI() = 0;
-	void endDrawingWindow();
+	class GameObject;
+	class Component abstract {
+	public:
+		Component() = default;
+		Component(const std::string& componentName);
+		virtual ~Component();
+		Component(Component&) = delete;
+		Component(Component&&) = delete;
+		Component& operator=(const Component&) = delete;
+		Component& operator=(Component&&) = delete;
 
-	std::shared_ptr<GameObject> getGameObject() const;
-	bool getActive() const;
-	void setGameObject(std::shared_ptr<GameObject>& game_object);
-	void setActive(bool active_);
-	
-	template <class T>
-	void removeComponentGUI()
-	{
-		if (ImGui::Button("Delete"))
-		{
-			auto remove = [this]()
-			{
-				getGameObject()->removeComponent<T>(name);
-			};
-			SceneManager::getInstance()->getCurrentScene()->toRemove.push_back(remove);
-		}
+		virtual void update() = 0;
+		virtual void fixedUpdate() = 0;
+		void drawComponentGUI();
+		void beginDrawingWindow();
+		virtual void drawGUI() = 0;
+		void endDrawingWindow();
+		std::shared_ptr<GameObject> getGameObject() const;
+		bool getActive() const;
+		void setGameObject(std::shared_ptr<GameObject>& game_object);
+		void setActive(bool active_);
+		template <class T>
+		void removeComponentGUI() {
+			if (ImGui::Button("Delete")) {
+				auto remove = [this]() {
+					getGameObject()->removeComponent<T>(name);
+				};
+				SceneManager::getInstance()->getCurrentScene()->toRemove.push_back(remove);
+			}
+		};
+
+		std::string name{ NAMEOF_TYPE(Component) };
+	private:
+		std::weak_ptr<GameObject> gameObject;
+		bool active = true;
+		RTTR_REGISTRATION_FRIEND;
+		RTTR_ENABLE()
 	};
-
-private:
-	std::weak_ptr<GameObject> gameObject;
-	bool active = true;
-};
-
 }
 #endif

@@ -48,10 +48,11 @@ public:
 			{
 				IM_ASSERT(payload->DataSize == sizeof(std::shared_ptr<GameObject>));
 				std::shared_ptr<GameObject> gameObject = *static_cast<const std::shared_ptr<GameObject>*>(payload->Data);
-				if(dynamic_cast<T*>(gameObject.get()) != nullptr)
-				{
-					return std::dynamic_pointer_cast<T>(gameObject);
-				}
+				//TODO: resolve this
+				//if(dynamic_cast<T*>(gameObject.get()) != nullptr)
+				//{
+				//	return std::dynamic_pointer_cast<T>(gameObject);
+				//}
 
 				return gameObject->getComponent<T>(); // return nullptr if there is not any type T component
 			}

@@ -24,8 +24,6 @@ public:
 	void fixedUpdate();
 	void removeObjectsFromScene();
 	std::shared_ptr<Camera> getCamera() const;
-	Json::Value serialize() const;
-	void deserialize(Json::Value& deserializationRoot);
 	virtual void drawGUI();
 	void drawSceneGraph();
 	void drawTreeNode(std::shared_ptr<GameObject> node, bool isRootNode);

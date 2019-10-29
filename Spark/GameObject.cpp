@@ -15,11 +15,6 @@
 
 namespace spark {
 
-std::shared_ptr<GameObject> GameObject::get_ptr()
-{
-	return shared_from_this();
-}
-
 void GameObject::update()
 {
 	if (parent.lock() == nullptr)
@@ -83,9 +78,9 @@ void GameObject::addChild(const std::shared_ptr<GameObject>& newChild, const std
 	children.push_back(newChild);
 }
 
-void GameObject::addComponent(std::shared_ptr<Component> component, std::shared_ptr<GameObject> gameObject)
+void GameObject::addComponent(std::shared_ptr<Component> component)
 {
-	component->setGameObject(gameObject);
+	component->setGameObject(shared_from_this());
 	components.push_back(component);
 }
 
@@ -140,7 +135,7 @@ void GameObject::drawGUI()
 	const std::shared_ptr<Component> componentToAdd = SparkGui::addComponent();
 	if (componentToAdd != nullptr)
 	{
-		addComponent(componentToAdd, get_ptr());
+		addComponent(componentToAdd);
 	}
 }
 
@@ -214,52 +209,6 @@ GameObject::~GameObject()
 #ifdef DEBUG
 	std::cout << "GameObject: " << name.c_str() << " destroyed!" << std::endl;
 #endif
-}
-
-SerializableType GameObject::getSerializableType()
-{
-	return SerializableType::SGameObject;
-}
-
-Json::Value GameObject::serialize()
-{
-	Json::Value root;
-	root["name"] = name;
-	root["localTransform"] = transform.local.serialize();
-	root["worldTransform"] = transform.world.serialize();
-
-	unsigned int j = 0;
-	for (const auto& component : components)
-	{
-		root["components"][j] = JsonSerializer::serialize(component);
-		++j;
-	}
-
-	unsigned int i = 0;
-	for (const auto& child : children)
-	{
-		root["children"][i] = JsonSerializer::serialize(child);
-		++i;
-	}
-	return root;
-}
-
-void GameObject::deserialize(Json::Value& root)
-{
-	name = root.get("name", "GameObject").asString();
-	transform.local.deserialize(root["localTransform"]);
-	transform.world.deserialize(root["worldTransform"]);
-	for (unsigned int i = 0; i < root["children"].size(); ++i)
-	{
-		auto child = std::static_pointer_cast<GameObject>(JsonSerializer::deserialize(root["children"][i]));
-		addChild(child, shared_from_this());
-	}
-
-	for (unsigned int i = 0; i < root["components"].size(); ++i)
-	{
-		const auto component = std::static_pointer_cast<Component>(JsonSerializer::deserialize(root["components"][i]));
-		addComponent(component, shared_from_this());
-	}
 }
 
 }

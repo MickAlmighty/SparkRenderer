@@ -88,38 +88,6 @@ void MeshPlane::setTexture(TextureTarget target, Texture tex)
 	textures[target] = tex;
 }
 
-SerializableType MeshPlane::getSerializableType()
-{
-	return SerializableType::SMeshPlane;
-}
-
-Json::Value MeshPlane::serialize()
-{
-	Json::Value root;
-	root["name"] = name;
-	for (const auto& tex_it : textures)
-	{
-		root[std::to_string(static_cast<int>(tex_it.first))] = tex_it.second.path;
-	}
-	return root;
-}
-
-void MeshPlane::deserialize(Json::Value& root)
-{
-	name = root.get("name", "MeshPlane").asString();
-	std::string diffuseTexName = root[std::to_string(static_cast<int>(TextureTarget::DIFFUSE_TARGET))].asString();
-	std::string normalTexName = root[std::to_string(static_cast<int>(TextureTarget::NORMAL_TARGET))].asString();
-
-	if (!diffuseTexName.empty())
-	{
-		textures[TextureTarget::DIFFUSE_TARGET] = ResourceManager::getInstance()->findTexture(static_cast<const std::string>(diffuseTexName));
-	}
-	if (!normalTexName.empty())
-	{
-		textures[TextureTarget::DIFFUSE_TARGET] = ResourceManager::getInstance()->findTexture(static_cast<const std::string>(diffuseTexName));
-	}
-}
-
 void MeshPlane::update()
 {
 	addToRenderQueue();

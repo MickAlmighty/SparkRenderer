@@ -12,16 +12,14 @@ namespace std {
 
 namespace spark {
 
-class ISerializable;
-
 class JsonSerializer
 {
 public:
 	static void writeToFile(std::filesystem::path&& filePath, Json::Value&& root);
 	static Json::Value readFromFile(std::filesystem::path&& filePath);
 
-	static Json::Value serialize(const std::shared_ptr<ISerializable> objToSerialize);
-	static std::shared_ptr<ISerializable> deserialize(Json::Value& root);
+	//static Json::Value serialize(const std::shared_ptr<ISerializable> objToSerialize);
+	//static std::shared_ptr<ISerializable> deserialize(Json::Value& root);
 
 	static void clearState();
 	static Json::Value serializeVec2(glm::vec2 val);
@@ -37,13 +35,13 @@ public:
 
 private:
 	inline static int counter = 0;
-	static std::map<std::shared_ptr<ISerializable>, int> serializedObjects;
+	//static std::map<std::shared_ptr<ISerializable>, int> serializedObjects;
 
 	JsonSerializer() = default;
 	~JsonSerializer() = default;
 
-	static std::shared_ptr<ISerializable> findSerializedObject(const int id);
-	static int findId(const std::shared_ptr<ISerializable>& serializableObject);
+	//static std::shared_ptr<ISerializable> findSerializedObject(const int id);
+	//static int findId(const std::shared_ptr<ISerializable>& serializableObject);
 };
 
 template <class T>

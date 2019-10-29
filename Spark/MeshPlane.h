@@ -21,9 +21,6 @@ public:
 	void draw(std::shared_ptr<Shader>& shader, glm::mat4 model) const;
 	void setTexture(TextureTarget target, Texture tex);
 	
-	SerializableType getSerializableType() override;
-	Json::Value serialize() override;
-	void deserialize(Json::Value& root) override;
 	void update() override;
 	void fixedUpdate() override;
 	void drawGUI() override;

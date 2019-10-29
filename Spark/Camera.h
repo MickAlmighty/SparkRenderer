@@ -38,9 +38,6 @@ public:
 	void processMouseMovement(float xoffset, float yoffset, bool constrainPitch = true);
 	void processMouseScroll(float yoffset);
 
-	SerializableType getSerializableType() override;
-	Json::Value serialize() override;
-	void deserialize(Json::Value& root) override;
 	void update() override;
 	void fixedUpdate() override;
 	void drawGUI() override;
