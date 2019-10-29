@@ -5,7 +5,6 @@
 #include "ISerializable.h"
 #include "Scene.h"
 
-#include <nameof.hpp>
 #include <rttr/registration_friend>
 #include <rttr/registration>
 #include <GUI/ImGui/imgui.h>
@@ -43,12 +42,18 @@ namespace spark {
 			}
 		};
 
-		std::string name{ NAMEOF_TYPE(Component) };
+		std::string name{ "Component" };
 	private:
-		std::weak_ptr<GameObject> gameObject;
 		bool active = true;
+		std::weak_ptr<GameObject> gameObject;
 		RTTR_REGISTRATION_FRIEND;
 		RTTR_ENABLE()
 	};
+}
+
+RTTR_REGISTRATION{
+	rttr::registration::class_<spark::Component>("Component")
+	.property("active", &spark::Component::active)
+	.property("name", &spark::Component::name);
 }
 #endif

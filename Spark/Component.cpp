@@ -62,9 +62,3 @@ namespace spark {
 		active = active_;
 	}
 }
-
-RTTR_REGISTRATION{
-	rttr::registration::class_<spark::Component>(STR_NAMEOF_TYPE(spark::Component))
-	.property(STR_NAMEOF(spark::Component::active), &spark::Component::active)
-	.property(STR_NAMEOF(spark::Component::name), &spark::Component::name);
-}
