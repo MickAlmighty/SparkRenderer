@@ -21,7 +21,7 @@ public:
 
 	void setup();
 	void renderPass();
-	void cleanup();
+	void cleanup() const;
 
 	static SparkRenderer* getInstance();
 
@@ -32,6 +32,7 @@ private:
 	GLuint lightFrameBuffer{}, lightColorTexture{};
 	GLuint postprocessingFramebuffer{}, postProcessingTexture{};
 	GLuint motionBlurFramebuffer{}, motionBlurTexture{};
+	GLuint textureHandle{}; //temporary its only a handle to other texture -> dont delete it
 	GLuint cubemapFramebuffer{};
 
 	std::weak_ptr<Shader> mainShader;
@@ -46,9 +47,13 @@ private:
 	SparkRenderer() = default;
 
 	void createTexture(GLuint& texture, GLuint width, GLuint height, GLenum internalFormat, GLenum format, GLenum pixelFormat, GLenum textureWrapping, GLenum textureSampling);
+	void renderCubemap() const;
+	void renderLights() const;
 	void postprocessingPass();
-	void renderToScreen();
+	void motionBlur();
+	void renderToScreen() const;
 	void initMembers();
+	void resizeWindowIfNecessary();
 	void createFrameBuffersAndTextures();
 	void deleteFrameBuffersAndTextures() const;
 };
