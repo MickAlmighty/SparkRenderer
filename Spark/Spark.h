@@ -1,9 +1,11 @@
 #ifndef SPARK_H
 #define	SPARK_H
 
-#include <filesystem>
-
 #include "Structs.h"
+
+#include <filesystem>
+#include <GLFW/glfw3.h>
+
 namespace spark {
 
 class Spark

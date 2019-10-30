@@ -2,7 +2,6 @@
 #define COMPONENT_H
 
 #include "EngineSystems/SceneManager.h"
-#include "ISerializable.h"
 #include "Scene.h"
 
 #include <rttr/registration_friend>
@@ -31,7 +30,7 @@ namespace spark {
 		std::shared_ptr<GameObject> getGameObject() const;
 		std::string getName() const;
 		bool getActive() const;
-		void setGameObject(std::shared_ptr<GameObject>& game_object);
+		void setGameObject(const std::shared_ptr<GameObject> game_object);
 		void setActive(bool active_);
 		template <class T>
 		void removeComponentGUI() {
@@ -51,11 +50,5 @@ namespace spark {
 		RTTR_REGISTRATION_FRIEND;
 		RTTR_ENABLE()
 	};
-}
-
-RTTR_REGISTRATION{
-	rttr::registration::class_<spark::Component>("Component")
-	.property("active", &spark::Component::active)
-	.property("name", &spark::Component::name);
 }
 #endif

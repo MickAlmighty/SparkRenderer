@@ -1,5 +1,4 @@
 #include "Camera.h"
-
 #include "JsonSerializer.h"
 #include "Clock.h"
 #include "HID.h"
@@ -252,4 +251,23 @@ void Camera::drawGUI()
 
 }
 
+}
+
+RTTR_REGISTRATION{
+	rttr::registration::class_<spark::Camera>("Camera")
+	.property("cameraTarget", &spark::Camera::cameraTarget)
+	.property("Position", &spark::Camera::Position)
+	.property("Front", &spark::Camera::Front)
+	.property("Up", &spark::Camera::Up)
+	.property("Right", &spark::Camera::Right)
+	.property("WorldUp", &spark::Camera::WorldUp)
+	.property("Yaw", &spark::Camera::Yaw)
+	.property("Pitch", &spark::Camera::Pitch)
+	.property("MovementSpeed", &spark::Camera::MovementSpeed)
+	.property("MouseSensitivity", &spark::Camera::MouseSensitivity)
+	.property("Zoom", &spark::Camera::Zoom)
+	.property("cameraMode", &spark::Camera::cameraMode)
+	.property("fov", &spark::Camera::fov)
+	.property("zNear", &spark::Camera::zNear)
+	.property("zFar", &spark::Camera::zFar);
 }

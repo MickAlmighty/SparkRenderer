@@ -72,6 +72,8 @@ private:
 	void processKeyboardFirstPerson();
 	void processKeyboardThirdPerson();
 	void processMouseMovementThirdPerson(float xoffset, float yoffset);
+	RTTR_REGISTRATION_FRIEND;
+	RTTR_ENABLE(Component)
 };
 
 }

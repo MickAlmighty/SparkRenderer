@@ -1,4 +1,5 @@
 #include "Component.h"
+#include "GameObject.h"
 
 #include <iostream>
 
@@ -58,11 +59,19 @@ namespace spark {
 		return active;
 	}
 
-	void Component::setGameObject(std::shared_ptr<GameObject>& game_object) {
+	void Component::setGameObject(const std::shared_ptr<GameObject> game_object) {
 		gameObject = game_object;
 	}
 
 	void Component::setActive(bool active_) {
 		active = active_;
 	}
+}
+
+RTTR_REGISTRATION{
+	rttr::registration::class_<spark::Component>("Component")
+	.property("active", &spark::Component::active)
+	.property("name", &spark::Component::name)
+	.property
+	("gameObject", &spark::Component::getGameObject, &spark::Component::setGameObject, rttr::registration::public_access);
 }
