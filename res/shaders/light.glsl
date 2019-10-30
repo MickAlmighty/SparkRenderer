@@ -111,22 +111,29 @@ void main()
 	vec3 L0 = directionalLightAddition(V, N, material);
 	L0 += pointLightAddition(V, N, pos, material);
 	L0 += spotLightAddition(V, N, pos, material);
-	//vec3 ambient = vec3(0.001) * material.albedo;
-///// 
-	vec3 kS = fresnelSchlick(N, V, material.F0);
-    vec3 kD = 1.0 - kS;
-    vec3 irradiance = texture(irradianceMap, N).rgb;
-    vec3 diffuse    = irradiance * material.albedo * 0.05;
 
-	vec3 R = reflect(-V, N);
-	vec3 F = fresnelSchlickRoughness(max(dot(N, V), 0.0), material.F0, material.roughness);
-	const float MAX_REFLECTION_LOD = 4.0;
+	//IBL	
+	vec3 ambient = vec3(0.0);
 
-	vec3 prefilteredColor = textureLod(prefilterMap, R, material.roughness * MAX_REFLECTION_LOD).rgb;    
-    vec2 brdf = texture(brdfLUT, vec2(max(dot(N, V), 0.0), material.roughness)).rg;
-    vec3 specular = prefilteredColor * (F * brdf.x + brdf.y);
+	{
+		float NdotV = max(dot(N, V), 0.0);
+		vec3 kS = fresnelSchlickRoughness(NdotV, material.F0, material.roughness);
+		vec3 kD = 1.0 - kS;
+		kD *= 1.0 - material.metalness;
+		vec3 irradiance = texture(irradianceMap, N).rgb;
+		vec3 diffuse    = irradiance * material.albedo;
+
+		vec3 R = reflect(-V, N);
+		vec3 F = fresnelSchlickRoughness(NdotV, material.F0, material.roughness);
+		const float MAX_REFLECTION_LOD = 4.0;
+
+		vec3 prefilteredColor = textureLod(prefilterMap, R, material.roughness * MAX_REFLECTION_LOD).rgb;    
+		vec2 brdf = texture(brdfLUT, vec2(NdotV, material.roughness)).rg;
+		vec3 specular = prefilteredColor * (F * brdf.x + brdf.y);
+		
+		ambient = (kD * diffuse + specular);
+	}
 	
-	vec3 ambient = (kD * diffuse + specular);
 	FragColor = vec4(L0 + ambient, 1);
 }
 
