@@ -6,35 +6,22 @@
 
 namespace spark {
 
-	Camera::Camera(std::string&& newName) : Component(newName) {
-		MovementSpeed = SPEED;
-		MouseSensitivity = SENSITIVITY;
-		Zoom = ZOOM;
-	}
+	Camera::Camera(std::string&& newName) : Component(newName) { }
 
-	Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch) : Front(glm::vec3(0.0f, 0.0f, -1.0f)),
-		MovementSpeed(SPEED),
-		MouseSensitivity(SENSITIVITY), Zoom(ZOOM) {
-		Position = position;
-		WorldUp = up;
-		Yaw = yaw;
-		Pitch = pitch;
+	Camera::Camera(glm::vec3 position, float yaw, float pitch) :
+	Position(position), Front(glm::vec3(0.0f, 0.0f, -1.0f)), Yaw(yaw), Pitch(pitch) {
 		updateCameraVectors();
 	}
 
-	Camera::Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch) :
-		Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY), Zoom(ZOOM) {
-		Position = glm::vec3(posX, posY, posZ);
-		WorldUp = glm::vec3(upX, upY, upZ);
-		Yaw = yaw;
-		Pitch = pitch;
+	Camera::Camera(float posX, float posY, float posZ, float yaw, float pitch) :
+		Position(posX, posY, posZ), Front(glm::vec3(0.0f, 0.0f, -1.0f)), Yaw(yaw), Pitch(pitch) {
 		updateCameraVectors();
 	}
 
 	glm::mat4 Camera::getViewMatrix() const {
 		//return glm::lookAt(Position, Position + Front, Up);
 		//cameraTarget = Position + Front;
-		return glm::lookAt(Position, cameraTarget, WorldUp);
+		return glm::lookAt(Position, cameraTarget, WORLD_UP);
 	}
 
 	glm::mat4 Camera::getProjectionMatrix() const {
@@ -59,7 +46,6 @@ namespace spark {
 	glm::vec3 Camera::getFront() const { return Front; }
 	glm::vec3 Camera::getUp() const { return Up; }
 	glm::vec3 Camera::getRight() const { return Right; }
-	glm::vec3 Camera::getWorldUp() const { return WorldUp; }
 	float Camera::getYaw() const { return Yaw; }
 	float Camera::getPitch() const { return Pitch; }
 	float Camera::getMovementSpeed() const { return MovementSpeed; }
@@ -69,6 +55,9 @@ namespace spark {
 	float Camera::getNearPlane() const { return zNear; }
 	float Camera::getFarPlane() const { return zFar; }
 	CameraMode Camera::getCameraMode() const { return cameraMode; }
+	void Camera::setYaw(float yaw) { Yaw = yaw; }
+	void Camera::setPitch(float pitch) { Pitch = pitch; }
+	void Camera::setRotation(float yaw, float pitch) { Yaw = yaw; Pitch = pitch; }
 
 	void Camera::processKeyboard() {
 		if (cameraMode == CameraMode::FirstPerson) {
@@ -97,9 +86,9 @@ namespace spark {
 		if (HID::isKeyPressed(GLFW_KEY_D))
 			finalDirection += right;
 		if (HID::isKeyPressed(GLFW_KEY_Q))
-			finalDirection -= WorldUp;
+			finalDirection -= WORLD_UP;
 		if (HID::isKeyPressed(GLFW_KEY_E))
-			finalDirection += WorldUp;
+			finalDirection += WORLD_UP;
 
 		if (finalDirection != glm::vec3(0)) {
 			finalDirection = glm::normalize(finalDirection);
@@ -139,7 +128,7 @@ namespace spark {
 			cameraRotation = !cameraRotation;
 		}
 
-		if (cameraRotation == false)
+		if (!cameraRotation)
 			return;
 		xoffset *= MouseSensitivity;
 		yoffset *= MouseSensitivity;
@@ -204,7 +193,7 @@ namespace spark {
 		Front = glm::normalize(front);
 		//Front = glm::normalize(glm::vec3(front.x, 0, front.z));
 		// Also re-calculate the Right and Up vector
-		Right = glm::normalize(glm::cross(Front, WorldUp));
+		Right = glm::normalize(glm::cross(Front, WORLD_UP));
 		// Normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
 		Up = glm::normalize(glm::cross(Right, Front));
 
@@ -213,7 +202,7 @@ namespace spark {
 
 	void Camera::updateCameraVectorsThirdPerson() {
 		Front = glm::normalize(Position - cameraTarget);
-		Right = glm::normalize(glm::cross(Front, WorldUp));
+		Right = glm::normalize(glm::cross(Front, WORLD_UP));
 		Up = glm::normalize(glm::cross(Front, Right));
 	}
 
@@ -241,7 +230,6 @@ RTTR_REGISTRATION{
 	.property("Front", &spark::Camera::Front)
 	.property("Up", &spark::Camera::Up)
 	.property("Right", &spark::Camera::Right)
-	.property("WorldUp", &spark::Camera::WorldUp)
 	.property("Yaw", &spark::Camera::Yaw)
 	.property("Pitch", &spark::Camera::Pitch)
 	.property("MovementSpeed", &spark::Camera::MovementSpeed)

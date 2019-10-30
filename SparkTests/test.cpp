@@ -25,13 +25,12 @@ TEST(ReflectionTest, CameraInheritsComponent) {
 TEST(ReflectionTest, CameraPropertiesValidAndAccessible) {
 	spark::Camera camera{};
 	rttr::type type{ camera.get_type() };
-	ASSERT_EQ(15 + rttr::type::get<spark::Component>().get_properties().size(), type.get_properties().size());
+	ASSERT_EQ(14 + rttr::type::get<spark::Component>().get_properties().size(), type.get_properties().size());
 	ASSERT_TRUE(type.get_property("cameraTarget").is_valid());
 	ASSERT_TRUE(type.get_property("Position").is_valid());
 	ASSERT_TRUE(type.get_property("Front").is_valid());
 	ASSERT_TRUE(type.get_property("Up").is_valid());
 	ASSERT_TRUE(type.get_property("Right").is_valid());
-	ASSERT_TRUE(type.get_property("WorldUp").is_valid());
 	ASSERT_TRUE(type.get_property("Yaw").is_valid());
 	ASSERT_TRUE(type.get_property("Pitch").is_valid());
 	ASSERT_TRUE(type.get_property("MovementSpeed").is_valid());
@@ -46,7 +45,6 @@ TEST(ReflectionTest, CameraPropertiesValidAndAccessible) {
 	ASSERT_EQ(camera.getFront(), type.get_property_value("Front", camera).get_value<glm::vec3>());
 	ASSERT_EQ(camera.getUp(), type.get_property_value("Up", camera).get_value<glm::vec3>());
 	ASSERT_EQ(camera.getRight(), type.get_property_value("Right", camera).get_value<glm::vec3>());
-	ASSERT_EQ(camera.getWorldUp(), type.get_property_value("WorldUp", camera).get_value<glm::vec3>());
 	ASSERT_EQ(camera.getYaw(), type.get_property_value("Yaw", camera).get_value<float>());
 	ASSERT_EQ(camera.getPitch(), type.get_property_value("Pitch", camera).get_value<float>());
 	ASSERT_EQ(camera.getMovementSpeed(), type.get_property_value("MovementSpeed", camera).get_value<float>());

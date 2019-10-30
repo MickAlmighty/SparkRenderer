@@ -26,8 +26,8 @@ class Camera : public Component
 {
 public:
 	Camera(std::string&& newName = "Camera");
-	Camera(glm::vec3 position, glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), float yaw = YAW, float pitch = PITCH);
-	Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch);
+	Camera(glm::vec3 position, float yaw = YAW, float pitch = PITCH);
+	Camera(float posX, float posY, float posZ, float yaw, float pitch);
 
 	glm::mat4 getViewMatrix() const;
 	glm::mat4 getProjectionMatrix() const;
@@ -38,7 +38,6 @@ public:
 	glm::vec3 getFront() const;
 	glm::vec3 getUp() const;
 	glm::vec3 getRight() const;
-	glm::vec3 getWorldUp() const;
 	float getYaw() const;
 	float getPitch() const;
 	float getMovementSpeed() const;
@@ -48,7 +47,9 @@ public:
 	float getNearPlane() const;
 	float getFarPlane() const;
 	CameraMode getCameraMode() const;
-	//TODO: might want to add setters here as well
+	void setYaw(float yaw);
+	void setPitch(float pitch);
+	void setRotation(float yaw, float pitch);
 	void processKeyboard();
 	void processMouseMovement(float xoffset, float yoffset, bool constrainPitch = true);
 	void processMouseScroll(float yoffset);
@@ -65,7 +66,7 @@ private:
 	glm::vec3 Front{};
 	glm::vec3 Up{};
 	glm::vec3 Right{};
-	glm::vec3 WorldUp{ 0.0f, 1.0f, 0.0f };
+	const glm::vec3 WORLD_UP{ 0.0f, 1.0f, 0.0f };
 	// Euler Angles
 	float Yaw{ YAW };
 	float Pitch{ PITCH };
