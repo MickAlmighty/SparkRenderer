@@ -25,7 +25,9 @@ public:
 	GameObject& operator=(GameObject&&) = delete;
 	
 	std::shared_ptr<GameObject> getParent() const;
+	std::shared_ptr<Scene> getScene() const;
 	void setParent(const std::shared_ptr<GameObject> newParent);
+	void setScene(const std::shared_ptr<Scene> newScene);
 	void addChild(const std::shared_ptr<GameObject>& newChild, const std::shared_ptr<GameObject>& parent);
 	void addComponent(std::shared_ptr<Component> component);
 	bool removeChild(std::string&& gameObjectName);
@@ -71,7 +73,7 @@ public:
 		{
 			if (dynamic_cast<T*>(component.get()))
 			{
-				return component->name == name;
+				return component->getName() == name;
 			}
 			return false;
 		});
@@ -100,6 +102,7 @@ public:
 
 private:
 	friend class Scene;
+	std::weak_ptr<Scene> scene;
 	std::weak_ptr<GameObject> parent;
 	std::list<std::shared_ptr<GameObject>> children;
 	std::list<std::shared_ptr<Component>> components;

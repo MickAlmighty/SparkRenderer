@@ -29,6 +29,7 @@ namespace spark {
 		virtual void drawGUI() = 0;
 		void endDrawingWindow();
 		std::shared_ptr<GameObject> getGameObject() const;
+		std::string_view getName() const;
 		bool getActive() const;
 		void setGameObject(std::shared_ptr<GameObject>& game_object);
 		void setActive(bool active_);
@@ -38,13 +39,14 @@ namespace spark {
 				auto remove = [this]() {
 					getGameObject()->removeComponent<T>(name);
 				};
-				SceneManager::getInstance()->getCurrentScene()->toRemove.push_back(remove);
+				getGameObject()->getScene()->toRemove.push_back(remove);
 			}
-		};
+		}
 
-		std::string name{ "Component" };
+
 	private:
-		bool active = true;
+		std::string name{ "Component" };
+		bool active { true };
 		std::weak_ptr<GameObject> gameObject;
 		RTTR_REGISTRATION_FRIEND;
 		RTTR_ENABLE()

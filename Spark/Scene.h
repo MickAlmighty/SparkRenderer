@@ -5,36 +5,38 @@
 #include <list>
 #include <functional>
 
-#include <json/value.h>
-
 namespace spark {
 
 class GameObject;
 class Component;
 class Camera;
-class Scene
+class Scene final : public std::enable_shared_from_this<Scene>
 {
 public:
-	std::list < std::function<void()> > toRemove;
 	
 	Scene(std::string&& sceneName);
 	~Scene();
-	
+	Scene(Scene&) = delete;
+	Scene(Scene&&) = delete;
+	Scene& operator=(const Scene&) = delete;
+	Scene& operator=(const Scene&&) = delete;
+
 	void update();
 	void fixedUpdate();
 	void removeObjectsFromScene();
 	std::shared_ptr<Camera> getCamera() const;
-	virtual void drawGUI();
+	void drawGUI();
 	void drawSceneGraph();
-	void drawTreeNode(std::shared_ptr<GameObject> node, bool isRootNode);
-
 private:
 	friend class SceneManager;
-	std::string name = "New Scene";
+	friend class Component;
+	void drawTreeNode(std::shared_ptr<GameObject> node, bool isRootNode);
+	std::list < std::function<void()> > toRemove;
+	std::string name{ "New Scene" };
 	std::shared_ptr<GameObject> root{};
 	std::weak_ptr<GameObject> gameObjectToPreview;
 	std::shared_ptr<Camera> camera{};
-	bool cameraMovement = false;
+	bool cameraMovement { false };
 };
 
 }

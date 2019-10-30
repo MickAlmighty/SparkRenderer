@@ -15,6 +15,7 @@ namespace spark {
 Scene::Scene(std::string&& sceneName) : name(sceneName)
 {
 	root = std::make_shared<GameObject>("Root");
+	root->setScene(shared_from_this());
 	camera = std::make_shared<Camera>(glm::vec3(0, 0, 5));
 }
 

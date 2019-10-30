@@ -62,7 +62,11 @@ std::shared_ptr<GameObject> GameObject::getParent() const
 	return parent.lock();
 }
 
-void GameObject::setParent(const std::shared_ptr<GameObject> newParent)
+std::shared_ptr<Scene> GameObject::getScene() const {
+	return scene.lock();
+}
+
+	void GameObject::setParent(const std::shared_ptr<GameObject> newParent)
 {
 	if (!parent.expired())
 	{
@@ -72,9 +76,14 @@ void GameObject::setParent(const std::shared_ptr<GameObject> newParent)
 	parent = newParent;
 }
 
-void GameObject::addChild(const std::shared_ptr<GameObject>& newChild, const std::shared_ptr<GameObject>& parent)
+void GameObject::setScene(const std::shared_ptr<Scene> newScene) {
+	this->scene = newScene;
+}
+
+	void GameObject::addChild(const std::shared_ptr<GameObject>& newChild, const std::shared_ptr<GameObject>& parent)
 {
 	newChild->setParent(parent);
+	newChild->setScene(getScene());
 	children.push_back(newChild);
 }
 
@@ -174,7 +183,7 @@ void GameObject::drawGizmos()
 	}
 
 	ImGuiIO& io = ImGui::GetIO();
-	auto camera = SceneManager::getInstance()->getCurrentScene()->getCamera();
+	auto camera = getScene()->getCamera();
 	ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
 	ImGuizmo::Manipulate(glm::value_ptr(camera->getViewMatrix()), glm::value_ptr(camera->getProjectionMatrix()), mCurrentGizmoOperation, mCurrentGizmoMode, &worldMatrix[0][0]);
 
