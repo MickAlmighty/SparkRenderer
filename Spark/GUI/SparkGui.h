@@ -32,12 +32,12 @@ public:
 		{
 			if (Component* c = dynamic_cast<Component*>(object.get()); c != nullptr)
 			{
-				std::string objectName = variableName + ": " + c->name + " (" + typeid(c).name() + ")";
+				std::string objectName = variableName + ": " + c->getName() + " (" + typeid(c).name() + ")";
 				ImGui::Text(objectName.c_str());
 			}
 			if (GameObject* g = dynamic_cast<GameObject*>(object.get()); g != nullptr)
 			{
-				std::string objectName = variableName + ": " + g->name + " (" + typeid(g).name() + ")";
+				std::string objectName = variableName + ": " + g->getName() + " (" + typeid(g).name() + ")";
 				ImGui::Text(objectName.c_str());
 			}
 		}

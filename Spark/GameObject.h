@@ -15,7 +15,6 @@ class GameObject final : public std::enable_shared_from_this<GameObject>
 {
 public:
 	Transform transform;
-	std::string name = "GameObject";
 
 	GameObject(std::string&& _name = "GameObject");
 	~GameObject();
@@ -33,6 +32,7 @@ public:
 	bool removeChild(std::string&& gameObjectName);
 	bool removeChild(std::shared_ptr<GameObject> child);
 	void drawGUI();
+	std::string getName() const;
 
 	template <class T>
 	bool removeFirstComponentOfType()
@@ -102,6 +102,7 @@ public:
 
 private:
 	friend class Scene;
+	std::string name = "GameObject";
 	std::weak_ptr<Scene> scene;
 	std::weak_ptr<GameObject> parent;
 	std::list<std::shared_ptr<GameObject>> children;

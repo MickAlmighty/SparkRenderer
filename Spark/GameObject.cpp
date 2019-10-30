@@ -148,7 +148,11 @@ void GameObject::drawGUI()
 	}
 }
 
-void GameObject::drawGizmos()
+std::string GameObject::getName() const {
+	return name;
+}
+
+	void GameObject::drawGizmos()
 {
 	static ImGuizmo::OPERATION mCurrentGizmoOperation(ImGuizmo::ROTATE);
 	static ImGuizmo::MODE mCurrentGizmoMode(ImGuizmo::LOCAL);

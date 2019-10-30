@@ -50,7 +50,7 @@ namespace spark {
 		return gameObject.lock();
 	}
 
-	std::string_view Component::getName() const {
+	std::string Component::getName() const {
 		return name;
 	}
 

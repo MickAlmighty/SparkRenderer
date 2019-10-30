@@ -29,7 +29,7 @@ namespace spark {
 		virtual void drawGUI() = 0;
 		void endDrawingWindow();
 		std::shared_ptr<GameObject> getGameObject() const;
-		std::string_view getName() const;
+		std::string getName() const;
 		bool getActive() const;
 		void setGameObject(std::shared_ptr<GameObject>& game_object);
 		void setActive(bool active_);
