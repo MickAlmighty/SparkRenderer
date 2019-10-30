@@ -92,7 +92,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <AdditionalLibraryDirectories>$(SolutionDir)thirdparty\lib\CommonLib;$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalOptions>"$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.lib" "$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.a" "$(SolutionDir)thirdparty\lib\CommonLib\*.lib" "$(SolutionDir)thirdparty\lib\CommonLib\*.a" /VERBOSE:UNUSEDLIBS %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>"$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.lib" "$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.a" "$(SolutionDir)thirdparty\lib\CommonLib\*.lib" "$(SolutionDir)thirdparty\lib\CommonLib\*.a" /VERBOSE:UNUSEDLIBS "$(TargetDir)Spark.lib"</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -129,7 +129,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <AdditionalLibraryDirectories>$(SolutionDir)thirdparty\lib\CommonLib;$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalOptions>"$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.lib" "$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.a" "$(SolutionDir)thirdparty\lib\CommonLib\*.lib" "$(SolutionDir)thirdparty\lib\CommonLib\*.a" /VERBOSE:UNUSEDLIBS %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>"$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.lib" "$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.a" "$(SolutionDir)thirdparty\lib\CommonLib\*.lib" "$(SolutionDir)thirdparty\lib\CommonLib\*.a" /VERBOSE:UNUSEDLIBS "$(TargetDir)Spark.lib"</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
