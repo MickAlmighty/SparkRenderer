@@ -34,6 +34,21 @@ public:
 	glm::vec3 getPosition() const;
 	void setProjectionMatrix(float fov, float nearPlane, float farPlane);
 	void setCameraTarget(glm::vec3 target);
+	glm::vec3 getCameraTarget() const;
+	glm::vec3 getFront() const;
+	glm::vec3 getUp() const;
+	glm::vec3 getRight() const;
+	glm::vec3 getWorldUp() const;
+	float getYaw() const;
+	float getPitch() const;
+	float getMovementSpeed() const;
+	float getMouseSensitivity() const;
+	float getZoom() const;
+	float getFov() const;
+	float getNearPlane() const;
+	float getFarPlane() const;
+	CameraMode getCameraMode() const;
+	//TODO: might want to add setters here as well
 	void processKeyboard();
 	void processMouseMovement(float xoffset, float yoffset, bool constrainPitch = true);
 	void processMouseScroll(float yoffset);
