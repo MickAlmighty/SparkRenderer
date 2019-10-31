@@ -60,25 +60,6 @@ namespace spark {
 		active = active_;
 	}
 
-	SerializableType PointLight::getSerializableType()
-	{
-		return SerializableType::SPointLight;
-	}
-
-	Json::Value PointLight::serialize()
-	{
-		Json::Value root;
-		root["color"] = JsonSerializer::serializeVec3(color);
-		root["colorStrength"] = colorStrength;
-		return root;
-	}
-
-	void PointLight::deserialize(Json::Value& root)
-	{
-		color = JsonSerializer::deserializeVec3(root["color"]);
-		colorStrength = root.get("colorStrength", 1.0f).asFloat();
-	}
-
 	void PointLight::update()
 	{
 		if (!addedToLightManager)

@@ -31,7 +31,7 @@ namespace spark {
 		std::string getName() const;
 		bool getActive() const;
 		void setGameObject(const std::shared_ptr<GameObject> game_object);
-		void setActive(bool active_);
+		virtual void setActive(bool active_);
         template <class T>
         void removeComponent() {
             auto remove = [this]() {

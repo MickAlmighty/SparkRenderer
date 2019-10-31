@@ -183,6 +183,7 @@ if not exist "$(TargetDir)scene.json" (xcopy "$(ProjectDir)scene.json" "$(Target
     <ClCompile Include="EngineSystems\ResourceManager.cpp" />
     <ClCompile Include="EngineSystems\SceneManager.cpp" />
     <ClCompile Include="EngineSystems\SparkRenderer.cpp" />
+    <ClCompile Include="Factory.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="glad.c" />
     <ClCompile Include="GUI\ImGuizmo.cpp" />
@@ -224,6 +225,7 @@ if not exist "$(TargetDir)scene.json" (xcopy "$(ProjectDir)scene.json" "$(Target
     <ClInclude Include="EngineSystems\SceneManager.h" />
     <ClInclude Include="EngineSystems\SparkRenderer.h" />
     <ClInclude Include="Enums.h" />
+    <ClInclude Include="Factory.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="GUI\ImGuizmo.h" />
     <ClInclude Include="GUI\ImGui\imconfig.h" />

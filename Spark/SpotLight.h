@@ -33,9 +33,6 @@ namespace spark {
 		virtual ~SpotLight() = default;
 
 		void setActive(bool active_) override;
-		SerializableType getSerializableType() override;
-		Json::Value serialize() override;
-		void deserialize(Json::Value& root) override;
 		void update() override;
 		void fixedUpdate() override;
 		void drawGUI() override;

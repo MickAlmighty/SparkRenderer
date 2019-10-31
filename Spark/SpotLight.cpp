@@ -102,36 +102,11 @@ namespace spark {
 		active = active_;
 	}
 
-	SerializableType SpotLight::getSerializableType()
-	{
-		return SerializableType::SSpotLight;
-	}
-
-	Json::Value SpotLight::serialize()
-	{
-		Json::Value root;
-		root["color"] = JsonSerializer::serializeVec3(color);
-		root["colorStrength"] = colorStrength;
-		root["cutOff"] = cutOff;
-		root["outerCutOff"] = outerCutOff;
-		root["direction"] = JsonSerializer::serializeVec3(direction);
-		return root;
-	}
-
-	void SpotLight::deserialize(Json::Value& root)
-	{
-		color = JsonSerializer::deserializeVec3(root["color"]);
-		colorStrength = root.get("colorStrength", 1.0f).asFloat();
-		cutOff = root.get("cutOff", 30.0f).asFloat();
-		outerCutOff = root.get("outerCutOff", 45.0f).asFloat();
-		direction = JsonSerializer::deserializeVec3(root["direction"]);
-	}
-
 	void SpotLight::update()
 	{
 		if (!addedToLightManager)
 		{
-			SceneManager::getInstance()->getCurrentScene()->lightManager->addSpotLight(shared_from_base<SpotLight>());
+			getGameObject()->getScene()->lightManager->addSpotLight(shared_from_base<SpotLight>());
 			addedToLightManager = true;
 		}
 

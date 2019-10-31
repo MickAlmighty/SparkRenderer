@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <list>
+#include <utility>
 
 #include <GUI/ImGui/imgui.h>
 
@@ -12,10 +13,9 @@
 
 namespace spark {
 
-Scene::Scene(std::string&& sceneName) : name(sceneName)
+Scene::Scene(std::string sceneName) : name(std::move(sceneName))
 {
-	root = std::make_shared<GameObject>("Root");
-	root->setScene(shared_from_this());
+    root = std::make_shared<GameObject>("Root");
 	camera = std::make_shared<Camera>(glm::vec3(0, 0, 5));
 	lightManager = std::make_unique<LightManager>();
 }
@@ -59,7 +59,11 @@ std::shared_ptr<Camera> Scene::getCamera() const
 	return camera;
 }
 
-void Scene::drawGUI()
+std::shared_ptr<GameObject> Scene::getRoot() const {
+    return root;
+}
+
+    void Scene::drawGUI()
 {
 	drawSceneGraph();
 	static bool opened = false;

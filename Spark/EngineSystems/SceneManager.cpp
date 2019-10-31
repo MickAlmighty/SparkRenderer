@@ -23,7 +23,7 @@ std::shared_ptr<SceneManager> SceneManager::getInstance()
 
 void SceneManager::setup()
 {
-	//const auto scene = std::make_shared<Scene>("MainScene");
+	//const auto scene = Factory::createScene("MainScene");
 	addScene(current_scene);
 	//setCurrentScene("MainScene");
 }
