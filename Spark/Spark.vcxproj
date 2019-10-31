@@ -179,6 +179,7 @@ if not exist "$(TargetDir)scene.json" (xcopy "$(ProjectDir)scene.json" "$(Target
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Clock.cpp" />
     <ClCompile Include="Component.cpp" />
+    <ClCompile Include="DirectionalLight.cpp" />
     <ClCompile Include="EngineSystems\ResourceManager.cpp" />
     <ClCompile Include="EngineSystems\SceneManager.cpp" />
     <ClCompile Include="EngineSystems\SparkRenderer.cpp" />
@@ -194,18 +195,23 @@ if not exist "$(TargetDir)scene.json" (xcopy "$(ProjectDir)scene.json" "$(Target
     <ClCompile Include="GUI\SparkGui.cpp" />
     <ClCompile Include="HID.cpp" />
     <ClCompile Include="JsonSerializer.cpp" />
+    <ClCompile Include="LightManager.cpp" />
     <ClCompile Include="LocalTranform.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="MeshPlane.cpp" />
     <ClCompile Include="ModelMesh.cpp" />
     <ClCompile Include="NodeAI.cpp" />
+    <ClCompile Include="PointLight.cpp" />
     <ClCompile Include="ResourceLoader.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="Spark.cpp" />
+    <ClCompile Include="SpotLight.cpp" />
     <ClCompile Include="stb_image.cpp" />
+    <ClCompile Include="Structs.cpp" />
     <ClCompile Include="TerrainGenerator.cpp" />
+    <ClCompile Include="Timer.cpp" />
     <ClCompile Include="WorldTransform.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -213,6 +219,7 @@ if not exist "$(TargetDir)scene.json" (xcopy "$(ProjectDir)scene.json" "$(Target
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Clock.h" />
     <ClInclude Include="Component.h" />
+    <ClInclude Include="DirectionalLight.h" />
     <ClInclude Include="EngineSystems\ResourceManager.h" />
     <ClInclude Include="EngineSystems\SceneManager.h" />
     <ClInclude Include="EngineSystems\SparkRenderer.h" />
@@ -231,21 +238,26 @@ if not exist "$(TargetDir)scene.json" (xcopy "$(ProjectDir)scene.json" "$(Target
     <ClInclude Include="HID.h" />
     <ClInclude Include="ISerializable.h" />
     <ClInclude Include="JsonSerializer.h" />
+    <ClInclude Include="LightManager.h" />
     <ClInclude Include="LocalTranform.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="MeshPlane.h" />
     <ClInclude Include="ModelMesh.h" />
     <ClInclude Include="NodeAI.h" />
+    <ClInclude Include="PointLight.h" />
     <ClInclude Include="ResourceLoader.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="Spark.h" />
+    <ClInclude Include="SpotLight.h" />
     <ClInclude Include="Structs.h" />
     <ClInclude Include="TerrainGenerator.h" />
+    <ClInclude Include="Timer.h" />
     <ClInclude Include="WorldTransform.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\res\shaders\default.glsl" />
+    <None Include="..\res\shaders\light.glsl" />
     <None Include="..\res\shaders\postprocessing.glsl" />
     <None Include="..\res\shaders\screen.glsl" />
   </ItemGroup>

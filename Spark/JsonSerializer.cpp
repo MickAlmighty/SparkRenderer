@@ -9,12 +9,15 @@
 
 #include "ActorAI.h"
 #include "Camera.h"
+#include "DirectionalLight.h"
 #include "GameObject.h"
 #include "ISerializable.h"
+#include "Mesh.h"
 #include "MeshPlane.h"
 #include "ModelMesh.h"
+#include "PointLight.h"
+#include "SpotLight.h"
 #include "TerrainGenerator.h"
-#include "Mesh.h"
 
 namespace spark {
 
@@ -90,15 +93,15 @@ Json::Value JsonSerializer::readFromFile(std::filesystem::path&& filePath)
 //	{
 //		//if id != -1 means that this object has been serialized already
 //		root["id"] = id;
-//		//root["SerializableType"] = static_cast<int>(objToSerialize->getSerializableType());
+//		root["SerializableType"] = static_cast<int>(objToSerialize->getSerializableType());
 //		return root;
 //	}
 //
 //	counter++;
 //	serializedObjects.emplace(objToSerialize, counter);
 //	root["id"] = counter;
-//	//root["SerializableType"] = static_cast<int>(objToSerialize->getSerializableType());
-//	//root["object"] = objToSerialize->serialize();
+//	root["SerializableType"] = static_cast<int>(objToSerialize->getSerializableType());
+//	root["object"] = objToSerialize->serialize();
 //	return root;
 //}
 //
@@ -137,11 +140,20 @@ Json::Value JsonSerializer::readFromFile(std::filesystem::path&& filePath)
 //	case SerializableType::SCamera:
 //		deserialized = make<Camera>();
 //		break;
+//	case SerializableType::SDirectionalLight:
+//		deserialized = make<DirectionalLight>();
+//		break;
+//	case SerializableType::SPointLight:
+//		deserialized = make<PointLight>();
+//		break;
+//	case SerializableType::SSpotLight:
+//		deserialized = make<SpotLight>();
+//		break;
 //	default:
 //		throw std::exception("Unsupported SerializableType encountered!");;
 //	}
 //	serializedObjects.emplace(deserialized, id);
-//	//deserialized->deserialize(root["object"]);
+//	deserialized->deserialize(root["object"]);
 //	return deserialized;
 //}
 

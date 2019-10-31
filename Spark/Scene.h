@@ -1,9 +1,14 @@
 #ifndef SCENE_H
 #define SCENE_H
 
+#include "LightManager.h"
+
+#include <json/value.h>
+
 #include <memory>
 #include <list>
 #include <functional>
+
 
 namespace spark {
 
@@ -31,7 +36,9 @@ private:
 	friend class SceneManager;
 	friend class Component;
 	void drawTreeNode(std::shared_ptr<GameObject> node, bool isRootNode);
-	std::list < std::function<void()> > toRemove;
+    std::list < std::function<void()> > toRemove;
+    std::unique_ptr<LightManager> lightManager;
+    std::shared_ptr<PbrCubemapTexture> cubemap;
 	std::string name{ "New Scene" };
 	std::shared_ptr<GameObject> root{};
 	std::weak_ptr<GameObject> gameObjectToPreview;

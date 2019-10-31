@@ -3,24 +3,29 @@
 
 #include <filesystem>
 #include <map>
+#include <optional>
 
 #include "Enums.h"
-#include "Structs.h"
 
 struct aiMesh;
 struct aiScene;
+namespace gli {
+	class texture;
+}
 
 namespace spark {
 
 class MeshModel;
 class Mesh;
+struct Texture;
+struct PbrCubemapTexture;
 
 const std::vector<std::string> ModelMeshExtensions = {
 	".obj", ".fbx", ".FBX", ".max"
 };
 
 const std::vector<std::string> textureExtensions = {
-	".jpg", ".png"
+	".DDS", ".KTX"//".jpg", ".png"
 };
 
 class ResourceLoader
@@ -28,7 +33,8 @@ class ResourceLoader
 public:
 	static std::map<std::string, std::vector<Mesh>> loadModels(std::filesystem::path& modelDirectory);
 	static std::vector<Texture> loadTextures(std::filesystem::path& resDirectory);
-
+	static std::optional<std::shared_ptr<PbrCubemapTexture>> loadHdrTexture(const std::string& path);
+	
 	ResourceLoader(const ResourceLoader& rhs) = delete;
 	ResourceLoader& operator=(const ResourceLoader& rhs) = delete;
 
@@ -41,7 +47,9 @@ private:
 	static std::vector<Mesh> loadMeshes(const aiScene * scene, const std::filesystem::path& modelPath);
 	static Mesh loadMesh(aiMesh* assimpMesh, const std::filesystem::path& modelPath);
 	static std::map<TextureTarget, Texture> findTextures(const std::filesystem::path& modelDirectory);
-	static Texture loadTexture(std::string&& path);
+	static std::pair<std::string, gli::texture> loadTextureFromFile(const std::string& path);
+	static std::optional<Texture> loadTexture(const std::string& path);
+	static std::optional<Texture> loadTexture(const std::string& path, const gli::texture& texture);
 };
 
 }

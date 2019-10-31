@@ -17,6 +17,7 @@ Scene::Scene(std::string&& sceneName) : name(sceneName)
 	root = std::make_shared<GameObject>("Root");
 	root->setScene(shared_from_this());
 	camera = std::make_shared<Camera>(glm::vec3(0, 0, 5));
+	lightManager = std::make_unique<LightManager>();
 }
 
 Scene::~Scene()
@@ -36,6 +37,7 @@ void Scene::update()
 	}
 	camera->update();
 	root->update();
+	lightManager->updateLightBuffers();
 }
 
 void Scene::fixedUpdate()
@@ -65,7 +67,7 @@ void Scene::drawGUI()
 
 	ImGui::SetNextWindowPos({ io.DisplaySize.x - 5, 25 }, ImGuiCond_Always, { 1, 0 });
 	ImGui::SetNextWindowSizeConstraints(ImVec2(350, 20), ImVec2(350, io.DisplaySize.y - 50));
-	if (ImGui::Begin("GameObject", &opened, { 0, 0 }, -1, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_AlwaysHorizontalScrollbar))
+	if (ImGui::Begin("GameObject", &opened, { 0, 0 }, -1, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_AlwaysHorizontalScrollbar | ImGuiWindowFlags_NoCollapse))
 	{
 		auto gameObject_ptr = gameObjectToPreview.lock();
 		if (gameObject_ptr != nullptr)
