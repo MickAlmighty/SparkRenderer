@@ -224,6 +224,10 @@ namespace spark {
 }
 
 RTTR_REGISTRATION{
+    rttr::registration::enumeration<spark::CameraMode>("CameraMode")(
+        rttr::value("FirstPerson", spark::CameraMode::FirstPerson),
+        rttr::value("ThirdPerson", spark::CameraMode::ThirdPerson)
+        );
 	rttr::registration::class_<spark::Camera>("Camera")
 	.property("cameraTarget", &spark::Camera::cameraTarget)
 	.property("Position", &spark::Camera::Position)

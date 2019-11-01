@@ -16,10 +16,10 @@ constexpr float SENSITIVITY = 0.1f;
 constexpr float ZOOM = 45.0f;
 
 
-enum class CameraMode : uint16_t
+enum class CameraMode
 {
-	FirstPerson,
-	ThirdPerson
+	FirstPerson = 0,
+	ThirdPerson = 1
 };
 
 class Camera : public Component
