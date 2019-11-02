@@ -107,6 +107,10 @@ namespace spark {
 
 	void SparkRenderer::renderCubemap() const
 	{
+		glBindFramebuffer(GL_FRAMEBUFFER, cubemapFramebuffer);
+		glClearColor(0, 0, 0, 1);
+		glClear(GL_COLOR_BUFFER_BIT);
+
 		const auto cubemap = SceneManager::getInstance()->getCurrentScene()->cubemap;
 		if (!cubemap)
 			return;
@@ -118,9 +122,6 @@ namespace spark {
 		PUSH_DEBUG_GROUP(RENDER_CUBEMAP, 0);
 		glDepthMask(GL_FALSE);
 		
-		glBindFramebuffer(GL_FRAMEBUFFER, cubemapFramebuffer);
-		glClearColor(0, 0, 0, 1);
-		glClear(GL_COLOR_BUFFER_BIT);
 		const auto cubemapShaderPtr = cubemapShader.lock();
 		cubemapShaderPtr->use();
 		cubemapShaderPtr->setMat4("view", view);
