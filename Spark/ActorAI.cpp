@@ -32,17 +32,18 @@ namespace spark {
 			{
 				endPos = { static_cast<int>(glm::linearRand(0.0f, 20.0f)), static_cast<int>(glm::linearRand(0.0f, 20.0f)) };
 			} while (terrainGenerator.lock()->getTerrainValue(endPos.x, endPos.y) == 1.0f);
-
-			const double measureStart = glfwGetTime();
-			//findPath();
-			findPathStack();
-			timer = glfwGetTime() - measureStart;
-			std::cout << timer * 1000.0 << " ms" << std::endl;
-			if (!path.empty())
-			{
-				isTraveling = true;
-			}
 		}
+
+		const double measureStart = glfwGetTime();
+		//findPath();
+		findPathStack();
+		timer = glfwGetTime() - measureStart;
+		std::cout << timer * 1000.0 << " ms" << std::endl;
+		if (!path.empty())
+		{
+			isTraveling = true;
+		}
+		
 
 		if (isTraveling)
 		{
@@ -125,9 +126,11 @@ namespace spark {
 		{
 			if (auto terrain_g = terrainGenerator.lock(); terrain_g != nullptr)
 			{
-				finishNode->drawReturnPath(terrain_g);
+				path.clear();
+				//finishNode->drawReturnPath(terrain_g);
 				finishNode->getPath(path);
-				terrain_g->updateTerrain();
+				path.pop_front();
+				//terrain_g->updateTerrain();
 			}
 		}
 		nodesToProcess.clear();
@@ -158,7 +161,11 @@ namespace spark {
 	void ActorAI::walkToEndOfThePath()
 	{
 		if (path.empty())
+		{
+			isTraveling = false;
 			return;
+		}
+			
 
 		const auto wayPoint_it = std::find_if(path.begin(), path.end(),
 			[](const std::pair<bool, glm::vec2>& p)
@@ -183,10 +190,10 @@ namespace spark {
 			{
 				const glm::vec3 position = getGameObject()->transform.world.getPosition();
 				glm::vec3 pointOnPath = glm::vec3(wayPoint.second.x, 0.0f, wayPoint.second.y);
-				if (glm::distance(position, pointOnPath) < 0.01f)
+				if (glm::distance(position, pointOnPath) < 0.1f)
 				{
-					terrainGenerator.lock()->unMarkNodeAsPartOfPath(wayPoint.second.x, wayPoint.second.y);
-					terrainGenerator.lock()->updateTerrain();
+					//terrainGenerator.lock()->unMarkNodeAsPartOfPath(wayPoint.second.x, wayPoint.second.y);
+					//terrainGenerator.lock()->updateTerrain();
 					wayPoint.first = true;
 				}
 				else
@@ -246,9 +253,10 @@ namespace spark {
 		{
 			if (auto terrain_g = terrainGenerator.lock(); terrain_g != nullptr)
 			{
-				finishNode->drawReturnPathStack(terrain_g);
+				//finishNode->drawReturnPathStack(terrain_g);
 				finishNode->getPathStack(path);
-				terrain_g->updateTerrain();
+				path.pop_front();
+				//terrain_g->updateTerrain();
 			}
 		}
 		
