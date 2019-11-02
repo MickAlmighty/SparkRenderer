@@ -6,14 +6,12 @@
 
 namespace spark {
 
-	Camera::Camera(std::string&& newName) : Component(newName) { }
-
-	Camera::Camera(glm::vec3 position, float yaw, float pitch) :
+	Camera::Camera(glm::vec3 position, float yaw, float pitch) : Component("Camera"),
 	Position(position), Front(glm::vec3(0.0f, 0.0f, -1.0f)), Yaw(yaw), Pitch(pitch) {
 		updateCameraVectors();
 	}
 
-	Camera::Camera(float posX, float posY, float posZ, float yaw, float pitch) :
+	Camera::Camera(float posX, float posY, float posZ, float yaw, float pitch) : Component("Camera"),
 		Position(posX, posY, posZ), Front(glm::vec3(0.0f, 0.0f, -1.0f)), Yaw(yaw), Pitch(pitch) {
 		updateCameraVectors();
 	}
@@ -229,6 +227,7 @@ RTTR_REGISTRATION{
         rttr::value("ThirdPerson", spark::CameraMode::ThirdPerson)
         );
 	rttr::registration::class_<spark::Camera>("Camera")
+    .constructor()(rttr::policy::ctor::as_std_shared_ptr)
 	.property("cameraTarget", &spark::Camera::cameraTarget)
 	.property("Position", &spark::Camera::Position)
 	.property("Front", &spark::Camera::Front)

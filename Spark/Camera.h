@@ -25,7 +25,7 @@ enum class CameraMode
 class Camera : public Component
 {
 public:
-	Camera(std::string&& newName = "Camera");
+	Camera() = default;
 	Camera(glm::vec3 position, float yaw = YAW, float pitch = PITCH);
 	Camera(float posX, float posY, float posZ, float yaw, float pitch);
 
