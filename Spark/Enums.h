@@ -3,7 +3,7 @@
 
 namespace spark {
 
-enum class ShaderType
+enum class ShaderType : unsigned char
 {
 	DEFAULT_SHADER = 0,
 	LIGHT_SHADER = 1,
@@ -17,12 +17,12 @@ enum class ShaderType
 	BRDF_SHADER = 9
 };
 
-enum class TextureTarget
+enum class TextureTarget : unsigned char
 {
-	DIFFUSE_TARGET = 1,
-	NORMAL_TARGET = 2,
-	ROUGHNESS_TARGET = 3,
-	METALNESS_TARGET = 4
+	DIFFUSE_TARGET = 0,
+	NORMAL_TARGET = 1,
+	ROUGHNESS_TARGET = 2,
+	METALNESS_TARGET = 3
 };
 
 }
