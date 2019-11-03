@@ -107,20 +107,23 @@ namespace spark {
 
 	void SparkRenderer::renderCubemap() const
 	{
-		const auto cubemap = SceneManager::getInstance()->getCurrentScene()->cubemap;
-		if (!cubemap)
-			return;
-
-		const auto camera = SceneManager::getInstance()->getCurrentScene()->getCamera();
-		const glm::mat4 view = camera->getViewMatrix();
-		const glm::mat4 projection = camera->getProjectionMatrix();
-
 		PUSH_DEBUG_GROUP(RENDER_CUBEMAP, 0);
-		glDepthMask(GL_FALSE);
-		
 		glBindFramebuffer(GL_FRAMEBUFFER, cubemapFramebuffer);
 		glClearColor(0, 0, 0, 1);
 		glClear(GL_COLOR_BUFFER_BIT);
+
+		const auto cubemap = SceneManager::getInstance()->getCurrentScene()->cubemap;
+		if (!cubemap)
+		{
+			POP_DEBUG_GROUP();
+			return;
+		}
+			
+		const auto camera = SceneManager::getInstance()->getCurrentScene()->getCamera();
+		const glm::mat4 view = camera->getViewMatrix();
+		const glm::mat4 projection = camera->getProjectionMatrix();
+		
+		glDepthMask(GL_FALSE);
 		const auto cubemapShaderPtr = cubemapShader.lock();
 		cubemapShaderPtr->use();
 		cubemapShaderPtr->setMat4("view", view);
@@ -176,8 +179,6 @@ namespace spark {
 		textureHandle = postProcessingTexture;
 
 		glBindFramebuffer(GL_FRAMEBUFFER, postprocessingFramebuffer);
-		glClearColor(0, 0, 0, 0);
-		glClear(GL_COLOR_BUFFER_BIT);
 		glDisable(GL_DEPTH_TEST);
 
 		postprocessingShader.lock()->use();

@@ -63,10 +63,14 @@ void Mesh::draw(std::shared_ptr<Shader>& shader, glm::mat4 model)
 {
 	shader->setMat4("model", model);
 
+	std::array<GLuint, 4> textureIDs{};
 	for (auto& texture_it : textures)
 	{
-		glBindTextureUnit(static_cast<GLuint>(texture_it.first), texture_it.second.ID);
+		//glBindTextureUnit(static_cast<GLuint>(texture_it.first), texture_it.second.ID);
+		textureIDs[static_cast<GLuint>(texture_it.first) - 1] = texture_it.second.ID;
 	}
+
+	glBindTextures(1, 4, textureIDs.data());
 
 	glBindVertexArray(vao);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
