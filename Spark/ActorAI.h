@@ -16,7 +16,7 @@ namespace spark {
 	{
 	public:
 		ActorAI(std::string&& newName = "ActorAI");
-		~ActorAI() = default;
+		~ActorAI();
 
 		SerializableType getSerializableType() override;
 		Json::Value serialize() override;
@@ -31,6 +31,9 @@ namespace spark {
 		bool isTraveling = false;
 		glm::ivec2 startPos{};
 		glm::ivec2 endPos{};
+		GLuint vao{};
+		GLuint vbo{};
+
 		std::multimap<float, std::shared_ptr<NodeAI>> nodesToProcess;
 		std::multimap<float, NodeAI> nodesToProcessStack;
 		
@@ -52,6 +55,9 @@ namespace spark {
 
 		void validateActorPosition(glm::vec3& position) const;
 		void setStartPosition(glm::vec3& position);
+
+		void initPathMesh();
+		void updatePathMesh(const std::deque<std::pair<bool, glm::ivec2>>& path) const;
 	};
 }
 #endif

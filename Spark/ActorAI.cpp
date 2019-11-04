@@ -2,17 +2,16 @@
 
 #include <deque>
 #include <iostream>
-#include <math.h>
 
 #include <glm/gtc/random.inl>
 
 #include "Clock.h"
+#include "EngineSystems/SparkRenderer.h"
 #include "GameObject.h"
 #include "GUI/SparkGui.h"
 #include "JsonSerializer.h"
 #include "NodeAI.h"
 #include "TerrainGenerator.h"
-
 
 namespace spark {
 
@@ -38,7 +37,7 @@ namespace spark {
 		//findPath();
 		findPathStack();
 		timer = glfwGetTime() - measureStart;
-		std::cout << timer * 1000.0 << " ms" << std::endl;
+		//std::cout << timer * 1000.0 << " ms" << std::endl;
 		if (!path.empty())
 		{
 			isTraveling = true;
@@ -48,6 +47,14 @@ namespace spark {
 		if (isTraveling)
 		{
 			walkToEndOfThePath();
+			updatePathMesh(path);
+			const auto f = [this](std::shared_ptr<Shader>& shader)
+			{
+				glBindVertexArray(vao);
+				glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(path.size() * sizeof(glm::vec3)));
+				glBindVertexArray(0);
+			};
+			SparkRenderer::getInstance()->renderQueue[ShaderType::PATH_SHADER].push_back(f);
 		}
 	}
 
@@ -78,6 +85,53 @@ namespace spark {
 		{
 			startPos.y = static_cast<int>(position.z + 1);
 		}
+	}
+
+	void ActorAI::initPathMesh()
+	{
+		glGenVertexArrays(1, &vao);
+		glBindVertexArray(vao);
+
+		glGenBuffers(1, &vbo);
+		glBindBuffer(GL_ARRAY_BUFFER, vbo);
+		glBufferData(GL_ARRAY_BUFFER, 0, nullptr, GL_STATIC_DRAW);
+
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), reinterpret_cast<const void*>(0));
+
+		glBindVertexArray(0);
+	}
+
+	void ActorAI::updatePathMesh(const std::deque<std::pair<bool, glm::ivec2>>& path) const
+	{
+		if (path.size() < 2)
+			return;
+		const int numberOfVertices = 6;
+		const int lineSegments = static_cast<int>(path.size() - 1);
+		std::vector<glm::vec3> vertices(lineSegments * numberOfVertices);
+
+		for(int i = 0; i < lineSegments; ++i)
+		{
+			glm::vec3 segmentStart = { path[i].second.x, 0.0f, path[i].second.y };
+			glm::vec3 segmentEnd = { path[i + 1].second.x, 0.0f, path[i + 1].second.y };
+
+			glm::vec3 direction = glm::normalize(segmentEnd - segmentStart);
+			glm::vec3 perpendicularToDirection = glm::cross(direction, glm::vec3(0.0f, 1.0f, 0.0f));
+
+			//rectangle vertices for line segment
+			const int index = i * numberOfVertices;
+			vertices[index + 0] = segmentStart + perpendicularToDirection * 0.1f;
+			vertices[index + 1] = segmentEnd - perpendicularToDirection * 0.1f;
+			vertices[index + 2] = segmentStart - perpendicularToDirection * 0.1f;
+
+			vertices[index + 3] = segmentStart + perpendicularToDirection * 0.1f;
+			vertices[index + 4] = segmentEnd + perpendicularToDirection * 0.1f;
+			vertices[index + 5] = segmentEnd - perpendicularToDirection * 0.1f;
+		}
+
+		glBindBuffer(GL_ARRAY_BUFFER, vbo);
+		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), vertices.data(), GL_STATIC_DRAW);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 
 	void ActorAI::fixedUpdate()
@@ -351,6 +405,13 @@ namespace spark {
 
 	ActorAI::ActorAI(std::string&& newName) : Component(newName)
 	{
+		initPathMesh();
+	}
+
+	ActorAI::~ActorAI()
+	{
+		glDeleteBuffers(1, &vbo);
+		glDeleteVertexArrays(1, &vao);
 	}
 
 }

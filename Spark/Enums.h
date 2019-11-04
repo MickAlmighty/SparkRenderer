@@ -14,7 +14,8 @@ enum class ShaderType : uint16_t
 	CUBEMAP_SHADER,
 	IRRADIANCE_SHADER,
 	PREFILTER_SHADER,
-	BRDF_SHADER
+	BRDF_SHADER,
+	PATH_SHADER
 };
 
 enum class TextureTarget : uint16_t

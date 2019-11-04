@@ -166,6 +166,7 @@ namespace spark {
 			shaders.emplace(ShaderType::IRRADIANCE_SHADER, std::make_shared<Shader>(shaderDir.string() + "irradiance.glsl"));
 			shaders.emplace(ShaderType::PREFILTER_SHADER, std::make_shared<Shader>(shaderDir.string() + "prefilter.glsl"));
 			shaders.emplace(ShaderType::BRDF_SHADER, std::make_shared<Shader>(shaderDir.string() + "brdf.glsl"));
+			shaders.emplace(ShaderType::PATH_SHADER, std::make_shared<Shader>(shaderDir.string() + "path.glsl"));
 		}
 		
 		{

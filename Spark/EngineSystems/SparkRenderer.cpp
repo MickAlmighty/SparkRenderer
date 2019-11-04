@@ -80,6 +80,21 @@ namespace spark {
 		
 		renderCubemap();
 		renderLights();
+
+		PUSH_DEBUG_GROUP(RENDER_PATHS, 0);
+		glBindFramebuffer(GL_FRAMEBUFFER, lightFrameBuffer);
+		glDisable(GL_DEPTH_TEST);
+
+		const std::shared_ptr<Shader> pathShader = ResourceManager::getInstance()->getShader(ShaderType::PATH_SHADER);
+		pathShader->use();
+		pathShader->setMat4("VP", projection * view);
+		for (auto& drawPath : renderQueue[ShaderType::PATH_SHADER])
+		{
+			drawPath(shader);
+		}
+		renderQueue[ShaderType::PATH_SHADER].clear();
+		POP_DEBUG_GROUP();
+
 		postprocessingPass();
 		motionBlur();
 		renderToScreen();
