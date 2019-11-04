@@ -81,15 +81,16 @@ namespace spark {
 			}
 		}
 
-		if (ImGui::Button("Save settings"))
-		{
-			InitializationVariables variables;
-			variables.width = Spark::WIDTH;
-			variables.height = Spark::HEIGHT;
-			variables.pathToResources = Spark::pathToResources;
-			variables.pathToModels = Spark::pathToModelMeshes;
-			JsonSerializer::writeToFile("settings.json", variables.serialize());
-		}
+        //TODO: fix this!
+		//if (ImGui::Button("Save settings"))
+		//{
+		//	InitializationVariables variables;
+		//	variables.width = Spark::WIDTH;
+		//	variables.height = Spark::HEIGHT;
+		//	variables.pathToResources = Spark::pathToResources;
+		//	variables.pathToModels = Spark::pathToModelMeshes;
+		//	JsonSerializer::writeToFile("settings.json", variables.serialize());
+		//}
 		ImGui::End();
 	}
 

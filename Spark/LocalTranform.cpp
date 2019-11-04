@@ -41,23 +41,6 @@ void LocalTransform::drawGUI()
 	ImGui::PopStyleVar();
 }
 
-Json::Value LocalTransform::serialize() const
-{
-	Json::Value serializedTransform;
-	serializedTransform["position"] = JsonSerializer::serializeVec3(position);
-	serializedTransform["scale"] = JsonSerializer::serializeVec3(scale);
-	serializedTransform["rotationEuler"] = JsonSerializer::serializeVec3(rotationEuler);
-	return serializedTransform;
-}
-
-void LocalTransform::deserialize(Json::Value& root)
-{
-	position = JsonSerializer::deserializeVec3(root["position"]);
-	scale = JsonSerializer::deserializeVec3(root["scale"]);
-	rotationEuler = JsonSerializer::deserializeVec3(root["rotationEuler"]);
-	dirty = true;
-}
-
 glm::mat4 LocalTransform::getMatrix()
 {
 	if (dirty)

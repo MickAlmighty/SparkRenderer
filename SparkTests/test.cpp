@@ -5,6 +5,7 @@
 
 #include <rttr/registration>
 #include "Timer.h"
+#include "JsonSerializer.h"
 
 TEST(ReflectionTest, ComponentPropertiesValid) {
     rttr::type type{ rttr::type::get<spark::Component>() };
@@ -26,7 +27,7 @@ TEST(ReflectionTest, CameraReflectedAndInheritsComponent) {
     ASSERT_STREQ("Component", cameraType.get_base_classes().begin()->get_name().cbegin());
     ASSERT_FALSE(componentType.get_derived_classes().empty());
 }
-TEST(ReflectionTest, CameraValidAndAccessible) {    
+TEST(ReflectionTest, CameraValidAndAccessible) {
     rttr::type type{ rttr::type::get<spark::Camera>() };
     rttr::variant variant{ type.create() };
     ASSERT_TRUE(variant.is_valid());
@@ -61,4 +62,33 @@ TEST(ReflectionTest, CameraValidAndAccessible) {
     ASSERT_EQ(camera->getFov(), type.get_property_value("fov", camera).get_value<float>());
     ASSERT_EQ(camera->getNearPlane(), type.get_property_value("zNear", camera).get_value<float>());
     ASSERT_EQ(camera->getFarPlane(), type.get_property_value("zFar", camera).get_value<float>());
+}
+
+TEST(ReflectionTest, SparkClassPointersRecognizable) {
+    rttr::type falseType{ rttr::type::get<void>() };
+    rttr::type sharedCamType{ rttr::type::get<std::shared_ptr<spark::Camera>>() },
+        weakCamType{ rttr::type::get<std::weak_ptr<spark::Camera>>() },
+        rawCamType{ rttr::type::get<spark::Camera*>() };
+    GCOUT << "Shared: " << sharedCamType.get_name() << " Weak: " << weakCamType.get_name() << " Raw: " << rawCamType.get_name() << std::endl;
+    using serializer = spark::JsonSerializer;
+
+    ASSERT_FALSE(serializer::isSparkPtr(falseType));
+    ASSERT_TRUE(serializer::isSparkPtr(sharedCamType));
+    ASSERT_TRUE(serializer::isSparkPtr(weakCamType));
+    ASSERT_TRUE(serializer::isSparkPtr(rawCamType));
+
+    ASSERT_FALSE(serializer::isSparkSharedPtr(falseType));
+    ASSERT_TRUE(serializer::isSparkSharedPtr(sharedCamType));
+    ASSERT_FALSE(serializer::isSparkSharedPtr(weakCamType));
+    ASSERT_FALSE(serializer::isSparkSharedPtr(rawCamType));
+
+    ASSERT_FALSE(serializer::isSparkWeakPtr(falseType));
+    ASSERT_FALSE(serializer::isSparkWeakPtr(sharedCamType));
+    ASSERT_TRUE(serializer::isSparkWeakPtr(weakCamType));
+    ASSERT_FALSE(serializer::isSparkWeakPtr(rawCamType));
+
+    ASSERT_FALSE(serializer::isSparkRawPtr(falseType));
+    ASSERT_FALSE(serializer::isSparkRawPtr(sharedCamType));
+    ASSERT_FALSE(serializer::isSparkRawPtr(weakCamType));
+    ASSERT_TRUE(serializer::isSparkRawPtr(rawCamType));
 }
