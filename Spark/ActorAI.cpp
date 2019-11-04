@@ -47,11 +47,11 @@ namespace spark {
 		if (isTraveling)
 		{
 			walkToEndOfThePath();
-			updatePathMesh(path);
-			const auto f = [this](std::shared_ptr<Shader>& shader)
+			int indicesCount = updatePathMesh(path);
+			const auto f = [this, indicesCount] (std::shared_ptr<Shader>& shader)
 			{
 				glBindVertexArray(vao);
-				glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(path.size() * sizeof(glm::vec3)));
+				glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indicesCount), GL_UNSIGNED_INT, 0);
 				glBindVertexArray(0);
 			};
 			SparkRenderer::getInstance()->renderQueue[ShaderType::PATH_SHADER].push_back(f);
@@ -99,39 +99,69 @@ namespace spark {
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), reinterpret_cast<const void*>(0));
 
+		glGenBuffers(1, &ebo);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, 0, nullptr, GL_STATIC_DRAW);
+
 		glBindVertexArray(0);
 	}
 
-	void ActorAI::updatePathMesh(const std::deque<std::pair<bool, glm::ivec2>>& path) const
+	int ActorAI::updatePathMesh(const std::deque<std::pair<bool, glm::ivec2>>& path) const
 	{
 		if (path.size() < 2)
-			return;
+			return 0;
 		const int numberOfVertices = 6;
 		const int lineSegments = static_cast<int>(path.size() - 1);
-		std::vector<glm::vec3> vertices(lineSegments * numberOfVertices);
+		std::vector<glm::vec3> vertices;
+		std::vector<unsigned int> indices;
 
-		for(int i = 0; i < lineSegments; ++i)
+		const auto insertVertex = [&vertices, &indices] (glm::vec3&& vertex)
 		{
-			glm::vec3 segmentStart = { path[i].second.x, 0.0f, path[i].second.y };
+			const auto vertexIt = std::find(vertices.begin(), vertices.end(), vertex);
+			if (vertexIt != vertices.end())
+			{
+				indices.push_back(static_cast<unsigned int>(std::distance(vertices.begin(), vertexIt)));
+			}
+			else
+			{
+				vertices.push_back(vertex);
+				indices.push_back(static_cast<unsigned int>(vertices.size() - 1));
+			}
+		};
+
+		for(int i = -1; i < lineSegments; ++i)
+		{
+			glm::vec3 segmentStart;
+			if (i == -1)
+			{
+				segmentStart = getGameObject()->transform.world.getPosition();
+			}
+			else
+			{
+				segmentStart = { path[i].second.x, 0.0f, path[i].second.y };
+			}
 			glm::vec3 segmentEnd = { path[i + 1].second.x, 0.0f, path[i + 1].second.y };
 
 			glm::vec3 direction = glm::normalize(segmentEnd - segmentStart);
 			glm::vec3 perpendicularToDirection = glm::cross(direction, glm::vec3(0.0f, 1.0f, 0.0f));
-
-			//rectangle vertices for line segment
-			const int index = i * numberOfVertices;
-			vertices[index + 0] = segmentStart + perpendicularToDirection * 0.1f;
-			vertices[index + 1] = segmentEnd - perpendicularToDirection * 0.1f;
-			vertices[index + 2] = segmentStart - perpendicularToDirection * 0.1f;
-
-			vertices[index + 3] = segmentStart + perpendicularToDirection * 0.1f;
-			vertices[index + 4] = segmentEnd + perpendicularToDirection * 0.1f;
-			vertices[index + 5] = segmentEnd - perpendicularToDirection * 0.1f;
+		
+			insertVertex(segmentStart + perpendicularToDirection * 0.1f);
+			insertVertex(segmentEnd - perpendicularToDirection * 0.1f);
+			insertVertex(segmentStart - perpendicularToDirection * 0.1f);
+			insertVertex(segmentStart + perpendicularToDirection * 0.1f);
+			insertVertex(segmentEnd + perpendicularToDirection * 0.1f);
+			insertVertex(segmentEnd - perpendicularToDirection * 0.1f);
 		}
 
 		glBindBuffer(GL_ARRAY_BUFFER, vbo);
 		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), vertices.data(), GL_STATIC_DRAW);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+		return static_cast<int>(indices.size());
 	}
 
 	void ActorAI::fixedUpdate()
@@ -411,6 +441,7 @@ namespace spark {
 	ActorAI::~ActorAI()
 	{
 		glDeleteBuffers(1, &vbo);
+		glDeleteBuffers(1, &ebo);
 		glDeleteVertexArrays(1, &vao);
 	}
 
