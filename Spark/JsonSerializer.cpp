@@ -18,6 +18,7 @@
 #include "PointLight.h"
 #include "SpotLight.h"
 #include "TerrainGenerator.h"
+#include <regex>
 
 namespace spark {
 
@@ -47,212 +48,247 @@ namespace spark {
 //	return -1;
 //}
 
-void JsonSerializer::writeToFile(std::filesystem::path&& filePath, Json::Value&& root)
-{
-	Json::StreamWriterBuilder builder;
-	std::ofstream file(filePath);
-	Json::StreamWriter* writer = builder.newStreamWriter();
-	writer->write(root, &file);
-}
+    void JsonSerializer::writeToFile(const std::filesystem::path& filePath, Json::Value& root) {
+        Json::StreamWriterBuilder builder;
+        std::ofstream file(filePath);
+        Json::StreamWriter* writer = builder.newStreamWriter();
+        writer->write(root, &file);
+    }
 
-Json::Value JsonSerializer::readFromFile(std::filesystem::path&& filePath)
-{
-	Json::Value root;
-	std::ifstream file(filePath, std::ios::in | std::ios::binary | std::ios::ate);
-	if (file.is_open())
-	{
-		auto size = file.tellg();
-		char* data = new char[size];
-		file.seekg(0, std::ios::beg);
-		file.read(data, size);
+    Json::Value JsonSerializer::readFromFile(const std::filesystem::path& filePath) {
+        Json::Value root;
+        std::ifstream file(filePath, std::ios::in | std::ios::binary | std::ios::ate);
+        if (file.is_open()) {
+            auto size = file.tellg();
+            char* data = new char[size];
+            file.seekg(0, std::ios::beg);
+            file.read(data, size);
 
-		file.close();
+            file.close();
 
-		Json::CharReaderBuilder builder;
-		Json::CharReader* reader = builder.newCharReader();
+            Json::CharReaderBuilder builder;
+            Json::CharReader* reader = builder.newCharReader();
 
-		std::string errors;
-		reader->parse(data, data + size, &root, &errors);
-		delete[] data;
-	}
-	file.close();
-	return root;
-}
+            std::string errors;
+            reader->parse(data, data + size, &root, &errors);
+            delete[] data;
+        }
+        file.close();
+        return root;
+    }
 
-//Json::Value JsonSerializer::serialize(const std::shared_ptr<ISerializable> objToSerialize)
-//{
-//	Json::Value root;
-//	if(objToSerialize == nullptr)
-//	{
-//		root["id"] = -1;
-//		return root;
-//	}
-//
-//	const int id = findId(objToSerialize);
-//	if (id != -1)
-//	{
-//		//if id != -1 means that this object has been serialized already
-//		root["id"] = id;
-//		root["SerializableType"] = static_cast<int>(objToSerialize->getSerializableType());
-//		return root;
-//	}
-//
-//	counter++;
-//	serializedObjects.emplace(objToSerialize, counter);
-//	root["id"] = counter;
-//	root["SerializableType"] = static_cast<int>(objToSerialize->getSerializableType());
-//	root["object"] = objToSerialize->serialize();
-//	return root;
-//}
-//
-//std::shared_ptr<ISerializable> JsonSerializer::deserialize(Json::Value& root)
-//{
-//	int id = root.get("id", -1).asInt();
-//	if(id == -1)
-//	{
-//		return nullptr;
-//	}
-//
-//	if (const auto obj = findSerializedObject(id); obj != nullptr)
-//	{
-//		return obj;
-//	}
-//
-//	const auto type = static_cast<SerializableType>(root["SerializableType"].asInt());
-//	std::shared_ptr<ISerializable> deserialized;
-//	switch (type)
-//	{
-//	case SerializableType::SGameObject:
-//		deserialized = make<GameObject>();
-//		break;
-//	case SerializableType::SModelMesh:
-//		deserialized = make<ModelMesh>();
-//		break;
-//	case SerializableType::SMeshPlane:
-//		deserialized = make<MeshPlane>();
-//		break;
-//	case SerializableType::STerrainGenerator:
-//		deserialized = make<TerrainGenerator>();
-//		break;
-//	case SerializableType::SActorAI:
-//		deserialized = make<ActorAI>();
-//		break;
-//	case SerializableType::SCamera:
-//		deserialized = make<Camera>();
-//		break;
-//	case SerializableType::SDirectionalLight:
-//		deserialized = make<DirectionalLight>();
-//		break;
-//	case SerializableType::SPointLight:
-//		deserialized = make<PointLight>();
-//		break;
-//	case SerializableType::SSpotLight:
-//		deserialized = make<SpotLight>();
-//		break;
-//	default:
-//		throw std::exception("Unsupported SerializableType encountered!");;
-//	}
-//	serializedObjects.emplace(deserialized, id);
-//	deserialized->deserialize(root["object"]);
-//	return deserialized;
-//}
+    //Json::Value JsonSerializer::serialize(const std::shared_ptr<ISerializable> objToSerialize)
+    //{
+    //	Json::Value root;
+    //	if(objToSerialize == nullptr)
+    //	{
+    //		root["id"] = -1;
+    //		return root;
+    //	}
+    //
+    //	const int id = findId(objToSerialize);
+    //	if (id != -1)
+    //	{
+    //		//if id != -1 means that this object has been serialized already
+    //		root["id"] = id;
+    //		root["SerializableType"] = static_cast<int>(objToSerialize->getSerializableType());
+    //		return root;
+    //	}
+    //
+    //	counter++;
+    //	serializedObjects.emplace(objToSerialize, counter);
+    //	root["id"] = counter;
+    //	root["SerializableType"] = static_cast<int>(objToSerialize->getSerializableType());
+    //	root["object"] = objToSerialize->serialize();
+    //	return root;
+    //}
+    //
+    //std::shared_ptr<ISerializable> JsonSerializer::deserialize(Json::Value& root)
+    //{
+    //	int id = root.get("id", -1).asInt();
+    //	if(id == -1)
+    //	{
+    //		return nullptr;
+    //	}
+    //
+    //	if (const auto obj = findSerializedObject(id); obj != nullptr)
+    //	{
+    //		return obj;
+    //	}
+    //
+    //	const auto type = static_cast<SerializableType>(root["SerializableType"].asInt());
+    //	std::shared_ptr<ISerializable> deserialized;
+    //	switch (type)
+    //	{
+    //	case SerializableType::SGameObject:
+    //		deserialized = make<GameObject>();
+    //		break;
+    //	case SerializableType::SModelMesh:
+    //		deserialized = make<ModelMesh>();
+    //		break;
+    //	case SerializableType::SMeshPlane:
+    //		deserialized = make<MeshPlane>();
+    //		break;
+    //	case SerializableType::STerrainGenerator:
+    //		deserialized = make<TerrainGenerator>();
+    //		break;
+    //	case SerializableType::SActorAI:
+    //		deserialized = make<ActorAI>();
+    //		break;
+    //	case SerializableType::SCamera:
+    //		deserialized = make<Camera>();
+    //		break;
+    //	case SerializableType::SDirectionalLight:
+    //		deserialized = make<DirectionalLight>();
+    //		break;
+    //	case SerializableType::SPointLight:
+    //		deserialized = make<PointLight>();
+    //		break;
+    //	case SerializableType::SSpotLight:
+    //		deserialized = make<SpotLight>();
+    //		break;
+    //	default:
+    //		throw std::exception("Unsupported SerializableType encountered!");;
+    //	}
+    //	serializedObjects.emplace(deserialized, id);
+    //	deserialized->deserialize(root["object"]);
+    //	return deserialized;
+    //}
 
-void JsonSerializer::clearState()
-{
-	//serializedObjects.clear();
-	counter = 0;
-}
+    JsonSerializer* JsonSerializer::getInstance() {
+        static JsonSerializer serializer;
+        return &serializer;
+    }
 
-Json::Value JsonSerializer::serializeVec2(glm::vec2 val)
-{
-	Json::Value root;
-	root[0] = val.x;
-	root[1] = val.y;
-	return root;
-}
+    bool JsonSerializer::isSparkSharedPtr(const rttr::type& type) {
+        const std::string PREFIX{ "classstd::shared_ptr<classspark::" };
+        const std::string POSTFIX{ ">" };
+        static const std::regex REGEX("^" + PREFIX + "[[:alnum:]]+" + POSTFIX + "$", std::regex::extended);
+        return isSparkClassMatched(type, PREFIX, POSTFIX, REGEX);
+    }
 
-glm::vec2 JsonSerializer::deserializeVec2(Json::Value& root)
-{
-	glm::vec2 val;
-	val.x = root.get(Json::ArrayIndex(0), 0).asFloat();
-	val.y = root.get(Json::ArrayIndex(1), 0).asFloat();
-	return val;
-}
+    bool JsonSerializer::isSparkWeakPtr(const rttr::type & type) {
+        const std::string PREFIX{ "classstd::weak_ptr<classspark::" };
+        const std::string POSTFIX{ ">" };
+        static const std::regex REGEX("^" + PREFIX + "[[:alnum:]]+" + POSTFIX + "$", std::regex::extended);
+        return isSparkClassMatched(type, PREFIX, POSTFIX, REGEX);
+    }
 
-Json::Value JsonSerializer::serializeVec3(glm::vec3 val)
-{
-	Json::Value root;
-	root[0] = val.x;
-	root[1] = val.y;
-	root[2] = val.z;
-	return root;
-}
+    bool JsonSerializer::isSparkRawPtr(const rttr::type & type) {
+        const std::string name{ type.get_name() };
+        if (name[name.size() - 1] == '*') {
+            // this doesn't check whether it's an actual type in spark's namespace.
+            // I think it shouldn't matter so i'll leave it like this for now
+            if (rttr::type::get_by_name(name.substr(0, name.size() - 1)).is_valid()) {
+                return true;
+            }
+        }
+        return false;
+    }
 
-glm::vec3 JsonSerializer::deserializeVec3(Json::Value& root)
-{
-	glm::vec3 val;
-	val.x = root.get(Json::ArrayIndex(0), 0).asFloat();
-	val.y = root.get(Json::ArrayIndex(1), 0).asFloat();
-	val.z = root.get(Json::ArrayIndex(2), 0).asFloat();
-	return val;
-}
+    bool JsonSerializer::isSparkPtr(const rttr::type & type) {
+        return isSparkSharedPtr(type) || isSparkWeakPtr(type) || isSparkRawPtr(type);
+    }
 
-Json::Value JsonSerializer::serializeVec4(glm::vec4 val)
-{
-	Json::Value root;
-	root[0] = val.x;
-	root[1] = val.y;
-	root[2] = val.z;
-	root[3] = val.w;
-	return root;
-}
+    bool JsonSerializer::isSparkClassMatched(const rttr::type& type, const std::string& prefix,
+                                             const std::string& postfix, const std::regex& regex) {
+        if (std::regex_match(type.get_name().cbegin(), regex)) {
+            std::string sparkClassName{ std::string(type.get_name()).substr(prefix.size(), type.get_name().size() - prefix.size() - postfix.size()) };
+            if (rttr::type::get_by_name(sparkClassName).is_valid()) {
+                return true;
+            }
+        }
+        return false;
+    }
 
-glm::vec4 JsonSerializer::deserializeVec4(Json::Value& root)
-{
-	glm::vec4 val;
-	val.x = root.get(Json::ArrayIndex(0), 0).asFloat();
-	val.y = root.get(Json::ArrayIndex(1), 0).asFloat();
-	val.z = root.get(Json::ArrayIndex(2), 0).asFloat();
-	val.w = root.get(Json::ArrayIndex(3), 0).asFloat();
-	return val;
-}
+    std::shared_ptr<Scene> JsonSerializer::loadSceneFromFile(const std::filesystem::path& filePath) {
+        std::lock_guard lock(serializerMutex);
+        counter = 0;
+        throw std::exception();
+    }
 
-Json::Value JsonSerializer::serializeMat3(glm::mat3 val)
-{
-	Json::Value root;
-	root[0] = serializeVec3(val[0]);
-	root[1] = serializeVec3(val[1]);
-	root[2] = serializeVec3(val[2]);
-	return root;
-}
+    bool JsonSerializer::saveSceneToFile(const std::shared_ptr<Scene>& scene, const std::filesystem::path& filePath) {
+        std::lock_guard lock(serializerMutex);
+        counter = 0;
+        throw std::exception();
+    }
 
-glm::mat3 JsonSerializer::deserializeMat3(Json::Value& root)
-{
-	glm::mat3 val;
-	val[0] = deserializeVec3(root[0]);
-	val[1] = deserializeVec3(root[1]);
-	val[2] = deserializeVec3(root[2]);
-	return val;
-}
+    void JsonSerializer::serialize(rttr::variant, Json::Value& root) {
 
-Json::Value JsonSerializer::serializeMat4(glm::mat4 val)
-{
-	Json::Value root;
-	root[0] = serializeVec4(val[0]);
-	root[1] = serializeVec4(val[1]);
-	root[2] = serializeVec4(val[2]);
-	root[3] = serializeVec4(val[3]);
-	return root;
-}
+    }
 
-glm::mat4 JsonSerializer::deserializeMat4(Json::Value& root)
-{
-	glm::mat4 val;
-	val[0] = deserializeVec4(root[0]);
-	val[1] = deserializeVec4(root[1]);
-	val[2] = deserializeVec4(root[2]);
-	val[3] = deserializeVec4(root[3]);
-	return val;
-}
+    rttr::variant JsonSerializer::deserialize(const Json::Value& root) {
+        if (!root.isMember(ID_NAME)) {
+            //todo: Log error (gotta add spdlog later)
+            throw std::exception("Invalid serialization object found!"); //maybe outcome in the future?
+        }
+        const int id{ root[ID_NAME].asInt() };
+        if (id == NULL_ID) {
+            return nullptr;
+        }
+        if (rttr::variant var = getBoundObject(id); var != nullptr) {
+            return var;
+        }
+        if (!root.isMember(TYPE_NAME) || !root.isMember(CONTENT_NAME)) {
+            throw std::exception("No type/content info provided!");
+        }
+        rttr::type type{ rttr::type::get_by_name(root[TYPE_NAME].asString()) };
+        if (!type.is_valid()) {
+            throw std::exception("Invalid type found!");
+        }
+        const Json::Value& content{ root[CONTENT_NAME] };
+        rttr::variant var{ type.create() };
+        bindObject(var, id);
+        for (rttr::property prop : type.get_properties()) {
+            if (content.isMember(prop.get_name().cbegin())) {
+                const Json::Value& obj{ content[prop.get_name().cbegin()] };
+                if (isSparkPtr(prop.get_type())) {
+                    rttr::variant sparkPtr = deserialize(obj);
+                    prop.set_value(var, sparkPtr.convert(prop.get_type()));
+                } else {
+                    
+                }
+            } else {
+                //todo: warn about the property being absent
+            }
+        }
+        return var;
+    }
 
+    bool JsonSerializer::bindObject(const rttr::variant& var, int id) {
+        if (getBoundObject(id) != nullptr) {
+            return false;
+        }
+        bindings.emplace_back(var, id);
+        return true;
+    }
+
+    int JsonSerializer::getBoundId(const rttr::variant& var, bool createIfNonexistent) {
+        if (var == nullptr) {
+            return NULL_ID;
+        }
+        const auto it = std::find_if(bindings.begin(), bindings.end(),
+                                     [&](const std::pair<rttr::variant, int>& pair) {
+            return pair.first == var;
+        });
+        if (it != bindings.end()) {
+            return it->second;
+        }
+        if (!createIfNonexistent) {
+            throw std::exception("Unknown object encountered and createIfNonexistent is false!");
+        }
+        bindings.emplace_back(var, counter);
+        return counter++;
+    }
+
+    rttr::variant JsonSerializer::getBoundObject(const int id) {
+        const auto it = std::find_if(bindings.begin(), bindings.end(),
+                                     [=](const std::pair<rttr::variant, int>& pair) {
+            return pair.second == id;
+        });
+        if (it != bindings.end()) {
+            return it->first;
+        }
+        return nullptr;
+    }
 }

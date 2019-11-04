@@ -22,19 +22,6 @@ glm::vec3 WorldTransform::getPosition() const
 	return modelMatrix[3];
 }
 
-Json::Value WorldTransform::serialize() const
-{
-	Json::Value worldSerialized;
-	worldSerialized["modelMatrix"] = JsonSerializer::serializeMat4(modelMatrix);
-	return worldSerialized;
-}
-
-void WorldTransform::deserialize(Json::Value& root)
-{
-	modelMatrix = JsonSerializer::deserializeMat4(root["modelMatrix"]);
-	dirty = true;
-}
-
 void WorldTransform::setMatrix(glm::mat4 mat)
 {
 	modelMatrix = mat;

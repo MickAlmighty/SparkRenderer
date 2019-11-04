@@ -26,9 +26,6 @@ public:
 	void setRotationDegrees(float x, float y, float z);
 	void setScale(glm::vec3 scale);
 
-	Json::Value serialize() const;
-	void deserialize(Json::Value& root);
-
 private:
 	glm::mat4 modelMatrix = glm::mat4(1);
 	bool dirty = true;
