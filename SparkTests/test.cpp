@@ -96,10 +96,19 @@ TEST(ReflectionTest, PointersComparable) {
     ASSERT_FALSE(spark::JsonSerializer::areVariantsEqualPointers(raw, falseVar));
 }
 
+enum class SerializationEnum1 {
+    Value1 = 0,
+    Value2 = 1,
+    Value3,
+    Value4
+};
+
 class SerializationClass1 {
 public:
     float field1{ 1.0f };
     float field2{ 2.0f };
+    SerializationEnum1 field3{ SerializationEnum1::Value2 };
+    SerializationEnum1 field4{ SerializationEnum1::Value3 };
     RTTR_ENABLE();
 };
 
@@ -126,7 +135,9 @@ RTTR_REGISTRATION{
     rttr::registration::class_<SerializationClass1>("SerializationClass1")
     .constructor()(rttr::policy::ctor::as_std_shared_ptr)
     .property("field1", &SerializationClass1::field1)
-    .property("field2", &SerializationClass1::field2);
+    .property("field2", &SerializationClass1::field2)
+    .property("field3", &SerializationClass1::field3)
+    .property("field4", &SerializationClass1::field4);
 
     rttr::registration::class_<SerializationClass2>("SerializationClass2")
     .constructor()(rttr::policy::ctor::as_std_shared_ptr)
@@ -135,6 +146,13 @@ RTTR_REGISTRATION{
     .property("shared", &SerializationClass2::shared)
     .property("weak", &SerializationClass2::getWeak, &SerializationClass2::setWeak, rttr::registration::public_access)
     .property("raw", &SerializationClass2::raw);
+
+    rttr::registration::enumeration<SerializationEnum1>("SerializationEnum1")(
+        rttr::value("Value1", SerializationEnum1::Value1),
+        rttr::value("Value2", SerializationEnum1::Value2),
+        rttr::value("Value3", SerializationEnum1::Value3),
+        rttr::value("Value4", SerializationEnum1::Value4)
+        );
 }
 
 TEST(SerializationTest, PointersInterchangeable) {
@@ -158,6 +176,8 @@ TEST(SerializationTest, PointersSerializedProperly) {
     std::shared_ptr<SerializationClass1> class1 = std::make_shared<SerializationClass1>();
     class1->field1 = 3.0f;
     class1->field2 = 4.0f;
+    class1->field3 = SerializationEnum1::Value1;
+    class1->field4 = SerializationEnum1::Value4;
     std::shared_ptr<SerializationClass2> class2 = std::make_shared<SerializationClass2>(class1);
     Json::Value root;
     spark::JsonSerializer* serializer{ spark::JsonSerializer::getInstance() };
@@ -174,4 +194,6 @@ TEST(SerializationTest, PointersSerializedProperly) {
     ASSERT_EQ(deserializedClass2->weak.lock(), deserializedClass2->shared);
     ASSERT_EQ(class2->raw->field1, deserializedClass2->raw->field1);
     ASSERT_EQ(class2->raw->field2, deserializedClass2->raw->field2);
+    ASSERT_EQ(class2->raw->field3, deserializedClass2->raw->field3);
+    ASSERT_EQ(class2->raw->field4, deserializedClass2->raw->field4);
 }
