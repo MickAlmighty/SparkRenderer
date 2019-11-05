@@ -27,14 +27,19 @@ namespace spark {
         static Json::Value readFromFile(const std::filesystem::path & filePath);
         static JsonSerializer* getInstance();
         static bool isPtr(const rttr::type& type);
+        static bool isWrappedPtr(const rttr::type & type);
+        static bool areVariantsEqualPointers(const rttr::variant& var1, const rttr::variant& var2);
+        static void* getPtr(const rttr::variant& var);
         std::shared_ptr<Scene> loadSceneFromFile(const std::filesystem::path& filePath);
         bool saveSceneToFile(const std::shared_ptr<Scene>& scene, const std::filesystem::path& filePath);
-        void serialize(rttr::variant var, Json::Value& root);
+        void serialize(const rttr::variant& var, Json::Value& root);
         rttr::variant deserialize(const Json::Value& root);
     private:
         JsonSerializer() = default;
         bool bindObject(const rttr::variant& var, int id);
-        int getBoundId(const rttr::variant& var, bool createIfNonexistent = true);
+        bool isVarBound(const rttr::variant & var);
+        int getBoundId(const rttr::variant& var);
+        bool isIdBound(const int id);
         rttr::variant getBoundObject(int id);
         int counter{};
         std::vector<std::pair<rttr::variant, int>> bindings;
@@ -45,6 +50,5 @@ namespace spark {
 
     template <class T>
     std::shared_ptr<T> make() { return std::make_shared<T>(); };
-
 }
 #endif

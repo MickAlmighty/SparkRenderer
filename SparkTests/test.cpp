@@ -64,7 +64,7 @@ TEST(ReflectionTest, CameraValidAndAccessible) {
     ASSERT_EQ(camera->getFarPlane(), type.get_property_value("zFar", camera).get_value<float>());
 }
 
-TEST(ReflectionTest, SparkClassPointersRecognizable) {
+TEST(ReflectionTest, PointerTypesRecognizable) {
     rttr::type falseType{ rttr::type::get<void>() };
     rttr::type sharedCamType{ rttr::type::get<std::shared_ptr<spark::Camera>>() },
         weakCamType{ rttr::type::get<std::weak_ptr<spark::Camera>>() },
@@ -72,9 +72,28 @@ TEST(ReflectionTest, SparkClassPointersRecognizable) {
 
     using serializer = spark::JsonSerializer;
     ASSERT_FALSE(serializer::isPtr(falseType));
+    ASSERT_FALSE(serializer::isWrappedPtr(falseType));
     ASSERT_TRUE(serializer::isPtr(sharedCamType));
+    ASSERT_TRUE(serializer::isWrappedPtr(sharedCamType));
     ASSERT_TRUE(serializer::isPtr(weakCamType));
+    ASSERT_TRUE(serializer::isWrappedPtr(weakCamType));
     ASSERT_TRUE(serializer::isPtr(rawCamType));
+    ASSERT_FALSE(serializer::isWrappedPtr(rawCamType));
+}
+
+TEST(ReflectionTest, PointersComparable) {
+    int falseVal = 0;
+    std::shared_ptr<spark::Camera> cam = std::make_shared<spark::Camera>();
+    spark::Camera* rawCam{ cam.get() };
+    rttr::variant shared{ cam };
+    rttr::variant raw{ rawCam };
+    rttr::variant falseVar{ falseVal };
+    ASSERT_TRUE(spark::JsonSerializer::areVariantsEqualPointers(shared, raw));
+    ASSERT_TRUE(spark::JsonSerializer::areVariantsEqualPointers(raw, shared));
+    ASSERT_FALSE(spark::JsonSerializer::areVariantsEqualPointers(falseVar, shared));
+    ASSERT_FALSE(spark::JsonSerializer::areVariantsEqualPointers(shared, falseVar));
+    ASSERT_FALSE(spark::JsonSerializer::areVariantsEqualPointers(falseVar, raw));
+    ASSERT_FALSE(spark::JsonSerializer::areVariantsEqualPointers(raw, falseVar));
 }
 
 class SerializationClass1 {
@@ -89,11 +108,17 @@ public:
     SerializationClass2() = default;
     SerializationClass2(const std::shared_ptr<SerializationClass1>& class1)
         : shared(class1), weak(class1), raw(class1.get()) {}
+    std::shared_ptr<SerializationClass1> getWeak() const {
+        return weak.lock();
+    }
+    void setWeak(std::shared_ptr<SerializationClass1> shared) {
+        weak = shared;
+    }
     int field1{ 0 };
     int field2{ 1 };
     std::shared_ptr<SerializationClass1> shared{};
     std::weak_ptr<SerializationClass1> weak{};
-    SerializationClass1* raw;
+    SerializationClass1* raw{ nullptr };
     RTTR_ENABLE();
 };
 
@@ -108,8 +133,25 @@ RTTR_REGISTRATION{
     .property("field1", &SerializationClass2::field1)
     .property("field2", &SerializationClass2::field2)
     .property("shared", &SerializationClass2::shared)
-    .property("weak", &SerializationClass2::weak)
+    .property("weak", &SerializationClass2::getWeak, &SerializationClass2::setWeak, rttr::registration::public_access)
     .property("raw", &SerializationClass2::raw);
+}
+
+TEST(SerializationTest, PointersInterchangeable) {
+    std::shared_ptr<SerializationClass1> shared = std::make_shared<SerializationClass1>();
+    SerializationClass1* raw = shared.get();
+    rttr::variant sharedVar = shared, rawVar = raw, wrappedVar = sharedVar.extract_wrapped_value();
+
+    ASSERT_TRUE(sharedVar.get_type().is_wrapper());
+    ASSERT_FALSE(rawVar.get_type().is_wrapper());
+
+    ASSERT_FALSE(sharedVar.get_type().is_pointer());
+    ASSERT_TRUE(wrappedVar.get_type().is_pointer());
+    ASSERT_TRUE(rawVar.get_type().is_pointer());
+
+    ASSERT_TRUE(wrappedVar.get_type() == rawVar.get_type());
+
+    ASSERT_EQ(static_cast<void*>(raw), rawVar.get_value<void*>(), wrappedVar.get_value<void*>());
 }
 
 TEST(SerializationTest, PointersSerializedProperly) {
