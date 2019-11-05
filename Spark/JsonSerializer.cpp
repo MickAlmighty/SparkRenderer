@@ -386,7 +386,7 @@ namespace spark {
                                 return name.compare(stringValue) == 0;
                             });
                             if(it != names.end()) {
-                                if (!prop.set_value(wrapped, *it)) {
+                                if (!prop.set_value(wrapped, enumeration.name_to_value(*it))) {
                                     status = 3;
                                 }
                             } else {
