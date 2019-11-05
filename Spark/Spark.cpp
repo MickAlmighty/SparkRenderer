@@ -12,6 +12,7 @@
 #include "EngineSystems/SceneManager.h"
 #include "HID.h"
 #include "JsonSerializer.h"
+#include "Logging.h"
 
 namespace spark {
 
@@ -100,9 +101,7 @@ namespace spark {
 			sparkGui.drawGui();
 			SparkRenderer::getInstance()->renderPass();
 			HID::clearStates();
-	#ifdef DEBUG
-			//std::cout << Clock::getFPS() << std::endl;
-	#endif
+            //SPARK_DEBUG("FPS: {}", Clock::getFPS());
 		}
 	}
 
@@ -128,51 +127,76 @@ namespace spark {
 		glfwTerminate();
 	}
 
-	void APIENTRY glDebugOutput(GLenum source,
-	GLenum type,
-	GLuint id,
-	GLenum severity,
-	GLsizei length,
-	const GLchar *message,
-	const void *userParam)
-	{
-		// ignore non-significant error/warning codes
-		if (id == 131169 || id == 131185 || id == 131218 || id == 131204) return;
+    void APIENTRY glDebugOutput(GLenum source,
+    GLenum type,
+    GLuint id,
+    GLenum severity,
+    GLsizei length,
+    const GLchar *message,
+    const void *userParam)
+    {
+        // ignore non-significant error/warning codes
+        if (id == 131169 || id == 131185 || id == 131218 || id == 131204) return;
 
-		std::cout << "---------------" << std::endl;
-		std::cout << "Debug message (" << id << "): " << message << std::endl;
+        std::string msg{ "[GL{}] " };
 
-		switch (source)
-		{
-		case GL_DEBUG_SOURCE_API:             std::cout << "Source: API"; break;
-		case GL_DEBUG_SOURCE_WINDOW_SYSTEM:   std::cout << "Source: Window System"; break;
-		case GL_DEBUG_SOURCE_SHADER_COMPILER: std::cout << "Source: Shader Compiler"; break;
-		case GL_DEBUG_SOURCE_THIRD_PARTY:     std::cout << "Source: Third Party"; break;
-		case GL_DEBUG_SOURCE_APPLICATION:     std::cout << "Source: Application"; break;
-		case GL_DEBUG_SOURCE_OTHER:           std::cout << "Source: Other"; break;
-		} std::cout << std::endl;
+        switch (source)
+        {
+            case GL_DEBUG_SOURCE_API:             msg.append("[API] "); break;
+            case GL_DEBUG_SOURCE_WINDOW_SYSTEM:   msg.append("[WinSys] "); break;
+            case GL_DEBUG_SOURCE_SHADER_COMPILER: msg.append("[ShadComp] "); break;
+            case GL_DEBUG_SOURCE_THIRD_PARTY:     msg.append("[3rdParty] "); break;
+            case GL_DEBUG_SOURCE_APPLICATION:     msg.append("[App] "); break;
+            case GL_DEBUG_SOURCE_OTHER:           msg.append("[Other] "); break;
+        }
 
-		switch (type)
-		{
-		case GL_DEBUG_TYPE_ERROR:               std::cout << "Type: Error"; break;
-		case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: std::cout << "Type: Deprecated Behaviour"; break;
-		case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:  std::cout << "Type: Undefined Behaviour"; break;
-		case GL_DEBUG_TYPE_PORTABILITY:         std::cout << "Type: Portability"; break;
-		case GL_DEBUG_TYPE_PERFORMANCE:         std::cout << "Type: Performance"; break;
-		case GL_DEBUG_TYPE_MARKER:              std::cout << "Type: Marker"; break;
-		case GL_DEBUG_TYPE_PUSH_GROUP:          std::cout << "Type: Push Group"; break;
-		case GL_DEBUG_TYPE_POP_GROUP:           std::cout << "Type: Pop Group"; break;
-		case GL_DEBUG_TYPE_OTHER:               std::cout << "Type: Other"; break;
-		} std::cout << std::endl;
+        switch (severity) {
+            case GL_DEBUG_SEVERITY_HIGH:         msg.append("[H] "); break;
+            case GL_DEBUG_SEVERITY_MEDIUM:       msg.append("[M] "); break;
+            case GL_DEBUG_SEVERITY_LOW:          msg.append("[L] "); break;
+            case GL_DEBUG_SEVERITY_NOTIFICATION: msg.append("[N] "); break;
+        }
 
-		switch (severity)
-		{
-		case GL_DEBUG_SEVERITY_HIGH:         std::cout << "Severity: high"; break;
-		case GL_DEBUG_SEVERITY_MEDIUM:       std::cout << "Severity: medium"; break;
-		case GL_DEBUG_SEVERITY_LOW:          std::cout << "Severity: low"; break;
-		case GL_DEBUG_SEVERITY_NOTIFICATION: std::cout << "Severity: notification"; break;
-		} std::cout << std::endl;
-		std::cout << std::endl;
-	}
+        switch (type)
+        {
+            case GL_DEBUG_TYPE_ERROR:
+                msg.append("[Err] {}");
+                SPARK_ERROR(msg, id, message);
+                break;
+            case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
+                msg.append("[DepBeh] {}");
+                SPARK_WARN(msg, id, message);
+                break;
+            case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
+                msg.append("[UndefBeh] {}");
+                SPARK_WARN(msg, id, message);
+                break;
+            case GL_DEBUG_TYPE_PORTABILITY:
+                msg.append("[Port] {}");
+                SPARK_DEBUG(msg, id, message);
+                break;
+            case GL_DEBUG_TYPE_PERFORMANCE:
+                msg.append("[Perf] {}");
+                SPARK_DEBUG(msg, id, message);
+                break;
+            case GL_DEBUG_TYPE_MARKER:
+                msg.append("[Marker] {}");
+                SPARK_DEBUG(msg, id, message);
+                break;
+            case GL_DEBUG_TYPE_PUSH_GROUP:
+                msg.append("[Push] {}");
+                SPARK_DEBUG(msg, id, message);
+                break;
+            case GL_DEBUG_TYPE_POP_GROUP:
+                msg.append("[Pop] {}");
+                SPARK_DEBUG(msg, id, message);
+                break;
+            case GL_DEBUG_TYPE_OTHER:
+                msg.append("[Other] {}");
+                SPARK_DEBUG(msg, id, message);
+                break;
+        }
+
+    }
 
 }

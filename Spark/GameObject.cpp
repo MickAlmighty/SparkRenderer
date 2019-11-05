@@ -12,6 +12,7 @@
 #include "JsonSerializer.h"
 #include "Scene.h"
 #include "GUI/SparkGui.h"
+#include "Logging.h"
 
 namespace spark {
 
@@ -219,9 +220,7 @@ GameObject::GameObject(std::string&& _name) : name(_name)
 
 GameObject::~GameObject()
 {
-#ifdef DEBUG
-	std::cout << "GameObject: " << name.c_str() << " destroyed!" << std::endl;
-#endif
+    SPARK_DEBUG("GameObject {} destroyed!", name);
 }
 
 }

@@ -3,6 +3,7 @@
 #include "JsonSerializer.h"
 #include "Spark.h"
 #include "Structs.h"
+#include "Logging.h"
 
 int main()
 {
@@ -18,7 +19,7 @@ int main()
 	}
 	catch (std::exception& e)
 	{
-		std::cout << e.what() << std::endl;
+        SPARK_ERROR("{}", e.what());
 		return 1;
 	}
 	getchar();

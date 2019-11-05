@@ -4,6 +4,7 @@
 
 #include "EngineSystems/SparkRenderer.h"
 #include "Shader.h"
+#include "Logging.h"
 
 namespace spark {
 
@@ -82,9 +83,7 @@ void Mesh::cleanup() const
 	glDeleteBuffers(1, &ebo);
 	glDeleteVertexArrays(1, &vao);
 
-#ifdef DEBUG
-	std::cout << "Mesh deleted!" << std::endl;
-#endif
+    SPARK_DEBUG("Mesh deleted!");
 }
 
 }

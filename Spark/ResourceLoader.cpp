@@ -14,6 +14,7 @@
 #include "Spark.h"
 #include "Structs.h"
 #include "Timer.h"
+#include "Logging.h"
 
 namespace spark {
 
@@ -276,7 +277,7 @@ namespace spark {
 		
 		if (!data)
 		{
-			std::cout << "Failed to load HDR image." << std::endl;
+            SPARK_ERROR("Failed to load HDR image '{}'.", path);
 			return std::nullopt;
 		}
 		GLuint hdrTexture{0};

@@ -8,6 +8,7 @@
 #include "GameObject.h"
 #include "GUI/SparkGui.h"
 #include "Mesh.h"
+#include "Logging.h"
 
 namespace spark {
 
@@ -24,9 +25,7 @@ void ModelMesh::setModel(std::pair<std::string, std::vector<Mesh>> model)
 
 ModelMesh::~ModelMesh()
 {
-#ifdef DEBUG
-	std::cout << "ModelMesh deleted!" << std::endl;
-#endif
+    SPARK_DEBUG("ModelMesh deleted!");
 }
 
 void ModelMesh::update()

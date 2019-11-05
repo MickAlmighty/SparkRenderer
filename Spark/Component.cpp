@@ -2,6 +2,7 @@
 #include "GameObject.h"
 
 #include <iostream>
+#include "Logging.h"
 
 namespace spark {
 	Component::Component(const std::string& componentName) {
@@ -9,9 +10,7 @@ namespace spark {
 	}
 
 	Component::~Component() {
-#ifdef DEBUG
-		std::cout << "Component: " + name << " destroyed!" << std::endl;
-#endif
+        SPARK_DEBUG("Component {} destroyed!", name);
 	}
 
 	void Component::drawComponentGUI() {

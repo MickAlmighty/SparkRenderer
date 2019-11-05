@@ -1,12 +1,13 @@
 #include "NodeAI.h"
 
 #include "TerrainGenerator.h"
+#include "Logging.h"
 
 namespace spark {
 
 NodeAI::NodeAI(const glm::ivec2 pos, const float depth_) : position(pos), depth(depth_)
 {
-	//std::cout << "NodeAI Constructor!" << std::endl;
+    //SPARK_DEBUG("NodeAI Constructor!");
 }
 
 NodeAI::NodeAI(const NodeAI& rhs) : position(rhs.position), depth(rhs.depth), parentAddress(rhs.parentAddress)
@@ -82,7 +83,7 @@ void NodeAI::getPath(std::deque<std::pair<bool, glm::ivec2>>& path) const
 
 void NodeAI::drawReturnPathStack(std::shared_ptr<TerrainGenerator>& terrainGenerator) const
 {
-	//std::cout << position.x << " " << position.y << std::endl;
+    //SPARK_DEBUG("{}, {}", position.x, position.y);
 	const int index = position.y * terrainGenerator->terrainSize + position.x;
 	terrainGenerator->markNodeAsPartOfPath(position.x, position.y);
 	if (parentAddress)

@@ -10,6 +10,7 @@
 #include <HID.h>
 #include <GameObject.h>
 #include <JsonSerializer.h>
+#include "Logging.h"
 
 namespace spark {
 
@@ -22,9 +23,7 @@ Scene::Scene(std::string sceneName) : name(std::move(sceneName))
 
 Scene::~Scene()
 {
-#ifdef DEBUG
-	std::cout << "Scene destroyed!" << std::endl;
-#endif
+    SPARK_DEBUG("Scene destroyed!");
 }
 
 void Scene::update()
@@ -152,7 +151,7 @@ void Scene::drawTreeNode(std::shared_ptr<GameObject> node, bool isRootNode)
 	if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0) && !isRootNode)
 	{
 		gameObjectToPreview = node;
-		std::cout << "GameObject: " + node->name + " clicked!" << std::endl;
+        SPARK_DEBUG("GameObject {} clicked!", node->name);
 	}
 
 	if (!node->children.empty())

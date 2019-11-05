@@ -12,6 +12,7 @@
 #include "JsonSerializer.h"
 #include "NodeAI.h"
 #include "TerrainGenerator.h"
+#include "Logging.h"
 
 
 namespace spark {
@@ -37,7 +38,7 @@ void ActorAI::update()
 		//findPath();
 		findPathStack();
 		timer = glfwGetTime() - measureStart;
-		std::cout << timer * 1000.0 << " ms" << std::endl;
+        SPARK_INFO("{} ms", timer * 1000.0);
 		if (!path.empty())
 		{
 			isTraveling = true;
@@ -93,7 +94,7 @@ void ActorAI::findPath()
 	{
 		if (nodesToProcess.empty())
 		{
-			std::cout << "Path hasn't been found" << std::endl;
+            SPARK_INFO("Path not found.");
 			break;
 		}
 
@@ -212,7 +213,7 @@ void ActorAI::findPathStack()
 		if (nodesToProcessStack.empty())
 		{
 			isTraveling = false;
-			std::cout << "Path hasn't been found" << std::endl;
+            SPARK_INFO("Path not found.");
 			break;
 		}
 

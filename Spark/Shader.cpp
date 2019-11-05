@@ -7,6 +7,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "Structs.h"
+#include "Logging.h"
 
 namespace spark {
 
@@ -106,7 +107,7 @@ namespace spark {
 		glGetProgramiv(program, GL_LINK_STATUS, &success);
 		if (!success) {
 			glGetProgramInfoLog(program, 512, NULL, infoLog);
-			std::cout << "ERROR::PROGRAM::LINKAGE_FAILED/n" << infoLog << std::endl;
+            SPARK_ERROR("PROGRAM::LINKAGE_FAILED: {}", infoLog);
 		}
 		ID = program;
 
@@ -127,9 +128,7 @@ namespace spark {
 	Shader::~Shader()
 	{
 		glDeleteProgram(ID);
-	#ifdef DEBUG
-		std::cout << "Shader deleted!" << std::endl;
-	#endif
+        SPARK_DEBUG("Shader deleted!");
 	}
 
 	std::string Shader::loadShader(const std::string& shaderPath)
@@ -148,7 +147,7 @@ namespace spark {
 		}
 		catch (const std::ifstream::failure& e)
 		{
-			std::cout << "ERROR::SHADER::FILE_NOT_SUCCESSFULLY_READ, cause: " << e.what() << std::endl;
+            SPARK_ERROR("SHADER::FILE_NOT_SUCCESSFULLY_READ: {}" e.what());
 		}
 		return codeString;
 	}

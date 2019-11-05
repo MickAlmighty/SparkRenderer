@@ -1,6 +1,7 @@
 #include "HID.h"
 
 #include "Spark.h"
+#include "Logging.h"
 
 namespace spark {
 
@@ -39,11 +40,9 @@ void HID::cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
 
 	mouse.screenPosition.x = static_cast<float>(xpos);
 	mouse.screenPosition.y = static_cast<float>(ypos);
-
-#ifdef DEBUG
-	//std::cout << "Mouse X: " << xpos << " Mouse Y: " << ypos << std::endl;
-	//std::cout << "Mouse X_Dir: " << mouse.direction.x << " Mouse Y_Dir: " << mouse.direction.y << std::endl;
-#endif
+    
+    //SPARK_DEBUG("Mouse X: {}, Mouse Y: {}", xpos, ypos);
+    //SPARK_DEBUG("Mouse X_Dir: {}, Mouse Y_Dir: {}", mouse.direction.x, mouse.direction.y);
 }
 
 void HID::clearStates()
