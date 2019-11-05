@@ -184,15 +184,15 @@ namespace spark {
                 break;
             case GL_DEBUG_TYPE_MARKER:
                 msg.append("[Marker] {}");
-                SPARK_DEBUG(msg, id, message);
+                SPARK_TRACE(msg, id, message);
                 break;
             case GL_DEBUG_TYPE_PUSH_GROUP:
                 msg.append("[Push] {}");
-                SPARK_DEBUG(msg, id, message);
+                SPARK_TRACE(msg, id, message);
                 break;
             case GL_DEBUG_TYPE_POP_GROUP:
                 msg.append("[Pop] {}");
-                SPARK_DEBUG(msg, id, message);
+                SPARK_TRACE(msg, id, message);
                 break;
             case GL_DEBUG_TYPE_OTHER:
                 msg.append("[Other] {}");
