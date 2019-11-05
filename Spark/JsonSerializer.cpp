@@ -251,10 +251,48 @@ namespace spark {
             rttr::variant wrapped{ isWrappedPtr(var.get_type()) ? var.extract_wrapped_value() : var };
             Json::Value& content = root[CONTENT_NAME];
             for (rttr::property prop : wrapped.get_type().get_properties()) {
-                if (isPtr(prop.get_type())) {
-                    serialize(prop.get_value(wrapped), content[std::string(prop.get_name())]);
+                const rttr::type propType{ prop.get_type() };
+                Json::Value& obj{ content[std::string(prop.get_name())] };
+                if (isPtr(propType)) {
+                    serialize(prop.get_value(wrapped), obj);
                 } else {
-
+                    unsigned char status = 0; //outcome here as well!
+                    if(propType.is_enumeration()) {
+                        obj = std::string(propType.get_enumeration().value_to_name(prop.get_value(wrapped)));
+                    } else if(propType.is_arithmetic()) {
+                        if(propType == rttr::type::get<uint8_t>()) {
+                            obj = prop.get_value(wrapped).get_value<uint8_t>();
+                        } else if(propType == rttr::type::get<uint16_t>()) {
+                            obj = prop.get_value(wrapped).get_value<uint16_t>();
+                        } else if (propType == rttr::type::get<uint32_t>()) {
+                            obj = prop.get_value(wrapped).get_value<uint32_t>();
+                        } else if (propType == rttr::type::get<uint64_t>()) {
+                            obj = prop.get_value(wrapped).get_value<uint64_t>();
+                        } else if (propType == rttr::type::get<int8_t>()) {
+                            obj = prop.get_value(wrapped).get_value<int8_t>();
+                        } else if (propType == rttr::type::get<int16_t>()) {
+                            obj = prop.get_value(wrapped).get_value<int16_t>();
+                        } else if (propType == rttr::type::get<int32_t>()) {
+                            obj = prop.get_value(wrapped).get_value<int32_t>();
+                        } else if (propType == rttr::type::get<int64_t>()) {
+                            obj = prop.get_value(wrapped).get_value<int64_t>();
+                        } else if (propType == rttr::type::get<bool>()) {
+                            obj = prop.get_value(wrapped).get_value<bool>();
+                        } else if (propType == rttr::type::get<float>()) {
+                            obj = prop.get_value(wrapped).get_value<float>();
+                        } else if (propType == rttr::type::get<double>()) {
+                            obj = prop.get_value(wrapped).get_value<double>();
+                        } else {
+                            status = 1;
+                        }
+                    } else {
+                        status = 1;
+                    }
+                    switch(status) {
+                        case 1:
+                            SPARK_ERROR("Unknown property type: '{}'.", propType.get_name().cbegin());
+                            throw std::exception("Unknown property type!");
+                    }
                 }
             }
         }
