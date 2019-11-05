@@ -327,7 +327,34 @@ namespace spark {
                 } else {
                     unsigned char status = 0; //outcome here as well!
                     if (propType.is_enumeration()) {
-
+                        rttr::enumeration enumeration = propType.get_enumeration();
+                        if(obj.isInt()) { // allow input of integral values as enums
+                            int intValue = obj.asInt();
+                            auto values = enumeration.get_values();
+                            auto it = std::find_if(values.begin(), values.end(), [=](const rttr::variant& var) {
+                                return intValue == var.to_int();
+                            });
+                            if(it != values.end()) {
+                                if(!prop.set_value(wrapped, *it)) {
+                                    status = 3;
+                                }
+                            } else {
+                                status = 2;
+                            }
+                        } else { // string representation expected
+                            std::string stringValue = obj.asString();
+                            auto names = enumeration.get_names();
+                            auto it = std::find_if(names.begin(), names.end(), [&](const rttr::basic_string_view<char>& name) {
+                                return name.compare(stringValue) == 0;
+                            });
+                            if(it != names.end()) {
+                                if (!prop.set_value(wrapped, *it)) {
+                                    status = 3;
+                                }
+                            } else {
+                                status = 2;
+                            }
+                        }
                     } else if (propType.is_arithmetic()) {
                         if (propType == rttr::type::get<uint8_t>()
                             || propType == rttr::type::get<uint16_t>()
