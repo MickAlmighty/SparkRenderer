@@ -199,6 +199,7 @@ if not exist "$(TargetDir)scene.json" (xcopy "$(ProjectDir)scene.json" "$(Target
     <ClCompile Include="JsonSerializer.cpp" />
     <ClCompile Include="LightManager.cpp" />
     <ClCompile Include="LocalTranform.cpp" />
+    <ClCompile Include="Logging.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="MeshPlane.cpp" />
@@ -242,6 +243,7 @@ if not exist "$(TargetDir)scene.json" (xcopy "$(ProjectDir)scene.json" "$(Target
     <ClInclude Include="JsonSerializer.h" />
     <ClInclude Include="LightManager.h" />
     <ClInclude Include="LocalTranform.h" />
+    <ClInclude Include="Logging.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="MeshPlane.h" />
     <ClInclude Include="ModelMesh.h" />
