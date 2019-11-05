@@ -69,26 +69,66 @@ TEST(ReflectionTest, SparkClassPointersRecognizable) {
     rttr::type sharedCamType{ rttr::type::get<std::shared_ptr<spark::Camera>>() },
         weakCamType{ rttr::type::get<std::weak_ptr<spark::Camera>>() },
         rawCamType{ rttr::type::get<spark::Camera*>() };
-    //GCOUT << "Shared: " << sharedCamType.get_name() << " Weak: " << weakCamType.get_name() << " Raw: " << rawCamType.get_name() << std::endl;
+
     using serializer = spark::JsonSerializer;
+    ASSERT_FALSE(serializer::isPtr(falseType));
+    ASSERT_TRUE(serializer::isPtr(sharedCamType));
+    ASSERT_TRUE(serializer::isPtr(weakCamType));
+    ASSERT_TRUE(serializer::isPtr(rawCamType));
+}
 
-    ASSERT_FALSE(serializer::isSparkPtr(falseType));
-    ASSERT_TRUE(serializer::isSparkPtr(sharedCamType));
-    ASSERT_TRUE(serializer::isSparkPtr(weakCamType));
-    ASSERT_TRUE(serializer::isSparkPtr(rawCamType));
+class SerializationClass1 {
+public:
+    float field1{ 1.0f };
+    float field2{ 2.0f };
+    RTTR_ENABLE();
+};
 
-    ASSERT_FALSE(serializer::isSparkSharedPtr(falseType));
-    ASSERT_TRUE(serializer::isSparkSharedPtr(sharedCamType));
-    ASSERT_FALSE(serializer::isSparkSharedPtr(weakCamType));
-    ASSERT_FALSE(serializer::isSparkSharedPtr(rawCamType));
+class SerializationClass2 {
+public:
+    SerializationClass2() = default;
+    SerializationClass2(const std::shared_ptr<SerializationClass1>& class1)
+        : shared(class1), weak(class1), raw(class1.get()) {}
+    int field1{ 0 };
+    int field2{ 1 };
+    std::shared_ptr<SerializationClass1> shared{};
+    std::weak_ptr<SerializationClass1> weak{};
+    SerializationClass1* raw;
+    RTTR_ENABLE();
+};
 
-    ASSERT_FALSE(serializer::isSparkWeakPtr(falseType));
-    ASSERT_FALSE(serializer::isSparkWeakPtr(sharedCamType));
-    ASSERT_TRUE(serializer::isSparkWeakPtr(weakCamType));
-    ASSERT_FALSE(serializer::isSparkWeakPtr(rawCamType));
+RTTR_REGISTRATION{
+    rttr::registration::class_<SerializationClass1>("SerializationClass1")
+    .constructor()(rttr::policy::ctor::as_std_shared_ptr)
+    .property("field1", &SerializationClass1::field1)
+    .property("field2", &SerializationClass1::field2);
 
-    ASSERT_FALSE(serializer::isSparkRawPtr(falseType));
-    ASSERT_FALSE(serializer::isSparkRawPtr(sharedCamType));
-    ASSERT_FALSE(serializer::isSparkRawPtr(weakCamType));
-    ASSERT_TRUE(serializer::isSparkRawPtr(rawCamType));
+    rttr::registration::class_<SerializationClass2>("SerializationClass2")
+    .constructor()(rttr::policy::ctor::as_std_shared_ptr)
+    .property("field1", &SerializationClass2::field1)
+    .property("field2", &SerializationClass2::field2)
+    .property("shared", &SerializationClass2::shared)
+    .property("weak", &SerializationClass2::weak)
+    .property("raw", &SerializationClass2::raw);
+}
+
+TEST(SerializationTest, PointersSerializedProperly) {
+    std::shared_ptr<SerializationClass1> class1 = std::make_shared<SerializationClass1>();
+    class1->field1 = 3.0f;
+    class1->field2 = 4.0f;
+    std::shared_ptr<SerializationClass2> class2 = std::make_shared<SerializationClass2>(class1);
+    Json::Value root;
+    spark::JsonSerializer* serializer{ spark::JsonSerializer::getInstance() };
+    serializer->serialize(class2, root);
+    serializer->writeToFile("test.json", root);
+    rttr::variant var{ serializer->deserialize(root) };
+    ASSERT_TRUE(var.is_type<std::shared_ptr<SerializationClass2>>());
+    std::shared_ptr<SerializationClass2> deserializedClass2{ var.get_value<std::shared_ptr<SerializationClass2>>() };
+    ASSERT_EQ(class2->field1, deserializedClass2->field1);
+    ASSERT_EQ(class2->field2, deserializedClass2->field2);
+    ASSERT_NE(deserializedClass2->raw, nullptr);
+    ASSERT_EQ(deserializedClass2->shared.get(), deserializedClass2->raw);
+    ASSERT_EQ(deserializedClass2->weak.lock(), deserializedClass2->shared);
+    ASSERT_EQ(class2->raw->field1, deserializedClass2->raw->field1);
+    ASSERT_EQ(class2->raw->field2, deserializedClass2->raw->field2);
 }

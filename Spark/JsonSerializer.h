@@ -26,17 +26,13 @@ namespace spark {
         static void writeToFile(const std::filesystem::path & filePath, Json::Value & root);
         static Json::Value readFromFile(const std::filesystem::path & filePath);
         static JsonSerializer* getInstance();
-        static bool isSparkSharedPtr(const rttr::type& type);
-        static bool isSparkWeakPtr(const rttr::type& type);
-        static bool isSparkRawPtr(const rttr::type& type);
-        static bool isSparkPtr(const rttr::type& type);
+        static bool isPtr(const rttr::type& type);
         std::shared_ptr<Scene> loadSceneFromFile(const std::filesystem::path& filePath);
         bool saveSceneToFile(const std::shared_ptr<Scene>& scene, const std::filesystem::path& filePath);
+        void serialize(rttr::variant var, Json::Value& root);
+        rttr::variant deserialize(const Json::Value& root);
     private:
         JsonSerializer() = default;
-        static bool isSparkClassMatched(const rttr::type& type, const std::string& prefix, const std::string& postfix, const std::regex& regex);
-        void serialize(rttr::variant, Json::Value& root);
-        rttr::variant deserialize(const Json::Value& root);
         bool bindObject(const rttr::variant& var, int id);
         int getBoundId(const rttr::variant& var, bool createIfNonexistent = true);
         rttr::variant getBoundObject(int id);

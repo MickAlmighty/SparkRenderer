@@ -160,45 +160,8 @@ namespace spark {
         return &serializer;
     }
 
-    bool JsonSerializer::isSparkSharedPtr(const rttr::type& type) {
-        const std::string PREFIX{ "classstd::shared_ptr<classspark::" };
-        const std::string POSTFIX{ ">" };
-        static const std::regex REGEX("^" + PREFIX + "[[:alnum:]]+" + POSTFIX + "$", std::regex::extended);
-        return isSparkClassMatched(type, PREFIX, POSTFIX, REGEX);
-    }
-
-    bool JsonSerializer::isSparkWeakPtr(const rttr::type & type) {
-        const std::string PREFIX{ "classstd::weak_ptr<classspark::" };
-        const std::string POSTFIX{ ">" };
-        static const std::regex REGEX("^" + PREFIX + "[[:alnum:]]+" + POSTFIX + "$", std::regex::extended);
-        return isSparkClassMatched(type, PREFIX, POSTFIX, REGEX);
-    }
-
-    bool JsonSerializer::isSparkRawPtr(const rttr::type & type) {
-        const std::string name{ type.get_name() };
-        if (name[name.size() - 1] == '*') {
-            // this doesn't check whether it's an actual type in spark's namespace.
-            // I think it shouldn't matter so i'll leave it like this for now
-            if (rttr::type::get_by_name(name.substr(0, name.size() - 1)).is_valid()) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    bool JsonSerializer::isSparkPtr(const rttr::type & type) {
-        return isSparkSharedPtr(type) || isSparkWeakPtr(type) || isSparkRawPtr(type);
-    }
-
-    bool JsonSerializer::isSparkClassMatched(const rttr::type& type, const std::string& prefix,
-                                             const std::string& postfix, const std::regex& regex) {
-        if (std::regex_match(type.get_name().cbegin(), regex)) {
-            std::string sparkClassName{ std::string(type.get_name()).substr(prefix.size(), type.get_name().size() - prefix.size() - postfix.size()) };
-            if (rttr::type::get_by_name(sparkClassName).is_valid()) {
-                return true;
-            }
-        }
-        return false;
+    bool JsonSerializer::isPtr(const rttr::type & type) {
+        return type.is_pointer() || type.is_wrapper();
     }
 
     std::shared_ptr<Scene> JsonSerializer::loadSceneFromFile(const std::filesystem::path& filePath) {
@@ -213,8 +176,22 @@ namespace spark {
         throw std::exception();
     }
 
-    void JsonSerializer::serialize(rttr::variant, Json::Value& root) {
-
+    void JsonSerializer::serialize(rttr::variant var, Json::Value& root) {
+        if(!isPtr(var.get_type())) {
+            throw std::exception("Source object must be a pointer!");
+        }
+        const int id{ counter++ };
+        root[ID_NAME] = id;
+        root[TYPE_NAME] = std::string(var.get_type().get_name());
+        rttr::variant wrapped{ var.get_type().is_wrapper() ? var.extract_wrapped_value() : var };
+        Json::Value& content = root[CONTENT_NAME];
+        for(rttr::property prop : wrapped.get_type().get_properties()) {
+            if(isPtr(prop.get_type())) {
+                serialize(prop.get_value(wrapped), content[std::string(prop.get_name())]);
+            } else {
+                
+            }
+        }
     }
 
     rttr::variant JsonSerializer::deserialize(const Json::Value& root) {
@@ -239,12 +216,13 @@ namespace spark {
         const Json::Value& content{ root[CONTENT_NAME] };
         rttr::variant var{ type.create() };
         bindObject(var, id);
-        for (rttr::property prop : type.get_properties()) {
+        rttr::variant wrapped{ type.is_wrapper() ? var.extract_wrapped_value() : var };
+        for (rttr::property prop : wrapped.get_type().get_properties()) {
             if (content.isMember(prop.get_name().cbegin())) {
                 const Json::Value& obj{ content[prop.get_name().cbegin()] };
-                if (isSparkPtr(prop.get_type())) {
+                if (isPtr(prop.get_type())) {
                     rttr::variant sparkPtr = deserialize(obj);
-                    prop.set_value(var, sparkPtr.convert(prop.get_type()));
+                    prop.set_value(wrapped, sparkPtr.convert(prop.get_type()));
                 } else {
                     
                 }
@@ -269,7 +247,9 @@ namespace spark {
         }
         const auto it = std::find_if(bindings.begin(), bindings.end(),
                                      [&](const std::pair<rttr::variant, int>& pair) {
-            return pair.first == var;
+            const rttr::variant& first{ pair.first.get_type().is_wrapper() ? pair.first.extract_wrapped_value() : pair.first };
+            const rttr::variant& second{ var.get_type().is_wrapper() ? var.extract_wrapped_value() : var };
+            return first == second;
         });
         if (it != bindings.end()) {
             return it->second;
