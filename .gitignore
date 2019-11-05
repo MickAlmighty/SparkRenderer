@@ -330,3 +330,4 @@ ASALocalRun/
 .mfractor/
 Spark/imgui.ini
 !res/*
+/SparkTests/test.json

@@ -438,8 +438,15 @@ namespace spark {
                             } else {
                                 status = 2;
                             }
-                        } else if (propType == rttr::type::get<float>()
-                                   || propType == rttr::type::get<double>()) {
+                        } else if (propType == rttr::type::get<float>()) {
+                            if (obj.isDouble()) {
+                                if (!prop.set_value(wrapped, static_cast<float>(obj.asDouble()))) {
+                                    status = 3;
+                                }
+                            } else {
+                                status = 2;
+                            }
+                        } else if (propType == rttr::type::get<double>()) {
                             if (obj.isDouble()) {
                                 if (!prop.set_value(wrapped, obj.asDouble())) {
                                     status = 3;
