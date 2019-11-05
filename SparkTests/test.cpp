@@ -132,6 +132,13 @@ public:
 };
 
 RTTR_REGISTRATION{
+    rttr::registration::enumeration<SerializationEnum1>("SerializationEnum1")(
+        rttr::value("Value1", SerializationEnum1::Value1),
+        rttr::value("Value2", SerializationEnum1::Value2),
+        rttr::value("Value3", SerializationEnum1::Value3),
+        rttr::value("Value4", SerializationEnum1::Value4)
+        );
+
     rttr::registration::class_<SerializationClass1>("SerializationClass1")
     .constructor()(rttr::policy::ctor::as_std_shared_ptr)
     .property("field1", &SerializationClass1::field1)
@@ -146,13 +153,6 @@ RTTR_REGISTRATION{
     .property("shared", &SerializationClass2::shared)
     .property("weak", &SerializationClass2::getWeak, &SerializationClass2::setWeak, rttr::registration::public_access)
     .property("raw", &SerializationClass2::raw);
-
-    rttr::registration::enumeration<SerializationEnum1>("SerializationEnum1")(
-        rttr::value("Value1", SerializationEnum1::Value1),
-        rttr::value("Value2", SerializationEnum1::Value2),
-        rttr::value("Value3", SerializationEnum1::Value3),
-        rttr::value("Value4", SerializationEnum1::Value4)
-        );
 }
 
 TEST(SerializationTest, PointersInterchangeable) {

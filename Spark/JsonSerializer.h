@@ -70,8 +70,5 @@ namespace spark {
             return nullptr;
         }
     }
-
-    template <class T>
-    std::shared_ptr<T> make() { return std::make_shared<T>(); };
 }
 #endif
