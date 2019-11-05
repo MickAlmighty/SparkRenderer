@@ -161,9 +161,10 @@ TEST(SerializationTest, PointersSerializedProperly) {
     std::shared_ptr<SerializationClass2> class2 = std::make_shared<SerializationClass2>(class1);
     Json::Value root;
     spark::JsonSerializer* serializer{ spark::JsonSerializer::getInstance() };
-    serializer->serialize(class2, root);
-    serializer->writeToFile("test.json", root);
-    rttr::variant var{ serializer->deserialize(root) };
+    ASSERT_TRUE(serializer->save(class2, root));
+    spark::JsonSerializer::writeToFile("test.json", root);
+    rttr::variant var{ serializer->loadVariant(root) };
+    ASSERT_TRUE(var.is_valid());
     ASSERT_TRUE(var.is_type<std::shared_ptr<SerializationClass2>>());
     std::shared_ptr<SerializationClass2> deserializedClass2{ var.get_value<std::shared_ptr<SerializationClass2>>() };
     ASSERT_EQ(class2->field1, deserializedClass2->field1);

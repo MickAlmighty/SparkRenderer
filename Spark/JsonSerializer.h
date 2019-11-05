@@ -6,6 +6,7 @@
 #include <glm/glm.hpp>
 #include <mutex>
 #include <regex>
+#include "Logging.h"
 
 namespace std {
     namespace filesystem {
@@ -23,7 +24,7 @@ namespace spark {
         JsonSerializer(JsonSerializer&&) = delete;
         JsonSerializer& operator+(JsonSerializer&) = delete;
         JsonSerializer& operator+(JsonSerializer&&) = delete;
-        static void writeToFile(const std::filesystem::path & filePath, Json::Value & root);
+        static bool writeToFile(const std::filesystem::path & filePath, Json::Value & root);
         static Json::Value readFromFile(const std::filesystem::path & filePath);
         static JsonSerializer* getInstance();
         static bool isPtr(const rttr::type& type);
@@ -32,9 +33,13 @@ namespace spark {
         static void* getPtr(const rttr::variant& var);
         std::shared_ptr<Scene> loadSceneFromFile(const std::filesystem::path& filePath);
         bool saveSceneToFile(const std::shared_ptr<Scene>& scene, const std::filesystem::path& filePath);
+        bool save(const rttr::variant& var, Json::Value& root);
+        template <typename T>
+        std::shared_ptr<T> load(const Json::Value& root);
+        rttr::variant loadVariant(const Json::Value& root);
+    private:
         void serialize(const rttr::variant& var, Json::Value& root);
         rttr::variant deserialize(const Json::Value& root);
-    private:
         JsonSerializer() = default;
         bool bindObject(const rttr::variant& var, int id);
         bool isVarBound(const rttr::variant & var);
@@ -47,6 +52,24 @@ namespace spark {
         const std::string ID_NAME{ "Identifier" }, TYPE_NAME{ "Type" }, CONTENT_NAME{ "Content" };
         const int NULL_ID = -1;
     };
+
+    template <typename T>
+    std::shared_ptr<T> JsonSerializer::load(const Json::Value& root) {
+        std::lock_guard lock(serializerMutex);
+        counter = 0;
+        try {
+            rttr::variant var{ deserialize(root) };
+            bindings.clear();
+            if(var.is_type<std::shared_ptr<T>>()) {
+                return var.get_value<std::shared_ptr<T>>();
+            }
+            return nullptr;
+        } catch(std::exception& e) {
+            SPARK_ERROR("{}", e.what());
+            bindings.clear();
+            return nullptr;
+        }
+    }
 
     template <class T>
     std::shared_ptr<T> make() { return std::make_shared<T>(); };

@@ -49,11 +49,17 @@ namespace spark {
 //	return -1;
 //}
 
-    void JsonSerializer::writeToFile(const std::filesystem::path& filePath, Json::Value& root) {
-        Json::StreamWriterBuilder builder;
-        std::ofstream file(filePath);
-        Json::StreamWriter* writer = builder.newStreamWriter();
-        writer->write(root, &file);
+    bool JsonSerializer::writeToFile(const std::filesystem::path& filePath, Json::Value& root) {
+        try {
+            Json::StreamWriterBuilder builder;
+            std::ofstream file(filePath);
+            Json::StreamWriter* writer = builder.newStreamWriter();
+            writer->write(root, &file);
+            return true;
+        } catch (std::exception e) {
+            SPARK_ERROR("{}", e.what());
+            return false;
+        }
     }
 
     Json::Value JsonSerializer::readFromFile(const std::filesystem::path& filePath) {
@@ -174,14 +180,14 @@ namespace spark {
         if (isPtr(type1) && isPtr(type2)) {
             const rttr::variant first{ isWrappedPtr(type1) ? var1.extract_wrapped_value() : var1 },
                 second{ isWrappedPtr(type2) ? var2.extract_wrapped_value() : var2 };
-            return first.get_value<void*>() == second.get_value<void*>();
+            return getPtr(first) == getPtr(second);
         }
         return false;
     }
 
     void* JsonSerializer::getPtr(const rttr::variant& var) {
         const rttr::variant& resultVar = isWrappedPtr(var.get_type()) ? var.extract_wrapped_value() : var;
-        if(resultVar.is_valid()) {
+        if (resultVar.is_valid()) {
             return resultVar.get_value<void*>();
         }
         SPARK_ERROR("Invalid variant of type '{}' provided as pointer type!", var.get_type().get_name().cbegin());
@@ -189,15 +195,45 @@ namespace spark {
     }
 
     std::shared_ptr<Scene> JsonSerializer::loadSceneFromFile(const std::filesystem::path& filePath) {
-        std::lock_guard lock(serializerMutex);
-        counter = 0;
-        throw std::exception();
+        Json::Value root = readFromFile(filePath);
+        return load<Scene>(root);
     }
 
     bool JsonSerializer::saveSceneToFile(const std::shared_ptr<Scene>& scene, const std::filesystem::path& filePath) {
+        Json::Value root;
+        bool saved = save(scene, root);
+        if (!saved) {
+            return false;
+        }
+        return writeToFile(filePath, root);
+    }
+
+    bool JsonSerializer::save(const rttr::variant& var, Json::Value& root) {
         std::lock_guard lock(serializerMutex);
         counter = 0;
-        throw std::exception();
+        try {
+            serialize(var, root);
+            bindings.clear();
+            return true;
+        } catch (std::exception& e) {
+            SPARK_ERROR("{}", e.what());
+            bindings.clear();
+            return false;
+        }
+    }
+
+    rttr::variant JsonSerializer::loadVariant(const Json::Value& root) {
+        std::lock_guard lock(serializerMutex);
+        counter = 0;
+        try {
+            rttr::variant returnValue = deserialize(root);
+            bindings.clear();
+            return returnValue;
+        } catch (std::exception& e) {
+            SPARK_ERROR("{}", e.what());
+            bindings.clear();
+            return nullptr;
+        }
     }
 
     void JsonSerializer::serialize(const rttr::variant& var, Json::Value& root) {
@@ -240,26 +276,134 @@ namespace spark {
             SPARK_ERROR("No type/content info provided!");
             throw std::exception("No type/content info provided!");
         }
-        rttr::type type{ rttr::type::get_by_name(root[TYPE_NAME].asString()) };
+        std::string typeName{ root[TYPE_NAME].asString() };
+        rttr::type type{ rttr::type::get_by_name(typeName) };
         if (!type.is_valid()) {
-            SPARK_ERROR("Invalid type found for name '{}'!", root[TYPE_NAME].asString());
+            SPARK_ERROR("Invalid type found for name '{}'!", typeName);
             throw std::exception("Invalid type found!");
         }
         const Json::Value& content{ root[CONTENT_NAME] };
-        rttr::variant var{ type.create() };
+        rttr::type targetType{ (isWrappedPtr(type) ? type.get_wrapped_type() : type).get_raw_type() };
+        rttr::variant var{ targetType.create() };
+        if (!var.is_valid()) {
+            SPARK_ERROR("Created variant of '{}' is not valid!", targetType.get_name().cbegin());
+            throw std::exception("Created variant is not valid!");
+        }
+        if (var.get_type() != type) {
+            SPARK_ERROR("Created variant's type '{}' does not match source type '{}'!",
+                        var.get_type().get_name().cbegin(), type.get_name().begin());
+            throw std::exception("Created variant's type does not match source type!");
+        }
         bindObject(var, id);
         rttr::variant wrapped{ isWrappedPtr(type) ? var.extract_wrapped_value() : var };
         for (rttr::property prop : wrapped.get_type().get_properties()) {
+            const rttr::type propType{ prop.get_type() };
             if (content.isMember(prop.get_name().cbegin())) {
                 const Json::Value& obj{ content[prop.get_name().cbegin()] };
-                if (isPtr(prop.get_type())) {
+                if (isPtr(propType)) {
                     rttr::variant sparkPtr = deserialize(obj);
-                    prop.set_value(wrapped, sparkPtr.convert(prop.get_type()));
+                    unsigned char status = 0; // 0 = success
+                    //todo: i'd really love to see outcome library arrive here as well xd
+                    if (propType == sparkPtr.get_type()) {
+                        if (!prop.set_value(wrapped, sparkPtr)) {
+                            status = 1;
+                        }
+                    } else if (isWrappedPtr(sparkPtr.get_type()) && !isWrappedPtr(propType)) {
+                        if (!prop.set_value(wrapped, sparkPtr.extract_wrapped_value())) {
+                            status = 2;
+                        }
+                    } else if (sparkPtr.can_convert(propType)) {
+                        if (!prop.set_value(wrapped, sparkPtr.convert(propType))) {
+                            status = 3;
+                        }
+                    } else {
+                        status = 4;
+                    }
+                    if (status != 0) {
+                        SPARK_WARN("Property '{}' of type '{}' (ID: {}) could not be properly deserialized with var of type '{}' (valid: {})! Code: {}",
+                                   prop.get_name().cbegin(), propType.get_name().cbegin(), id,
+                                   sparkPtr.get_type().get_name().cbegin(), sparkPtr.is_valid(), status);
+                    }
                 } else {
+                    unsigned char status = 0; //outcome here as well!
+                    if (propType.is_enumeration()) {
 
+                    } else if (propType.is_arithmetic()) {
+                        if (propType == rttr::type::get<uint8_t>()
+                            || propType == rttr::type::get<uint16_t>()
+                            || propType == rttr::type::get<uint32_t>()) {
+                            if (obj.isUInt()) {
+                                if (!prop.set_value(wrapped, obj.asUInt())) {
+                                    status = 3;
+                                }
+                            } else {
+                                status = 2;
+                            }
+                        } else if (propType == rttr::type::get<uint64_t>()) {
+                            if (obj.isUInt64()) {
+                                if (!prop.set_value(wrapped, obj.asUInt64())) {
+                                    status = 3;
+                                }
+                            } else {
+                                status = 2;
+                            }
+                        } else if (propType == rttr::type::get<int8_t>()
+                                   || propType == rttr::type::get<int16_t>()
+                                   || propType == rttr::type::get<int32_t>()) {
+                            if (obj.isInt()) {
+                                if (!prop.set_value(wrapped, obj.asInt())) {
+                                    status = 3;
+                                }
+                            } else {
+                                status = 2;
+                            }
+                        } else if (propType == rttr::type::get<int64_t>()) {
+                            if (obj.isInt64()) {
+                                if (!prop.set_value(wrapped, obj.asInt64())) {
+                                    status = 3;
+                                }
+                            } else {
+                                status = 2;
+                            }
+                        } else if (propType == rttr::type::get<bool>()) {
+                            if (obj.isBool()) {
+                                if (!prop.set_value(wrapped, obj.asBool())) {
+                                    status = 3;
+                                }
+                            } else {
+                                status = 2;
+                            }
+                        } else if (propType == rttr::type::get<float>()
+                                   || propType == rttr::type::get<double>()) {
+                            if (obj.isDouble()) {
+                                if (!prop.set_value(wrapped, obj.asDouble())) {
+                                    status = 3;
+                                }
+                            } else {
+                                status = 2;
+                            }
+                        } else {
+                            status = 1;
+                        }
+                    } else {
+                        //todo: add custom types here, as well as containers
+                        status = 1;
+                    }
+                    switch (status) {
+                        case 1:
+                            SPARK_ERROR("Unknown property type: '{}'.", propType.get_name().cbegin());
+                            throw std::exception("Unknown property type!");
+                        case 2:
+                            SPARK_WARN("Invalid json value: '{}' for type '{}'! Default value will be used."
+                                       , obj.asString(), propType.get_name().cbegin());
+                            break;
+                        case 3:
+                            SPARK_ERROR("Unable to set value for property '{}'!", prop.get_name().cbegin());
+                            throw std::exception("Unable to set value for property!");
+                    }
                 }
             } else {
-                SPARK_WARN("Property {} of type {} does not exist in json entry (ID: {})",
+                SPARK_WARN("Property '{}' of type '{}' (ID: {}) does not exist in json entry!",
                            prop.get_name().cbegin(), wrapped.get_type().get_name().cbegin(), id);
             }
         }
