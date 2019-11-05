@@ -150,7 +150,13 @@ RTTR_REGISTRATION{
     .property("field1", &SerializationClass1::field1)
     .property("field2", &SerializationClass1::field2)
     .property("field3", &SerializationClass1::field3)
-    .property("field4", &SerializationClass1::field4);
+    .property("field4", &SerializationClass1::field4)
+    .property("vec2", &SerializationClass1::vec2)
+    .property("vec3", &SerializationClass1::vec3)
+    .property("vec4", &SerializationClass1::vec4)
+    .property("mat2", &SerializationClass1::mat2)
+    .property("mat3", &SerializationClass1::mat3)
+    .property("mat4", &SerializationClass1::mat4);
 
     rttr::registration::class_<SerializationClass2>("SerializationClass2")
     .constructor()(rttr::policy::ctor::as_std_shared_ptr)
@@ -184,6 +190,24 @@ TEST(SerializationTest, PointersSerializedProperly) {
     class1->field2 = 4.0f;
     class1->field3 = SerializationEnum1::Value1;
     class1->field4 = SerializationEnum1::Value4;
+    class1->vec2 = { 1.0f, 2.0f };
+    class1->vec3 = { 3.0f, 4.0f, 5.0f };
+    class1->vec4 = { 6.0f, 7.0f, 8.0f, 9.0f };
+    class1->mat2 = {
+        {10.0f, 11.0f},
+        {12.0f, 13.0f}
+    };
+    class1->mat3 = {
+        {14.0f, 15.0f, 16.0f},
+        {17.0f, 18.0f, 19.0f},
+        {20.0f, 21.0f, 22.0f}
+    };
+    class1->mat4 = {
+        {23.0f, 24.0f, 25.0f, 26.0f},
+        {27.0f, 28.0f, 29.0f, 30.0f},
+        {31.0f, 32.0f, 33.0f, 34.0f},
+        {35.0f, 36.0f, 37.0f, 38.0f}
+    };
     std::shared_ptr<SerializationClass2> class2 = std::make_shared<SerializationClass2>(class1);
     Json::Value root;
     spark::JsonSerializer* serializer{ spark::JsonSerializer::getInstance() };
@@ -202,4 +226,10 @@ TEST(SerializationTest, PointersSerializedProperly) {
     ASSERT_EQ(class2->raw->field2, deserializedClass2->raw->field2);
     ASSERT_EQ(class2->raw->field3, deserializedClass2->raw->field3);
     ASSERT_EQ(class2->raw->field4, deserializedClass2->raw->field4);
+    ASSERT_EQ(class2->raw->vec2, deserializedClass2->raw->vec2);
+    ASSERT_EQ(class2->raw->vec3, deserializedClass2->raw->vec3);
+    ASSERT_EQ(class2->raw->vec4, deserializedClass2->raw->vec4);
+    ASSERT_EQ(class2->raw->mat2, deserializedClass2->raw->mat2);
+    ASSERT_EQ(class2->raw->mat3, deserializedClass2->raw->mat3);
+    ASSERT_EQ(class2->raw->mat4, deserializedClass2->raw->mat4);
 }

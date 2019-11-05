@@ -196,7 +196,45 @@ namespace spark {
                             status = 1;
                         }
                     } else {
-                        status = 1;
+                        if (propType == rttr::type::get<glm::vec2>()) {
+                            const glm::vec2 vec{ prop.get_value(wrapped).get_value<glm::vec2>() };
+                            for (int i = 0; i < 2; i++) {
+                                obj[i] = vec[i];
+                            }
+                        } else if (propType == rttr::type::get<glm::vec3>()) {
+                            const glm::vec3 vec{ prop.get_value(wrapped).get_value<glm::vec3>() };
+                            for (int i = 0; i < 3; i++) {
+                                obj[i] = vec[i];
+                            }
+                        } else if (propType == rttr::type::get<glm::vec4>()) {
+                            const glm::vec4 vec{ prop.get_value(wrapped).get_value<glm::vec4>() };
+                            for (int i = 0; i < 4; i++) {
+                                obj[i] = vec[i];
+                            }
+                        } else if (propType == rttr::type::get<glm::mat2>()) {
+                            const glm::mat2 mat{ prop.get_value(wrapped).get_value<glm::mat2>() };
+                            for (int i = 0; i < 2; i++) {
+                                for (int j = 0; j < 2; j++) {
+                                    obj[i][j] = mat[i][j];
+                                }
+                            }
+                        } else if (propType == rttr::type::get<glm::mat3>()) {
+                            const glm::mat3 mat{ prop.get_value(wrapped).get_value<glm::mat3>() };
+                            for (int i = 0; i < 3; i++) {
+                                for (int j = 0; j < 3; j++) {
+                                    obj[i][j] = mat[i][j];
+                                }
+                            }
+                        } else if (propType == rttr::type::get<glm::mat4>()) {
+                            const glm::mat4 mat{ prop.get_value(wrapped).get_value<glm::mat4>() };
+                            for (int i = 0; i < 4; i++) {
+                                for (int j = 0; j < 4; j++) {
+                                    obj[i][j] = mat[i][j];
+                                }
+                            }
+                        } else {
+                            status = 1;
+                        }
                     }
                     switch (status) {
                         case 1:
@@ -368,16 +406,146 @@ namespace spark {
                             status = 1;
                         }
                     } else {
-                        //todo: add custom types here, as well as containers
-                        status = 1;
+                        if (propType == rttr::type::get<glm::vec2>()) {
+                            if (obj.size() == 2) {
+                                glm::vec2 vec;
+                                for (int i = 0; i < 2; i++) {
+                                    if (obj[i].isDouble()) {
+                                        vec[i] = obj[i].asDouble();
+                                    } else {
+                                        status = 2;
+                                        break;
+                                    }
+                                }
+                                if (status == 0 && !prop.set_value(wrapped, vec)) {
+                                    status = 3;
+                                }
+                            } else {
+                                status = 2;
+                            }
+                        } else if (propType == rttr::type::get<glm::vec3>()) {
+                            if (obj.size() == 3) {
+                                glm::vec3 vec;
+                                for (int i = 0; i < 3; i++) {
+                                    if (obj[i].isDouble()) {
+                                        vec[i] = obj[i].asDouble();
+                                    } else {
+                                        status = 2;
+                                        break;
+                                    }
+                                }
+                                if (status == 0 && !prop.set_value(wrapped, vec)) {
+                                    status = 3;
+                                }
+                            } else {
+                                status = 2;
+                            }
+                        } else if (propType == rttr::type::get<glm::vec4>()) {
+                            if (obj.size() == 4) {
+                                glm::vec4 vec;
+                                for (int i = 0; i < 4; i++) {
+                                    if (obj[i].isDouble()) {
+                                        vec[i] = obj[i].asDouble();
+                                    } else {
+                                        status = 2;
+                                        break;
+                                    }
+                                }
+                                if (status == 0 && !prop.set_value(wrapped, vec)) {
+                                    status = 3;
+                                }
+                            } else {
+                                status = 2;
+                            }
+                        } else if (propType == rttr::type::get<glm::mat2>()) {
+                            if (obj.size() == 2) {
+                                glm::mat2 mat;
+                                for (int i = 0; i < 2; i++) {
+                                    if (obj[i].size() == 2) {
+                                        for (int j = 0; j < 2; j++) {
+                                            if (obj[i][j].isDouble()) {
+                                                mat[i][j] = obj[i][j].asDouble();
+                                            } else {
+                                                status = 2;
+                                                break;
+                                            }
+                                        }
+                                    } else {
+                                        status = 2;
+                                    }
+                                    if (status != 0) {
+                                        break;
+                                    }
+                                }
+                                if (status == 0 && !prop.set_value(wrapped, mat)) {
+                                    status = 3;
+                                }
+                            } else {
+                                status = 2;
+                            }
+                        } else if (propType == rttr::type::get<glm::mat3>()) {
+                            if (obj.size() == 3) {
+                                glm::mat3 mat;
+                                for (int i = 0; i < 3; i++) {
+                                    if (obj[i].size() == 3) {
+                                        for (int j = 0; j < 3; j++) {
+                                            if (obj[i][j].isDouble()) {
+                                                mat[i][j] = obj[i][j].asDouble();
+                                            } else {
+                                                status = 2;
+                                                break;
+                                            }
+                                        }
+                                    } else {
+                                        status = 2;
+                                    }
+                                    if (status != 0) {
+                                        break;
+                                    }
+                                }
+                                if (status == 0 && !prop.set_value(wrapped, mat)) {
+                                    status = 3;
+                                }
+                            } else {
+                                status = 2;
+                            }
+                        } else if (propType == rttr::type::get<glm::mat4>()) {
+                            if (obj.size() == 4) {
+                                glm::mat4 mat;
+                                for (int i = 0; i < 4; i++) {
+                                    if (obj[i].size() == 4) {
+                                        for (int j = 0; j < 4; j++) {
+                                            if (obj[i][j].isDouble()) {
+                                                mat[i][j] = obj[i][j].asDouble();
+                                            } else {
+                                                status = 2;
+                                                break;
+                                            }
+                                        }
+                                    } else {
+                                        status = 2;
+                                    }
+                                    if (status != 0) {
+                                        break;
+                                    }
+                                }
+                                if (status == 0 && !prop.set_value(wrapped, mat)) {
+                                    status = 3;
+                                }
+                            } else {
+                                status = 2;
+                            }
+                        } else {
+                            status = 1;
+                        }
                     }
                     switch (status) {
                         case 1:
                             SPARK_ERROR("Unknown property type: '{}'.", propType.get_name().cbegin());
                             throw std::exception("Unknown property type!");
                         case 2:
-                            SPARK_WARN("Invalid json value: '{}' for type '{}'! Default value will be used."
-                                       , obj.asString(), propType.get_name().cbegin());
+                            SPARK_WARN("Invalid json value given for type '{}'! Default value will be used."
+                                       , propType.get_name().cbegin());
                             break;
                         case 3:
                             SPARK_ERROR("Unable to set value for property '{}'!", prop.get_name().cbegin());
