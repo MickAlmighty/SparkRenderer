@@ -147,7 +147,7 @@ namespace spark {
 		}
 		catch (const std::ifstream::failure& e)
 		{
-            SPARK_ERROR("SHADER::FILE_NOT_SUCCESSFULLY_READ: {}" e.what());
+            SPARK_ERROR("SHADER::FILE_NOT_SUCCESSFULLY_READ: {}", e.what());
 		}
 		return codeString;
 	}

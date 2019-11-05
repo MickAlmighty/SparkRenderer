@@ -16,6 +16,7 @@
 #include "Scene.h"
 #include "Spark.h"
 #include "Clock.h"
+#include "Logging.h"
 
 namespace spark {
 
@@ -271,6 +272,7 @@ namespace spark {
 
 		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 		{
+            SPARK_ERROR("Main framebuffer incomplete!");
 			throw std::exception("Main framebuffer incomplete!");
 		}
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -284,6 +286,7 @@ namespace spark {
 
 		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 		{
+            SPARK_ERROR("Postprocessing framebuffer incomplete!");
 			throw std::exception("Postprocessing framebuffer incomplete!");
 		}
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -298,6 +301,7 @@ namespace spark {
 
 		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 		{
+            SPARK_ERROR("Postprocessing framebuffer incomplete!");
 			throw std::exception("Postprocessing framebuffer incomplete!");
 		}
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -310,6 +314,7 @@ namespace spark {
 
 		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 		{
+            SPARK_ERROR("Cubemap framebuffer incomplete!");
 			throw std::exception("Cubemap framebuffer incomplete!");
 		}
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -323,6 +328,7 @@ namespace spark {
 
 		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 		{
+            SPARK_ERROR("Motion Blur framebuffer incomplete!");
 			throw std::exception("Motion Blur framebuffer incomplete!");
 		}
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);

@@ -42,6 +42,7 @@ namespace spark {
 	{
 		if (!glfwInit())
 		{
+            SPARK_CRITICAL("glfw init failed");
 			throw std::exception("glfw init failed");
 		}
 
@@ -54,6 +55,7 @@ namespace spark {
 		window = glfwCreateWindow(Spark::WIDTH, Spark::HEIGHT, "Spark", NULL, NULL);
 		if (!window)
 		{
+            SPARK_CRITICAL("Window creation failed");
 			throw std::exception("Window creation failed");
 		}
 
@@ -61,6 +63,7 @@ namespace spark {
 
 		if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
 		{
+            SPARK_CRITICAL("Failed to initialize OpenGL loader!");
 			throw std::exception("Failed to initialize OpenGL loader!");
 		}
 

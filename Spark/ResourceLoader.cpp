@@ -47,6 +47,7 @@ namespace spark {
 			
 			if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
 			{
+                SPARK_ERROR("{}", importer.GetErrorString());
 				throw std::exception(importer.GetErrorString());
 			}
 		}

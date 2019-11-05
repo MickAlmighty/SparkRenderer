@@ -5,6 +5,7 @@
 #include "Shader.h"
 #include "Spark.h"
 #include "Timer.h"
+#include "Logging.h"
 
 namespace spark {
 
@@ -70,7 +71,7 @@ namespace spark {
 		{
 			return it->second;
 		}
-
+        SPARK_ERROR("Cannot find shader! Probably shader was not loaded!");
 		throw std::exception("Cannot find shader! Probably shader was not loaded!");
 	}
 

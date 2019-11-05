@@ -68,5 +68,5 @@
 
 namespace spark {
     using logger = spdlog::logger;
-    static std::shared_ptr<logger> getSparkLogger();
+    std::shared_ptr<logger> getSparkLogger();
 }
