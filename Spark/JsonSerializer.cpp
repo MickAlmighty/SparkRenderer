@@ -210,6 +210,7 @@ namespace spark {
         } else {
             const int id{ counter++ };
             root[ID_NAME] = id;
+            bindObject(var, id);
             root[TYPE_NAME] = std::string(var.get_type().get_name());
             rttr::variant wrapped{ isWrappedPtr(var.get_type()) ? var.extract_wrapped_value() : var };
             Json::Value& content = root[CONTENT_NAME];
