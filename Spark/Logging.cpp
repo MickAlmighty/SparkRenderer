@@ -9,7 +9,7 @@ std::shared_ptr<spark::logger> spark::getSparkLogger() {
         auto consoleSink = std::make_shared<spdlog::sinks::wincolor_stdout_sink_mt>();
         auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>("spark.log", true);
         const spdlog::level::level_enum level{ static_cast<spdlog::level::level_enum>(SPARK_ACTIVE_LEVEL) };
-        const std::string pattern{ "[%d.%m.%Y %T.%f] [%@] [%t] [%^%l%$] %v" };
+        const std::string pattern{ "[%d.%m.%Y %T.%f] [%s:%#] [%t] [%^%l%$] %v" };
         consoleSink->set_level(level);
         fileSink->set_level(level);
         consoleSink->set_pattern(pattern);
