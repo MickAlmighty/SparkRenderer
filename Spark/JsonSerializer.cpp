@@ -92,7 +92,7 @@ namespace spark {
 
     std::shared_ptr<Scene> JsonSerializer::loadSceneFromFile(const std::filesystem::path& filePath) {
         Json::Value root = readFromFile(filePath);
-        return load<Scene>(root);
+        return loadJson<Scene>(root);
     }
 
     bool JsonSerializer::saveSceneToFile(const std::shared_ptr<Scene>& scene, const std::filesystem::path& filePath) {
@@ -118,6 +118,15 @@ namespace spark {
         }
     }
 
+    bool JsonSerializer::save(const rttr::variant& var, const std::filesystem::path& filePath) {
+        Json::Value root;
+        bool success = save(var, root);
+        if (!success) {
+            return false;
+        }
+        return writeToFile(filePath, root);
+    }
+
     rttr::variant JsonSerializer::loadVariant(const Json::Value& root) {
         std::lock_guard lock(serializerMutex);
         counter = 0;
@@ -130,6 +139,11 @@ namespace spark {
             bindings.clear();
             return nullptr;
         }
+    }
+
+    rttr::variant JsonSerializer::loadVariant(const std::filesystem::path& filePath) {
+        Json::Value root{ readFromFile(filePath) };
+        return loadVariant(root);
     }
 
     void JsonSerializer::serialize(const rttr::variant& var, Json::Value& root) {
@@ -153,12 +167,12 @@ namespace spark {
                     serialize(prop.get_value(wrapped), obj);
                 } else {
                     unsigned char status = 0; //outcome here as well!
-                    if(propType.is_enumeration()) {
+                    if (propType.is_enumeration()) {
                         obj = std::string(propType.get_enumeration().value_to_name(prop.get_value(wrapped)));
-                    } else if(propType.is_arithmetic()) {
-                        if(propType == rttr::type::get<uint8_t>()) {
+                    } else if (propType.is_arithmetic()) {
+                        if (propType == rttr::type::get<uint8_t>()) {
                             obj = prop.get_value(wrapped).get_value<uint8_t>();
-                        } else if(propType == rttr::type::get<uint16_t>()) {
+                        } else if (propType == rttr::type::get<uint16_t>()) {
                             obj = prop.get_value(wrapped).get_value<uint16_t>();
                         } else if (propType == rttr::type::get<uint32_t>()) {
                             obj = prop.get_value(wrapped).get_value<uint32_t>();
@@ -184,7 +198,7 @@ namespace spark {
                     } else {
                         status = 1;
                     }
-                    switch(status) {
+                    switch (status) {
                         case 1:
                             SPARK_ERROR("Unknown property type: '{}'.", propType.get_name().cbegin());
                             throw std::exception("Unknown property type!");
@@ -262,14 +276,14 @@ namespace spark {
                     unsigned char status = 0; //outcome here as well!
                     if (propType.is_enumeration()) {
                         rttr::enumeration enumeration = propType.get_enumeration();
-                        if(obj.isInt()) { // allow input of integral values as enums
+                        if (obj.isInt()) { // allow input of integral values as enums
                             int intValue = obj.asInt();
                             auto values = enumeration.get_values();
                             auto it = std::find_if(values.begin(), values.end(), [=](const rttr::variant& var) {
                                 return intValue == var.to_int();
                             });
-                            if(it != values.end()) {
-                                if(!prop.set_value(wrapped, *it)) {
+                            if (it != values.end()) {
+                                if (!prop.set_value(wrapped, *it)) {
                                     status = 3;
                                 }
                             } else {
@@ -281,7 +295,7 @@ namespace spark {
                             auto it = std::find_if(names.begin(), names.end(), [&](const rttr::basic_string_view<char>& name) {
                                 return name.compare(stringValue) == 0;
                             });
-                            if(it != names.end()) {
+                            if (it != names.end()) {
                                 if (!prop.set_value(wrapped, enumeration.name_to_value(*it))) {
                                     status = 3;
                                 }

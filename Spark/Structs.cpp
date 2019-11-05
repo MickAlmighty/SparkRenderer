@@ -173,3 +173,11 @@ namespace spark {
 		glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
 	}
 }
+
+RTTR_REGISTRATION{
+    rttr::registration::class_<spark::InitializationVariables>("InitializationVariables")
+    .property("width", &spark::InitializationVariables::width)
+    .property("height", &spark::InitializationVariables::height)
+    .property("pathToModels", &spark::InitializationVariables::pathToModels)
+    .property("pathToResources", &spark::InitializationVariables::pathToResources);
+    }

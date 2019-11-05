@@ -24,7 +24,7 @@ namespace spark {
         JsonSerializer(JsonSerializer&&) = delete;
         JsonSerializer& operator+(JsonSerializer&) = delete;
         JsonSerializer& operator+(JsonSerializer&&) = delete;
-        static bool writeToFile(const std::filesystem::path & filePath, Json::Value & root);
+        static bool writeToFile(const std::filesystem::path& filePath, Json::Value & root);
         static Json::Value readFromFile(const std::filesystem::path & filePath);
         static JsonSerializer* getInstance();
         static bool isPtr(const rttr::type& type);
@@ -34,9 +34,13 @@ namespace spark {
         std::shared_ptr<Scene> loadSceneFromFile(const std::filesystem::path& filePath);
         bool saveSceneToFile(const std::shared_ptr<Scene>& scene, const std::filesystem::path& filePath);
         bool save(const rttr::variant& var, Json::Value& root);
+        bool save(const rttr::variant& var, const std::filesystem::path& filePath);
         template <typename T>
-        std::shared_ptr<T> load(const Json::Value& root);
+        std::shared_ptr<T> loadJson(const Json::Value& root);
+        template <typename T>
+        std::shared_ptr<T> load(const std::filesystem::path& filePath);
         rttr::variant loadVariant(const Json::Value& root);
+        rttr::variant loadVariant(const std::filesystem::path& filePath);
     private:
         void serialize(const rttr::variant& var, Json::Value& root);
         rttr::variant deserialize(const Json::Value& root);
@@ -54,7 +58,7 @@ namespace spark {
     };
 
     template <typename T>
-    std::shared_ptr<T> JsonSerializer::load(const Json::Value& root) {
+    std::shared_ptr<T> JsonSerializer::loadJson(const Json::Value& root) {
         std::lock_guard lock(serializerMutex);
         counter = 0;
         try {
@@ -69,6 +73,12 @@ namespace spark {
             bindings.clear();
             return nullptr;
         }
+    }
+
+    template <typename T>
+    std::shared_ptr<T> JsonSerializer::load(const std::filesystem::path& filePath) {
+        Json::Value root{ readFromFile(filePath) };
+        return loadJson<T>(root);
     }
 }
 #endif

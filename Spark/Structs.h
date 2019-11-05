@@ -1,16 +1,16 @@
 #ifndef STRUCTS_H
 #define STRUCTS_H
 
-#include <vector>
-#include <filesystem>
+#include "LocalTranform.h"
+#include "WorldTransform.h"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
-#include <json/value.h>
+#include <rttr/registration>
 
-#include "LocalTranform.h"
-#include "WorldTransform.h"
+#include <vector>
+#include <filesystem>
 
 namespace spark {
 
@@ -38,26 +38,9 @@ namespace spark {
 	{
 		unsigned int width;
 		unsigned int height;
-		std::filesystem::path pathToModels;
-		std::filesystem::path pathToResources;
-
-		Json::Value serialize() const
-		{
-			Json::Value root;
-			root["width"] = width;
-			root["height"] = height;
-			root["pathToModels"] = pathToModels.string();
-			root["pathToResources"] = pathToResources.string();
-			return root;
-		}
-
-		void deserialize(Json::Value& root)
-		{
-			width = root.get("width", 1280).asInt();
-			height = root.get("height", 720).asInt();
-			pathToModels = root["pathToModels"].asString();
-			pathToResources = root["pathToResources"].asString();
-		}
+		std::string pathToModels;
+		std::string pathToResources;
+        RTTR_ENABLE();
 	};
 
 	struct Texture

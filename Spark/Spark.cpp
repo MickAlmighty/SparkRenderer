@@ -16,12 +16,12 @@
 
 namespace spark {
 
-	void Spark::setup(InitializationVariables& variables)
+	void Spark::setup(const std::shared_ptr<InitializationVariables>& variables)
 	{
-		WIDTH = variables.width;
-		HEIGHT = variables.height;
-		pathToModelMeshes = variables.pathToModels;
-		pathToResources = variables.pathToResources;
+		WIDTH = variables->width;
+		HEIGHT = variables->height;
+		pathToModelMeshes = variables->pathToModels;
+		pathToResources = variables->pathToResources;
 		
 		initOpenGL();
 		ResourceManager::getInstance()->loadResources();

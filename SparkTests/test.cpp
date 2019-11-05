@@ -109,6 +109,12 @@ public:
     float field2{ 2.0f };
     SerializationEnum1 field3{ SerializationEnum1::Value2 };
     SerializationEnum1 field4{ SerializationEnum1::Value3 };
+    glm::vec2 vec2{};
+    glm::vec3 vec3{};
+    glm::vec4 vec4{};
+    glm::mat2 mat2{};
+    glm::mat3 mat3{};
+    glm::mat4 mat4{};
     RTTR_ENABLE();
 };
 
