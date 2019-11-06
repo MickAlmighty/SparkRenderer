@@ -56,8 +56,7 @@ namespace spark {
 			};
 			SparkRenderer::getInstance()->renderQueue[ShaderType::PATH_SHADER].push_back(f);
 		}
-	}
-
+	
 		if (isTraveling)
 		{
 			walkToEndOfThePath();
