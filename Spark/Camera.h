@@ -32,6 +32,9 @@ public:
 	glm::mat4 getViewMatrix() const;
 	glm::mat4 getProjectionMatrix() const;
 	glm::vec3 getPosition() const;
+	glm::vec3 getFront() const;
+	float getFarPlane() const;
+	float getNearPlane() const;
 	void setProjectionMatrix(float fov, float nearPlane, float farPlane);
 	void setCameraTarget(glm::vec3 target);
 	void processKeyboard();

@@ -18,6 +18,7 @@ public:
 	inline static GLFWwindow* window = nullptr;
 	inline static bool runProgram = true;
 	inline static float maxAnisotropicFiltering = 1.0f;
+	inline static bool vsync = false;
 	
 	static void setup(InitializationVariables& variables);
 	static void run();

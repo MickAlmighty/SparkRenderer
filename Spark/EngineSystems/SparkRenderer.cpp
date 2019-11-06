@@ -49,6 +49,13 @@ namespace spark {
 		lightShader = ResourceManager::getInstance()->getShader(ShaderType::LIGHT_SHADER);
 		motionBlurShader = ResourceManager::getInstance()->getShader(ShaderType::MOTION_BLUR_SHADER);
 		cubemapShader = ResourceManager::getInstance()->getShader(ShaderType::CUBEMAP_SHADER);
+
+		const std::shared_ptr<Shader> lShader = lightShader.lock();
+		lShader->use();
+		lShader->bindSSBO("DirLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->dirLightSSBO);
+		lShader->bindSSBO("PointLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->pointLightSSBO);
+		lShader->bindSSBO("SpotLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->spotLightSSBO);
+
 		createFrameBuffersAndTextures();
 	}
 
@@ -78,8 +85,23 @@ namespace spark {
 		renderQueue[ShaderType::DEFAULT_SHADER].clear();
 		POP_DEBUG_GROUP();
 		
-		renderCubemap();
 		renderLights();
+		renderCubemap();
+		//bloom();
+
+		PUSH_DEBUG_GROUP(RENDER_PATHS, 0);
+		glBindFramebuffer(GL_FRAMEBUFFER, lightFrameBuffer);
+
+		const std::shared_ptr<Shader> pathShader = ResourceManager::getInstance()->getShader(ShaderType::PATH_SHADER);
+		pathShader->use();
+		pathShader->setMat4("VP", projection * view);
+		for (auto& drawPath : renderQueue[ShaderType::PATH_SHADER])
+		{
+			drawPath(shader);
+		}
+		renderQueue[ShaderType::PATH_SHADER].clear();
+		POP_DEBUG_GROUP();
+
 		postprocessingPass();
 		motionBlur();
 		renderToScreen();
@@ -105,51 +127,20 @@ namespace spark {
 		glViewport(0, 0, Spark::WIDTH, Spark::HEIGHT);
 	}
 
-	void SparkRenderer::renderCubemap() const
+	void SparkRenderer::renderLights() const
 	{
-		PUSH_DEBUG_GROUP(RENDER_CUBEMAP, 0);
-		glBindFramebuffer(GL_FRAMEBUFFER, cubemapFramebuffer);
+		PUSH_DEBUG_GROUP(PBR_LIGHT, 0);
+
+		glBindFramebuffer(GL_FRAMEBUFFER, lightFrameBuffer);
 		glClearColor(0, 0, 0, 1);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		const auto cubemap = SceneManager::getInstance()->getCurrentScene()->cubemap;
-		if (!cubemap)
-		{
-			POP_DEBUG_GROUP();
-			return;
-		}
-			
-		const auto camera = SceneManager::getInstance()->getCurrentScene()->getCamera();
-		const glm::mat4 view = camera->getViewMatrix();
-		const glm::mat4 projection = camera->getProjectionMatrix();
-		
-		glDepthMask(GL_FALSE);
-		const auto cubemapShaderPtr = cubemapShader.lock();
-		cubemapShaderPtr->use();
-		cubemapShaderPtr->setMat4("view", view);
-		cubemapShaderPtr->setMat4("projection", projection);
-		
-		glBindTextureUnit(0, cubemap->cubemap);
-		cube.draw();
-		glBindTextures(0, 1, nullptr);
-		
-		glDepthMask(GL_TRUE);
-		POP_DEBUG_GROUP();
-	}
-
-	void SparkRenderer::renderLights() const
-	{
 		const auto camera = SceneManager::getInstance()->getCurrentScene()->getCamera();
 		const auto cubemap = SceneManager::getInstance()->getCurrentScene()->cubemap;
 
-		PUSH_DEBUG_GROUP(PBR_LIGHT, 0);
-		
-		glBindFramebuffer(GL_FRAMEBUFFER, lightFrameBuffer);
+		glDisable(GL_DEPTH_TEST);
 		const std::shared_ptr<Shader> lShader = lightShader.lock();
 		lShader->use();
-		lShader->bindSSBO("DirLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->dirLightSSBO);
-		lShader->bindSSBO("PointLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->pointLightSSBO);
-		lShader->bindSSBO("SpotLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->spotLightSSBO);
 		lShader->setVec3("camPos", camera->getPosition());
 		if (cubemap)
 		{
@@ -169,12 +160,149 @@ namespace spark {
 			screenQuad.draw();
 			glBindTextures(0, static_cast<GLsizei>(textures.size()), nullptr);
 		}
+		glEnable(GL_DEPTH_TEST);
+
 		POP_DEBUG_GROUP();
+	}
+
+	void SparkRenderer::renderCubemap() const
+	{
+		const auto cubemap = SceneManager::getInstance()->getCurrentScene()->cubemap;
+		if (!cubemap)
+			return;
+
+		const auto camera = SceneManager::getInstance()->getCurrentScene()->getCamera();
+		const glm::mat4 view = camera->getViewMatrix();
+		const glm::mat4 projection = camera->getProjectionMatrix();
+		const glm::vec3 cameraPosition = camera->getPosition();
+		const glm::vec3 cameraFront = camera->getFront();
+		const float farPlane = camera->getFarPlane();
+		PUSH_DEBUG_GROUP(RENDER_CUBEMAP, 0);
+		glBindFramebuffer(GL_FRAMEBUFFER, cubemapFramebuffer);
+
+		glDepthFunc(GL_LEQUAL);
+		const auto cubemapShaderPtr = cubemapShader.lock();
+		cubemapShaderPtr->use();
+		cubemapShaderPtr->setMat4("view", view);
+		cubemapShaderPtr->setMat4("projection", projection);
+		cubemapShaderPtr->setVec3("cubemapPosition", cameraPosition + cameraFront * farPlane);
+
+		glBindTextureUnit(0, cubemap->cubemap);
+		cube.draw();
+		glBindTextures(0, 1, nullptr);
+		glDepthFunc(GL_LESS);
+
+		POP_DEBUG_GROUP();
+	}
+
+	void SparkRenderer::bloom() const
+	{
+		PUSH_DEBUG_GROUP(BRIGHT_PASS, 0);
+		glBindFramebuffer(GL_FRAMEBUFFER, brightPassFramebuffer);
+		//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, brightPassFramebuffer, 0);
+		glClearColor(0.0, 0.0, 0.0, 0.0);
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		const auto brightPassShader = ResourceManager::getInstance()->getShader(ShaderType::BRIGHT_PASS_SHADER);
+		brightPassShader->use();
+
+		glBindTextureUnit(0, lightColorTexture);
+		screenQuad.draw();
+		glBindTextures(0, 1, nullptr);
+
+		{
+			PUSH_DEBUG_GROUP(DOWN_SCALE, 0);
+			const auto downScaleShader = ResourceManager::getInstance()->getShader(ShaderType::DOWNSCALE_SHADER);
+			downScaleShader->use();
+			downScaleShader->setBool("blend", false);
+			glBindFramebuffer(GL_FRAMEBUFFER, brightPassOneEightsFramebuffer);
+			glViewport(0, 0, Spark::WIDTH / 8, Spark::HEIGHT / 8);
+			glBindTextureUnit(0, brightPassTexture);
+			screenQuad.draw();
+			glBindTextures(0, 1, nullptr);
+
+				PUSH_DEBUG_GROUP(GAUSSIAN_BLUR_1_8, 0);
+				glBindFramebuffer(GL_FRAMEBUFFER, gaussianBlurOneEightsFramebuffer);
+				const auto gaussianBlurShader = ResourceManager::getInstance()->getShader(ShaderType::GAUSSIAN_BLUR_SHADER);
+				gaussianBlurShader->use();
+				gaussianBlurShader->setVec2("inverseScreenSize", { 1.0f / (Spark::WIDTH / 8), 1.0f / (Spark::HEIGHT / 8) });
+				gaussianBlurShader->setVec2("direction", { 1.0f, 0.0f });
+				glBindTextureUnit(0, brightOneEights);
+				screenQuad.draw();
+				glBindTextures(0, 1, nullptr);
+
+				glBindFramebuffer(GL_FRAMEBUFFER, gaussianBlurOneEightsFramebuffer2);
+				gaussianBlurShader->setVec2("direction", { 0.0f, 1.0f });
+				glBindTextureUnit(0, gaussianBlurOneEightsTexture);
+				screenQuad.draw();
+				glBindTextures(0, 1, nullptr);
+				POP_DEBUG_GROUP();
+
+			glBindFramebuffer(GL_FRAMEBUFFER, brightPassQuarterFramebuffer);
+			glViewport(0, 0, Spark::WIDTH / 4, Spark::HEIGHT / 4);
+			downScaleShader->use();
+			downScaleShader->setBool("blend", true);
+			glBindTextureUnit(0, brightPassTexture);
+			glBindTextureUnit(1, gaussianBlurOneEightsTexture2);
+			screenQuad.draw();
+
+				PUSH_DEBUG_GROUP(GAUSSIAN_BLUR_1_4, 0);
+				gaussianBlurShader->use();
+				gaussianBlurShader->setVec2("inverseScreenSize", { 1.0f / (Spark::WIDTH / 4), 1.0f / (Spark::HEIGHT / 4) });
+				gaussianBlurShader->setVec2("direction", { 1.0f, 0.0f });
+				glBindFramebuffer(GL_FRAMEBUFFER, gaussianBlurQuarterFramebuffer);
+				glBindTextureUnit(0, brightQuarter);
+				screenQuad.draw();
+				glBindTextures(0, 1, nullptr);
+
+				glBindFramebuffer(GL_FRAMEBUFFER, gaussianBlurQuarterFramebuffer2);
+				gaussianBlurShader->setVec2("direction", { 0.0f, 1.0f });
+				glBindTextureUnit(0, gaussianBlurQuarterTexture);
+				screenQuad.draw();
+				glBindTextures(0, 1, nullptr);
+				POP_DEBUG_GROUP();
+
+			glBindFramebuffer(GL_FRAMEBUFFER, brightPassHalfFramebuffer);
+			glViewport(0, 0, Spark::WIDTH / 2, Spark::HEIGHT / 2);
+			downScaleShader->use();
+			glBindTextureUnit(0, brightPassTexture);
+			glBindTextureUnit(1, gaussianBlurQuarterTexture2);
+			screenQuad.draw();
+
+				PUSH_DEBUG_GROUP(GAUSSIAN_BLUR_1_2, 0);
+				glBindFramebuffer(GL_FRAMEBUFFER, gaussianBlurHalfFramebuffer);
+				gaussianBlurShader->use();
+				gaussianBlurShader->setVec2("inverseScreenSize", { 1.0f / (Spark::WIDTH / 2), 1.0f / (Spark::HEIGHT / 2) });
+				gaussianBlurShader->setVec2("direction", { 1.0f, 0.0f });
+				glBindTextureUnit(0, brightHalf);
+				screenQuad.draw();
+				glBindTextures(0, 1, nullptr);
+
+				glBindFramebuffer(GL_FRAMEBUFFER, gaussianBlurHalfFramebuffer2);
+				gaussianBlurShader->setVec2("direction", { 0.0f, 1.0f });
+				glBindTextureUnit(0, gaussianBlurHalfTexture);
+				screenQuad.draw();
+				glBindTextures(0, 1, nullptr);
+				POP_DEBUG_GROUP();
+
+			POP_DEBUG_GROUP();
+		}
+		POP_DEBUG_GROUP();
+
+		glViewport(0, 0, Spark::WIDTH, Spark::HEIGHT);
 	}
 
 	void SparkRenderer::postprocessingPass()
 	{
-		PUSH_DEBUG_GROUP(POSTPROCESSING, 0);
+		/*PUSH_DEBUG_GROUP(POSTPROCESSING, 0);
+		glBindFramebuffer(GL_FRAMEBUFFER, lightFrameBuffer);
+		const auto downScaleShader = ResourceManager::getInstance()->getShader(ShaderType::DOWNSCALE_SHADER);
+		downScaleShader->use();
+		downScaleShader->setBool("blend", true);
+		glBindTextureUnit(0, lightColorTexture);
+		glBindTextureUnit(1, gaussianBlurHalfTexture2);
+		screenQuad.draw();
+		glBindTextures(0, 2, nullptr);*/
 
 		textureHandle = postProcessingTexture;
 
@@ -185,6 +313,7 @@ namespace spark {
 		postprocessingShader.lock()->setVec2("inversedScreenSize", { 1.0f / Spark::WIDTH, 1.0f / Spark::HEIGHT });
 
 		glBindTextureUnit(0, lightColorTexture);
+		glBindTextureUnit(1, gaussianBlurHalfTexture2);
 
 		screenQuad.draw();
 
@@ -248,83 +377,74 @@ namespace spark {
 
 	void SparkRenderer::createFrameBuffersAndTextures()
 	{
-		glCreateFramebuffers(1, &mainFramebuffer);
-		glBindFramebuffer(GL_FRAMEBUFFER, mainFramebuffer);
-		createTexture(colorTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
-		createTexture(positionTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
-		createTexture(normalsTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
-		createTexture(roughnessTexture, Spark::WIDTH, Spark::HEIGHT, GL_R16F, GL_RED, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
-		createTexture(metalnessTexture, Spark::WIDTH, Spark::HEIGHT, GL_R16F, GL_RED, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, positionTexture, 0);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, colorTexture, 0);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, normalsTexture, 0);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, roughnessTexture, 0);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT4, GL_TEXTURE_2D, metalnessTexture, 0);
-
 		GLuint renderbuffer;
 		glCreateRenderbuffers(1, &renderbuffer);
 		glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer);
 		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, Spark::WIDTH, Spark::HEIGHT);
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, renderbuffer);
 
-		GLenum attachments[6] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4 };
-		glDrawBuffers(6, attachments);
+		createTexture(colorTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
+		createTexture(positionTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
+		createTexture(normalsTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
+		createTexture(roughnessTexture, Spark::WIDTH, Spark::HEIGHT, GL_R16F, GL_RED, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
+		createTexture(metalnessTexture, Spark::WIDTH, Spark::HEIGHT, GL_R16F, GL_RED, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
 
-		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-		{
-			throw std::exception("Main framebuffer incomplete!");
-		}
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-		glCreateFramebuffers(1, &lightFrameBuffer);
-		glBindFramebuffer(GL_FRAMEBUFFER, lightFrameBuffer);
 		createTexture(lightColorTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, lightColorTexture, 0);
-		GLenum attachments2[1] = { GL_COLOR_ATTACHMENT0 };
-		glDrawBuffers(1, attachments2);
-
-		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-		{
-			throw std::exception("Postprocessing framebuffer incomplete!");
-		}
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-
-		glCreateFramebuffers(1, &postprocessingFramebuffer);
-		glBindFramebuffer(GL_FRAMEBUFFER, postprocessingFramebuffer);
 		createTexture(postProcessingTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, postProcessingTexture, 0);
-		GLenum attachments3[1] = { GL_COLOR_ATTACHMENT0 };
-		glDrawBuffers(1, attachments3);
-
-		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-		{
-			throw std::exception("Postprocessing framebuffer incomplete!");
-		}
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-		glCreateFramebuffers(1, &cubemapFramebuffer);
-		glBindFramebuffer(GL_FRAMEBUFFER, cubemapFramebuffer);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, lightColorTexture, 0);
-		GLenum attachments4[1] = { GL_COLOR_ATTACHMENT0 };
-		glDrawBuffers(1, attachments4);
-
-		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-		{
-			throw std::exception("Cubemap framebuffer incomplete!");
-		}
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-		glCreateFramebuffers(1, &motionBlurFramebuffer);
-		glBindFramebuffer(GL_FRAMEBUFFER, motionBlurFramebuffer);
 		createTexture(motionBlurTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, motionBlurTexture, 0);
-		GLenum attachments5[1] = { GL_COLOR_ATTACHMENT0 };
-		glDrawBuffers(1, attachments5);
+		createTexture(brightPassTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+		createTexture(brightHalf, Spark::WIDTH / 2, Spark::HEIGHT / 2, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+		createTexture(brightQuarter, Spark::WIDTH / 4, Spark::HEIGHT / 4, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+		createTexture(brightOneEights, Spark::WIDTH / 8, Spark::HEIGHT / 8, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+		createTexture(gaussianBlurHalfTexture, Spark::WIDTH / 2, Spark::HEIGHT / 2, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+		createTexture(gaussianBlurQuarterTexture, Spark::WIDTH / 4, Spark::HEIGHT / 4, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+		createTexture(gaussianBlurOneEightsTexture, Spark::WIDTH / 8, Spark::HEIGHT / 8, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+
+		createTexture(gaussianBlurHalfTexture2, Spark::WIDTH / 2, Spark::HEIGHT / 2, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+		createTexture(gaussianBlurQuarterTexture2, Spark::WIDTH / 4, Spark::HEIGHT / 4, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+		createTexture(gaussianBlurOneEightsTexture2, Spark::WIDTH / 8, Spark::HEIGHT / 8, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+
+		createFramebuffer(mainFramebuffer, { positionTexture, colorTexture, normalsTexture, roughnessTexture, metalnessTexture }, renderbuffer);
+		createFramebuffer(lightFrameBuffer, { lightColorTexture }, renderbuffer);
+		createFramebuffer(postprocessingFramebuffer, { postProcessingTexture });
+		createFramebuffer(cubemapFramebuffer, { lightColorTexture, positionTexture }, renderbuffer);
+		createFramebuffer(motionBlurFramebuffer, { motionBlurTexture });
+		createFramebuffer(brightPassFramebuffer, { brightPassTexture });
+		createFramebuffer(brightPassHalfFramebuffer, { brightHalf });
+		createFramebuffer(brightPassQuarterFramebuffer, { brightQuarter });
+		createFramebuffer(brightPassOneEightsFramebuffer, { brightOneEights });
+		createFramebuffer(gaussianBlurHalfFramebuffer, { gaussianBlurHalfTexture });
+		createFramebuffer(gaussianBlurQuarterFramebuffer, { gaussianBlurQuarterTexture });
+		createFramebuffer(gaussianBlurOneEightsFramebuffer, { gaussianBlurOneEightsTexture });
+
+		createFramebuffer(gaussianBlurHalfFramebuffer2, { gaussianBlurHalfTexture2 });
+		createFramebuffer(gaussianBlurQuarterFramebuffer2, { gaussianBlurQuarterTexture2 });
+		createFramebuffer(gaussianBlurOneEightsFramebuffer2, { gaussianBlurOneEightsTexture2 });
+	}
+
+	void SparkRenderer::createFramebuffer(GLuint& framebuffer, const std::vector<GLuint>&& colorTextures,
+		GLuint renderbuffer)
+	{
+		glCreateFramebuffers(1, &framebuffer);
+		glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+
+		std::vector<GLenum> colorAttachments;
+		colorAttachments.reserve(colorTextures.size());
+		for(unsigned int i = 0; i < colorTextures.size(); ++i)
+		{
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, colorTextures[i], 0);
+			colorAttachments.push_back(GL_COLOR_ATTACHMENT0 + i);
+		}
+		glDrawBuffers(static_cast<GLsizei>(colorAttachments.size()), colorAttachments.data());
+
+		if (renderbuffer != 0)
+		{
+			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, renderbuffer);
+		}
 
 		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 		{
-			throw std::exception("Motion Blur framebuffer incomplete!");
+			throw std::exception("Framebuffer incomplete!");
 		}
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
@@ -349,11 +469,14 @@ namespace spark {
 
 	void SparkRenderer::deleteFrameBuffersAndTextures() const
 	{
-		GLuint textures[8] = { colorTexture, positionTexture, normalsTexture, roughnessTexture, metalnessTexture, lightColorTexture, postProcessingTexture, motionBlurTexture };
-		glDeleteTextures(8, textures);
+		GLuint textures[9] = { colorTexture, positionTexture, normalsTexture, roughnessTexture, metalnessTexture, lightColorTexture, postProcessingTexture, motionBlurTexture, brightPassTexture };
+		glDeleteTextures(9, textures);
 
-		GLuint frameBuffers[5] = { mainFramebuffer, lightFrameBuffer, postprocessingFramebuffer, motionBlurFramebuffer, cubemapFramebuffer };
-		glDeleteFramebuffers(5, frameBuffers);
+		GLuint brightPassDownScale[3] = { brightHalf, brightQuarter, brightOneEights };
+		glDeleteTextures(3, brightPassDownScale);
+
+		GLuint frameBuffers[6] = { mainFramebuffer, lightFrameBuffer, postprocessingFramebuffer, motionBlurFramebuffer, cubemapFramebuffer, brightPassFramebuffer };
+		glDeleteFramebuffers(6, frameBuffers);
 	}
 
 }

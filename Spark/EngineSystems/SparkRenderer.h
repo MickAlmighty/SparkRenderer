@@ -32,8 +32,18 @@ private:
 	GLuint lightFrameBuffer{}, lightColorTexture{};
 	GLuint postprocessingFramebuffer{}, postProcessingTexture{};
 	GLuint motionBlurFramebuffer{}, motionBlurTexture{};
-	GLuint textureHandle{}; //temporary its only a handle to other texture -> dont delete it
 	GLuint cubemapFramebuffer{};
+	GLuint brightPassFramebuffer{}, brightPassTexture{};
+	GLuint brightPassHalfFramebuffer{}, brightHalf{};
+	GLuint brightPassQuarterFramebuffer{}, brightQuarter{};
+	GLuint brightPassOneEightsFramebuffer{}, brightOneEights{};
+	GLuint gaussianBlurOneEightsFramebuffer{}, gaussianBlurOneEightsTexture{};
+	GLuint gaussianBlurOneEightsFramebuffer2{}, gaussianBlurOneEightsTexture2{};
+	GLuint gaussianBlurQuarterFramebuffer{}, gaussianBlurQuarterTexture{};
+	GLuint gaussianBlurQuarterFramebuffer2{}, gaussianBlurQuarterTexture2{};
+	GLuint gaussianBlurHalfFramebuffer{}, gaussianBlurHalfTexture{};
+	GLuint gaussianBlurHalfFramebuffer2{}, gaussianBlurHalfTexture2{};
+	GLuint textureHandle{}; //temporary its only a handle to other texture -> dont delete it
 
 	std::weak_ptr<Shader> mainShader;
 	std::weak_ptr<Shader> screenShader;
@@ -47,14 +57,16 @@ private:
 	SparkRenderer() = default;
 
 	void createTexture(GLuint& texture, GLuint width, GLuint height, GLenum internalFormat, GLenum format, GLenum pixelFormat, GLenum textureWrapping, GLenum textureSampling);
-	void renderCubemap() const;
 	void renderLights() const;
+	void bloom() const;
+	void renderCubemap() const;
 	void postprocessingPass();
 	void motionBlur();
 	void renderToScreen() const;
 	void initMembers();
 	void resizeWindowIfNecessary();
 	void createFrameBuffersAndTextures();
+	void createFramebuffer(GLuint& framebuffer, const std::vector<GLuint>&& colorTextures, GLuint renderbuffer = 0);
 	void deleteFrameBuffersAndTextures() const;
 };
 }

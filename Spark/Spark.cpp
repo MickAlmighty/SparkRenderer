@@ -21,7 +21,8 @@ namespace spark {
 		HEIGHT = variables.height;
 		pathToModelMeshes = variables.pathToModels;
 		pathToResources = variables.pathToResources;
-		
+		vsync = variables.vsync;
+
 		initOpenGL();
 		ResourceManager::getInstance()->loadResources();
 		SceneManager::getInstance()->setup();
@@ -87,7 +88,14 @@ namespace spark {
 		ImGui_ImplOpenGL3_Init(glsl_version);
 		ImGui_ImplOpenGL3_NewFrame();
 
-		glfwSwapInterval(0);
+		if(vsync)
+		{
+			glfwSwapInterval(1);
+		}
+		else
+		{
+			glfwSwapInterval(0);
+		}
 	}
 
 	void Spark::run()

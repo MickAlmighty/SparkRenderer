@@ -38,6 +38,7 @@ namespace spark {
 	{
 		unsigned int width;
 		unsigned int height;
+		bool vsync = false;
 		std::filesystem::path pathToModels;
 		std::filesystem::path pathToResources;
 
@@ -48,6 +49,7 @@ namespace spark {
 			root["height"] = height;
 			root["pathToModels"] = pathToModels.string();
 			root["pathToResources"] = pathToResources.string();
+			root["vsync"] = vsync;
 			return root;
 		}
 
@@ -57,6 +59,7 @@ namespace spark {
 			height = root.get("height", 720).asInt();
 			pathToModels = root["pathToModels"].asString();
 			pathToResources = root["pathToResources"].asString();
+			vsync = root.get("vsync", false).asBool();
 		}
 	};
 

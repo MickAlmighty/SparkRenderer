@@ -58,7 +58,17 @@ namespace spark {
 
 		ImGui::Text("Path to models:"); ImGui::SameLine(); ImGui::Text(Spark::pathToModelMeshes.string().c_str());
 		ImGui::Text("Path to resources:"); ImGui::SameLine(); ImGui::Text(Spark::pathToResources.string().c_str());
-
+		if(ImGui::Checkbox("V-Sync", &Spark::vsync))
+		{
+			if (Spark::vsync)
+			{
+				glfwSwapInterval(1);
+			}
+			else
+			{
+				glfwSwapInterval(0);
+			}
+		}
 		static const char* items[4] = { "1280x720", "1600x900", "1920x1080", "1920x1055" };
 		static int current_item = checkCurrentItem(items);
 		if (ImGui::Combo("Resolution", &current_item, items, IM_ARRAYSIZE(items)))
@@ -88,6 +98,7 @@ namespace spark {
 			variables.height = Spark::HEIGHT;
 			variables.pathToResources = Spark::pathToResources;
 			variables.pathToModels = Spark::pathToModelMeshes;
+			variables.vsync = Spark::vsync;
 			JsonSerializer::writeToFile("settings.json", variables.serialize());
 		}
 		ImGui::End();

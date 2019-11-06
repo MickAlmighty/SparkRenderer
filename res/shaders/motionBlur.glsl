@@ -26,7 +26,7 @@ uniform mat4 viewProjectionMatrix;
 uniform mat4 previousViewProjectionMatrix;
 uniform float currentFPS;
 
-#define MAX_SAMPLES 12
+#define MAX_SAMPLES 20
 
 void main()
 {

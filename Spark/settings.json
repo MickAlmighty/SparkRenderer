@@ -2,5 +2,6 @@
 	"height" : 720,
 	"pathToModels" : "..\\res\\models",
 	"pathToResources" : "..\\res",
+	"vsync" : true,
 	"width" : 1280
 }

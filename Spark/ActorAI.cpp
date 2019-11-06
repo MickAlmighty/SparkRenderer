@@ -42,6 +42,20 @@ void ActorAI::update()
 		{
 			isTraveling = true;
 		}
+		
+
+		if (isTraveling)
+		{
+			walkToEndOfThePath();
+			int indicesCount = updatePathMesh(path);
+			const auto f = [shared_ptr = shared_from_base<ActorAI>(), indicesCount] (std::shared_ptr<Shader>& shader)
+			{
+				glBindVertexArray(shared_ptr->vao);
+				glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indicesCount), GL_UNSIGNED_INT, 0);
+				glBindVertexArray(0);
+			};
+			SparkRenderer::getInstance()->renderQueue[ShaderType::PATH_SHADER].push_back(f);
+		}
 	}
 
 	if (isTraveling)
