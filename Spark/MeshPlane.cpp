@@ -109,6 +109,8 @@ void MeshPlane::deserialize(Json::Value& root)
 	name = root.get("name", "MeshPlane").asString();
 	std::string diffuseTexName = root[std::to_string(static_cast<int>(TextureTarget::DIFFUSE_TARGET))].asString();
 	std::string normalTexName = root[std::to_string(static_cast<int>(TextureTarget::NORMAL_TARGET))].asString();
+	std::string roughnessTexName = root[std::to_string(static_cast<int>(TextureTarget::ROUGHNESS_TARGET))].asString();
+	std::string metalnessTexName = root[std::to_string(static_cast<int>(TextureTarget::METALNESS_TARGET))].asString();
 
 	if (!diffuseTexName.empty())
 	{
@@ -116,7 +118,15 @@ void MeshPlane::deserialize(Json::Value& root)
 	}
 	if (!normalTexName.empty())
 	{
-		textures[TextureTarget::DIFFUSE_TARGET] = ResourceManager::getInstance()->findTexture(static_cast<const std::string>(diffuseTexName));
+		textures[TextureTarget::NORMAL_TARGET] = ResourceManager::getInstance()->findTexture(static_cast<const std::string>(normalTexName));
+	}
+	if (!roughnessTexName.empty())
+	{
+		textures[TextureTarget::ROUGHNESS_TARGET] = ResourceManager::getInstance()->findTexture(static_cast<const std::string>(roughnessTexName));
+	}
+	if (!metalnessTexName.empty())
+	{
+		textures[TextureTarget::METALNESS_TARGET] = ResourceManager::getInstance()->findTexture(static_cast<const std::string>(metalnessTexName));
 	}
 }
 
@@ -140,7 +150,9 @@ void MeshPlane::drawGUI()
 	//ImGui::com
 	static int mode = static_cast<int>(TextureTarget::DIFFUSE_TARGET);
 	if (ImGui::RadioButton("Diffuse", mode == static_cast<int>(TextureTarget::DIFFUSE_TARGET))) { mode = static_cast<int>(TextureTarget::DIFFUSE_TARGET); } ImGui::SameLine();
-	if (ImGui::RadioButton("Normal", mode == static_cast<int>(TextureTarget::NORMAL_TARGET))) { mode = static_cast<int>(TextureTarget::NORMAL_TARGET); }
+	if (ImGui::RadioButton("Normal", mode == static_cast<int>(TextureTarget::NORMAL_TARGET))) { mode = static_cast<int>(TextureTarget::NORMAL_TARGET); } ImGui::SameLine();
+	if (ImGui::RadioButton("Roughness", mode == static_cast<int>(TextureTarget::ROUGHNESS_TARGET))) { mode = static_cast<int>(TextureTarget::ROUGHNESS_TARGET); } ImGui::SameLine();
+	if (ImGui::RadioButton("Metalness", mode == static_cast<int>(TextureTarget::METALNESS_TARGET))) { mode = static_cast<int>(TextureTarget::METALNESS_TARGET); } 
 
 	std::string name = "texture: " + std::to_string(textures[static_cast<TextureTarget>(mode)].ID);
 	ImGui::Text(name.c_str());

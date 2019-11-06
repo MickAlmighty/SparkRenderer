@@ -132,7 +132,7 @@ namespace spark {
 			{
 				for (const auto& texture : textures)
 				{
-					ImGui::Image(reinterpret_cast<void*>(static_cast<intptr_t>(texture.ID)), ImVec2(200.0f, 200.0f), ImVec2(0, 1), ImVec2(1, 0));
+					ImGui::Image(reinterpret_cast<void*>(static_cast<intptr_t>(texture.ID)), ImVec2(200.0f, 200.0f));
 					
 					if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
 					{

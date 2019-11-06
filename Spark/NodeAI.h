@@ -25,7 +25,7 @@ public:
 	NodeAI();
 	~NodeAI() = default;
 
-	float distanceToEndPoint(glm::vec2 endPoint) const;
+	float measureManhattanDistance(glm::vec2 point) const;
 	std::list<std::shared_ptr<NodeAI>> getNeighbors(const std::shared_ptr<TerrainGenerator>& terrainGenerator) const;
 	void drawReturnPath(std::shared_ptr<TerrainGenerator>& terrainGenerator) const;
 	void getPath(std::deque<std::pair<bool, glm::ivec2>>& path) const;
