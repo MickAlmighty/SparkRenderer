@@ -146,9 +146,110 @@ namespace spark {
         return loadVariant(root);
     }
 
+    void JsonSerializer::writePropertyToJson(Json::Value& root, const rttr::type& type, const rttr::variant& var) {
+        if (isPtr(type)) {
+            serialize(var, root);
+        } else {
+            unsigned char status = 0; //outcome here as well!
+            if (type.is_enumeration()) {
+                root = std::string(type.get_enumeration().value_to_name(var));
+            } else if (type.is_arithmetic()) {
+                if (type == rttr::type::get<uint8_t>()) {
+                    root = var.get_value<uint8_t>();
+                } else if (type == rttr::type::get<uint16_t>()) {
+                    root = var.get_value<uint16_t>();
+                } else if (type == rttr::type::get<uint32_t>()) {
+                    root = var.get_value<uint32_t>();
+                } else if (type == rttr::type::get<uint64_t>()) {
+                    root = var.get_value<uint64_t>();
+                } else if (type == rttr::type::get<int8_t>()) {
+                    root = var.get_value<int8_t>();
+                } else if (type == rttr::type::get<int16_t>()) {
+                    root = var.get_value<int16_t>();
+                } else if (type == rttr::type::get<int32_t>()) {
+                    root = var.get_value<int32_t>();
+                } else if (type == rttr::type::get<int64_t>()) {
+                    root = var.get_value<int64_t>();
+                } else if (type == rttr::type::get<bool>()) {
+                    root = var.get_value<bool>();
+                } else if (type == rttr::type::get<float>()) {
+                    root = var.get_value<float>();
+                } else if (type == rttr::type::get<double>()) {
+                    root = var.get_value<double>();
+                } else {
+                    status = 1;
+                }
+            } else if (type.is_sequential_container()) {
+                rttr::variant_sequential_view seq{ var.create_sequential_view() };
+                for (int i = 0; i < seq.get_size(); ++i) {
+                    writePropertyToJson(root[i], seq.get_value_type(), seq.get_value(i).extract_wrapped_value());
+                }
+            } else if (type.is_associative_container()) {
+                rttr::variant_associative_view view{ var.create_associative_view() };
+                int counter = 0;
+                if(view.is_key_only_type()) {
+                    for (auto& item : view) {
+                        writePropertyToJson(root[counter++], view.get_key_type(), item.first.extract_wrapped_value());
+                    }
+                } else {
+                    for (auto& item : view) {
+                        writePropertyToJson(root[counter][0], view.get_key_type(), item.first.extract_wrapped_value());
+                        writePropertyToJson(root[counter][1], view.get_value_type(), item.second.extract_wrapped_value());
+                        counter++;
+                    }
+                }
+            } else {
+                if (type == rttr::type::get<glm::vec2>()) {
+                    const glm::vec2 vec{ var.get_value<glm::vec2>() };
+                    for (int i = 0; i < 2; i++) {
+                        root[i] = vec[i];
+                    }
+                } else if (type == rttr::type::get<glm::vec3>()) {
+                    const glm::vec3 vec{ var.get_value<glm::vec3>() };
+                    for (int i = 0; i < 3; i++) {
+                        root[i] = vec[i];
+                    }
+                } else if (type == rttr::type::get<glm::vec4>()) {
+                    const glm::vec4 vec{ var.get_value<glm::vec4>() };
+                    for (int i = 0; i < 4; i++) {
+                        root[i] = vec[i];
+                    }
+                } else if (type == rttr::type::get<glm::mat2>()) {
+                    const glm::mat2 mat{ var.get_value<glm::mat2>() };
+                    for (int i = 0; i < 2; i++) {
+                        for (int j = 0; j < 2; j++) {
+                            root[i][j] = mat[i][j];
+                        }
+                    }
+                } else if (type == rttr::type::get<glm::mat3>()) {
+                    const glm::mat3 mat{ var.get_value<glm::mat3>() };
+                    for (int i = 0; i < 3; i++) {
+                        for (int j = 0; j < 3; j++) {
+                            root[i][j] = mat[i][j];
+                        }
+                    }
+                } else if (type == rttr::type::get<glm::mat4>()) {
+                    const glm::mat4 mat{ var.get_value<glm::mat4>() };
+                    for (int i = 0; i < 4; i++) {
+                        for (int j = 0; j < 4; j++) {
+                            root[i][j] = mat[i][j];
+                        }
+                    }
+                } else {
+                    status = 1;
+                }
+            }
+            switch (status) {
+                case 1:
+                    SPARK_ERROR("Unknown property type: '{}'.", type.get_name().cbegin());
+                    throw std::exception("Unknown property type!");
+            }
+        }
+    }
+
     void JsonSerializer::serialize(const rttr::variant& var, Json::Value& root) {
         if (!isPtr(var.get_type())) {
-            SPARK_ERROR("Source object must be a pointer!");
+            SPARK_ERROR("Source object's type '{}' must be a pointer!", var.get_type().get_name().cbegin());
             throw std::exception("Source object must be a pointer!");
         }
         if (isVarBound(var)) {
@@ -161,87 +262,8 @@ namespace spark {
             rttr::variant wrapped{ isWrappedPtr(var.get_type()) ? var.extract_wrapped_value() : var };
             Json::Value& content = root[CONTENT_NAME];
             for (rttr::property prop : wrapped.get_type().get_properties()) {
-                const rttr::type propType{ prop.get_type() };
                 Json::Value& obj{ content[std::string(prop.get_name())] };
-                if (isPtr(propType)) {
-                    serialize(prop.get_value(wrapped), obj);
-                } else {
-                    unsigned char status = 0; //outcome here as well!
-                    if (propType.is_enumeration()) {
-                        obj = std::string(propType.get_enumeration().value_to_name(prop.get_value(wrapped)));
-                    } else if (propType.is_arithmetic()) {
-                        if (propType == rttr::type::get<uint8_t>()) {
-                            obj = prop.get_value(wrapped).get_value<uint8_t>();
-                        } else if (propType == rttr::type::get<uint16_t>()) {
-                            obj = prop.get_value(wrapped).get_value<uint16_t>();
-                        } else if (propType == rttr::type::get<uint32_t>()) {
-                            obj = prop.get_value(wrapped).get_value<uint32_t>();
-                        } else if (propType == rttr::type::get<uint64_t>()) {
-                            obj = prop.get_value(wrapped).get_value<uint64_t>();
-                        } else if (propType == rttr::type::get<int8_t>()) {
-                            obj = prop.get_value(wrapped).get_value<int8_t>();
-                        } else if (propType == rttr::type::get<int16_t>()) {
-                            obj = prop.get_value(wrapped).get_value<int16_t>();
-                        } else if (propType == rttr::type::get<int32_t>()) {
-                            obj = prop.get_value(wrapped).get_value<int32_t>();
-                        } else if (propType == rttr::type::get<int64_t>()) {
-                            obj = prop.get_value(wrapped).get_value<int64_t>();
-                        } else if (propType == rttr::type::get<bool>()) {
-                            obj = prop.get_value(wrapped).get_value<bool>();
-                        } else if (propType == rttr::type::get<float>()) {
-                            obj = prop.get_value(wrapped).get_value<float>();
-                        } else if (propType == rttr::type::get<double>()) {
-                            obj = prop.get_value(wrapped).get_value<double>();
-                        } else {
-                            status = 1;
-                        }
-                    } else {
-                        if (propType == rttr::type::get<glm::vec2>()) {
-                            const glm::vec2 vec{ prop.get_value(wrapped).get_value<glm::vec2>() };
-                            for (int i = 0; i < 2; i++) {
-                                obj[i] = vec[i];
-                            }
-                        } else if (propType == rttr::type::get<glm::vec3>()) {
-                            const glm::vec3 vec{ prop.get_value(wrapped).get_value<glm::vec3>() };
-                            for (int i = 0; i < 3; i++) {
-                                obj[i] = vec[i];
-                            }
-                        } else if (propType == rttr::type::get<glm::vec4>()) {
-                            const glm::vec4 vec{ prop.get_value(wrapped).get_value<glm::vec4>() };
-                            for (int i = 0; i < 4; i++) {
-                                obj[i] = vec[i];
-                            }
-                        } else if (propType == rttr::type::get<glm::mat2>()) {
-                            const glm::mat2 mat{ prop.get_value(wrapped).get_value<glm::mat2>() };
-                            for (int i = 0; i < 2; i++) {
-                                for (int j = 0; j < 2; j++) {
-                                    obj[i][j] = mat[i][j];
-                                }
-                            }
-                        } else if (propType == rttr::type::get<glm::mat3>()) {
-                            const glm::mat3 mat{ prop.get_value(wrapped).get_value<glm::mat3>() };
-                            for (int i = 0; i < 3; i++) {
-                                for (int j = 0; j < 3; j++) {
-                                    obj[i][j] = mat[i][j];
-                                }
-                            }
-                        } else if (propType == rttr::type::get<glm::mat4>()) {
-                            const glm::mat4 mat{ prop.get_value(wrapped).get_value<glm::mat4>() };
-                            for (int i = 0; i < 4; i++) {
-                                for (int j = 0; j < 4; j++) {
-                                    obj[i][j] = mat[i][j];
-                                }
-                            }
-                        } else {
-                            status = 1;
-                        }
-                    }
-                    switch (status) {
-                        case 1:
-                            SPARK_ERROR("Unknown property type: '{}'.", propType.get_name().cbegin());
-                            throw std::exception("Unknown property type!");
-                    }
-                }
+                writePropertyToJson(obj, prop.get_type(), prop.get_value(wrapped));
             }
         }
     }
@@ -405,6 +427,10 @@ namespace spark {
                         } else {
                             status = 1;
                         }
+                    } else if (propType.is_sequential_container()) {
+
+                    } else if (propType.is_associative_container()) {
+
                     } else {
                         if (propType == rttr::type::get<glm::vec2>()) {
                             if (obj.size() == 2) {

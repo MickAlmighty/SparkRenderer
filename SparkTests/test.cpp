@@ -105,8 +105,8 @@ enum class SerializationEnum1 {
 
 class SerializationClass1 {
 public:
-    float field1{ 1.0f };
-    float field2{ 2.0f };
+    float field1{ };
+    float field2{ };
     SerializationEnum1 field3{ SerializationEnum1::Value2 };
     SerializationEnum1 field4{ SerializationEnum1::Value3 };
     glm::vec2 vec2{};
@@ -115,6 +115,7 @@ public:
     glm::mat2 mat2{};
     glm::mat3 mat3{};
     glm::mat4 mat4{};
+    std::vector<int> intVector{};
     RTTR_ENABLE();
 };
 
@@ -129,11 +130,13 @@ public:
     void setWeak(std::shared_ptr<SerializationClass1> shared) {
         weak = shared;
     }
-    int field1{ 0 };
-    int field2{ 1 };
+    int field1{ };
+    int field2{ };
     std::shared_ptr<SerializationClass1> shared{};
     std::weak_ptr<SerializationClass1> weak{};
     SerializationClass1* raw{ nullptr };
+    std::vector<std::shared_ptr<SerializationClass1>> ptrVector{};
+    std::map<int, int> intMap{};
     RTTR_ENABLE();
 };
 
@@ -156,7 +159,8 @@ RTTR_REGISTRATION{
     .property("vec4", &SerializationClass1::vec4)
     .property("mat2", &SerializationClass1::mat2)
     .property("mat3", &SerializationClass1::mat3)
-    .property("mat4", &SerializationClass1::mat4);
+    .property("mat4", &SerializationClass1::mat4)
+    .property("intVector", &SerializationClass1::intVector);
 
     rttr::registration::class_<SerializationClass2>("SerializationClass2")
     .constructor()(rttr::policy::ctor::as_std_shared_ptr)
@@ -164,7 +168,9 @@ RTTR_REGISTRATION{
     .property("field2", &SerializationClass2::field2)
     .property("shared", &SerializationClass2::shared)
     .property("weak", &SerializationClass2::getWeak, &SerializationClass2::setWeak, rttr::registration::public_access)
-    .property("raw", &SerializationClass2::raw);
+    .property("raw", &SerializationClass2::raw)
+    .property("ptrVector", &SerializationClass2::ptrVector)
+    .property("intMap", &SerializationClass2::intMap);
 }
 
 TEST(SerializationTest, PointersInterchangeable) {
@@ -208,7 +214,12 @@ TEST(SerializationTest, PointersSerializedProperly) {
         {31.0f, 32.0f, 33.0f, 34.0f},
         {35.0f, 36.0f, 37.0f, 38.0f}
     };
+    class1->intVector = { 4,4,6,6,8,8 };
     std::shared_ptr<SerializationClass2> class2 = std::make_shared<SerializationClass2>(class1);
+    class2->field1 = 100;
+    class2->field2 = 500;
+    class2->intMap = { {4,7}, {8,12}, {99,100} };
+    class2->ptrVector = { class1, class1, class1 };
     Json::Value root;
     spark::JsonSerializer* serializer{ spark::JsonSerializer::getInstance() };
     ASSERT_TRUE(serializer->save(class2, root));
@@ -222,6 +233,18 @@ TEST(SerializationTest, PointersSerializedProperly) {
     ASSERT_NE(deserializedClass2->raw, nullptr);
     ASSERT_EQ(deserializedClass2->shared.get(), deserializedClass2->raw);
     ASSERT_EQ(deserializedClass2->weak.lock(), deserializedClass2->shared);
+    ASSERT_EQ(class2->intMap.size(), deserializedClass2->intMap.size());
+    for (auto& item : class2->intMap) {
+        ASSERT_EQ(item.second, deserializedClass2->intMap[item.first]);
+    }
+    ASSERT_EQ(class2->ptrVector.size(), deserializedClass2->ptrVector.size());
+    for (int i = 0; i < class2->ptrVector.size(); ++i) {
+        ASSERT_EQ(deserializedClass2->ptrVector[i], deserializedClass2->shared);
+    }
+    ASSERT_EQ(class2->raw->intVector.size(), deserializedClass2->raw->intVector.size());
+    for (int i = 0; i < class2->raw->intVector.size(); ++i) {
+        ASSERT_EQ(class2->raw->intVector[i], deserializedClass2->raw->intVector[i]);
+    }
     ASSERT_EQ(class2->raw->field1, deserializedClass2->raw->field1);
     ASSERT_EQ(class2->raw->field2, deserializedClass2->raw->field2);
     ASSERT_EQ(class2->raw->field3, deserializedClass2->raw->field3);

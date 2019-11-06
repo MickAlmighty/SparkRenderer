@@ -41,6 +41,7 @@ namespace spark {
         std::shared_ptr<T> load(const std::filesystem::path& filePath);
         rttr::variant loadVariant(const Json::Value& root);
         rttr::variant loadVariant(const std::filesystem::path& filePath);
+        void writePropertyToJson(Json::Value& root, const rttr::type& type, const rttr::variant& var);
     private:
         void serialize(const rttr::variant& var, Json::Value& root);
         rttr::variant deserialize(const Json::Value& root);
