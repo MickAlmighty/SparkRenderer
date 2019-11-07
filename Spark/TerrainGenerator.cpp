@@ -30,8 +30,8 @@ void TerrainGenerator::deserialize(Json::Value& root)
 	terrainSize = root.get("terrainSize", 20).asInt();
 	
 	int tex_width, tex_height, nr_channels;
-	unsigned char* pixels;
-	pixels = stbi_load("map.png", &tex_width, &tex_height, &nr_channels, 0);
+	
+	unsigned char* pixels = stbi_load("map.png", &tex_width, &tex_height, &nr_channels, 0);
 
 	std::vector<glm::vec3> pix;
 	pix.reserve(tex_width * tex_height);
@@ -46,11 +46,12 @@ void TerrainGenerator::deserialize(Json::Value& root)
 		else
 			pix.push_back(pixel);
 	}
-
-	terrain = std::vector<TerrainNode>(400);
+//#TODO: Terrain size as rectangle(x,y) not quad(x,x) 
+	terrainSize = tex_width;
+	terrain = std::vector<float>(tex_width * tex_height);
 	for (int i = 0; i < terrainSize * terrainSize; i++)
 	{
-		terrain[i].nodeData.x = pix[i].x;
+		terrain[i] = pix[i].x;
 	}
 	updateTerrain();
 	generatedTerrain.path = "GeneratedTerrain";
@@ -69,9 +70,7 @@ void TerrainGenerator::fixedUpdate()
 
 void TerrainGenerator::drawGUI()
 {
-	ImGui::DragInt("TerrainSize", &terrainSize, 1);
-	ImGui::DragFloat("PerlinDivider", &perlinDivider, 0.003f);
-	ImGui::DragFloat("PerlinTimeStep", &perlinTimeStep, 0.1f);
+	ImGui::Text("TerrainSize: "); ImGui::SameLine(); ImGui::Text(std::to_string(terrainSize).c_str());
 
 	if(ImGui::Button("Map from .bmp"))
 	{
@@ -94,7 +93,7 @@ void TerrainGenerator::drawGUI()
 
 		for(int i = 0; i < terrainSize * terrainSize; i++)
 		{
-			terrain[i].nodeData.x = pix[i].x;
+			terrain[i] = pix[i].x;
 		}
 		updateTerrain();
 	}
@@ -119,22 +118,6 @@ int TerrainGenerator::getTerrainNodeIndex(const int x, const int y) const
 
 Texture TerrainGenerator::generateTerrain()
 {
-	const int width = terrainSize, height = terrainSize;
-	terrain.clear();
-	float y = glm::linearRand(20.0f, 100.0f);
-	float x = y;
-	for (int i = 0; i < width; ++i)
-	{
-		for (int j = 0; j < height; ++j)
-		{
-			const float perlinValue = glm::perlin(glm::vec2(x / perlinDivider, y / perlinDivider));
-			const glm::vec3 perlinNoise{ glm::clamp(perlinValue, 0.0f, 1.0f), 0, 0 };
-			terrain.push_back(TerrainNode{ 0, perlinNoise });
-			y += perlinTimeStep;
-		}
-		x += perlinTimeStep;
-	}
-
 	updateTerrain();
 	generatedTerrain.path = "GeneratedTerrain";
 	return generatedTerrain;
@@ -142,14 +125,9 @@ Texture TerrainGenerator::generateTerrain()
 
 void TerrainGenerator::updateTerrain() const
 {
-	std::vector<glm::vec3> pixels;
-	for(const auto terrainNode : terrain)
-	{
-		pixels.push_back(terrainNode.nodeData);
-	}
 	glBindTexture(GL_TEXTURE_2D, generatedTerrain.ID);
 	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, perlinValues.data());
-	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, terrainSize, terrainSize, GL_RGB, GL_FLOAT, pixels.data());
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, terrainSize, terrainSize, GL_RED, GL_FLOAT, terrain.data());
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -157,32 +135,17 @@ void TerrainGenerator::updateTerrain() const
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void TerrainGenerator::markNodeAsPartOfPath(int x, int y)
-{
-	terrain[getTerrainNodeIndex(x, y)].nodeData.y = 1.0f;
-	terrain[getTerrainNodeIndex(x, y)].numberOfActorsPassingThrough++;
-}
-
-void TerrainGenerator::unMarkNodeAsPartOfPath(int x, int y)
-{
-	terrain[getTerrainNodeIndex(x, y)].numberOfActorsPassingThrough--;
-	if(terrain[getTerrainNodeIndex(x, y)].numberOfActorsPassingThrough == 0)
-	{
-		terrain[getTerrainNodeIndex(x, y)].nodeData.y = 0.0f;
-	}
-}
-
 float TerrainGenerator::getTerrainValue(const int x, const int y)
 {
 	const unsigned int index = getTerrainNodeIndex(x, y);
-	return terrain[index].nodeData.x;
+	return terrain[index];
 }
 
 TerrainGenerator::TerrainGenerator(std::string&& newName) : Component(newName)
 {
 	glGenTextures(1, &generatedTerrain.ID);
 	glBindTexture(GL_TEXTURE_2D, generatedTerrain.ID);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, terrainSize, terrainSize, 0, GL_RGB, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_R16F, terrainSize, terrainSize, 0, GL_RED, GL_FLOAT, NULL);
 }
 
 

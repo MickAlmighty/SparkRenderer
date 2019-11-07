@@ -71,7 +71,6 @@ namespace spark {
 	void NodeAI::drawReturnPath(std::shared_ptr<TerrainGenerator>& terrainGenerator) const
 	{
 		const int index = position.y * terrainGenerator->terrainSize + position.x;
-		terrainGenerator->markNodeAsPartOfPath(position.x, position.y);
 		if (!parent.expired())
 			parent.lock()->drawReturnPath(terrainGenerator);
 	}
@@ -87,7 +86,6 @@ namespace spark {
 	{
 		//std::cout << position.x << " " << position.y << std::endl;
 		const int index = position.y * terrainGenerator->terrainSize + position.x;
-		terrainGenerator->markNodeAsPartOfPath(position.x, position.y);
 		if (parentAddress)
 			parentAddress->drawReturnPathStack(terrainGenerator);
 	}

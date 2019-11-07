@@ -25,17 +25,18 @@ namespace spark {
 		validateActorPosition(pos);
 		setStartPosition(pos);
 
-		if (!isTraveling)
-		{
-			do
-			{
-				endPos = { static_cast<int>(glm::linearRand(0.0f, 20.0f)), static_cast<int>(glm::linearRand(0.0f, 20.0f)) };
-			} while (terrainGenerator.lock()->getTerrainValue(endPos.x, endPos.y) == 1.0f);
-		}
-
 		const double measureStart = glfwGetTime();
 		//findPath();
-		findPathStack();
+		if(path.empty())
+		{
+			randomizeEndPoint();
+			findPathStack();
+		}
+		else if (const bool firstNodeAchieved = path.begin()->first; firstNodeAchieved)
+		{
+			randomizeEndPoint();
+			findPathStack();
+		}
 		timer = glfwGetTime() - measureStart;
 		//std::cout << timer * 1000.0 << " ms" << std::endl;
 		if (!path.empty())
@@ -43,11 +44,10 @@ namespace spark {
 			isTraveling = true;
 		}
 		
-
 		if (isTraveling)
 		{
 			walkToEndOfThePath();
-			int indicesCount = updatePathMesh(path);
+			const int indicesCount = updatePathMesh(path);
 			const auto f = [shared_ptr = shared_from_base<ActorAI>(), indicesCount] (std::shared_ptr<Shader>& shader)
 			{
 				glBindVertexArray(shared_ptr->vao);
@@ -60,10 +60,11 @@ namespace spark {
 
 	void ActorAI::validateActorPosition(glm::vec3& position) const
 	{
+		const auto terrainSize = static_cast<float>(terrainGenerator.lock()->terrainSize) - 1;
 		if (position.x < 0) position.x = 0;
 		if (position.z < 0) position.z = 0;
-		if (position.x > 19) position.x = 19;
-		if (position.z > 19) position.z = 19;
+		if (position.x > terrainSize) position.x = terrainSize;
+		if (position.z > terrainSize) position.z = terrainSize;
 	}
 
 	void ActorAI::setStartPosition(glm::vec3& position)
@@ -85,6 +86,15 @@ namespace spark {
 		{
 			startPos.y = static_cast<int>(position.z + 1);
 		}
+	}
+
+	void ActorAI::randomizeEndPoint()
+	{
+		do
+		{
+			const float terrainSize = static_cast<float>(terrainGenerator.lock()->terrainSize);
+			endPos = { static_cast<int>(glm::linearRand(0.0f, terrainSize)), static_cast<int>(glm::linearRand(0.0f, terrainSize)) };
+		} while (terrainGenerator.lock()->getTerrainValue(endPos.x, endPos.y) == 1.0f);
 	}
 
 	void ActorAI::initPathMesh()
@@ -262,7 +272,7 @@ namespace spark {
 			isTraveling = false;
 			return;
 		}
-
+		
 		for (auto& wayPoint : path)
 		{
 			if (wayPoint.first)
@@ -276,9 +286,8 @@ namespace spark {
 				glm::vec3 pointOnPath = glm::vec3(wayPoint.second.x, 0.0f, wayPoint.second.y);
 				if (glm::distance(position, pointOnPath) < 0.1f)
 				{
-					//terrainGenerator.lock()->unMarkNodeAsPartOfPath(wayPoint.second.x, wayPoint.second.y);
-					//terrainGenerator.lock()->updateTerrain();
 					wayPoint.first = true;
+					path.pop_front();
 				}
 				else
 				{

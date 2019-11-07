@@ -55,6 +55,7 @@ namespace spark {
 
 		void validateActorPosition(glm::vec3& position) const;
 		void setStartPosition(glm::vec3& position);
+		void randomizeEndPoint();
 
 		void initPathMesh();
 		int updatePathMesh(const std::deque<std::pair<bool, glm::ivec2>>& path) const;
