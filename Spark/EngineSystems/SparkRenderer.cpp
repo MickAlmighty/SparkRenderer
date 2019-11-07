@@ -19,11 +19,16 @@
 
 namespace spark {
 
-#define PUSH_DEBUG_GROUP(x,y) { \
-	std::string message = #x; \
-	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, y, static_cast<GLsizei>(message.length()), message.data()); }
+	inline static int debug_group_counter = 0;
 
-#define POP_DEBUG_GROUP() glPopDebugGroup()
+#define PUSH_DEBUG_GROUP(x) { \
+	std::string message = #x; \
+	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, debug_group_counter, static_cast<GLsizei>(message.length()), message.data()); \
+	debug_group_counter++; }
+
+#define POP_DEBUG_GROUP() \
+	glPopDebugGroup(); \
+	debug_group_counter--;
 
 	SparkRenderer* SparkRenderer::getInstance()
 	{
@@ -68,7 +73,7 @@ namespace spark {
 		const glm::mat4 view = camera->getViewMatrix();
 		const glm::mat4 projection = camera->getProjectionMatrix();
 
-		PUSH_DEBUG_GROUP(RENDER_TO_MAIN_FRAMEBUFFER, 0);
+		PUSH_DEBUG_GROUP(RENDER_TO_MAIN_FRAMEBUFFER);
 		glBindFramebuffer(GL_FRAMEBUFFER, mainFramebuffer);
 		glClearColor(0, 0, 0, 1);
 		glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
@@ -89,7 +94,7 @@ namespace spark {
 		renderCubemap();
 		//bloom();
 
-		PUSH_DEBUG_GROUP(RENDER_PATHS, 0);
+		PUSH_DEBUG_GROUP(RENDER_PATHS);
 		glBindFramebuffer(GL_FRAMEBUFFER, lightFrameBuffer);
 
 		const std::shared_ptr<Shader> pathShader = ResourceManager::getInstance()->getShader(ShaderType::PATH_SHADER);
@@ -106,7 +111,7 @@ namespace spark {
 		motionBlur();
 		renderToScreen();
 
-		PUSH_DEBUG_GROUP(GUI, 0);
+		PUSH_DEBUG_GROUP(GUI);
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 		POP_DEBUG_GROUP();
@@ -129,7 +134,7 @@ namespace spark {
 
 	void SparkRenderer::renderLights() const
 	{
-		PUSH_DEBUG_GROUP(PBR_LIGHT, 0);
+		PUSH_DEBUG_GROUP(PBR_LIGHT);
 
 		glBindFramebuffer(GL_FRAMEBUFFER, lightFrameBuffer);
 		glClearColor(0, 0, 0, 1);
@@ -177,7 +182,7 @@ namespace spark {
 		const glm::vec3 cameraPosition = camera->getPosition();
 		const glm::vec3 cameraFront = camera->getFront();
 		const float farPlane = camera->getFarPlane();
-		PUSH_DEBUG_GROUP(RENDER_CUBEMAP, 0);
+		PUSH_DEBUG_GROUP(RENDER_CUBEMAP);
 		glBindFramebuffer(GL_FRAMEBUFFER, cubemapFramebuffer);
 
 		glDepthFunc(GL_LEQUAL);
@@ -197,7 +202,7 @@ namespace spark {
 
 	void SparkRenderer::bloom() const
 	{
-		PUSH_DEBUG_GROUP(BRIGHT_PASS, 0);
+		PUSH_DEBUG_GROUP(BRIGHT_PASS);
 		glBindFramebuffer(GL_FRAMEBUFFER, brightPassFramebuffer);
 		//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, brightPassFramebuffer, 0);
 		glClearColor(0.0, 0.0, 0.0, 0.0);
@@ -211,7 +216,7 @@ namespace spark {
 		glBindTextures(0, 1, nullptr);
 
 		{
-			PUSH_DEBUG_GROUP(DOWN_SCALE, 0);
+			PUSH_DEBUG_GROUP(DOWN_SCALE);
 			const auto downScaleShader = ResourceManager::getInstance()->getShader(ShaderType::DOWNSCALE_SHADER);
 			downScaleShader->use();
 			downScaleShader->setBool("blend", false);
@@ -221,7 +226,7 @@ namespace spark {
 			screenQuad.draw();
 			glBindTextures(0, 1, nullptr);
 
-				PUSH_DEBUG_GROUP(GAUSSIAN_BLUR_1_8, 0);
+				PUSH_DEBUG_GROUP(GAUSSIAN_BLUR_1_8);
 				glBindFramebuffer(GL_FRAMEBUFFER, gaussianBlurOneEightsFramebuffer);
 				const auto gaussianBlurShader = ResourceManager::getInstance()->getShader(ShaderType::GAUSSIAN_BLUR_SHADER);
 				gaussianBlurShader->use();
@@ -246,7 +251,7 @@ namespace spark {
 			glBindTextureUnit(1, gaussianBlurOneEightsTexture2);
 			screenQuad.draw();
 
-				PUSH_DEBUG_GROUP(GAUSSIAN_BLUR_1_4, 0);
+				PUSH_DEBUG_GROUP(GAUSSIAN_BLUR_1_4);
 				gaussianBlurShader->use();
 				gaussianBlurShader->setVec2("inverseScreenSize", { 1.0f / (Spark::WIDTH / 4), 1.0f / (Spark::HEIGHT / 4) });
 				gaussianBlurShader->setVec2("direction", { 1.0f, 0.0f });
@@ -269,7 +274,7 @@ namespace spark {
 			glBindTextureUnit(1, gaussianBlurQuarterTexture2);
 			screenQuad.draw();
 
-				PUSH_DEBUG_GROUP(GAUSSIAN_BLUR_1_2, 0);
+				PUSH_DEBUG_GROUP(GAUSSIAN_BLUR_1_2);
 				glBindFramebuffer(GL_FRAMEBUFFER, gaussianBlurHalfFramebuffer);
 				gaussianBlurShader->use();
 				gaussianBlurShader->setVec2("inverseScreenSize", { 1.0f / (Spark::WIDTH / 2), 1.0f / (Spark::HEIGHT / 2) });
@@ -294,8 +299,8 @@ namespace spark {
 
 	void SparkRenderer::postprocessingPass()
 	{
-		/*PUSH_DEBUG_GROUP(POSTPROCESSING, 0);
-		glBindFramebuffer(GL_FRAMEBUFFER, lightFrameBuffer);
+		PUSH_DEBUG_GROUP(POSTPROCESSING);
+		/*glBindFramebuffer(GL_FRAMEBUFFER, lightFrameBuffer);
 		const auto downScaleShader = ResourceManager::getInstance()->getShader(ShaderType::DOWNSCALE_SHADER);
 		downScaleShader->use();
 		downScaleShader->setBool("blend", true);
@@ -342,7 +347,7 @@ namespace spark {
 
 		textureHandle = motionBlurTexture;
 
-		PUSH_DEBUG_GROUP(MOTION_BLUR, 0);
+		PUSH_DEBUG_GROUP(MOTION_BLUR);
 		const std::shared_ptr<Shader> motionBlurShaderS = motionBlurShader.lock();
 		glBindFramebuffer(GL_FRAMEBUFFER, motionBlurFramebuffer);
 		glClearColor(0, 0, 0, 0);
@@ -363,7 +368,7 @@ namespace spark {
 
 	void SparkRenderer::renderToScreen() const
 	{
-		PUSH_DEBUG_GROUP(RENDER_TO_SCREEN, 0);
+		PUSH_DEBUG_GROUP(RENDER_TO_SCREEN);
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glDisable(GL_DEPTH_TEST);
 
