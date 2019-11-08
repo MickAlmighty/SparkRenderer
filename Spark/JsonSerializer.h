@@ -20,10 +20,10 @@ namespace spark {
     class JsonSerializer final {
     public:
         ~JsonSerializer() = default;
-        JsonSerializer(JsonSerializer&) = delete;
+        JsonSerializer(const JsonSerializer&) = delete;
         JsonSerializer(JsonSerializer&&) = delete;
-        JsonSerializer& operator+(const JsonSerializer&) = delete;
-        JsonSerializer& operator+(JsonSerializer&&) = delete;
+        JsonSerializer& operator=(const JsonSerializer&) = delete;
+        JsonSerializer& operator=(JsonSerializer&&) = delete;
         static bool writeToFile(const std::filesystem::path& filePath, Json::Value & root);
         static Json::Value readFromFile(const std::filesystem::path & filePath);
         static JsonSerializer* getInstance();
