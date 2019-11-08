@@ -176,6 +176,7 @@ namespace spark {
 
 RTTR_REGISTRATION{
     rttr::registration::class_<spark::InitializationVariables>("InitializationVariables")
+    .constructor()(rttr::policy::ctor::as_std_shared_ptr)
     .property("width", &spark::InitializationVariables::width)
     .property("height", &spark::InitializationVariables::height)
     .property("pathToModels", &spark::InitializationVariables::pathToModels)
