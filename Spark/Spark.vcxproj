@@ -77,9 +77,11 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IntDir>$(SolutionDir)$(Configuration)\Intermadiate\</IntDir>
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IntDir>$(SolutionDir)$(Configuration)\Intermadiate\</IntDir>
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -112,6 +114,8 @@
     <PostBuildEvent>
       <Command>xcopy "$(SolutionDir)thirdparty\lib\CommonLib\*.dll" "$(TargetDir)" /D /Y
 xcopy "$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.dll" "$(TargetDir)" /D /Y
+xcopy "$(SolutionDir)thirdparty\lib\CommonLib\*.pdb" "$(TargetDir)" /D /Y
+xcopy "$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.pdb" "$(TargetDir)" /D /Y
 if not exist "$(TargetDir)settings.json" (xcopy "$(ProjectDir)settings.json" "$(TargetDir)" /D /Y)
 if not exist "$(TargetDir)scene.json" (xcopy "$(ProjectDir)scene.json" "$(TargetDir)" /D /Y)</Command>
     </PostBuildEvent>

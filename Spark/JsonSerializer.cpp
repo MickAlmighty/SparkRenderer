@@ -235,6 +235,8 @@ namespace spark {
                             root[i][j] = mat[i][j];
                         }
                     }
+                } else if (type == rttr::type::get<std::string>()) {
+                    root = var.get_value<std::string>();
                 } else {
                     status = 1;
                 }
@@ -366,7 +368,7 @@ namespace spark {
                         for (int i = 0; i < root.size(); ++i) {
                             bool ok;
                             rttr::variant val{ readPropertyFromJson(root[i], view.get_value_type(), rttr::variant(), ok) };
-                            if(ok) {
+                            if (ok) {
                                 view.insert(view.begin() + i, val);
                             } else {
                                 status = 2;
@@ -381,7 +383,7 @@ namespace spark {
                             bool ok;
                             rttr::variant currVal{ view.get_value(i).extract_wrapped_value() };
                             rttr::variant val{ readPropertyFromJson(root[i], view.get_value_type(), currVal, ok) };
-                            if(ok) {
+                            if (ok) {
                                 view.set_value(i, val);
                             } else {
                                 status = 2;
@@ -389,7 +391,7 @@ namespace spark {
                             }
                         }
                     }
-                    if(status == 0) {
+                    if (status == 0) {
                         return currentValue;
                     }
                 }
@@ -438,7 +440,7 @@ namespace spark {
                             }
                         }
                     }
-                    if(status == 0) {
+                    if (status == 0) {
                         return currentValue;
                     }
                 }
@@ -572,6 +574,9 @@ namespace spark {
                     } else {
                         status = 2;
                     }
+                } else if (type == rttr::type::get<std::string>()) {
+                    std::string string{ root.asString() };
+                    return string;
                 } else {
                     status = 1;
                 }

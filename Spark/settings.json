@@ -1,6 +1,11 @@
 {
-	"height" : 720,
-	"pathToModels" : "..\\res\\models",
-	"pathToResources" : "..\\res",
-	"width" : 1280
+	"Content" : 
+	{
+		"height" : 720,
+		"pathToModels" : "..\\..\\..\\res\\models",
+		"pathToResources" : "..\\..\\..\\res",
+		"width" : 1280
+	},
+	"Identifier" : 0,
+	"Type" : "classstd::shared_ptr<structspark::InitializationVariables>"
 }

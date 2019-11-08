@@ -34,7 +34,7 @@ namespace spark {
 		}
 	};
 
-	struct InitializationVariables
+	struct InitializationVariables final
 	{
 		unsigned int width;
 		unsigned int height;
