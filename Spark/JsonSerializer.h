@@ -22,7 +22,7 @@ namespace spark {
         ~JsonSerializer() = default;
         JsonSerializer(JsonSerializer&) = delete;
         JsonSerializer(JsonSerializer&&) = delete;
-        JsonSerializer& operator+(JsonSerializer&) = delete;
+        JsonSerializer& operator+(const JsonSerializer&) = delete;
         JsonSerializer& operator+(JsonSerializer&&) = delete;
         static bool writeToFile(const std::filesystem::path& filePath, Json::Value & root);
         static Json::Value readFromFile(const std::filesystem::path & filePath);
@@ -41,15 +41,16 @@ namespace spark {
         std::shared_ptr<T> load(const std::filesystem::path& filePath);
         rttr::variant loadVariant(const Json::Value& root);
         rttr::variant loadVariant(const std::filesystem::path& filePath);
-        void writePropertyToJson(Json::Value& root, const rttr::type& type, const rttr::variant& var);
     private:
+        void writePropertyToJson(Json::Value& root, const rttr::type& type, const rttr::variant& var);
+        rttr::variant readPropertyFromJson(const Json::Value& root, const rttr::type& type, rttr::variant& currentValue, bool& ok);
         void serialize(const rttr::variant& var, Json::Value& root);
         rttr::variant deserialize(const Json::Value& root);
         JsonSerializer() = default;
         bool bindObject(const rttr::variant& var, int id);
         bool isVarBound(const rttr::variant & var);
         int getBoundId(const rttr::variant& var);
-        bool isIdBound(const int id);
+        bool isIdBound(int id);
         rttr::variant getBoundObject(int id);
         int counter{};
         std::vector<std::pair<rttr::variant, int>> bindings;

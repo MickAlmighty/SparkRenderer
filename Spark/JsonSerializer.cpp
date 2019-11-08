@@ -187,7 +187,7 @@ namespace spark {
             } else if (type.is_associative_container()) {
                 rttr::variant_associative_view view{ var.create_associative_view() };
                 int counter = 0;
-                if(view.is_key_only_type()) {
+                if (view.is_key_only_type()) {
                     for (auto& item : view) {
                         writePropertyToJson(root[counter++], view.get_key_type(), item.first.extract_wrapped_value());
                     }
@@ -268,6 +268,333 @@ namespace spark {
         }
     }
 
+    //todo: add outcome in read and write
+    rttr::variant JsonSerializer::readPropertyFromJson(const Json::Value& root, const rttr::type& type, rttr::variant& currentValue, bool& ok) {
+        ok = true;
+        unsigned char status = 0; //0 = success. Waiting for outcome here!
+        if (isPtr(type)) {
+            rttr::variant sparkPtr = deserialize(root);
+            //todo: i'd really love to see outcome library arrive here as well xd
+            if (type == sparkPtr.get_type()) {
+                return sparkPtr;
+            }
+            if (isWrappedPtr(sparkPtr.get_type()) && !isWrappedPtr(type)) {
+                return sparkPtr.extract_wrapped_value();
+            }
+            if (sparkPtr.can_convert(type)) {
+                return sparkPtr.convert(type);
+            }
+            status = 3;
+            SPARK_WARN("Property of type '{}' could not be properly deserialized with var of type '{}' (valid: {})!",
+                       type.get_name().cbegin(), sparkPtr.get_type().get_name().cbegin(), sparkPtr.is_valid());
+        } else {
+            if (type.is_enumeration()) {
+                rttr::enumeration enumeration = type.get_enumeration();
+                if (root.isInt()) { // allow input of integral values as enums
+                    int intValue = root.asInt();
+                    auto values = enumeration.get_values();
+                    auto it = std::find_if(values.begin(), values.end(), [=](const rttr::variant& var) {
+                        return intValue == var.to_int();
+                    });
+                    if (it != values.end()) {
+                        return *it;
+                    }
+                    status = 2;
+                } else { // string representation expected
+                    std::string stringValue = root.asString();
+                    auto names = enumeration.get_names();
+                    auto it = std::find_if(names.begin(), names.end(), [&](const rttr::basic_string_view<char>& name) {
+                        return name.compare(stringValue) == 0;
+                    });
+                    if (it != names.end()) {
+                        return enumeration.name_to_value(*it);
+                    }
+                    status = 2;
+                }
+            } else if (type.is_arithmetic()) {
+                if (type == rttr::type::get<uint8_t>()
+                    || type == rttr::type::get<uint16_t>()
+                    || type == rttr::type::get<uint32_t>()) {
+                    if (root.isUInt()) {
+                        return root.asUInt();
+                    }
+                    status = 2;
+                } else if (type == rttr::type::get<uint64_t>()) {
+                    if (root.isUInt64()) {
+                        return root.asUInt64();
+                    }
+                    status = 2;
+                } else if (type == rttr::type::get<int8_t>()
+                           || type == rttr::type::get<int16_t>()
+                           || type == rttr::type::get<int32_t>()) {
+                    if (root.isInt()) {
+                        return root.asInt();
+                    }
+                    status = 2;
+                } else if (type == rttr::type::get<int64_t>()) {
+                    if (root.isInt64()) {
+                        return root.asInt64();
+                    }
+                    status = 2;
+                } else if (type == rttr::type::get<bool>()) {
+                    if (root.isBool()) {
+                        return root.asBool();
+                    }
+                    status = 2;
+                } else if (type == rttr::type::get<float>()) {
+                    if (root.isDouble()) {
+                        return static_cast<float>(root.asDouble());
+                    }
+                    status = 2;
+                } else if (type == rttr::type::get<double>()) {
+                    if (root.isDouble()) {
+                        return root.asDouble();
+                    }
+                    status = 2;
+                } else {
+                    status = 1;
+                }
+            } else if (type.is_sequential_container()) {
+                //TODO: find a better way to deserialize containers!
+                // Cannot instantiate containers with RTTR for some reason (whether it's a bug or desired behaviour)
+                // For now only value replacement of statically allocated containers are supported
+                if (!currentValue.is_valid() || !currentValue.is_sequential_container()) {
+                    status = 2;
+                } else {
+                    rttr::variant_sequential_view view{ currentValue.create_sequential_view() };
+                    if (view.is_dynamic()) {
+                        for (int i = 0; i < root.size(); ++i) {
+                            bool ok;
+                            rttr::variant val{ readPropertyFromJson(root[i], view.get_value_type(), rttr::variant(), ok) };
+                            if(ok) {
+                                view.insert(view.begin() + i, val);
+                            } else {
+                                status = 2;
+                                break;
+                            }
+                        }
+                    } else {
+                        if (root.size() != view.get_size()) {
+                            SPARK_WARN("Sequential container size mismatch! Read {}, expected {}.", root.size(), view.get_size());
+                        }
+                        for (int i = 0; i < std::min(static_cast<unsigned int>(view.get_size()), root.size()); ++i) {
+                            bool ok;
+                            rttr::variant currVal{ view.get_value(i).extract_wrapped_value() };
+                            rttr::variant val{ readPropertyFromJson(root[i], view.get_value_type(), currVal, ok) };
+                            if(ok) {
+                                view.set_value(i, val);
+                            } else {
+                                status = 2;
+                                break;
+                            }
+                        }
+                    }
+                    if(status == 0) {
+                        return currentValue;
+                    }
+                }
+            } else if (type.is_associative_container()) {
+                if (!currentValue.is_valid() || !currentValue.is_associative_container()) {
+                    status = 2;
+                } else {
+                    rttr::variant_associative_view view{ currentValue.create_associative_view() };
+                    if (view.is_key_only_type()) {
+                        for (int i = 0; i < root.size(); ++i) {
+                            if (root[i].size() != 1) {
+                                status = 2;
+                                break;
+                            }
+                            bool ok;
+                            rttr::variant key{ readPropertyFromJson(root[i], view.get_key_type(), rttr::variant(), ok) };
+                            if (!ok) {
+                                status = 2;
+                                break;
+                            }
+                            if (!view.insert(key).second) {
+                                status = 2;
+                                break;
+                            }
+                        }
+                    } else {
+                        for (int i = 0; i < root.size(); ++i) {
+                            if (root[i].size() != 2) {
+                                status = 2;
+                                break;
+                            }
+                            bool ok = true;
+                            rttr::variant key{ readPropertyFromJson(root[i][0], view.get_key_type(), rttr::variant(), ok) };
+                            if (!ok) {
+                                status = 2;
+                                break;
+                            }
+                            rttr::variant value{ readPropertyFromJson(root[i][1], view.get_value_type(), rttr::variant(), ok) };
+                            if (!ok) {
+                                status = 2;
+                                break;
+                            }
+                            if (!view.insert(key, value).second) {
+                                status = 2;
+                                break;
+                            }
+                        }
+                    }
+                    if(status == 0) {
+                        return currentValue;
+                    }
+                }
+            } else {
+                if (type == rttr::type::get<glm::vec2>()) {
+                    if (root.size() == 2) {
+                        glm::vec2 vec;
+                        for (int i = 0; i < 2; i++) {
+                            if (root[i].isDouble()) {
+                                vec[i] = root[i].asDouble();
+                            } else {
+                                status = 2;
+                                break;
+                            }
+                        }
+                        if (status == 0) {
+                            return vec;
+                        }
+                    } else {
+                        status = 2;
+                    }
+                } else if (type == rttr::type::get<glm::vec3>()) {
+                    if (root.size() == 3) {
+                        glm::vec3 vec;
+                        for (int i = 0; i < 3; i++) {
+                            if (root[i].isDouble()) {
+                                vec[i] = root[i].asDouble();
+                            } else {
+                                status = 2;
+                                break;
+                            }
+                        }
+                        if (status == 0) {
+                            return vec;
+                        }
+                    } else {
+                        status = 2;
+                    }
+                } else if (type == rttr::type::get<glm::vec4>()) {
+                    if (root.size() == 4) {
+                        glm::vec4 vec;
+                        for (int i = 0; i < 4; i++) {
+                            if (root[i].isDouble()) {
+                                vec[i] = root[i].asDouble();
+                            } else {
+                                status = 2;
+                                break;
+                            }
+                        }
+                        if (status == 0) {
+                            return vec;
+                        }
+                    } else {
+                        status = 2;
+                    }
+                } else if (type == rttr::type::get<glm::mat2>()) {
+                    if (root.size() == 2) {
+                        glm::mat2 mat;
+                        for (int i = 0; i < 2; i++) {
+                            if (root[i].size() == 2) {
+                                for (int j = 0; j < 2; j++) {
+                                    if (root[i][j].isDouble()) {
+                                        mat[i][j] = root[i][j].asDouble();
+                                    } else {
+                                        status = 2;
+                                        break;
+                                    }
+                                }
+                            } else {
+                                status = 2;
+                            }
+                            if (status != 0) {
+                                break;
+                            }
+                        }
+                        if (status == 0) {
+                            return mat;
+                        }
+                    } else {
+                        status = 2;
+                    }
+                } else if (type == rttr::type::get<glm::mat3>()) {
+                    if (root.size() == 3) {
+                        glm::mat3 mat;
+                        for (int i = 0; i < 3; i++) {
+                            if (root[i].size() == 3) {
+                                for (int j = 0; j < 3; j++) {
+                                    if (root[i][j].isDouble()) {
+                                        mat[i][j] = root[i][j].asDouble();
+                                    } else {
+                                        status = 2;
+                                        break;
+                                    }
+                                }
+                            } else {
+                                status = 2;
+                            }
+                            if (status != 0) {
+                                break;
+                            }
+                        }
+                        if (status == 0) {
+                            return mat;
+                        }
+                    } else {
+                        status = 2;
+                    }
+                } else if (type == rttr::type::get<glm::mat4>()) {
+                    if (root.size() == 4) {
+                        glm::mat4 mat;
+                        for (int i = 0; i < 4; i++) {
+                            if (root[i].size() == 4) {
+                                for (int j = 0; j < 4; j++) {
+                                    if (root[i][j].isDouble()) {
+                                        mat[i][j] = root[i][j].asDouble();
+                                    } else {
+                                        status = 2;
+                                        break;
+                                    }
+                                }
+                            } else {
+                                status = 2;
+                            }
+                            if (status != 0) {
+                                break;
+                            }
+                        }
+                        if (status == 0) {
+                            return mat;
+                        }
+                    } else {
+                        status = 2;
+                    }
+                } else {
+                    status = 1;
+                }
+            }
+        }
+        switch (status) {
+            default:
+                SPARK_ERROR("Unexpected deserialization failure!");
+                throw std::exception("Unexpected deserialization failure!");
+            case 1:
+                SPARK_ERROR("Unknown property type: '{}'.", type.get_name().cbegin());
+                throw std::exception("Unknown property type!");
+            case 2:
+                SPARK_WARN("Invalid json value given for type '{}'! Zero value will be used."
+                           , type.get_name().cbegin());
+                ok = false;
+                return 0;
+            case 3:
+                SPARK_ERROR("Invalid conversion attempt!");
+                throw std::exception("Invalid conversion attempt!");
+        }
+    }
+
     rttr::variant JsonSerializer::deserialize(const Json::Value& root) {
         if (!root.isMember(ID_NAME)) {
             SPARK_ERROR("Invalid serialization object found!");
@@ -308,275 +635,11 @@ namespace spark {
             const rttr::type propType{ prop.get_type() };
             if (content.isMember(prop.get_name().cbegin())) {
                 const Json::Value& obj{ content[prop.get_name().cbegin()] };
-                if (isPtr(propType)) {
-                    rttr::variant sparkPtr = deserialize(obj);
-                    unsigned char status = 0; // 0 = success
-                    //todo: i'd really love to see outcome library arrive here as well xd
-                    if (propType == sparkPtr.get_type()) {
-                        if (!prop.set_value(wrapped, sparkPtr)) {
-                            status = 1;
-                        }
-                    } else if (isWrappedPtr(sparkPtr.get_type()) && !isWrappedPtr(propType)) {
-                        if (!prop.set_value(wrapped, sparkPtr.extract_wrapped_value())) {
-                            status = 2;
-                        }
-                    } else if (sparkPtr.can_convert(propType)) {
-                        if (!prop.set_value(wrapped, sparkPtr.convert(propType))) {
-                            status = 3;
-                        }
-                    } else {
-                        status = 4;
-                    }
-                    if (status != 0) {
-                        SPARK_WARN("Property '{}' of type '{}' (ID: {}) could not be properly deserialized with var of type '{}' (valid: {})! Code: {}",
-                                   prop.get_name().cbegin(), propType.get_name().cbegin(), id,
-                                   sparkPtr.get_type().get_name().cbegin(), sparkPtr.is_valid(), status);
-                    }
-                } else {
-                    unsigned char status = 0; //outcome here as well!
-                    if (propType.is_enumeration()) {
-                        rttr::enumeration enumeration = propType.get_enumeration();
-                        if (obj.isInt()) { // allow input of integral values as enums
-                            int intValue = obj.asInt();
-                            auto values = enumeration.get_values();
-                            auto it = std::find_if(values.begin(), values.end(), [=](const rttr::variant& var) {
-                                return intValue == var.to_int();
-                            });
-                            if (it != values.end()) {
-                                if (!prop.set_value(wrapped, *it)) {
-                                    status = 3;
-                                }
-                            } else {
-                                status = 2;
-                            }
-                        } else { // string representation expected
-                            std::string stringValue = obj.asString();
-                            auto names = enumeration.get_names();
-                            auto it = std::find_if(names.begin(), names.end(), [&](const rttr::basic_string_view<char>& name) {
-                                return name.compare(stringValue) == 0;
-                            });
-                            if (it != names.end()) {
-                                if (!prop.set_value(wrapped, enumeration.name_to_value(*it))) {
-                                    status = 3;
-                                }
-                            } else {
-                                status = 2;
-                            }
-                        }
-                    } else if (propType.is_arithmetic()) {
-                        if (propType == rttr::type::get<uint8_t>()
-                            || propType == rttr::type::get<uint16_t>()
-                            || propType == rttr::type::get<uint32_t>()) {
-                            if (obj.isUInt()) {
-                                if (!prop.set_value(wrapped, obj.asUInt())) {
-                                    status = 3;
-                                }
-                            } else {
-                                status = 2;
-                            }
-                        } else if (propType == rttr::type::get<uint64_t>()) {
-                            if (obj.isUInt64()) {
-                                if (!prop.set_value(wrapped, obj.asUInt64())) {
-                                    status = 3;
-                                }
-                            } else {
-                                status = 2;
-                            }
-                        } else if (propType == rttr::type::get<int8_t>()
-                                   || propType == rttr::type::get<int16_t>()
-                                   || propType == rttr::type::get<int32_t>()) {
-                            if (obj.isInt()) {
-                                if (!prop.set_value(wrapped, obj.asInt())) {
-                                    status = 3;
-                                }
-                            } else {
-                                status = 2;
-                            }
-                        } else if (propType == rttr::type::get<int64_t>()) {
-                            if (obj.isInt64()) {
-                                if (!prop.set_value(wrapped, obj.asInt64())) {
-                                    status = 3;
-                                }
-                            } else {
-                                status = 2;
-                            }
-                        } else if (propType == rttr::type::get<bool>()) {
-                            if (obj.isBool()) {
-                                if (!prop.set_value(wrapped, obj.asBool())) {
-                                    status = 3;
-                                }
-                            } else {
-                                status = 2;
-                            }
-                        } else if (propType == rttr::type::get<float>()) {
-                            if (obj.isDouble()) {
-                                if (!prop.set_value(wrapped, static_cast<float>(obj.asDouble()))) {
-                                    status = 3;
-                                }
-                            } else {
-                                status = 2;
-                            }
-                        } else if (propType == rttr::type::get<double>()) {
-                            if (obj.isDouble()) {
-                                if (!prop.set_value(wrapped, obj.asDouble())) {
-                                    status = 3;
-                                }
-                            } else {
-                                status = 2;
-                            }
-                        } else {
-                            status = 1;
-                        }
-                    } else if (propType.is_sequential_container()) {
-
-                    } else if (propType.is_associative_container()) {
-
-                    } else {
-                        if (propType == rttr::type::get<glm::vec2>()) {
-                            if (obj.size() == 2) {
-                                glm::vec2 vec;
-                                for (int i = 0; i < 2; i++) {
-                                    if (obj[i].isDouble()) {
-                                        vec[i] = obj[i].asDouble();
-                                    } else {
-                                        status = 2;
-                                        break;
-                                    }
-                                }
-                                if (status == 0 && !prop.set_value(wrapped, vec)) {
-                                    status = 3;
-                                }
-                            } else {
-                                status = 2;
-                            }
-                        } else if (propType == rttr::type::get<glm::vec3>()) {
-                            if (obj.size() == 3) {
-                                glm::vec3 vec;
-                                for (int i = 0; i < 3; i++) {
-                                    if (obj[i].isDouble()) {
-                                        vec[i] = obj[i].asDouble();
-                                    } else {
-                                        status = 2;
-                                        break;
-                                    }
-                                }
-                                if (status == 0 && !prop.set_value(wrapped, vec)) {
-                                    status = 3;
-                                }
-                            } else {
-                                status = 2;
-                            }
-                        } else if (propType == rttr::type::get<glm::vec4>()) {
-                            if (obj.size() == 4) {
-                                glm::vec4 vec;
-                                for (int i = 0; i < 4; i++) {
-                                    if (obj[i].isDouble()) {
-                                        vec[i] = obj[i].asDouble();
-                                    } else {
-                                        status = 2;
-                                        break;
-                                    }
-                                }
-                                if (status == 0 && !prop.set_value(wrapped, vec)) {
-                                    status = 3;
-                                }
-                            } else {
-                                status = 2;
-                            }
-                        } else if (propType == rttr::type::get<glm::mat2>()) {
-                            if (obj.size() == 2) {
-                                glm::mat2 mat;
-                                for (int i = 0; i < 2; i++) {
-                                    if (obj[i].size() == 2) {
-                                        for (int j = 0; j < 2; j++) {
-                                            if (obj[i][j].isDouble()) {
-                                                mat[i][j] = obj[i][j].asDouble();
-                                            } else {
-                                                status = 2;
-                                                break;
-                                            }
-                                        }
-                                    } else {
-                                        status = 2;
-                                    }
-                                    if (status != 0) {
-                                        break;
-                                    }
-                                }
-                                if (status == 0 && !prop.set_value(wrapped, mat)) {
-                                    status = 3;
-                                }
-                            } else {
-                                status = 2;
-                            }
-                        } else if (propType == rttr::type::get<glm::mat3>()) {
-                            if (obj.size() == 3) {
-                                glm::mat3 mat;
-                                for (int i = 0; i < 3; i++) {
-                                    if (obj[i].size() == 3) {
-                                        for (int j = 0; j < 3; j++) {
-                                            if (obj[i][j].isDouble()) {
-                                                mat[i][j] = obj[i][j].asDouble();
-                                            } else {
-                                                status = 2;
-                                                break;
-                                            }
-                                        }
-                                    } else {
-                                        status = 2;
-                                    }
-                                    if (status != 0) {
-                                        break;
-                                    }
-                                }
-                                if (status == 0 && !prop.set_value(wrapped, mat)) {
-                                    status = 3;
-                                }
-                            } else {
-                                status = 2;
-                            }
-                        } else if (propType == rttr::type::get<glm::mat4>()) {
-                            if (obj.size() == 4) {
-                                glm::mat4 mat;
-                                for (int i = 0; i < 4; i++) {
-                                    if (obj[i].size() == 4) {
-                                        for (int j = 0; j < 4; j++) {
-                                            if (obj[i][j].isDouble()) {
-                                                mat[i][j] = obj[i][j].asDouble();
-                                            } else {
-                                                status = 2;
-                                                break;
-                                            }
-                                        }
-                                    } else {
-                                        status = 2;
-                                    }
-                                    if (status != 0) {
-                                        break;
-                                    }
-                                }
-                                if (status == 0 && !prop.set_value(wrapped, mat)) {
-                                    status = 3;
-                                }
-                            } else {
-                                status = 2;
-                            }
-                        } else {
-                            status = 1;
-                        }
-                    }
-                    switch (status) {
-                        case 1:
-                            SPARK_ERROR("Unknown property type: '{}'.", propType.get_name().cbegin());
-                            throw std::exception("Unknown property type!");
-                        case 2:
-                            SPARK_WARN("Invalid json value given for type '{}'! Default value will be used."
-                                       , propType.get_name().cbegin());
-                            break;
-                        case 3:
-                            SPARK_ERROR("Unable to set value for property '{}'!", prop.get_name().cbegin());
-                            throw std::exception("Unable to set value for property!");
-                    }
+                bool ok = true;
+                rttr::variant propVar{ readPropertyFromJson(obj, propType, prop.get_value(wrapped), ok) };
+                if (ok && !prop.set_value(wrapped, propVar)) {
+                    SPARK_ERROR("Unable to set value for property '{}'!", prop.get_name().cbegin());
+                    throw std::exception("Unable to set value for property!");
                 }
             } else {
                 SPARK_WARN("Property '{}' of type '{}' (ID: {}) does not exist in json entry!",
