@@ -7,7 +7,7 @@ namespace spark {
 
 NodeAI::NodeAI(const glm::ivec2 pos, const float depth_) : position(pos), depth(depth_)
 {
-    //SPARK_DEBUG("NodeAI Constructor!");
+    //SPARK_TRACE("NodeAI Constructor!");
 }
 
 NodeAI::NodeAI(const NodeAI& rhs) : position(rhs.position), depth(rhs.depth), parentAddress(rhs.parentAddress)
@@ -83,7 +83,6 @@ void NodeAI::getPath(std::deque<std::pair<bool, glm::ivec2>>& path) const
 
 void NodeAI::drawReturnPathStack(std::shared_ptr<TerrainGenerator>& terrainGenerator) const
 {
-    //SPARK_DEBUG("{}, {}", position.x, position.y);
 	const int index = position.y * terrainGenerator->terrainSize + position.x;
 	terrainGenerator->markNodeAsPartOfPath(position.x, position.y);
 	if (parentAddress)
@@ -100,7 +99,7 @@ void NodeAI::getPathStack(std::deque<std::pair<bool, glm::ivec2>>& path) const
 	void NodeAI::tryToCreateNeighbor(std::list<std::shared_ptr<NodeAI>>& container, glm::ivec2&& pos,
 	                                 const std::shared_ptr<TerrainGenerator>& terrainGenerator, const float depth) const
 	{
-		if (terrainGenerator->areIndexesValid(pos.x, pos.y))
+		if (terrainGenerator->areIndicesValid(pos.x, pos.y))
 		{
 			if (terrainGenerator->getTerrainValue(pos.x, pos.y) != 1.0f)
 			{
@@ -112,7 +111,7 @@ void NodeAI::getPathStack(std::deque<std::pair<bool, glm::ivec2>>& path) const
 	void NodeAI::tryToCreateNeighbor(std::list<NodeAI>& container, glm::ivec2&& pos,
 		const std::shared_ptr<TerrainGenerator>& terrainGenerator, const float depth) const
 	{
-		if (terrainGenerator->areIndexesValid(pos.x, pos.y))
+		if (terrainGenerator->areIndicesValid(pos.x, pos.y))
 		{
 			if (terrainGenerator->getTerrainValue(pos.x, pos.y) != 1.0f)
 			{

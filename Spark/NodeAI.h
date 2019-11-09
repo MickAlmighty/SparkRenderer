@@ -11,7 +11,7 @@
 
 namespace spark {
 
-class NodeAI
+class NodeAI final
 {
 public:
 	std::weak_ptr<NodeAI> parent;

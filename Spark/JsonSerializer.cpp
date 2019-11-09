@@ -214,6 +214,21 @@ namespace spark {
                     for (int i = 0; i < 4; i++) {
                         root[i] = vec[i];
                     }
+                } else if (type == rttr::type::get<glm::ivec2>()) {
+                    const glm::ivec2 vec{ var.get_value<glm::ivec2>() };
+                    for (int i = 0; i < 2; i++) {
+                        root[i] = vec[i];
+                    }
+                } else if (type == rttr::type::get<glm::ivec3>()) {
+                    const glm::ivec3 vec{ var.get_value<glm::ivec3>() };
+                    for (int i = 0; i < 3; i++) {
+                        root[i] = vec[i];
+                    }
+                } else if (type == rttr::type::get<glm::ivec4>()) {
+                    const glm::ivec4 vec{ var.get_value<glm::ivec4>() };
+                    for (int i = 0; i < 4; i++) {
+                        root[i] = vec[i];
+                    }
                 } else if (type == rttr::type::get<glm::mat2>()) {
                     const glm::mat2 mat{ var.get_value<glm::mat2>() };
                     for (int i = 0; i < 2; i++) {
@@ -485,6 +500,57 @@ namespace spark {
                         for (int i = 0; i < 4; i++) {
                             if (root[i].isDouble()) {
                                 vec[i] = root[i].asDouble();
+                            } else {
+                                status = 2;
+                                break;
+                            }
+                        }
+                        if (status == 0) {
+                            return vec;
+                        }
+                    } else {
+                        status = 2;
+                    }
+                } else if (type == rttr::type::get<glm::ivec2>()) {
+                    if (root.size() == 2) {
+                        glm::ivec2 vec;
+                        for (int i = 0; i < 2; i++) {
+                            if (root[i].isInt()) {
+                                vec[i] = root[i].asInt();
+                            } else {
+                                status = 2;
+                                break;
+                            }
+                        }
+                        if (status == 0) {
+                            return vec;
+                        }
+                    } else {
+                        status = 2;
+                    }
+                } else if (type == rttr::type::get<glm::ivec3>()) {
+                    if (root.size() == 3) {
+                        glm::ivec3 vec;
+                        for (int i = 0; i < 3; i++) {
+                            if (root[i].isInt()) {
+                                vec[i] = root[i].asInt();
+                            } else {
+                                status = 2;
+                                break;
+                            }
+                        }
+                        if (status == 0) {
+                            return vec;
+                        }
+                    } else {
+                        status = 2;
+                    }
+                } else if (type == rttr::type::get<glm::ivec4>()) {
+                    if (root.size() == 4) {
+                        glm::ivec4 vec;
+                        for (int i = 0; i < 4; i++) {
+                            if (root[i].isInt()) {
+                                vec[i] = root[i].asInt();
                             } else {
                                 status = 2;
                                 break;

@@ -16,7 +16,8 @@ class GameObject final : public std::enable_shared_from_this<GameObject>
 public:
 	Transform transform;
 
-	GameObject(std::string&& _name = "GameObject");
+	GameObject() = default;
+    explicit GameObject(std::string&& name);
 	~GameObject();
 	GameObject(GameObject&) = delete;
 	GameObject(GameObject&&) = delete;
@@ -121,7 +122,7 @@ public:
 
 private:
 	friend class Scene;
-	std::string name = "GameObject";
+    std::string name{ "GameObject" };
 	std::weak_ptr<Scene> scene;
 	std::weak_ptr<GameObject> parent;
 	std::list<std::shared_ptr<GameObject>> children;
@@ -129,7 +130,8 @@ private:
 	void update();
 	void fixedUpdate();
 	void drawGizmos();
-
+    RTTR_REGISTRATION_FRIEND;
+    RTTR_ENABLE();
 };
 
 }

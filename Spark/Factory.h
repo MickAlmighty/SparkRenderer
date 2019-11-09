@@ -7,7 +7,7 @@ namespace spark {
 
     class Factory final {
     public:
-        static std::shared_ptr<spark::Scene> createScene(const std::string& name);
+        static std::shared_ptr<spark::Scene> createScene(std::string&& name);
     };
 
 }

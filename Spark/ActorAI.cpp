@@ -17,6 +17,8 @@
 
 namespace spark {
 
+    ActorAI::ActorAI() : Component("ActorAI") {}
+
 void ActorAI::update()
 {
 	if(terrainGenerator.expired())
@@ -292,10 +294,6 @@ void ActorAI::drawGUI()
 		isTraveling = true;
 	}
 	removeComponentGUI<ActorAI>();
-}
-
-ActorAI::ActorAI(std::string&& newName) : Component(newName)
-{
 }
 
 }

@@ -92,9 +92,7 @@ namespace spark {
 		outerCutOff = outerCutOff_;
 	}
 
-	SpotLight::SpotLight(std::string name_) : Component(name_)
-	{
-	}
+    SpotLight::SpotLight() : Component("SpotLight") {}
 
 	void SpotLight::setActive(bool active_)
 	{
@@ -170,4 +168,14 @@ namespace spark {
 	}
 }
 
-
+RTTR_REGISTRATION{
+    rttr::registration::class_<spark::SpotLight>("SpotLight")
+    .constructor()(rttr::policy::ctor::as_std_shared_ptr)
+    //.property("dirty", &spark::SpotLight::dirty) //FIXME: shouldn't it always be dirty when loaded? maybe not
+    .property("addedToLightManager", &spark::SpotLight::addedToLightManager)
+    .property("color", &spark::SpotLight::color)
+    .property("colorStrength", &spark::SpotLight::colorStrength)
+    .property("direction", &spark::SpotLight::direction)
+    .property("cutOff", &spark::SpotLight::cutOff)
+    .property("lastPos", &spark::SpotLight::lastPos);
+}

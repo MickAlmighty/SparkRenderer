@@ -128,7 +128,7 @@ namespace spark {
 	Shader::~Shader()
 	{
 		glDeleteProgram(ID);
-        SPARK_DEBUG("Shader deleted!");
+        SPARK_TRACE("Shader deleted!");
 	}
 
 	std::string Shader::loadShader(const std::string& shaderPath)

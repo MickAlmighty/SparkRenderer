@@ -9,11 +9,17 @@
 namespace spark {
 	struct SpotLightData;
 
-	class SpotLight : public Component
+	class SpotLight final : public Component
 	{
 	public:
-		SpotLightData getLightData() const;
+		SpotLight();
+		~SpotLight() = default;
+        SpotLight(const SpotLight&) = delete;
+        SpotLight(const SpotLight&&) = delete;
+        SpotLight& operator=(const SpotLight&) = delete;
+        SpotLight& operator=(const SpotLight&&) = delete;
 
+	    SpotLightData getLightData() const;
 		bool getDirty() const;
 		void resetDirty();
 		glm::vec3 getPosition() const;
@@ -22,16 +28,11 @@ namespace spark {
 		float getColorStrength() const;
 		float getCutOff() const;
 		float getOuterCutOff() const;
-
 		void setColor(glm::vec3 color_);
 		void setColorStrength(float strength);
 		void setDirection(glm::vec3 direction_);
 		void setCutOff(float cutOff_);
 		void setOuterCutOff(float outerCutOff_);
-
-		SpotLight(std::string name_ = "SpotLight");
-		virtual ~SpotLight() = default;
-
 		void setActive(bool active_) override;
 		void update() override;
 		void fixedUpdate() override;
@@ -40,14 +41,14 @@ namespace spark {
 	private:
 		bool dirty = true;
 		bool addedToLightManager = false;
-
 		glm::vec3 color{ 1 };
 		float colorStrength{ 1 };
 		glm::vec3 direction{ 0.0f, -1.0f, 0.0f };
 		float cutOff{ 30.0f };
 		float outerCutOff{ 45.0f };
-
 		glm::vec3 lastPos{ 0 };
+        RTTR_REGISTRATION_FRIEND;
+        RTTR_ENABLE(Component);
 	};
 }
 

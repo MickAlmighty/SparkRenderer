@@ -88,12 +88,16 @@ void SceneManager::drawGui() const
 		}
 		if (ImGui::MenuItem("Save Current Scene"))
 		{
-			//JsonSerializer::writeToFile("scene.json", current_scene->serialize());
+            if(!JsonSerializer::getInstance()->saveSceneToFile(current_scene, "scene.json")) {
+                SPARK_ERROR("Scene serialization failed!");
+            }
 		}
 		if (ImGui::MenuItem("Load main scene"))
 		{
-			//Json::Value root = JsonSerializer::readFromFile("scene.json");
-			//current_scene->deserialize(root);
+            std::shared_ptr<Scene> scene{ JsonSerializer::getInstance()->loadSceneFromFile("scene.json") };
+            if(scene != nullptr) {
+                //TODO: replace the scene with new one
+            }
 		}
 		ImGui::EndMenu();
 	}

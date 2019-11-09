@@ -1,14 +1,15 @@
 #ifndef SCENE_H
 #define SCENE_H
 
+#include "Structs.h"
 #include "LightManager.h"
 
-#include <json/value.h>
+#include <rttr/registration_friend>
+#include <rttr/registration>
 
 #include <memory>
 #include <list>
 #include <functional>
-#include "Structs.h"
 
 
 namespace spark {
@@ -33,18 +34,23 @@ public:
 	void drawGUI();
 	void drawSceneGraph();
     std::list < std::function<void()> > toRemove;
-    std::unique_ptr<LightManager> lightManager;
+    std::shared_ptr<LightManager> lightManager; //FIXME: switch back to unique_ptr
     std::shared_ptr<PbrCubemapTexture> cubemap;
 private:
 	friend class SceneManager;
     friend class Factory;
-    explicit Scene(std::string sceneName);
+    Scene() = default;
+    explicit Scene(std::string&& sceneName);
 	void drawTreeNode(std::shared_ptr<GameObject> node, bool isRootNode);
+    std::shared_ptr<GameObject> getGameObjectToPreview() const;
+    void setGameObjectToPreview(const std::shared_ptr<GameObject> node);
 	std::string name{ "New Scene" };
 	std::shared_ptr<GameObject> root{};
 	std::weak_ptr<GameObject> gameObjectToPreview;
 	std::shared_ptr<Camera> camera{};
 	bool cameraMovement { false };
+    RTTR_REGISTRATION_FRIEND;
+    RTTR_ENABLE();
 };
 
 }

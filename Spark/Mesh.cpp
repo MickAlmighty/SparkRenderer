@@ -83,7 +83,7 @@ void Mesh::cleanup() const
 	glDeleteBuffers(1, &ebo);
 	glDeleteVertexArrays(1, &vao);
 
-    SPARK_DEBUG("Mesh deleted!");
+    SPARK_TRACE("Mesh deleted!");
 }
 
 }

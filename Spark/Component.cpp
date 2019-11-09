@@ -5,12 +5,11 @@
 #include "Logging.h"
 
 namespace spark {
-	Component::Component(const std::string& componentName) {
-		name = componentName;
-	}
 
-	Component::~Component() {
-        SPARK_DEBUG("Component {} destroyed!", name);
+    Component::Component(std::string&& name) : name(std::move(name)) {}
+
+    Component::~Component() {
+        SPARK_TRACE("Component '{}' destroyed!", name);
 	}
 
 	void Component::drawComponentGUI() {

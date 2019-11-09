@@ -8,11 +8,17 @@ namespace spark {
 	
 	struct PointLightData;
 
-	class PointLight : public Component
+	class PointLight final : public Component
 	{
 	public:
-		PointLightData getLightData() const;
+		PointLight();
+		~PointLight() = default;
+        PointLight(const PointLight&) = delete;
+        PointLight(const PointLight&&) = delete;
+        PointLight& operator=(const PointLight&) = delete;
+        PointLight& operator=(const PointLight&&) = delete;
 
+	    PointLightData getLightData() const;
 		bool getDirty() const;
 		glm::vec3 getPosition() const;
 		glm::vec3 getColor() const;
@@ -20,10 +26,6 @@ namespace spark {
 		void resetDirty();
 		void setColor(glm::vec3 color_);
 		void setColorStrength(float strength);
-
-		PointLight(std::string name_ = "PointLight");
-		virtual ~PointLight() = default;
-
 		void setActive(bool active_) override;
 		void update() override;
 		void fixedUpdate() override;
@@ -32,11 +34,11 @@ namespace spark {
 	private:
 		bool dirty = true;
 		bool addedToLightManager = false;
-		
 		glm::vec3 color{ 1 };
 		float colorStrength{ 1 };
-
 		glm::vec3 lastPos{0};
+        RTTR_REGISTRATION_FRIEND;
+        RTTR_ENABLE(Component);
 	};
 }
 

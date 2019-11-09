@@ -58,10 +58,7 @@ namespace spark {
 		colorStrength = strength;
 	}
 
-	DirectionalLight::DirectionalLight(std::string name_) : Component(name_)
-	{
-		
-	}
+    DirectionalLight::DirectionalLight() : Component("DirectionalLight") {}
 
 	void DirectionalLight::setActive(bool active_)
 	{
@@ -113,4 +110,14 @@ namespace spark {
 		removeComponentGUI<DirectionalLight>();
 	}
 
+}
+
+RTTR_REGISTRATION{
+    rttr::registration::class_<spark::DirectionalLight>("DirectionalLight")
+    .constructor()(rttr::policy::ctor::as_std_shared_ptr)
+    //.property("dirty", &spark::DirectionalLight::dirty) //FIXME: shouldn't it always be dirty when loaded? maybe not
+    .property("addedToLightManager", &spark::DirectionalLight::addedToLightManager)
+    .property("color", &spark::DirectionalLight::color)
+    .property("colorStrength", &spark::DirectionalLight::colorStrength)
+    .property("direction", &spark::DirectionalLight::direction);
 }

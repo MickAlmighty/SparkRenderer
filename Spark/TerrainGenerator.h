@@ -15,13 +15,16 @@ struct TerrainNode
 };
 
 
-class TerrainGenerator : public Component
+class TerrainGenerator final : public Component
 {
 public:
-	int terrainSize = 20;
-
-	TerrainGenerator(std::string&& newName = "TerrainGenerator");
+    TerrainGenerator();
+    TerrainGenerator(std::string && newName);
 	~TerrainGenerator();
+    TerrainGenerator(const TerrainGenerator&) = delete;
+    TerrainGenerator(TerrainGenerator&&) = delete;
+    TerrainGenerator& operator=(const TerrainGenerator&) = delete;
+    TerrainGenerator& operator=(TerrainGenerator&&) = delete;
 
 	Texture generateTerrain();
 	void updateTerrain() const;
@@ -33,21 +36,18 @@ public:
 	void fixedUpdate() override;
 	void drawGUI() override;
 
-	inline bool areIndexesValid(const int x, const int y) const
-	{
-		const bool validX = x >= 0 && x < terrainSize;
-		const bool validY = y >= 0 && y < terrainSize;
-		return validX && validY;
-	}
+    bool areIndicesValid(const int x, const int y) const;
 
+    int terrainSize{ 20 };
 private:
 	float perlinDivider = 1.0f;
 	float perlinTimeStep = 1.0f;
 	Texture generatedTerrain{};
-	std::vector<TerrainNode> terrain;
+	std::vector<TerrainNode> terrain; //FIXME: should it be serialized too, or just regenerated?
 
 	int getTerrainNodeIndex(const int x, const int y) const;
-	
+    RTTR_REGISTRATION_FRIEND;
+    RTTR_ENABLE(Component);
 };
 
 }

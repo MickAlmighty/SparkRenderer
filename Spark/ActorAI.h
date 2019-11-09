@@ -1,22 +1,26 @@
 #ifndef ACTOR_AI_H
 #define ACTOR_AI_H
 
-#include <deque>
+#include "Component.h"
+#include "NodeAI.h"
 
 #include <glm/glm.hpp>
 
-#include <Component.h>
+#include <deque>
 
 namespace spark {
 	
 class TerrainGenerator;
-class NodeAI;
 
-class ActorAI : public Component
+class ActorAI final : public Component
 {
 public:
-	ActorAI(std::string&& newName = "ActorAI");
+	ActorAI();
 	~ActorAI() = default;
+    ActorAI(const ActorAI&) = delete;
+    ActorAI(const ActorAI&&) = delete;
+    ActorAI& operator=(const ActorAI&) = delete;
+    ActorAI& operator=(const ActorAI&&) = delete;
 
 	void update() override;
 	void fixedUpdate() override;

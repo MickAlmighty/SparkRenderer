@@ -14,7 +14,7 @@
 
 namespace spark {
 
-Scene::Scene(std::string sceneName) : name(std::move(sceneName))
+Scene::Scene(std::string&& sceneName) : name(std::move(sceneName))
 {
     root = std::make_shared<GameObject>("Root");
 	camera = std::make_shared<Camera>(glm::vec3(0, 0, 5));
@@ -23,7 +23,7 @@ Scene::Scene(std::string sceneName) : name(std::move(sceneName))
 
 Scene::~Scene()
 {
-    SPARK_DEBUG("Scene destroyed!");
+    SPARK_TRACE("Scene destroyed!");
 }
 
 void Scene::update()
@@ -72,7 +72,7 @@ std::shared_ptr<GameObject> Scene::getRoot() const {
 	ImGui::SetNextWindowSizeConstraints(ImVec2(350, 20), ImVec2(350, io.DisplaySize.y - 50));
 	if (ImGui::Begin("GameObject", &opened, { 0, 0 }, -1, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_AlwaysHorizontalScrollbar | ImGuiWindowFlags_NoCollapse))
 	{
-		auto gameObject_ptr = gameObjectToPreview.lock();
+        auto gameObject_ptr = getGameObjectToPreview();
 		if (gameObject_ptr != nullptr)
 		{
 			camera->setCameraTarget(gameObject_ptr->transform.world.getPosition());
@@ -111,7 +111,7 @@ void Scene::drawSceneGraph()
 void Scene::drawTreeNode(std::shared_ptr<GameObject> node, bool isRootNode)
 {
 	ImGui::PushID(node.get());
-	bool opened = node == gameObjectToPreview.lock();
+    bool opened = node == getGameObjectToPreview();
 	ImGui::Selectable(node->name.c_str(), opened, 0, { node->name.length() * 7.1f, 0.0f });
 
 	if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None) && !isRootNode)
@@ -150,7 +150,7 @@ void Scene::drawTreeNode(std::shared_ptr<GameObject> node, bool isRootNode)
 
 	if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0) && !isRootNode)
 	{
-		gameObjectToPreview = node;
+        setGameObjectToPreview(node);
         SPARK_DEBUG("GameObject {} clicked!", node->name);
 	}
 
@@ -170,4 +170,23 @@ void Scene::drawTreeNode(std::shared_ptr<GameObject> node, bool isRootNode)
 	ImGui::PopID();
 }
 
+    std::shared_ptr<GameObject> Scene::getGameObjectToPreview() const {
+        return gameObjectToPreview.lock();
+    }
+
+    void Scene::setGameObjectToPreview(const std::shared_ptr<GameObject> node) {
+        gameObjectToPreview = node;
+    }
+}
+
+RTTR_REGISTRATION{
+    rttr::registration::class_<spark::Scene>("Scene")
+    .constructor()(rttr::policy::ctor::as_std_shared_ptr)
+    .property("lightManager", &spark::Scene::lightManager)
+    .property("name", &spark::Scene::name)
+    .property("root", &spark::Scene::root)
+    .property("gameObjectToPreview", &spark::Scene::getGameObjectToPreview
+              , &spark::Scene::setGameObjectToPreview, rttr::registration::private_access)
+    .property("camera", &spark::Scene::camera)
+    .property("cameraMovement", &spark::Scene::cameraMovement);
 }

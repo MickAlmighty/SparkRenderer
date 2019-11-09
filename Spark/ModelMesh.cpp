@@ -12,7 +12,7 @@
 
 namespace spark {
 
-ModelMesh::ModelMesh(std::vector<Mesh>& meshes, std::string&& modelName) : Component(modelName)
+ModelMesh::ModelMesh(std::vector<Mesh>& meshes, std::string&& modelName) : Component(std::move(modelName))
 {
 	this->meshes = meshes;
 }
@@ -21,11 +21,6 @@ void ModelMesh::setModel(std::pair<std::string, std::vector<Mesh>> model)
 {
 	modelPath = model.first;
 	meshes = model.second;
-}
-
-ModelMesh::~ModelMesh()
-{
-    SPARK_DEBUG("ModelMesh deleted!");
 }
 
 void ModelMesh::update()
@@ -61,4 +56,10 @@ void ModelMesh::drawGUI()
 
 	removeComponentGUI<ModelMesh>();
 }
+}
+
+RTTR_REGISTRATION{
+    rttr::registration::class_<spark::ModelMesh>("ModelMesh")
+    .constructor()(rttr::policy::ctor::as_std_shared_ptr)
+    .property("modelPath", &spark::ModelMesh::modelPath);
 }

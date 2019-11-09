@@ -7,11 +7,6 @@
 
 namespace spark {
 
-MeshPlane::MeshPlane(std::string&& newName) : Component(newName)
-{
-	setup();
-}
-
 void MeshPlane::setup()
 {
 	vertices = {
@@ -43,6 +38,14 @@ void MeshPlane::setup()
 	glBindVertexArray(0);
 }
 
+
+MeshPlane::MeshPlane() : Component("MeshPlane") {
+    setup();
+}
+
+MeshPlane::MeshPlane(std::string&& name) : Component(std::move(name)) {
+    setup();
+}
 
 MeshPlane::~MeshPlane()
 {
@@ -121,4 +124,10 @@ void MeshPlane::drawGUI()
 	removeComponentGUI<MeshPlane>();
 }
 
+}
+
+RTTR_REGISTRATION{
+    rttr::registration::class_<spark::MeshPlane>("MeshPlane")
+    .constructor()(rttr::policy::ctor::as_std_shared_ptr)
+    .property("shaderType", &spark::MeshPlane::shaderType);
 }

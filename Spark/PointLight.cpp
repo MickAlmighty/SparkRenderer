@@ -49,10 +49,7 @@ namespace spark {
 		colorStrength = strength;
 	}
 
-	PointLight::PointLight(std::string name_) : Component(name_)
-	{
-
-	}
+    PointLight::PointLight() : Component("PointLight") {}
 
 	void PointLight::setActive(bool active_)
 	{
@@ -105,3 +102,12 @@ namespace spark {
 	}
 }
 
+RTTR_REGISTRATION{
+    rttr::registration::class_<spark::PointLight>("PointLight")
+    .constructor()(rttr::policy::ctor::as_std_shared_ptr)
+    //.property("dirty", &spark::PointLight::dirty) //FIXME: shouldn't it always be dirty when loaded? maybe not
+    .property("addedToLightManager", &spark::PointLight::addedToLightManager)
+    .property("color", &spark::PointLight::color)
+    .property("colorStrength", &spark::PointLight::colorStrength)
+    .property("lastPos", &spark::PointLight::lastPos);
+}

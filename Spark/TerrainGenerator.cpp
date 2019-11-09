@@ -66,6 +66,12 @@ void TerrainGenerator::drawGUI()
 	removeComponentGUI<TerrainGenerator>();
 }
 
+bool TerrainGenerator::areIndicesValid(const int x, const int y) const {
+    const bool validX = x >= 0 && x < terrainSize;
+    const bool validY = y >= 0 && y < terrainSize;
+    return validX && validY;
+}
+
 int TerrainGenerator::getTerrainNodeIndex(const int x, const int y) const
 {
 	return y * terrainSize + x;
@@ -132,16 +138,30 @@ float TerrainGenerator::getTerrainValue(const int x, const int y)
 	return terrain[index].nodeData.x;
 }
 
-TerrainGenerator::TerrainGenerator(std::string&& newName) : Component(newName)
+TerrainGenerator::TerrainGenerator(std::string&& newName) : Component(std::move(newName))
 {
-	glGenTextures(1, &generatedTerrain.ID);
-	glBindTexture(GL_TEXTURE_2D, generatedTerrain.ID);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, terrainSize, terrainSize, 0, GL_RGB, GL_FLOAT, NULL);
+    glGenTextures(1, &generatedTerrain.ID);
+    glBindTexture(GL_TEXTURE_2D, generatedTerrain.ID);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, terrainSize, terrainSize, 0, GL_RGB, GL_FLOAT, NULL);
 }
 
+
+TerrainGenerator::TerrainGenerator() : Component("TerrainGenerator") {
+    glGenTextures(1, &generatedTerrain.ID);
+    glBindTexture(GL_TEXTURE_2D, generatedTerrain.ID);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, terrainSize, terrainSize, 0, GL_RGB, GL_FLOAT, NULL);
+}
 
 TerrainGenerator::~TerrainGenerator()
 {
 	glDeleteTextures(1, &generatedTerrain.ID);
 }
+}
+
+RTTR_REGISTRATION{
+    rttr::registration::class_<spark::TerrainGenerator>("TerrainGenerator")
+    .constructor()(rttr::policy::ctor::as_std_shared_ptr)
+    .property("terrainSize", &spark::TerrainGenerator::terrainSize)
+    .property("perlinDivider", &spark::TerrainGenerator::perlinDivider)
+    .property("perlinTimeStep", &spark::TerrainGenerator::perlinTimeStep);
 }

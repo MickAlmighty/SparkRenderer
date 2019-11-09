@@ -14,13 +14,14 @@
 
 namespace spark {
 
-	struct Transform
+	struct Transform final
 	{
 		LocalTransform local;
 		WorldTransform world;
+        RTTR_ENABLE();
 	};
 
-	struct Uniform
+	struct Uniform final
 	{
 		std::string type;
 		std::string name;
@@ -49,7 +50,7 @@ namespace spark {
 		std::string path;
 	};
 
-	struct PbrCubemapTexture
+	struct PbrCubemapTexture final
 	{
 		GLuint cubemap{};
 		GLuint irradianceCubemap{}; 
@@ -66,7 +67,7 @@ namespace spark {
 	};
 
 
-	struct Vertex
+	struct Vertex final
 	{
 		glm::vec3 pos;
 		glm::vec3 normal;
@@ -75,14 +76,14 @@ namespace spark {
 		glm::vec3 bitangent;
 	};
 
-	struct QuadVertex
+	struct QuadVertex final
 	{
 		glm::vec3 pos;
 		glm::vec2 texCoords;
 	};
 
 
-	struct ScreenQuad
+	struct ScreenQuad final
 	{
 		GLuint vao{};
 		GLuint vbo{};
@@ -130,7 +131,7 @@ namespace spark {
 		}
 	};
 
-	struct Cube
+	struct Cube final
 	{
 		GLuint vao{};
 		GLuint vbo{};
@@ -207,19 +208,19 @@ namespace spark {
 		}
 	};
 
-	struct DirectionalLightData
+	struct DirectionalLightData final
 	{
 		alignas(16) glm::vec3 direction;
 		alignas(16) glm::vec3 color;
 	};
 
-	struct PointLightData
+	struct PointLightData final
 	{
 		alignas(16) glm::vec3 position;
 		alignas(16) glm::vec3 color;
 	};
 
-	struct SpotLightData
+	struct SpotLightData final
 	{
 		alignas(16) glm::vec3 position;
 		float cutOff;
