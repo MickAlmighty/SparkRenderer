@@ -34,9 +34,10 @@ namespace spark {
 		//return glm::distance(position, endPoint);
 	}
 
-	std::list<std::shared_ptr<NodeAI>> NodeAI::getNeighbors(const std::shared_ptr<TerrainGenerator>& terrainGenerator) const
+	std::vector<std::shared_ptr<NodeAI>> NodeAI::getNeighbors(const std::shared_ptr<TerrainGenerator>& terrainGenerator) const
 	{
-		std::list<std::shared_ptr<NodeAI>> neighbors;
+		std::vector<std::shared_ptr<NodeAI>> neighbors;
+		neighbors.reserve(8);
 		const float distanceFromNode = 1.0f;
 		const float diagonalDistanceFromNode = 1.41f;
 		tryToCreateNeighbor(neighbors, { position.x - 1, position.y }, terrainGenerator, distanceFromNode);
@@ -51,9 +52,10 @@ namespace spark {
 		return neighbors;
 	}
 
-	std::list<NodeAI> NodeAI::getNeighborsStack(const std::shared_ptr<TerrainGenerator>& terrainGenerator) const
+	std::vector<NodeAI> NodeAI::getNeighborsStack(const std::shared_ptr<TerrainGenerator>& terrainGenerator) const
 	{
-		std::list<NodeAI> neighbors;
+		std::vector<NodeAI> neighbors;
+		neighbors.reserve(8);
 		const float distanceFromNode = 1.0f;
 		const float diagonalDistanceFromNode = 1.41f;
 		tryToCreateNeighbor(neighbors, { position.x - 1, position.y }, terrainGenerator, distanceFromNode);
@@ -82,7 +84,7 @@ namespace spark {
 			parentAddress->getPathStack(path);
 	}
 
-	void NodeAI::tryToCreateNeighbor(std::list<std::shared_ptr<NodeAI>>& container, glm::ivec2&& pos,
+	void NodeAI::tryToCreateNeighbor(std::vector<std::shared_ptr<NodeAI>>& container, glm::ivec2&& pos,
 	                                 const std::shared_ptr<TerrainGenerator>& terrainGenerator, const float depth) const
 	{
 		if (terrainGenerator->areIndexesValid(pos.x, pos.y))
@@ -94,7 +96,7 @@ namespace spark {
 		}
 	}
 
-	void NodeAI::tryToCreateNeighbor(std::list<NodeAI>& container, glm::ivec2&& pos,
+	void NodeAI::tryToCreateNeighbor(std::vector<NodeAI>& container, glm::ivec2&& pos,
 		const std::shared_ptr<TerrainGenerator>& terrainGenerator, const float depth) const
 	{
 		if (terrainGenerator->areIndexesValid(pos.x, pos.y))

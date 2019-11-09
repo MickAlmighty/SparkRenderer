@@ -23,13 +23,12 @@ namespace spark {
 		glm::vec3 pos = getGameObject()->transform.world.getPosition();
 		
 		validateActorPosition(pos);
-		setStartPosition(pos);
-
-		const double measureStart = glfwGetTime();
+		setStartPosition(pos);		
 		//findPath();
 		if(path.empty())
 		{
 			randomizeEndPoint();
+			const double measureStart = glfwGetTime();
 			findPathStack();
 			timer = glfwGetTime() - measureStart;
 			std::cout << timer * 1000.0 << " ms" << std::endl;
@@ -37,6 +36,7 @@ namespace spark {
 		else if (const bool firstNodeAchieved = path.begin()->first; firstNodeAchieved)
 		{
 			randomizeEndPoint();
+			const double measureStart = glfwGetTime();
 			findPathStack();
 			timer = glfwGetTime() - measureStart;
 			std::cout << timer * 1000.0 << " ms" << std::endl;
@@ -202,7 +202,7 @@ namespace spark {
 				break;
 			}
 			processedNodes.push_back(closedNode);
-			std::list<std::shared_ptr<NodeAI>> neighbors = closedNode->getNeighbors(terrainGenerator.lock());
+			auto neighbors = closedNode->getNeighbors(terrainGenerator.lock());
 
 			for (const std::shared_ptr<NodeAI>& neighbor : neighbors)
 			{
@@ -329,7 +329,7 @@ namespace spark {
 				break;
 			}
 			
-			std::list<NodeAI> neighbors = closedNode.getNeighborsStack(terrainGenerator.lock());
+			auto neighbors = closedNode.getNeighborsStack(terrainGenerator.lock());
 			for (NodeAI& neighbor : neighbors)
 			{
 				if (isNodeClosedStack(neighbor))
