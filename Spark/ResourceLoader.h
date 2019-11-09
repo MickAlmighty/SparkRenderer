@@ -28,15 +28,17 @@ const std::vector<std::string> textureExtensions = {
 	".DDS", ".KTX"//".jpg", ".png"
 };
 
-class ResourceLoader
+class ResourceLoader final
 {
 public:
 	static std::map<std::string, std::vector<Mesh>> loadModels(std::filesystem::path& modelDirectory);
 	static std::vector<Texture> loadTextures(std::filesystem::path& resDirectory);
 	static std::optional<std::shared_ptr<PbrCubemapTexture>> loadHdrTexture(const std::string& path);
 	
-	ResourceLoader(const ResourceLoader& rhs) = delete;
-	ResourceLoader& operator=(const ResourceLoader& rhs) = delete;
+	ResourceLoader(const ResourceLoader&) = delete;
+    ResourceLoader(const ResourceLoader&&) = delete;
+    ResourceLoader& operator=(const ResourceLoader&) = delete;
+    ResourceLoader& operator=(const ResourceLoader&&) = delete;
 
 private:
 	ResourceLoader() = default;
