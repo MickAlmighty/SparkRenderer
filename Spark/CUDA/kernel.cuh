@@ -1,10 +1,8 @@
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>
+#include <memory>
+#include "Map.cuh"
 
-struct Pixel;
-__global__ void changeColors(Pixel* pixel_dev, int brightness);
-__global__ void horizontalGaussianBlur(Pixel* pixel_dev);
-__global__ void verticalGaussianBlur(Pixel* pixel_dev);
-__global__ void sampleAddition(float* data);
-__host__ void runKernel();
-void runKernel(int iterations);
+__global__ void checkMapValues(Map* mapDev);
+__global__ void attachNodes(Map* map, float* nodes);
+__host__ void runKernel(Map* mapDev, float* nodes);

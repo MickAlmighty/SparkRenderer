@@ -111,7 +111,12 @@
     </Link>
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
+      <GenerateLineInfo>false</GenerateLineInfo>
+      <CodeGeneration>compute_61,sm_61;</CodeGeneration>
     </CudaCompile>
+    <CudaLink>
+      <GPUDebugInfo>true</GPUDebugInfo>
+    </CudaLink>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -149,6 +154,9 @@
     </Link>
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
+      <GPUDebugInfo>true</GPUDebugInfo>
+      <GenerateLineInfo>false</GenerateLineInfo>
+      <CodeGeneration>compute_75,sm_75;</CodeGeneration>
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -197,6 +205,7 @@
     <ClInclude Include="Clock.h" />
     <ClInclude Include="Component.h" />
     <CudaCompile Include="CUDA\kernel.cuh" />
+    <ClInclude Include="CUDA\Map.cuh" />
     <ClInclude Include="DirectionalLight.h" />
     <ClInclude Include="EngineSystems\ResourceManager.h" />
     <ClInclude Include="EngineSystems\SceneManager.h" />
@@ -232,6 +241,7 @@
     <ClInclude Include="TerrainGenerator.h" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="WorldTransform.h" />
+    <CudaCompile Include="CUDA\Map.cu" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\res\shaders\default.glsl" />

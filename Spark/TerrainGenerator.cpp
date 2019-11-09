@@ -4,6 +4,8 @@
 #include <glm/gtc/random.hpp>
 #include <stb_image/stb_image.h>
 
+#include "CUDA/Map.cuh"
+#include "CUDA/kernel.cuh"
 #include "EngineSystems/ResourceManager.h"
 #include "GameObject.h"
 #include "MeshPlane.h"
@@ -71,6 +73,42 @@ void TerrainGenerator::fixedUpdate()
 void TerrainGenerator::drawGUI()
 {
 	ImGui::Text("TerrainSize: "); ImGui::SameLine(); ImGui::Text(std::to_string(terrainSize).c_str());
+
+#define cudaCheckErrors(msg) \
+    do { \
+        cudaError_t __err = cudaGetLastError(); \
+        if (__err != cudaSuccess) { \
+            fprintf(stderr, "Fatal error: %s (%s at %s:%d)\n", \
+                msg, cudaGetErrorString(__err), \
+                __FILE__, __LINE__); \
+            fprintf(stderr, "*** FAILED - ABORTING\n"); \
+            exit(1); \
+        } \
+    } while (0)
+
+	if (ImGui::Button("Cuda Map"))
+	{
+		Map* mapDev;
+
+		cudaMalloc(&mapDev, sizeof(Map));
+		cudaCheckErrors("Map allocation");
+
+		cudaMemcpy(&mapDev->width, reinterpret_cast<const void*>(&terrainSize), sizeof(int), cudaMemcpyHostToDevice);
+		cudaCheckErrors("width memcopy");
+		cudaMemcpy(&mapDev->height, reinterpret_cast<const void*>(&terrainSize), sizeof(int), cudaMemcpyHostToDevice);
+		cudaCheckErrors("height memcopy");
+
+		float* nodes = nullptr;
+		cudaMalloc(&nodes, sizeof(float) * terrainSize * terrainSize);
+		cudaCheckErrors("nodes allocation");
+		cudaMemcpy(nodes, terrain.data(), sizeof(float) * terrainSize * terrainSize, cudaMemcpyHostToDevice);
+		cudaCheckErrors("nodes copy from host");
+
+		runKernel(mapDev, nodes);
+
+		cudaFree(nodes);
+		cudaFree(mapDev);
+	}
 
 	if(ImGui::Button("Map from .bmp"))
 	{
