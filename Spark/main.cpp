@@ -6,15 +6,17 @@
 #include "Logging.h"
 
 int main() {
-    std::shared_ptr<spark::InitializationVariables> variables = spark::JsonSerializer::getInstance()->load<spark::InitializationVariables>("settings.json");
-    if(variables == nullptr) {
-        variables = std::make_shared<spark::InitializationVariables>();
-        variables->width = 1280;
-        variables->height = 720;
-        variables->pathToResources = "..\\..\\..\\res";
-        variables->pathToModels = "..\\..\\..\\res\\models";
+    spark::InitializationVariables variables;
+    try {
+        variables = spark::JsonSerializer::getInstance()->load<spark::InitializationVariables>("settings.json");
+    } catch (std::exception& e) {
+        variables.width = 1280;
+        variables.height = 720;
+        variables.pathToResources = R"(..\..\..\res)";
+        variables.pathToModels = R"(..\..\..\res\models)";
         spark::JsonSerializer::getInstance()->save(variables, "settings.json");
     }
+
     try {
         spark::Spark::setup(variables);
         spark::Spark::run();

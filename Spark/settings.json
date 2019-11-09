@@ -6,6 +6,5 @@
 		"pathToResources" : "..\\..\\..\\res",
 		"width" : 1280
 	},
-	"Identifier" : 0,
-	"Type" : "classstd::shared_ptr<structspark::InitializationVariables>"
+	"Type" : "InitializationVariables"
 }

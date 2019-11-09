@@ -1,7 +1,7 @@
 #ifndef STRUCTS_H
 #define STRUCTS_H
 
-#include "LocalTranform.h"
+#include "LocalTransform.h"
 #include "WorldTransform.h"
 
 #include <glad/glad.h>

@@ -92,7 +92,7 @@ namespace spark {
 
     std::shared_ptr<Scene> JsonSerializer::loadSceneFromFile(const std::filesystem::path& filePath) {
         Json::Value root = readFromFile(filePath);
-        return loadJson<Scene>(root);
+        return loadJsonShared<Scene>(root);
     }
 
     bool JsonSerializer::saveSceneToFile(const std::shared_ptr<Scene>& scene, const std::filesystem::path& filePath) {
@@ -252,8 +252,8 @@ namespace spark {
                     }
                 } else if (type == rttr::type::get<std::string>()) {
                     root = var.get_value<std::string>();
-                } else {
-                    status = 1;
+                } else { // expecting an statically allocated object of a non-simple type
+                    serialize(var, root);
                 }
             }
             switch (status) {
@@ -265,22 +265,31 @@ namespace spark {
     }
 
     void JsonSerializer::serialize(const rttr::variant& var, Json::Value& root) {
-        if (!isPtr(var.get_type())) {
+       /* if (!isPtr(var.get_type())) {
             SPARK_ERROR("Source object's type '{}' must be a pointer!", var.get_type().get_name().cbegin());
             throw std::exception("Source object must be a pointer!");
-        }
-        if (isVarBound(var)) {
-            root[ID_NAME] = getBoundId(var);
+        }*/
+        if(isPtr(var.get_type())) {
+            if (isVarBound(var)) {
+                root[ID_NAME] = getBoundId(var);
+            } else {
+                const int id{ counter++ };
+                root[ID_NAME] = id;
+                bindObject(var, id);
+                root[TYPE_NAME] = std::string(var.get_type().get_name());
+                rttr::variant wrapped{ isWrappedPtr(var.get_type()) ? var.extract_wrapped_value() : var };
+                Json::Value& content = root[CONTENT_NAME];
+                for (rttr::property prop : wrapped.get_type().get_properties()) {
+                    Json::Value& obj{ content[std::string(prop.get_name())] };
+                    writePropertyToJson(obj, prop.get_type(), prop.get_value(wrapped));
+                }
+            }
         } else {
-            const int id{ counter++ };
-            root[ID_NAME] = id;
-            bindObject(var, id);
             root[TYPE_NAME] = std::string(var.get_type().get_name());
-            rttr::variant wrapped{ isWrappedPtr(var.get_type()) ? var.extract_wrapped_value() : var };
             Json::Value& content = root[CONTENT_NAME];
-            for (rttr::property prop : wrapped.get_type().get_properties()) {
+            for(rttr::property prop : var.get_type().get_properties()) {
                 Json::Value& obj{ content[std::string(prop.get_name())] };
-                writePropertyToJson(obj, prop.get_type(), prop.get_value(wrapped));
+                writePropertyToJson(obj, prop.get_type(), prop.get_value(var));
             }
         }
     }
@@ -304,6 +313,17 @@ namespace spark {
             status = 3;
             SPARK_WARN("Property of type '{}' could not be properly deserialized with var of type '{}' (valid: {})!",
                        type.get_name().cbegin(), sparkPtr.get_type().get_name().cbegin(), sparkPtr.is_valid());
+        } else if (root.isObject() && root.isMember(TYPE_NAME) && root.isMember(CONTENT_NAME)) { // statically allocated object
+            rttr::variant valueVar = deserialize(root);
+            if(valueVar.get_type() == type) {
+                return valueVar;
+            } 
+            if(valueVar.can_convert(type)) {
+                return valueVar.convert(type);
+            }
+            status = 3;
+            SPARK_WARN("Property of type '{}' could not be properly deserialized with var of type '{}' (valid: {})!",
+                       type.get_name().cbegin(), valueVar.get_type().get_name().cbegin(), valueVar.is_valid());
         } else {
             if (type.is_enumeration()) {
                 rttr::enumeration enumeration = type.get_enumeration();
@@ -667,57 +687,98 @@ namespace spark {
     }
 
     rttr::variant JsonSerializer::deserialize(const Json::Value& root) {
-        if (!root.isMember(ID_NAME)) {
-            SPARK_ERROR("Invalid serialization object found!");
-            throw std::exception("Invalid serialization object found!"); //maybe outcome in the future?
-        }
-        const int id{ root[ID_NAME].asInt() };
-        if (id == NULL_ID) {
-            return nullptr;
-        }
-        if (isIdBound(id)) {
-            return getBoundObject(id);
-        }
-        if (!root.isMember(TYPE_NAME) || !root.isMember(CONTENT_NAME)) {
-            SPARK_ERROR("No type/content info provided!");
-            throw std::exception("No type/content info provided!");
-        }
-        std::string typeName{ root[TYPE_NAME].asString() };
-        rttr::type type{ rttr::type::get_by_name(typeName) };
-        if (!type.is_valid()) {
-            SPARK_ERROR("Invalid type found for name '{}'!", typeName);
-            throw std::exception("Invalid type found!");
-        }
-        const Json::Value& content{ root[CONTENT_NAME] };
-        rttr::type targetType{ (isWrappedPtr(type) ? type.get_wrapped_type() : type).get_raw_type() };
-        rttr::variant var{ targetType.create() };
-        if (!var.is_valid()) {
-            SPARK_ERROR("Created variant of '{}' is not valid!", targetType.get_name().cbegin());
-            throw std::exception("Created variant is not valid!");
-        }
-        if (var.get_type() != type) {
-            SPARK_ERROR("Created variant's type '{}' does not match source type '{}'!",
-                        var.get_type().get_name().cbegin(), type.get_name().begin());
-            throw std::exception("Created variant's type does not match source type!");
-        }
-        bindObject(var, id);
-        rttr::variant wrapped{ isWrappedPtr(type) ? var.extract_wrapped_value() : var };
-        for (rttr::property prop : wrapped.get_type().get_properties()) {
-            const rttr::type propType{ prop.get_type() };
-            if (content.isMember(prop.get_name().cbegin())) {
-                const Json::Value& obj{ content[prop.get_name().cbegin()] };
-                bool ok = true;
-                rttr::variant propVar{ readPropertyFromJson(obj, propType, prop.get_value(wrapped), ok) };
-                if (ok && !prop.set_value(wrapped, propVar)) {
-                    SPARK_ERROR("Unable to set value for property '{}'!", prop.get_name().cbegin());
-                    throw std::exception("Unable to set value for property!");
-                }
-            } else {
-                SPARK_WARN("Property '{}' of type '{}' (ID: {}) does not exist in json entry!",
-                           prop.get_name().cbegin(), wrapped.get_type().get_name().cbegin(), id);
+        //if (!root.isMember(ID_NAME)) {
+        //    SPARK_ERROR("Invalid serialization object found!");
+        //    throw std::exception("Invalid serialization object found!"); //maybe outcome in the future?
+        //}
+        if(root.isMember(ID_NAME)) { // referenced pointer type
+            const int id{ root[ID_NAME].asInt() };
+            if (id == NULL_ID) {
+                return nullptr;
             }
+            if (isIdBound(id)) {
+                return getBoundObject(id);
+            }
+            if (!root.isMember(TYPE_NAME) || !root.isMember(CONTENT_NAME)) {
+                SPARK_ERROR("No type/content info provided!");
+                throw std::exception("No type/content info provided!");
+            }
+            std::string typeName{ root[TYPE_NAME].asString() };
+            rttr::type type{ rttr::type::get_by_name(typeName) };
+            if (!type.is_valid()) {
+                SPARK_ERROR("Invalid type found for name '{}'!", typeName);
+                throw std::exception("Invalid type found!");
+            }
+            const Json::Value& content{ root[CONTENT_NAME] };
+            rttr::type targetType{ (isWrappedPtr(type) ? type.get_wrapped_type() : type).get_raw_type() };
+            rttr::variant var{ targetType.create() };
+            if (!var.is_valid()) {
+                SPARK_ERROR("Created variant of '{}' is not valid!", targetType.get_name().cbegin());
+                throw std::exception("Created variant is not valid!");
+            }
+            if (var.get_type() != type) {
+                SPARK_ERROR("Created variant's type '{}' does not match source type '{}'!",
+                            var.get_type().get_name().cbegin(), type.get_name().begin());
+                throw std::exception("Created variant's type does not match source type!");
+            }
+            bindObject(var, id);
+            rttr::variant wrapped{ isWrappedPtr(type) ? var.extract_wrapped_value() : var };
+            for (rttr::property prop : wrapped.get_type().get_properties()) {
+                const rttr::type propType{ prop.get_type() };
+                if (content.isMember(prop.get_name().cbegin())) {
+                    const Json::Value& obj{ content[prop.get_name().cbegin()] };
+                    bool ok = true;
+                    rttr::variant propVar{ readPropertyFromJson(obj, propType, prop.get_value(wrapped), ok) };
+                    if (ok && !prop.set_value(wrapped, propVar)) {
+                        SPARK_ERROR("Unable to set value for property '{}'!", prop.get_name().cbegin());
+                        throw std::exception("Unable to set value for property!");
+                    }
+                } else {
+                    SPARK_WARN("Property '{}' of type '{}' (ID: {}) does not exist in json entry!",
+                               prop.get_name().cbegin(), wrapped.get_type().get_name().cbegin(), id);
+                }
+            }
+            return var;
+        } else { // statically allocated type
+            if (!root.isMember(TYPE_NAME) || !root.isMember(CONTENT_NAME)) {
+                SPARK_ERROR("No type/content info provided!");
+                throw std::exception("No type/content info provided!");
+            }
+            std::string typeName{ root[TYPE_NAME].asString() };
+            rttr::type type{ rttr::type::get_by_name(typeName) };
+            if (!type.is_valid()) {
+                SPARK_ERROR("Invalid type found for name '{}'!", typeName);
+                throw std::exception("Invalid type found!");
+            }
+            const Json::Value& content{ root[CONTENT_NAME] };
+            rttr::variant var{ type.create() };
+            if (!var.is_valid()) {
+                SPARK_ERROR("Created variant of '{}' is not valid!", type.get_name().cbegin());
+                throw std::exception("Created variant is not valid!");
+            }
+            if (var.get_type() != type) {
+                SPARK_ERROR("Created variant's type '{}' does not match source type '{}'!",
+                            var.get_type().get_name().cbegin(), type.get_name().begin());
+                throw std::exception("Created variant's type does not match source type!");
+            }
+            for (rttr::property prop : var.get_type().get_properties()) {
+                const rttr::type propType{ prop.get_type() };
+                if (content.isMember(prop.get_name().cbegin())) {
+                    const Json::Value& obj{ content[prop.get_name().cbegin()] };
+                    bool ok = true;
+                    rttr::variant propVar{ readPropertyFromJson(obj, propType, prop.get_value(var), ok) };
+                    if (ok && !prop.set_value(var, propVar)) {
+                        SPARK_ERROR("Unable to set value for property '{}'!", prop.get_name().cbegin());
+                        throw std::exception("Unable to set value for property!");
+                    }
+                } else {
+                    SPARK_WARN("Property '{}' of type '{}' does not exist in json entry!",
+                               prop.get_name().cbegin(), var.get_type().get_name().cbegin());
+                }
+            }
+            return var;
         }
-        return var;
+        
     }
 
     bool JsonSerializer::bindObject(const rttr::variant& var, int id) {

@@ -8,9 +8,7 @@
 
 namespace spark {
 
-WorldTransform::WorldTransform(glm::mat4 mat) : modelMatrix(mat)
-{
-}
+WorldTransform::WorldTransform(glm::mat4 mat) : modelMatrix(mat) {}
 
 glm::mat4 WorldTransform::getMatrix() const
 {
@@ -88,4 +86,10 @@ void WorldTransform::setScale(glm::vec3 scale)
 	dirty = true;
 }
 
+}
+
+RTTR_REGISTRATION{
+    rttr::registration::class_<spark::WorldTransform>("WorldTransform")
+    .constructor()(rttr::policy::ctor::as_object)
+    .property("modelMatrix", &spark::WorldTransform::modelMatrix);
 }

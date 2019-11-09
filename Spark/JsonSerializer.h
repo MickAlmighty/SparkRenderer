@@ -36,9 +36,13 @@ namespace spark {
         bool save(const rttr::variant& var, Json::Value& root);
         bool save(const rttr::variant& var, const std::filesystem::path& filePath);
         template <typename T>
-        std::shared_ptr<T> loadJson(const Json::Value& root);
+        std::shared_ptr<T> loadJsonShared(const Json::Value& root);
         template <typename T>
-        std::shared_ptr<T> load(const std::filesystem::path& filePath);
+        std::shared_ptr<T> loadShared(const std::filesystem::path& filePath);
+        template <class T>
+        T loadJson(const Json::Value& root);
+        template <class T>
+        T load(const std::filesystem::path& filePath);
         rttr::variant loadVariant(const Json::Value& root);
         rttr::variant loadVariant(const std::filesystem::path& filePath);
     private:
@@ -60,7 +64,7 @@ namespace spark {
     };
 
     template <typename T>
-    std::shared_ptr<T> JsonSerializer::loadJson(const Json::Value& root) {
+    std::shared_ptr<T> JsonSerializer::loadJsonShared(const Json::Value& root) {
         std::lock_guard lock(serializerMutex);
         counter = 0;
         try {
@@ -78,7 +82,32 @@ namespace spark {
     }
 
     template <typename T>
-    std::shared_ptr<T> JsonSerializer::load(const std::filesystem::path& filePath) {
+    std::shared_ptr<T> JsonSerializer::loadShared(const std::filesystem::path& filePath) {
+        Json::Value root{ readFromFile(filePath) };
+        return loadJsonShared<T>(root);
+    }
+
+    template <typename T>
+    T JsonSerializer::loadJson(const Json::Value& root) {
+        std::lock_guard lock(serializerMutex);
+        counter = 0;
+        try {
+            rttr::variant var{ deserialize(root) };
+            bindings.clear();
+            if (var.is_type<T>()) {
+                return var.get_value<T>();
+            }
+        } catch (std::exception& e) {
+            SPARK_ERROR("{}", e.what());
+            bindings.clear();
+            throw e;
+        }
+        SPARK_ERROR("Couldn't cast type '{}' to deserialized item!", rttr::type::get<T>().get_name().cbegin());
+        throw std::exception("Couldn't cast given type to deserialized item!");
+    }
+
+    template <typename T>
+    T JsonSerializer::load(const std::filesystem::path& filePath) {
         Json::Value root{ readFromFile(filePath) };
         return loadJson<T>(root);
     }

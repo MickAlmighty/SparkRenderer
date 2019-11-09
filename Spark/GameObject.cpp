@@ -224,6 +224,7 @@ GameObject::~GameObject()
 RTTR_REGISTRATION{
     rttr::registration::class_<spark::GameObject>("GameObject")
     .constructor()(rttr::policy::ctor::as_std_shared_ptr)
+    .property("transform", &spark::GameObject::transform)
     .property("name", &spark::GameObject::name)
     .property("scene", &spark::GameObject::getScene, &spark::GameObject::setScene, rttr::registration::public_access)
     .property("parent", &spark::GameObject::getParent, &spark::GameObject::setParent, rttr::registration::public_access)

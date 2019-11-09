@@ -21,7 +21,7 @@ public:
 	inline static bool runProgram = true;
 	inline static float maxAnisotropicFiltering = 1.0f;
 	
-	static void setup(const std::shared_ptr<InitializationVariables>& variables);
+	static void setup(const InitializationVariables& variables);
 	static void run();
 	static void resizeWindow(GLuint width, GLuint height);
 	static void clean();

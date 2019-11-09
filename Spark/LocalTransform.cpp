@@ -1,19 +1,13 @@
-#include "LocalTranform.h"
+#include "LocalTransform.h"
 
 #include <GUI/ImGui/imgui.h>
 #include <glm/gtx/euler_angles.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "JsonSerializer.h"
-
 namespace spark {
 
 LocalTransform::LocalTransform(glm::vec3 pos, glm::vec3 scale, glm::vec3 rotation)
-{
-	this->position = pos;
-	this->scale = scale;
-	this->rotationEuler = rotation;
-}
+    : position(pos), scale(scale), rotationEuler(rotation) {}
 
 void LocalTransform::drawGUI()
 {
@@ -150,4 +144,13 @@ void LocalTransform::setRotationRadians(glm::vec3 rotationRadians)
 	dirty = true;
 }
 
+}
+
+RTTR_REGISTRATION{
+    rttr::registration::class_<spark::LocalTransform>("LocalTransform")
+    .constructor()(rttr::policy::ctor::as_object)
+    .property("position", &spark::LocalTransform::position)
+    .property("rotationEuler", &spark::LocalTransform::rotationEuler)
+    .property("scale", &spark::LocalTransform::scale)
+    .property("modelMatrix", &spark::LocalTransform::modelMatrix);
 }

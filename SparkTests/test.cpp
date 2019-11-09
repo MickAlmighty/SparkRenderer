@@ -140,6 +140,21 @@ public:
     RTTR_ENABLE();
 };
 
+struct SerializationStruct1 {
+    glm::mat3 mat;
+    double d;
+    glm::vec4 vec;
+    RTTR_ENABLE();
+};
+
+struct SerializationStruct2 {
+    int i;
+    float f;
+    glm::ivec2 ivec;
+    SerializationStruct1 s;
+    RTTR_ENABLE();
+};
+
 RTTR_REGISTRATION{
     rttr::registration::enumeration<SerializationEnum1>("SerializationEnum1")(
         rttr::value("Value1", SerializationEnum1::Value1),
@@ -149,28 +164,41 @@ RTTR_REGISTRATION{
         );
 
     rttr::registration::class_<SerializationClass1>("SerializationClass1")
-    .constructor()(rttr::policy::ctor::as_std_shared_ptr)
-    .property("field1", &SerializationClass1::field1)
-    .property("field2", &SerializationClass1::field2)
-    .property("field3", &SerializationClass1::field3)
-    .property("field4", &SerializationClass1::field4)
-    .property("vec2", &SerializationClass1::vec2)
-    .property("vec3", &SerializationClass1::vec3)
-    .property("vec4", &SerializationClass1::vec4)
-    .property("mat2", &SerializationClass1::mat2)
-    .property("mat3", &SerializationClass1::mat3)
-    .property("mat4", &SerializationClass1::mat4)
-    .property("intVector", &SerializationClass1::intVector);
+        .constructor()(rttr::policy::ctor::as_std_shared_ptr)
+        .property("field1", &SerializationClass1::field1)
+        .property("field2", &SerializationClass1::field2)
+        .property("field3", &SerializationClass1::field3)
+        .property("field4", &SerializationClass1::field4)
+        .property("vec2", &SerializationClass1::vec2)
+        .property("vec3", &SerializationClass1::vec3)
+        .property("vec4", &SerializationClass1::vec4)
+        .property("mat2", &SerializationClass1::mat2)
+        .property("mat3", &SerializationClass1::mat3)
+        .property("mat4", &SerializationClass1::mat4)
+        .property("intVector", &SerializationClass1::intVector);
 
     rttr::registration::class_<SerializationClass2>("SerializationClass2")
-    .constructor()(rttr::policy::ctor::as_std_shared_ptr)
-    .property("field1", &SerializationClass2::field1)
-    .property("field2", &SerializationClass2::field2)
-    .property("shared", &SerializationClass2::shared)
-    .property("weak", &SerializationClass2::getWeak, &SerializationClass2::setWeak, rttr::registration::public_access)
-    .property("raw", &SerializationClass2::raw)
-    .property("ptrVector", &SerializationClass2::ptrVector)
-    .property("intMap", &SerializationClass2::intMap);
+        .constructor()(rttr::policy::ctor::as_std_shared_ptr)
+        .property("field1", &SerializationClass2::field1)
+        .property("field2", &SerializationClass2::field2)
+        .property("shared", &SerializationClass2::shared)
+        .property("weak", &SerializationClass2::getWeak, &SerializationClass2::setWeak, rttr::registration::public_access)
+        .property("raw", &SerializationClass2::raw)
+        .property("ptrVector", &SerializationClass2::ptrVector)
+        .property("intMap", &SerializationClass2::intMap);
+
+    rttr::registration::class_<SerializationStruct1>("SerializationStruct1")
+        .constructor()(rttr::policy::ctor::as_object)
+        .property("mat", &SerializationStruct1::mat)
+        .property("d", &SerializationStruct1::d)
+        .property("vec", &SerializationStruct1::vec);
+
+    rttr::registration::class_<SerializationStruct2>("SerializationStruct2")
+        .constructor()(rttr::policy::ctor::as_object)
+        .property("i", &SerializationStruct2::i)
+        .property("f", &SerializationStruct2::f)
+        .property("ivec", &SerializationStruct2::ivec)
+        .property("s", &SerializationStruct2::s);
 }
 
 TEST(SerializationTest, PointersInterchangeable) {
@@ -255,4 +283,30 @@ TEST(SerializationTest, PointersSerializedProperly) {
     ASSERT_EQ(class2->raw->mat2, deserializedClass2->raw->mat2);
     ASSERT_EQ(class2->raw->mat3, deserializedClass2->raw->mat3);
     ASSERT_EQ(class2->raw->mat4, deserializedClass2->raw->mat4);
+}
+
+TEST(SerializationTest, StructsSerializedProperly) {
+    SerializationStruct2 source;
+    source.i = 100;
+    source.f = 50.0f;
+    source.ivec = { -5,5 };
+    source.s.d = 0.1234f;
+    source.s.vec = { 0.1f, 0.2f, 0.3f, 0.4f };
+    source.s.mat = { {1.0f, 2.0f, 3.0f},{4.0f,5.0f,6.0f},{7.0f,8.0f,9.0f} };
+    spark::JsonSerializer* serializer{ spark::JsonSerializer::getInstance() };
+    Json::Value root;
+    ASSERT_TRUE(serializer->save(source, root));
+    spark::JsonSerializer::writeToFile("test2.json", root);
+    SerializationStruct2 target;
+    try {
+        target = serializer->loadJson<SerializationStruct2>(root);
+    } catch(std::exception& e) {
+        ASSERT_FALSE("Unable to deserialize struct!");
+    }
+    ASSERT_EQ(source.f, target.f);
+    ASSERT_EQ(source.i, target.i);
+    ASSERT_EQ(source.ivec, target.ivec);
+    ASSERT_EQ(source.s.d, target.s.d);
+    ASSERT_EQ(source.s.mat, target.s.mat);
+    ASSERT_EQ(source.s.vec, target.s.vec);
 }

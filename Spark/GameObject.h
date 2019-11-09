@@ -14,8 +14,6 @@ namespace spark {
 class GameObject final : public std::enable_shared_from_this<GameObject>
 {
 public:
-	Transform transform;
-
 	GameObject() = default;
     explicit GameObject(std::string&& name);
 	~GameObject();
@@ -120,6 +118,7 @@ public:
 		return false;
 	}*/
 
+    Transform transform;
 private:
 	friend class Scene;
     std::string name{ "GameObject" };
