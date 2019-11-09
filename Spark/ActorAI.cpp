@@ -31,14 +31,17 @@ namespace spark {
 		{
 			randomizeEndPoint();
 			findPathStack();
+			timer = glfwGetTime() - measureStart;
+			std::cout << timer * 1000.0 << " ms" << std::endl;
 		}
 		else if (const bool firstNodeAchieved = path.begin()->first; firstNodeAchieved)
 		{
 			randomizeEndPoint();
 			findPathStack();
+			timer = glfwGetTime() - measureStart;
+			std::cout << timer * 1000.0 << " ms" << std::endl;
 		}
-		timer = glfwGetTime() - measureStart;
-		//std::cout << timer * 1000.0 << " ms" << std::endl;
+		
 		if (!path.empty())
 		{
 			isTraveling = true;

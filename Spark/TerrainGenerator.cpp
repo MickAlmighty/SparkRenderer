@@ -8,8 +8,9 @@
 #include "CUDA/kernel.cuh"
 #include "EngineSystems/ResourceManager.h"
 #include "GameObject.h"
-#include "MeshPlane.h"
 #include "JsonSerializer.h"
+#include "MeshPlane.h"
+#include "Timer.h"
 
 namespace spark {
 
@@ -88,24 +89,29 @@ void TerrainGenerator::drawGUI()
 
 	if (ImGui::Button("Cuda Map"))
 	{
-		Map* mapDev;
+		using namespace cuda;
+		Timer timer1("CUDA Memalloc and kernels launch");
+		Map* mapDev = nullptr;
 
 		cudaMalloc(&mapDev, sizeof(Map));
-		cudaCheckErrors("Map allocation");
 
 		cudaMemcpy(&mapDev->width, reinterpret_cast<const void*>(&terrainSize), sizeof(int), cudaMemcpyHostToDevice);
-		cudaCheckErrors("width memcopy");
 		cudaMemcpy(&mapDev->height, reinterpret_cast<const void*>(&terrainSize), sizeof(int), cudaMemcpyHostToDevice);
-		cudaCheckErrors("height memcopy");
 
 		float* nodes = nullptr;
 		cudaMalloc(&nodes, sizeof(float) * terrainSize * terrainSize);
-		cudaCheckErrors("nodes allocation");
 		cudaMemcpy(nodes, terrain.data(), sizeof(float) * terrainSize * terrainSize, cudaMemcpyHostToDevice);
-		cudaCheckErrors("nodes copy from host");
 
-		runKernel(mapDev, nodes);
+		glm::ivec2 path[] = { {10, 10}, {15, 10}};
+		int* pathDev;
+		cudaMalloc(&pathDev, sizeof(glm::ivec2) * 2);
+		cudaMemcpy(pathDev, &path, sizeof(glm::ivec2) * 2, cudaMemcpyHostToDevice);
+		{
+			Timer timer("CUDA Kernels");
+			runKernel(mapDev, nodes, pathDev);
+		}
 
+		cudaFree(path);
 		cudaFree(nodes);
 		cudaFree(mapDev);
 	}

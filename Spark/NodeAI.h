@@ -27,12 +27,10 @@ public:
 
 	float measureManhattanDistance(glm::vec2 point) const;
 	std::list<std::shared_ptr<NodeAI>> getNeighbors(const std::shared_ptr<TerrainGenerator>& terrainGenerator) const;
-	void drawReturnPath(std::shared_ptr<TerrainGenerator>& terrainGenerator) const;
 	void getPath(std::deque<std::pair<bool, glm::ivec2>>& path) const;
 
 
 	std::list<NodeAI> getNeighborsStack(const std::shared_ptr<TerrainGenerator>& terrainGenerator) const;
-	void drawReturnPathStack(std::shared_ptr<TerrainGenerator>& terrainGenerator) const;
 	void getPathStack(std::deque<std::pair<bool, glm::ivec2>>& path) const;
 
 private:

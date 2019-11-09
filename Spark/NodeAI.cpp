@@ -68,26 +68,11 @@ namespace spark {
 		return neighbors;
 	}
 
-	void NodeAI::drawReturnPath(std::shared_ptr<TerrainGenerator>& terrainGenerator) const
-	{
-		const int index = position.y * terrainGenerator->terrainSize + position.x;
-		if (!parent.expired())
-			parent.lock()->drawReturnPath(terrainGenerator);
-	}
-
 	void NodeAI::getPath(std::deque<std::pair<bool, glm::ivec2>>& path) const
 	{
 		path.push_front({ false, { static_cast<float>(position.x), static_cast<float>(position.y) } });
 		if (!parent.expired())
 			parent.lock()->getPath(path);
-	}
-
-	void NodeAI::drawReturnPathStack(std::shared_ptr<TerrainGenerator>& terrainGenerator) const
-	{
-		//std::cout << position.x << " " << position.y << std::endl;
-		const int index = position.y * terrainGenerator->terrainSize + position.x;
-		if (parentAddress)
-			parentAddress->drawReturnPathStack(terrainGenerator);
 	}
 
 	void NodeAI::getPathStack(std::deque<std::pair<bool, glm::ivec2>>& path) const

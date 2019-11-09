@@ -284,7 +284,7 @@
     <CudaCompile Include="CUDA\kernel.cuh">
       <Filter>CUDA</Filter>
     </CudaCompile>
-    <CudaCompile Include="CUDA\Map.cu">
+    <CudaCompile Include="CUDA\Node.cuh">
       <Filter>CUDA</Filter>
     </CudaCompile>
   </ItemGroup>
