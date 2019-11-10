@@ -403,11 +403,15 @@ void JsonSerializer::serialize(const rttr::variant& var, Json::Value& root)
             SPARK_TRACE("Assigning ID {}", id);
             root[ID_NAME] = id;
             bindObject(var, id);
-            root[TYPE_NAME] = std::string(var.get_type().get_name());
+            //TODO: find a better way to get derived type maybe?
             rttr::variant wrapped{isWrappedPtr(var.get_type()) ? var.extract_wrapped_value() : var};
+            rttr::instance inst{wrapped};
+            const rttr::type derivedType{inst.get_derived_type()};
+            const rttr::variant newVar{derivedType.create()};
+            root[TYPE_NAME] = std::string(newVar.get_type().get_name());
             SPARK_TRACE("Is var a wrapped pointer? {}", isWrappedPtr(var.get_type()));
             Json::Value& content = root[CONTENT_NAME];
-            for(rttr::property prop : wrapped.get_type().get_properties())
+            for(rttr::property prop : derivedType.get_properties())
             {
                 Json::Value& obj{content[std::string(prop.get_name())]};
                 SPARK_TRACE("Writing property with name '{}'...", prop.get_name().cbegin());
@@ -418,7 +422,7 @@ void JsonSerializer::serialize(const rttr::variant& var, Json::Value& root)
     else
     {
         SPARK_TRACE("Var is not a pointer type");
-        root[TYPE_NAME] = std::string(var.get_type().get_name());
+        root[TYPE_NAME] = std::string(rttr::instance(var).get_derived_type().get_name());
         Json::Value& content = root[CONTENT_NAME];
         for(rttr::property prop : var.get_type().get_properties())
         {
