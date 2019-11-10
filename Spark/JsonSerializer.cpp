@@ -1167,6 +1167,10 @@ bool JsonSerializer::bindObject(const rttr::variant& var, int id)
 
 bool JsonSerializer::isVarBound(const rttr::variant& var)
 {
+    if(getPtr(var) == nullptr)
+    {
+        return true;
+    }
     const auto it = std::find_if(bindings.begin(), bindings.end(),
                                  [&](const std::pair<rttr::variant, int>& pair) { return areVariantsEqualPointers(pair.first, var); });
     return it != bindings.end();
@@ -1174,6 +1178,10 @@ bool JsonSerializer::isVarBound(const rttr::variant& var)
 
 int JsonSerializer::getBoundId(const rttr::variant& var)
 {
+    if(getPtr(var) == nullptr)
+    {
+        return -1;
+    }
     const auto it = std::find_if(bindings.begin(), bindings.end(),
                                  [&](const std::pair<rttr::variant, int>& pair) { return areVariantsEqualPointers(pair.first, var); });
     if(it != bindings.end())
