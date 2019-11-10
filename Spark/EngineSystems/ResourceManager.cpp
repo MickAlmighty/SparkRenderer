@@ -41,6 +41,7 @@ namespace spark {
 			if (tex_it.path == path)
 				return tex_it;
 		}
+        SPARK_ERROR("Texture from path '{}' was NOT found!", path);
 		return {};
 	}
 
@@ -51,10 +52,24 @@ namespace spark {
 		{
 			return it->second;
 		}
+        SPARK_ERROR("Meshes for model from path '{}' were NOT found!", path);
 		return {};
 	}
 
-	std::vector<std::string> ResourceManager::getPathsToModels() const
+    GLuint ResourceManager::getTextureId(const std::string& path) const {
+        const auto& it
+        {
+            std::find_if(textures.begin(), textures.end(), [&](const Texture& tex) { return tex.getPath() == path; })
+        };
+        if(it != textures.end())
+        {
+            return it->getId();
+        }
+        SPARK_ERROR("ID for texture from path '{}' was NOT found!", path);
+        return 0;
+	}
+
+std::vector<std::string> ResourceManager::getPathsToModels() const
 	{
 		std::vector<std::string> paths;
 		for (auto& element : models)
@@ -85,6 +100,7 @@ namespace spark {
 		{
 			return it->second;
 		}
+        SPARK_ERROR("Shader with name '{}' was NOT found!", name);
 		return nullptr;
 	}
 

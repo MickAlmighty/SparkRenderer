@@ -32,7 +32,7 @@ private:
 	GLuint vao{ 0 }, vbo{ 0 }, ebo{ 0 };
 	std::vector<QuadVertex> vertices;
 	std::vector<unsigned int> indices;
-	std::map<TextureTarget, Texture> textures; //TODO: add texture serialization!
+	std::map<TextureTarget, Texture> textures;
     ShaderType shaderType{ ShaderType::DEFAULT_SHADER };
     RTTR_REGISTRATION_FRIEND;
     RTTR_ENABLE(Component);

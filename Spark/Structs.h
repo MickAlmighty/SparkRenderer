@@ -46,8 +46,14 @@ namespace spark {
 
 	struct Texture
 	{
-		GLuint ID;
+        void setPath(const std::string path);
+        std::string getPath() const;
+	    GLuint getId() const;
+	private:
+		GLuint ID {0};
 		std::string path;
+        RTTR_REGISTRATION_FRIEND;
+        RTTR_ENABLE();
 	};
 
 	struct PbrCubemapTexture final

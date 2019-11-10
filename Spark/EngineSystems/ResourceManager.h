@@ -19,6 +19,7 @@ public:
 	void addCubemapTexturePath(const std::string& path);
 	Texture findTexture(const std::string&& path) const;
 	std::vector<Mesh> findModelMeshes(const std::string& path) const;
+    GLuint getTextureId(const std::string& path) const;
 	std::vector<std::string> getPathsToModels() const;
 	std::shared_ptr<Shader> getShader(const ShaderType& type) const;
 	std::shared_ptr<Shader> getShader(const std::string& name) const;

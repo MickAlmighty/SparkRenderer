@@ -11,7 +11,6 @@ class Mesh;
 class ModelMesh final : public Component
 {
 public:
-	ModelMesh() = default;
 	ModelMesh(std::vector<Mesh>& meshes, std::string&& modelName = "ModelMesh");
     ModelMesh(const ModelMesh&) = delete;
     ModelMesh(const ModelMesh&&) = delete;
@@ -22,9 +21,12 @@ public:
 	void update() override;
 	void fixedUpdate() override;
 	void drawGUI() override;
-private:
+    std::string getModelPath() const;
+    void setModelPath(const std::string modelPath);
+    private:
+	ModelMesh();
 	std::string modelPath;
-	std::vector<Mesh> meshes{}; //TODO: add proper mesh loading for deserialization
+	std::vector<Mesh> meshes{};
     RTTR_REGISTRATION_FRIEND;
     RTTR_ENABLE(Component);
 };

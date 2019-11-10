@@ -50,16 +50,26 @@ void ModelMesh::drawGUI()
 	if (meshes.empty())
 	{
 		const auto model = SparkGui::getMeshes();
-		modelPath = model.first;
-		meshes = model.second;
+        setModel(model);
 	}
 
 	removeComponentGUI<ModelMesh>();
 }
+
+std::string ModelMesh::getModelPath() const {
+    return modelPath;
+}
+
+void ModelMesh::setModelPath(const std::string modelPath) {
+    const std::pair<std::string, std::vector<Mesh>> model{modelPath, ResourceManager::getInstance()->findModelMeshes(modelPath)};
+    setModel(model);
+}
+
+ModelMesh::ModelMesh() : Component("ModelMesh") {}
 }
 
 RTTR_REGISTRATION{
     rttr::registration::class_<spark::ModelMesh>("ModelMesh")
     .constructor()(rttr::policy::ctor::as_std_shared_ptr)
-    .property("modelPath", &spark::ModelMesh::modelPath);
+    .property("modelPath", &spark::ModelMesh::getModelPath, &spark::ModelMesh::setModelPath, rttr::registration::public_access);
 }

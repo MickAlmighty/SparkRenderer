@@ -7,8 +7,20 @@
 #include "Shader.h"
 
 namespace spark {
+    void Texture::setPath(const std::string path) {
+        this->path = path;
+        this->ID = ResourceManager::getInstance()->getTextureId(path);
+    }
 
-	PbrCubemapTexture::PbrCubemapTexture(GLuint hdrTexture, unsigned size)
+    std::string Texture::getPath() const {
+        return path;
+    }
+
+    GLuint Texture::getId() const {
+        return ID;
+    }
+
+    PbrCubemapTexture::PbrCubemapTexture(GLuint hdrTexture, unsigned size)
 	{
 		setup(hdrTexture, size);
 	}
@@ -176,14 +188,18 @@ namespace spark {
 
 RTTR_REGISTRATION{
     rttr::registration::class_<spark::InitializationVariables>("InitializationVariables")
-    .constructor()(rttr::policy::ctor::as_object)
-    .property("width", &spark::InitializationVariables::width)
-    .property("height", &spark::InitializationVariables::height)
-    .property("pathToModels", &spark::InitializationVariables::pathToModels)
-    .property("pathToResources", &spark::InitializationVariables::pathToResources);
+        .constructor()(rttr::policy::ctor::as_object)
+        .property("width", &spark::InitializationVariables::width)
+        .property("height", &spark::InitializationVariables::height)
+        .property("pathToModels", &spark::InitializationVariables::pathToModels)
+        .property("pathToResources", &spark::InitializationVariables::pathToResources);
 
     rttr::registration::class_<spark::Transform>("Transform")
-    .constructor()(rttr::policy::ctor::as_object)
-    .property("local", &spark::Transform::local)
-    .property("world", &spark::Transform::world);
+        .constructor()(rttr::policy::ctor::as_object)
+        .property("local", &spark::Transform::local)
+        .property("world", &spark::Transform::world);
+
+    rttr::registration::class_<spark::Texture>("Texture")
+        .constructor()(rttr::policy::ctor::as_object)
+        .property("path", &spark::Texture::getPath, &spark::Texture::setPath, rttr::registration::public_access);
 }

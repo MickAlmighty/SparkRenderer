@@ -70,7 +70,7 @@ void MeshPlane::draw(std::shared_ptr<Shader>& shader, glm::mat4 model) const
 
 	for (auto& texture_it : textures)
 	{
-		glBindTextureUnit(static_cast<GLuint>(texture_it.first), texture_it.second.ID);
+		glBindTextureUnit(static_cast<GLuint>(texture_it.first), texture_it.second.getId());
 	}
 
 	glBindVertexArray(vao);
@@ -83,11 +83,6 @@ void MeshPlane::draw(std::shared_ptr<Shader>& shader, glm::mat4 model) const
 
 void MeshPlane::setTexture(TextureTarget target, Texture tex)
 {
-	Texture t = textures[target];
-	/*if(t.ID != ResourceManager::getInstance()->findTexture(static_cast<const std::string>(t.path)).ID)
-	{
-		glDeleteTextures(1, &t.ID);
-	}*/
 	textures[target] = tex;
 }
 
@@ -113,7 +108,7 @@ void MeshPlane::drawGUI()
 	if (ImGui::RadioButton("Diffuse", mode == static_cast<int>(TextureTarget::DIFFUSE_TARGET))) { mode = static_cast<int>(TextureTarget::DIFFUSE_TARGET); } ImGui::SameLine();
 	if (ImGui::RadioButton("Normal", mode == static_cast<int>(TextureTarget::NORMAL_TARGET))) { mode = static_cast<int>(TextureTarget::NORMAL_TARGET); }
 
-	std::string name = "texture: " + std::to_string(textures[static_cast<TextureTarget>(mode)].ID);
+	std::string name = "texture: " + std::to_string(textures[static_cast<TextureTarget>(mode)].getId());
 	ImGui::Text(name.c_str());
 	const auto optionalResult = SparkGui::getDraggedObject<Texture>("TEXTURE");
 	if (optionalResult)
@@ -129,5 +124,6 @@ void MeshPlane::drawGUI()
 RTTR_REGISTRATION{
     rttr::registration::class_<spark::MeshPlane>("MeshPlane")
     .constructor()(rttr::policy::ctor::as_std_shared_ptr)
-    .property("shaderType", &spark::MeshPlane::shaderType);
+    .property("shaderType", &spark::MeshPlane::shaderType)
+    .property("textures", &spark::MeshPlane::textures);
 }
