@@ -26,9 +26,9 @@ namespace spark {
         void fixedUpdate() const;
         void cleanup();
         void addScene(const std::shared_ptr<Scene>& scene);
-        bool setCurrentScene(std::string&& sceneName);
+        bool setCurrentScene(const std::string& sceneName);
         std::shared_ptr<Scene> getCurrentScene() const;
-        void drawGui() const;
+        void drawGui();
     private:
         std::list<std::shared_ptr<Scene>> scenes;
         std::shared_ptr<Scene> current_scene{ Factory::createScene("MainScene") };

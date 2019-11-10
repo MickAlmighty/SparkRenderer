@@ -60,5 +60,68 @@ namespace spark {
 		glDeleteBuffers(1, &spotLightSSBO);
 	}
 
+std::vector<std::shared_ptr<DirectionalLight>> LightManager::getDirectionalLights() {
+    std::vector<std::shared_ptr<DirectionalLight>> vec;
+    for(auto& light : directionalLights)
+    {
+        vec.push_back(light.lock());
+    }
+    return vec;
 }
 
+std::vector<std::shared_ptr<PointLight>> LightManager::getPointLights()
+{
+    std::vector<std::shared_ptr<PointLight>> vec;
+    for(auto& light : pointLights)
+    {
+        vec.push_back(light.lock());
+    }
+    return vec;
+}
+
+std::vector<std::shared_ptr<SpotLight>> LightManager::getSpotLights()
+{
+    std::vector<std::shared_ptr<SpotLight>> vec;
+    for(auto& light : spotLights)
+    {
+        vec.push_back(light.lock());
+    }
+    return vec;
+}
+
+void LightManager::setDirectionalLights(std::vector<std::shared_ptr<DirectionalLight>> lights) {
+    directionalLights.clear();
+    for(auto& light : lights)
+    {
+        directionalLights.push_back(light);
+    }
+}
+
+void LightManager::setPointLights(std::vector<std::shared_ptr<PointLight>> lights)
+{
+    pointLights.clear();
+    for(auto& light : lights)
+    {
+        pointLights.push_back(light);
+    }
+}
+
+void LightManager::setSpotLights(std::vector<std::shared_ptr<SpotLight>> lights)
+{
+    spotLights.clear();
+    for(auto& light : lights)
+    {
+        spotLights.push_back(light);
+    }
+}
+}
+
+RTTR_REGISTRATION
+{
+    rttr::registration::class_<spark::LightManager>("LightManager")
+        .constructor()(rttr::policy::ctor::as_std_shared_ptr)
+        .property("directionalLights", &spark::LightManager::getDirectionalLights, &spark::LightManager::setDirectionalLights,
+                  rttr::registration::public_access)
+        .property("pointLights", &spark::LightManager::getPointLights, &spark::LightManager::setPointLights, rttr::registration::public_access)
+        .property("spotLights", &spark::LightManager::getSpotLights, &spark::LightManager::setSpotLights, rttr::registration::public_access);
+}

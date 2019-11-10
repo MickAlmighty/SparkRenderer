@@ -70,7 +70,7 @@ void MeshPlane::draw(std::shared_ptr<Shader>& shader, glm::mat4 model) const
 
 	for (auto& texture_it : textures)
 	{
-		glBindTextureUnit(static_cast<GLuint>(texture_it.first), texture_it.second.getId());
+		glBindTextureUnit(static_cast<GLuint>(texture_it.first), texture_it.second.ID);
 	}
 
 	glBindVertexArray(vao);
@@ -108,7 +108,7 @@ void MeshPlane::drawGUI()
 	if (ImGui::RadioButton("Diffuse", mode == static_cast<int>(TextureTarget::DIFFUSE_TARGET))) { mode = static_cast<int>(TextureTarget::DIFFUSE_TARGET); } ImGui::SameLine();
 	if (ImGui::RadioButton("Normal", mode == static_cast<int>(TextureTarget::NORMAL_TARGET))) { mode = static_cast<int>(TextureTarget::NORMAL_TARGET); }
 
-	std::string name = "texture: " + std::to_string(textures[static_cast<TextureTarget>(mode)].getId());
+	std::string name = "texture: " + std::to_string(textures[static_cast<TextureTarget>(mode)].ID);
 	ImGui::Text(name.c_str());
 	const auto optionalResult = SparkGui::getDraggedObject<Texture>("TEXTURE");
 	if (optionalResult)

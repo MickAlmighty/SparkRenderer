@@ -7,13 +7,15 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <rttr/registration_friend>
+#include <rttr/registration>
 
 namespace spark {
 	class DirectionalLight;
 	class PointLight;
 	class SpotLight;
 
-	class LightManager
+	class LightManager final
 	{
 	public:
 		GLuint dirLightSSBO{}, pointLightSSBO{}, spotLightSSBO{};
@@ -30,12 +32,18 @@ namespace spark {
 		LightManager& operator=(const LightManager& lightManager) = delete;
 		LightManager&& operator=(const LightManager&& lightManager) = delete;
 	
+        std::vector<std::shared_ptr<DirectionalLight>> getDirectionalLights();
+        std::vector<std::shared_ptr<PointLight>> getPointLights();
+        std::vector<std::shared_ptr<SpotLight>> getSpotLights();
 
+        void setDirectionalLights(std::vector<std::shared_ptr<DirectionalLight>> lights);
+        void setPointLights(std::vector<std::shared_ptr<PointLight>> lights);
+        void setSpotLights(std::vector<std::shared_ptr<SpotLight>> lights);
 	private:
 		std::vector<std::weak_ptr<DirectionalLight>> directionalLights;
 		std::vector<std::weak_ptr<PointLight>> pointLights;
 		std::vector<std::weak_ptr<SpotLight>> spotLights;
-		bool updateBuffer = false;
+		bool updateBuffer { false };
 
 		template <typename T>
 		void updateBufferIfNecessary(const std::vector<T>& bufferLightData, GLuint ssbo)
@@ -102,24 +110,24 @@ namespace spark {
 
 				return bufferData;
 			}
-			else
+
+			std::vector<N> bufferData;
+			updateBuffer = findDirtyLight(lightContainer);
+			if (updateBuffer)
 			{
-				std::vector<N> bufferData;
-				updateBuffer = findDirtyLight(lightContainer);
-				if (updateBuffer)
+				for (const auto& light : lightContainer)
 				{
-					for (const auto& light : lightContainer)
+					light.lock()->resetDirty();
+					if (light.lock()->getActive())
 					{
-						light.lock()->resetDirty();
-						if (light.lock()->getActive())
-						{
-							bufferData.push_back(light.lock()->getLightData());
-						}
+						bufferData.push_back(light.lock()->getLightData());
 					}
 				}
-				return bufferData;
 			}
+			return bufferData;
 		}
+        RTTR_REGISTRATION_FRIEND;
+        RTTR_ENABLE();
 	};
 }
 

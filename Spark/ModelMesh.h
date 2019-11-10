@@ -23,8 +23,8 @@ public:
 	void drawGUI() override;
     std::string getModelPath() const;
     void setModelPath(const std::string modelPath);
-    private:
 	ModelMesh();
+    private:
 	std::string modelPath;
 	std::vector<Mesh> meshes{};
     RTTR_REGISTRATION_FRIEND;

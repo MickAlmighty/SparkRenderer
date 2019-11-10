@@ -11,6 +11,7 @@
 #include <GameObject.h>
 #include <JsonSerializer.h>
 #include "Logging.h"
+#include "ResourceLoader.h"
 
 namespace spark {
 
@@ -108,6 +109,22 @@ void Scene::drawSceneGraph()
 	toRemove.clear();
 }
 
+void Scene::setCubemapPath(const std::string path) {
+    const auto cbmap = ResourceLoader::loadHdrTexture(path);
+    if(cbmap.has_value())
+    {
+        this->cubemap = cbmap.value();
+    }
+    else
+    {
+        this->cubemap = nullptr;
+    }
+}
+
+std::string Scene::getCubemapPath() const {
+    return cubemap->getPath();
+}
+
 void Scene::drawTreeNode(std::shared_ptr<GameObject> node, bool isRootNode)
 {
 	ImGui::PushID(node.get());
@@ -183,6 +200,7 @@ RTTR_REGISTRATION{
     rttr::registration::class_<spark::Scene>("Scene")
     .constructor()(rttr::policy::ctor::as_std_shared_ptr)
     .property("lightManager", &spark::Scene::lightManager)
+    .property("cubemapPath", &spark::Scene::getCubemapPath, &spark::Scene::setCubemapPath, rttr::registration::public_access)
     .property("name", &spark::Scene::name)
     .property("root", &spark::Scene::root)
     .property("gameObjectToPreview", &spark::Scene::getGameObjectToPreview

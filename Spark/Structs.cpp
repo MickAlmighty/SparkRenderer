@@ -7,6 +7,11 @@
 #include "Shader.h"
 
 namespace spark {
+    Texture::Texture(GLuint id, const std::string& path) {
+        this->path = path;
+        this->ID = id;
+    }
+
     void Texture::setPath(const std::string path) {
         this->path = path;
         this->ID = ResourceManager::getInstance()->getTextureId(path);
@@ -16,14 +21,14 @@ namespace spark {
         return path;
     }
 
-    GLuint Texture::getId() const {
-        return ID;
+    const std::string PbrCubemapTexture::getPath() {
+        return path;
     }
 
-    PbrCubemapTexture::PbrCubemapTexture(GLuint hdrTexture, unsigned size)
-	{
-		setup(hdrTexture, size);
-	}
+    PbrCubemapTexture::PbrCubemapTexture(GLuint hdrTexture, const std::string& path, unsigned size) : path(path)
+    {
+        setup(hdrTexture, size);
+    }
 
 	PbrCubemapTexture::~PbrCubemapTexture()
 	{

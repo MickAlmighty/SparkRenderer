@@ -49,7 +49,7 @@ void SceneManager::addScene(const std::shared_ptr<Scene>& scene)
 	scenes.push_back(scene);
 }
 
-bool SceneManager::setCurrentScene(std::string&& sceneName)
+bool SceneManager::setCurrentScene(const std::string& sceneName)
 {
 	const auto searchingFunction = [&sceneName](const std::shared_ptr<Scene>& scene)
 	{
@@ -71,7 +71,7 @@ std::shared_ptr<Scene> SceneManager::getCurrentScene() const
 	return current_scene;
 }
 
-void SceneManager::drawGui() const
+void SceneManager::drawGui()
 {
 	if (ImGui::BeginMenu("SceneManager"))
 	{
@@ -96,7 +96,12 @@ void SceneManager::drawGui() const
 		{
             std::shared_ptr<Scene> scene{ JsonSerializer::getInstance()->loadSceneFromFile("scene.json") };
             if(scene != nullptr) {
-                //TODO: replace the scene with new one
+                if(scene->name == current_scene->name)
+                {
+                    scenes.remove(current_scene);
+                    scenes.push_back(scene);
+                    setCurrentScene(scene->name);
+                }
             }
 		}
 		ImGui::EndMenu();

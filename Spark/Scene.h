@@ -35,15 +35,18 @@ public:
 	void drawSceneGraph();
     std::list < std::function<void()> > toRemove;
     std::shared_ptr<LightManager> lightManager; //FIXME: switch back to unique_ptr
-    std::shared_ptr<PbrCubemapTexture> cubemap;
+    void setCubemapPath(const std::string path);
+    std::string getCubemapPath() const;
 private:
 	friend class SceneManager;
     friend class Factory;
+    friend class SparkRenderer;
     Scene() = default;
     explicit Scene(std::string&& sceneName);
 	void drawTreeNode(std::shared_ptr<GameObject> node, bool isRootNode);
     std::shared_ptr<GameObject> getGameObjectToPreview() const;
     void setGameObjectToPreview(const std::shared_ptr<GameObject> node);
+    std::shared_ptr<PbrCubemapTexture> cubemap;
 	std::string name{ "New Scene" };
 	std::shared_ptr<GameObject> root{};
 	std::weak_ptr<GameObject> gameObjectToPreview;

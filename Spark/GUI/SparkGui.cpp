@@ -176,7 +176,7 @@ namespace spark {
 		{
 			for (const Texture& texture : ResourceManager::getInstance()->getTextures())
 			{
-				if (ImGui::Button(texture.path.c_str()))
+				if (ImGui::Button(texture.getPath().c_str()))
 				{
 					tex = texture;
 					ImGui::CloseCurrentPopup();

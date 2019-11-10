@@ -19,7 +19,7 @@ namespace spark {
 	{
 		const auto tex_it = std::find_if(std::begin(textures), std::end(textures), [&tex](const Texture& texture)
 		{
-			return texture.path == tex.path;
+			return texture.getPath() == tex.getPath();
 		});
 		if (tex_it != std::end(textures))
 		{
@@ -38,7 +38,7 @@ namespace spark {
 	{
 		for (auto& tex_it : textures)
 		{
-			if (tex_it.path == path)
+			if (tex_it.getPath() == path)
 				return tex_it;
 		}
         SPARK_ERROR("Texture from path '{}' was NOT found!", path);
@@ -63,7 +63,7 @@ namespace spark {
         };
         if(it != textures.end())
         {
-            return it->getId();
+            return it->ID;
         }
         SPARK_ERROR("ID for texture from path '{}' was NOT found!", path);
         return 0;
@@ -154,10 +154,10 @@ std::vector<std::string> ResourceManager::getPathsToModels() const
 					if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
 					{
 						ImGui::SetDragDropPayload("TEXTURE", &texture, sizeof(Texture));        // Set payload to carry the index of our item (could be anything)
-						ImGui::Text("Getting texture %s", texture.path.c_str());
+						ImGui::Text("Getting texture %s", texture.getPath().c_str());
 						ImGui::EndDragDropSource();
 					}
-					std::string s = std::to_string(texture.ID) + ": " + texture.path;
+					std::string s = std::to_string(texture.ID) + ": " + texture.getPath();
 					ImGui::Text(s.c_str());
 					ImGui::NewLine();
 				}

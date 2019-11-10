@@ -46,11 +46,12 @@ namespace spark {
 
 	struct Texture
 	{
+        Texture(GLuint id, const std::string& path);
         void setPath(const std::string path);
         std::string getPath() const;
-	    GLuint getId() const;
+        Texture() = default;
+	    GLuint ID {0};
 	private:
-		GLuint ID {0};
 		std::string path;
         RTTR_REGISTRATION_FRIEND;
         RTTR_ENABLE();
@@ -62,11 +63,13 @@ namespace spark {
 		GLuint irradianceCubemap{}; 
 		GLuint prefilteredCubemap{};
 		GLuint brdfLUTTexture{};
+        const std::string getPath();
 
-		PbrCubemapTexture(GLuint hdrTexture, unsigned int size = 1024);
+		PbrCubemapTexture(GLuint hdrTexture, const std::string& path, unsigned int size = 1024);
 		~PbrCubemapTexture();
 
 	private:
+        std::string path {};
 		void setup(GLuint hdrTexture, unsigned int size);
 		GLuint generateCubemap(unsigned int texSize, bool mipmaps = false) const;
 		void generateCubemapMipMaps();

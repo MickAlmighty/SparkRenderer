@@ -96,7 +96,7 @@ Texture TerrainGenerator::generateTerrain()
 	}
 
 	updateTerrain();
-	generatedTerrain.path = "GeneratedTerrain";
+	//generatedTerrain.path = "GeneratedTerrain";
 	return generatedTerrain;
 }
 
