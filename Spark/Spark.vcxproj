@@ -113,6 +113,7 @@
       <TargetMachinePlatform>64</TargetMachinePlatform>
       <GenerateLineInfo>false</GenerateLineInfo>
       <CodeGeneration>compute_61,sm_61;</CodeGeneration>
+      <AdditionalOptions>--expt-extended-lambda %(AdditionalOptions)</AdditionalOptions>
     </CudaCompile>
     <CudaLink>
       <GPUDebugInfo>true</GPUDebugInfo>
@@ -157,6 +158,7 @@
       <GPUDebugInfo>true</GPUDebugInfo>
       <GenerateLineInfo>false</GenerateLineInfo>
       <CodeGeneration>compute_75,sm_75;</CodeGeneration>
+      <AdditionalOptions>--expt-extended-lambda %(AdditionalOptions)</AdditionalOptions>
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -205,6 +207,7 @@
     <ClInclude Include="Clock.h" />
     <ClInclude Include="Component.h" />
     <CudaCompile Include="CUDA\kernel.cuh" />
+    <CudaCompile Include="CUDA\List.cuh" />
     <ClInclude Include="CUDA\Map.cuh" />
     <CudaCompile Include="CUDA\Node.cuh" />
     <ClInclude Include="DirectionalLight.h" />
@@ -244,9 +247,19 @@
     <ClInclude Include="WorldTransform.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\res\shaders\brdf.glsl" />
+    <None Include="..\res\shaders\brightPass.glsl" />
+    <None Include="..\res\shaders\cubemap.glsl" />
     <None Include="..\res\shaders\default.glsl" />
+    <None Include="..\res\shaders\downScale.glsl" />
+    <None Include="..\res\shaders\equirectangularToCubemap.glsl" />
+    <None Include="..\res\shaders\gaussianBlur.glsl" />
+    <None Include="..\res\shaders\irradiance.glsl" />
     <None Include="..\res\shaders\light.glsl" />
+    <None Include="..\res\shaders\motionBlur.glsl" />
+    <None Include="..\res\shaders\path.glsl" />
     <None Include="..\res\shaders\postprocessing.glsl" />
+    <None Include="..\res\shaders\prefilter.glsl" />
     <None Include="..\res\shaders\screen.glsl" />
   </ItemGroup>
   <ItemGroup>

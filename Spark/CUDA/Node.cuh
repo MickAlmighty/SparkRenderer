@@ -5,6 +5,7 @@
 #include <corecrt_math.h>
 
 #include "Map.cuh"
+#include "List.cuh"
 
 namespace spark {
 	namespace cuda {
@@ -29,11 +30,11 @@ namespace spark {
 
 		class Node {
 		public:
-			Node* parent = nullptr;
+			float valueF{};
 			int pos[2] = {};
 			float distanceFromBeginning{ 0 };
 			float valueH{};
-			float valueF{};
+			Node* parent = nullptr;
 
 			__device__ Node() = default;
 
@@ -43,39 +44,53 @@ namespace spark {
 				pos[1] = position[1];
 			}
 
+			__device__ bool operator<(const Node& node) const
+			{
+				return this->valueF < node.valueF;
+			}
+
+			__device__ bool operator==(const Node& node) const
+			{
+				const bool xpos = this->pos[0] == node.pos[0];
+				const bool ypos = this->pos[1] == node.pos[1];
+				return xpos && ypos;
+			}
+
 			__device__ float measureManhattanDistance(int* point) const
 			{
-				const float xDistance = fabsf((float)(pos[0] - point[0]));
+				const float xDistance = fabsf(static_cast<float>(pos[0] - point[0]));
 				const float yDistance = fabsf(static_cast<float>(pos[1] - point[1]));
 				return xDistance + yDistance;
 			}
 
-			__device__ Node* getNeighbors(Map* map)
+			__device__ List<Node> getNeighbors(Map* map)
 			{
-				Node* nodes = new Node[8];
+				List<Node> nodes;
 				const float distanceFromNode = 1.0f;
 				const float diagonalDistanceFromNode = 1.41f;
-				tryToCreateNeighbor(nodes + 0, { pos[0] - 1, pos[1] }, map, distanceFromNode);
-				tryToCreateNeighbor(nodes + 1, { pos[0] + 1, pos[1] }, map, distanceFromNode);
-				tryToCreateNeighbor(nodes + 2, { pos[0], pos[1] - 1 }, map, distanceFromNode);
-				tryToCreateNeighbor(nodes + 3, { pos[0], pos[1] + 1 }, map, distanceFromNode);
-				tryToCreateNeighbor(nodes + 4, { pos[0] - 1, pos[1] - 1 }, map, diagonalDistanceFromNode);
-				tryToCreateNeighbor(nodes + 5, { pos[0] + 1, pos[1] - 1}, map, diagonalDistanceFromNode);
-				tryToCreateNeighbor(nodes + 6, { pos[0] + 1, pos[1] + 1}, map, diagonalDistanceFromNode);
-				tryToCreateNeighbor(nodes + 7, { pos[0] - 1, pos[1] + 1}, map, diagonalDistanceFromNode);
+				tryToCreateNeighbor(nodes, { pos[0] - 1, pos[1] }, map, distanceFromNode);
+				tryToCreateNeighbor(nodes, { pos[0] + 1, pos[1] }, map, distanceFromNode);
+				tryToCreateNeighbor(nodes, { pos[0], pos[1] - 1 }, map, distanceFromNode);
+				tryToCreateNeighbor(nodes, { pos[0], pos[1] + 1 }, map, distanceFromNode);
+				tryToCreateNeighbor(nodes, { pos[0] - 1, pos[1] - 1 }, map, diagonalDistanceFromNode);
+				tryToCreateNeighbor(nodes, { pos[0] + 1, pos[1] - 1}, map, diagonalDistanceFromNode);
+				tryToCreateNeighbor(nodes, { pos[0] + 1, pos[1] + 1}, map, diagonalDistanceFromNode);
+				tryToCreateNeighbor(nodes, { pos[0] - 1, pos[1] + 1}, map, diagonalDistanceFromNode);
 				return nodes;
 			}
 
-			__device__ void tryToCreateNeighbor(Node* child, ivec2 position,
+			__device__ void tryToCreateNeighbor(List<Node>& list, ivec2 position,
 				Map* map, const float depth) const
 			{
 				if (map->areIndexesValid(position.x, position.y))
 				{
-					if (map->getTerrainValue(pos[0], pos[1]) != 1.0f)
+					if (map->getTerrainValue(position.x, position.y) != 1.0f)
 					{
-						child->pos[0] = position.x;
-						child->pos[1] = position.y;
-						child->distanceFromBeginning = this->distanceFromBeginning + depth;
+						Node child;
+						child.pos[0] = position.x;
+						child.pos[1] = position.y;
+						child.distanceFromBeginning = this->distanceFromBeginning + depth;
+						list.insert(child);
 					}
 				}
 			}

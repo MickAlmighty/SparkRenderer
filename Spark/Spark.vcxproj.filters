@@ -276,6 +276,36 @@
     <None Include="..\res\shaders\light.glsl">
       <Filter>shaders</Filter>
     </None>
+    <None Include="..\res\shaders\brdf.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="..\res\shaders\brightPass.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="..\res\shaders\cubemap.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="..\res\shaders\downScale.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="..\res\shaders\equirectangularToCubemap.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="..\res\shaders\gaussianBlur.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="..\res\shaders\irradiance.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="..\res\shaders\motionBlur.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="..\res\shaders\path.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="..\res\shaders\prefilter.glsl">
+      <Filter>shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="CUDA\kernel.cu">
@@ -285,6 +315,9 @@
       <Filter>CUDA</Filter>
     </CudaCompile>
     <CudaCompile Include="CUDA\Node.cuh">
+      <Filter>CUDA</Filter>
+    </CudaCompile>
+    <CudaCompile Include="CUDA\List.cuh">
       <Filter>CUDA</Filter>
     </CudaCompile>
   </ItemGroup>

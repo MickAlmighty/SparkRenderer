@@ -4,6 +4,7 @@
 #include <iostream>
 
 #include "Node.cuh"
+#include "List.cuh"
 
 namespace spark {
 	namespace cuda {
@@ -38,15 +39,12 @@ namespace spark {
 			int startPoint[] = { path[0], path[1] };
 			int endPoint[] = { path[2], path[3] };
 
-			Node startNode(endPoint, 0.0f);
+			const Node startNode(startPoint, 0.0f);
+			List<Node> openNodes;
+			List<Node> closedNodes;
 
-			for(int i = 0; i < 10000; ++i)
-			{
-				Node* nodes = startNode.getNeighbors(map);
-				delete[] nodes;
-			}
+			openNodes.insert(startNode);
 
-		//#todo: add first node to open list
 			while(true)
 			{
 			//#todo: get first node from openedList
