@@ -438,6 +438,10 @@ rttr::variant JsonSerializer::readPropertyFromJson(const Json::Value& root, cons
     {
         SPARK_TRACE("Value is a pointer");
         rttr::variant sparkPtr = deserialize(root);
+        if(getPtr(sparkPtr) == nullptr)
+        {
+            return nullptr;
+        }
         // todo: i'd really love to see outcome library arrive here as well xd
         if(type == sparkPtr.get_type())
         {
@@ -1078,15 +1082,17 @@ rttr::variant JsonSerializer::deserialize(const Json::Value& root)
         {
             const rttr::type propType{prop.get_type()};
             if(content.isMember(prop.get_name().cbegin()))
-            {   
+            {
                 SPARK_TRACE("Reading prop with name '{}'...", prop.get_name().cbegin());
                 const Json::Value& obj{content[prop.get_name().cbegin()]};
                 bool ok = true;
                 rttr::variant propVar{readPropertyFromJson(obj, propType, prop.get_value(wrapped), ok)};
                 if(ok && !prop.set_value(wrapped, propVar))
                 {
-                    SPARK_ERROR("Unable to set value for property '{}'!", prop.get_name().cbegin());
-                    throw std::exception("Unable to set value for property!");
+                    SPARK_WARN("Unable to set value for property '{}' of type '{}' with value of type '{}'!", prop.get_name().cbegin(),
+                               propType.get_name().cbegin(), propVar.get_type().get_name().cbegin());
+                    //TODO: insert nullptr values here!
+                    // throw std::exception("Unable to set value for property!");
                 }
             }
             else
