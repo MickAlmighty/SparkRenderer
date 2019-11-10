@@ -110,19 +110,24 @@ void Scene::drawSceneGraph()
 }
 
 void Scene::setCubemapPath(const std::string path) {
+    if(path.empty())
+    {
+        cubemap = nullptr;
+        return;
+    }
     const auto cbmap = ResourceLoader::loadHdrTexture(path);
     if(cbmap.has_value())
     {
-        this->cubemap = cbmap.value();
+        cubemap = cbmap.value();
     }
     else
     {
-        this->cubemap = nullptr;
+        cubemap = nullptr;
     }
 }
 
 std::string Scene::getCubemapPath() const {
-    return cubemap->getPath();
+    return cubemap ? cubemap->getPath() : "";
 }
 
 void Scene::drawTreeNode(std::shared_ptr<GameObject> node, bool isRootNode)
