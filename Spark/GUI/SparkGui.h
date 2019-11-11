@@ -106,7 +106,7 @@ namespace spark {
 		int checkCurrentItem(const char** items) const;
 	};
 
-	const static std::map<std::string, std::function<std::shared_ptr<Component>()>> componentCreation{
+	const static std::map<std::string, std::function<std::shared_ptr<Component>()>> componentCreation{ //TODO: replace with a reflection-based list
 		{"ModelMesh", [] { return std::make_shared<ModelMesh>(); }},
 		{"MeshPlane", [] { return std::make_shared<MeshPlane>(); }},
 		{"TerrainGenerator", [] { return std::make_shared<TerrainGenerator>(); }},

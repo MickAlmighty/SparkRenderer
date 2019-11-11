@@ -219,7 +219,8 @@ namespace spark {
 
 	}
 
-}
+    COMPONENT_CONVERTER(Camera)
+ }
 
 RTTR_REGISTRATION{
     rttr::registration::enumeration<spark::CameraMode>("CameraMode")(
@@ -242,4 +243,7 @@ RTTR_REGISTRATION{
 	.property("fov", &spark::Camera::fov)
 	.property("zNear", &spark::Camera::zNear)
 	.property("zFar", &spark::Camera::zFar);
+
+    
+    REGISTER_COMPONENT_CONVERTER(Camera)
 }

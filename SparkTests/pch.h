@@ -7,6 +7,8 @@
 
 #include "gtest/gtest.h"
 
+#include <rttr/registration>
+
 #define GCOUT std::cerr << "[INFO] "
 inline void gprintf(_In_z_ _Printf_format_string_ char const* const _Format, ...) {
 	fprintf(stderr, "[INFO] ");

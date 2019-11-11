@@ -182,6 +182,7 @@ namespace spark {
                 msg.append("[Perf] {}");
                 SPARK_DEBUG(msg, id, message);
                 break;
+#ifdef SPARK_LOG_GL_MARKERS  //located in Logging.h
             case GL_DEBUG_TYPE_MARKER:
                 msg.append("[Marker] {}");
                 SPARK_TRACE(msg, id, message);
@@ -192,8 +193,9 @@ namespace spark {
                 break;
             case GL_DEBUG_TYPE_POP_GROUP:
                 msg.append("[Pop] {}");
-                SPARK_TRACE(msg, id, message);
-                break;
+            SPARK_TRACE(msg, id, message);
+            break;
+#endif
             case GL_DEBUG_TYPE_OTHER:
                 msg.append("[Other] {}");
                 SPARK_DEBUG(msg, id, message);

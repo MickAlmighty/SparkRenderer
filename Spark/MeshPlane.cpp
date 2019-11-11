@@ -119,6 +119,7 @@ void MeshPlane::drawGUI()
 	removeComponentGUI<MeshPlane>();
 }
 
+COMPONENT_CONVERTER(MeshPlane)
 }
 
 RTTR_REGISTRATION{
@@ -126,4 +127,6 @@ RTTR_REGISTRATION{
     .constructor()(rttr::policy::ctor::as_std_shared_ptr)
     .property("shaderType", &spark::MeshPlane::shaderType)
     .property("textures", &spark::MeshPlane::textures);
+
+    REGISTER_COMPONENT_CONVERTER(MeshPlane)
 }

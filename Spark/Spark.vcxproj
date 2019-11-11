@@ -105,6 +105,7 @@
       <PrecompiledHeaderFile />
       <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
       <WholeProgramOptimization>false</WholeProgramOptimization>
+      <PreprocessToFile>false</PreprocessToFile>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(SolutionDir)thirdparty\lib\CommonLib;$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -155,6 +156,7 @@ if not exist "$(TargetDir)scene.json" (xcopy "$(ProjectDir)scene.json" "$(Target
       <AdditionalIncludeDirectories>$(SolutionDir)thirdparty\include;$(SolutionDir)\Spark;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessToFile>false</PreprocessToFile>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>

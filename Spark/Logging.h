@@ -10,11 +10,13 @@
 #define SPARK_LEVEL_CRITICAL SPDLOG_LEVEL_CRITICAL
 #define SPARK_LEVEL_OFF SPDLOG_LEVEL_OFF
 
+//#define SPARK_LOG_GL_MARKERS
+
 ///
 /// Defines active logging level of Spark
 /// //todo: might want to make it changeable
 ///
-#define SPARK_ACTIVE_LEVEL SPARK_LEVEL_DEBUG
+#define SPARK_ACTIVE_LEVEL SPARK_LEVEL_TRACE
 
 #define SPARK_LOGGER_CALL(logger, level, ...) logger->log(spdlog::source_loc{__FILE__, __LINE__, SPDLOG_FUNCTION}, level, __VA_ARGS__)
 

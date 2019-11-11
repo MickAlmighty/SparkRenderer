@@ -52,7 +52,7 @@ public:
 
 	template <class T>
 	std::shared_ptr<T> getComponent()
-	{
+	{ //TODO: add RTTR reflection checks in template methods of GameObject, they'll make the code much cleaner
 		auto component_it = std::find_if(std::begin(components), std::end(components), [](std::shared_ptr<Component> component)
 		{
 			T* comp_ptr = dynamic_cast<T*>(component.get());

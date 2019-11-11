@@ -7,6 +7,17 @@
 #include <rttr/registration_friend>
 #include <rttr/registration>
 #include <GUI/ImGui/imgui.h>
+#include "Logging.h"
+
+#define COMPONENT_CONVERTER(ComponentName) \
+    std::shared_ptr<Component> get##ComponentName##ComponentPtr(std::shared_ptr<##ComponentName##> ptr, bool& ok) \
+    {                                                                                                             \
+        ok = true;                                                                                                \
+        return ptr;                                                                                               \
+    }
+
+#define REGISTER_COMPONENT_CONVERTER(ComponentName) \
+    rttr::type::register_converter_func(spark::get##ComponentName##ComponentPtr);
 
 namespace spark {
 
@@ -59,5 +70,16 @@ namespace spark {
 		RTTR_REGISTRATION_FRIEND;
         RTTR_ENABLE();
 	};
-}
+
+    template<typename T>
+    std::shared_ptr<Component> getComponentSharedPtr(std::shared_ptr<T> comp)
+    {
+        if(rttr::type::get<T>().is_derived_from(rttr::type::get<Component>()))
+        {
+            return std::static_pointer_cast<T>(comp);
+        }
+        SPARK_WARN("Invalid Component shared pointer cast attempt!");
+        return nullptr;
+    }
+    }
 #endif
