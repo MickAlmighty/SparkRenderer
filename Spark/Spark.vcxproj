@@ -106,14 +106,16 @@
       <WholeProgramOptimization>false</WholeProgramOptimization>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>glfw3.lib;glfw3dll.lib;glm_static.lib;assimp-vc141-mtd.lib;jsoncpp.lib;%(AdditionalDependencies);cudart.lib</AdditionalDependencies>
+      <AdditionalDependencies>glfw3.lib;glfw3dll.lib;glm_static.lib;assimp-vc141-mtd.lib;jsoncpp.lib;%(AdditionalDependencies);cudart_static.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)thirdparty\lib;$(SolutionDir)thirdparty\lib\DebugLib;%(AdditionalLibraryDirectories);$(CudaToolkitLibDir)</AdditionalLibraryDirectories>
     </Link>
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
       <GenerateLineInfo>false</GenerateLineInfo>
-      <CodeGeneration>compute_61,sm_61;</CodeGeneration>
+      <CodeGeneration>compute_35,sm_35</CodeGeneration>
       <AdditionalOptions>--expt-extended-lambda %(AdditionalOptions)</AdditionalOptions>
+      <MaxRegCount>0</MaxRegCount>
+      <FastMath>true</FastMath>
     </CudaCompile>
     <CudaLink>
       <GPUDebugInfo>true</GPUDebugInfo>
@@ -145,21 +147,24 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalIncludeDirectories>$(SolutionDir)thirdparty\include;$(SolutionDir)\Spark;$(CudaToolkitIncludeDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(SolutionDir)thirdparty\lib;$(SolutionDir)thirdparty\lib\ReleaseLib;%(AdditionalLibraryDirectories);$(CudaToolkitLibDir)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>glm_static.lib;glfw3.lib;glfw3dll.lib;assimp-vc141-mt.lib;jsoncpp.lib;%(AdditionalDependencies);cudart.lib</AdditionalDependencies>
+      <AdditionalDependencies>glm_static.lib;glfw3.lib;glfw3dll.lib;assimp-vc141-mt.lib;jsoncpp.lib;%(AdditionalDependencies);cudart_static.lib</AdditionalDependencies>
     </Link>
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
-      <GPUDebugInfo>true</GPUDebugInfo>
+      <GPUDebugInfo>false</GPUDebugInfo>
       <GenerateLineInfo>false</GenerateLineInfo>
-      <CodeGeneration>compute_75,sm_75;</CodeGeneration>
+      <CodeGeneration>compute_35,sm_35</CodeGeneration>
       <AdditionalOptions>--expt-extended-lambda %(AdditionalOptions)</AdditionalOptions>
+      <FastMath>true</FastMath>
+      <InterleaveSourceInPTX>false</InterleaveSourceInPTX>
     </CudaCompile>
+    <CudaLink />
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ActorAI.cpp" />
@@ -208,6 +213,7 @@
     <ClInclude Include="Component.h" />
     <CudaCompile Include="CUDA\kernel.cuh" />
     <CudaCompile Include="CUDA\List.cuh" />
+    <ClInclude Include="CUDA\Agent.cuh" />
     <ClInclude Include="CUDA\Map.cuh" />
     <CudaCompile Include="CUDA\Node.cuh" />
     <ClInclude Include="DirectionalLight.h" />

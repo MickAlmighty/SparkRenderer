@@ -2,6 +2,8 @@
 #include <future>
 
 namespace spark {
+	std::map<std::string, double> Timer::measurements{};
+
 	double Timer::getMeasurement(const std::string&& measurementName)
 	{
 		const auto measurementIt = measurements.find(measurementName);

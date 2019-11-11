@@ -33,6 +33,8 @@ namespace spark {
 		glm::ivec2 endPos{};
 		GLuint vao{};
 		GLuint vbo{}, ebo{};
+		std::deque<std::pair<bool, glm::ivec2>> path;
+		std::weak_ptr<TerrainGenerator> terrainGenerator;
 
 		std::multimap<float, std::shared_ptr<NodeAI>> nodesToProcess;
 		std::multimap<float, NodeAI> nodesToProcessStack;
@@ -40,8 +42,7 @@ namespace spark {
 		std::list<std::shared_ptr<NodeAI>> processedNodes;
 		std::list<NodeAI> processedNodesStack;
 
-		std::deque<std::pair<bool, glm::ivec2>> path;
-		std::weak_ptr<TerrainGenerator> terrainGenerator;
+		
 
 		void findPath();
 		std::shared_ptr<NodeAI> getTheNearestNodeFromOpen();

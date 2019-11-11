@@ -6,6 +6,7 @@
 
 #include "CUDA/Map.cuh"
 #include "CUDA/kernel.cuh"
+#include "CUDA/Agent.cuh"
 #include "EngineSystems/ResourceManager.h"
 #include "GameObject.h"
 #include "JsonSerializer.h"
@@ -75,21 +76,11 @@ void TerrainGenerator::drawGUI()
 {
 	ImGui::Text("TerrainSize: "); ImGui::SameLine(); ImGui::Text(std::to_string(terrainSize).c_str());
 
-#define cudaCheckErrors(msg) \
-    do { \
-        cudaError_t __err = cudaGetLastError(); \
-        if (__err != cudaSuccess) { \
-            fprintf(stderr, "Fatal error: %s (%s at %s:%d)\n", \
-                msg, cudaGetErrorString(__err), \
-                __FILE__, __LINE__); \
-            fprintf(stderr, "*** FAILED - ABORTING\n"); \
-            exit(1); \
-        } \
-    } while (0)
-
 	if (ImGui::Button("Cuda Map"))
 	{
 		using namespace cuda;
+		cudaDeviceSetLimit(cudaLimitMallocHeapSize, 256 * 1024 * 1024);
+
 		Timer timer1("CUDA Memalloc and kernels launch");
 		Map* mapDev = nullptr;
 
@@ -106,12 +97,18 @@ void TerrainGenerator::drawGUI()
 		int* pathDev;
 		cudaMalloc(&pathDev, sizeof(glm::ivec2) * 2);
 		cudaMemcpy(pathDev, &path, sizeof(glm::ivec2) * 2, cudaMemcpyHostToDevice);
+		Agent* agents = nullptr;
+		cudaMalloc(&agents, sizeof(Agent));
+		cudaMemcpy(agents->points, &path, sizeof(glm::ivec2) * 2, cudaMemcpyHostToDevice);
+		
+		int* memSizeDev = nullptr;
+		cudaMalloc(&memSizeDev, sizeof(int));
 		{
 			Timer timer("CUDA Kernels");
-			runKernel(mapDev, nodes, pathDev);
+			runKernel(mapDev, nodes, pathDev, memSizeDev, agents);
 		}
-
-		cudaFree(path);
+		cudaFree(memSizeDev);
+		cudaFree(agents);
 		cudaFree(nodes);
 		cudaFree(mapDev);
 	}

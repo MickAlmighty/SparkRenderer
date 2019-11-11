@@ -10,7 +10,7 @@ namespace spark {
 	class Timer
 	{
 	public:
-		static inline std::map<std::string, double> measurements;
+		static std::map<std::string, double> measurements;
 		static double getMeasurement(const std::string&& measurementName);
 		Timer(const std::string&& measurementName);
 		~Timer();

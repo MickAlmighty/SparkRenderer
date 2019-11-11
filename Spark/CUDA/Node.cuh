@@ -1,9 +1,6 @@
 #ifndef NODE_CUH
 #define NODE_CUH
 
-#include <cuda_runtime.h>
-#include <corecrt_math.h>
-
 #include "Map.cuh"
 #include "List.cuh"
 
@@ -92,6 +89,26 @@ namespace spark {
 						child.distanceFromBeginning = this->distanceFromBeginning + depth;
 						list.insert(child);
 					}
+				}
+			}
+
+			__device__ void getPathLength(int& length) const
+			{
+				++length;
+				if (parent != nullptr)
+				{
+					parent->getPathLength(length);
+				}
+			}
+			
+			__device__ void recreatePath(int* path, int index)
+			{
+				index = index - 1;
+				path[index * 2] = pos[0];
+				path[index * 2 + 1] = pos[1];
+				if (parent != nullptr)
+				{
+					parent->recreatePath(path, index);
 				}
 			}
 		};

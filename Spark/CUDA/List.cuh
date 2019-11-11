@@ -1,9 +1,7 @@
 #ifndef LIST_CUH
 #define LIST_CUH
 
-#include <cuda_runtime.h>
 #include <nvfunctional>
-#include <json/value.h>
 
 namespace spark {
 	namespace cuda {
@@ -110,6 +108,64 @@ namespace spark {
 				return it;
 			}
 
+			__device__ Iterator<T>* insert(Iterator<T>* it_)
+			{
+				Iterator<T>* it = it_;
+				if (size == 0)
+				{
+					first = it;
+					++size;
+					last = first;
+					return it;
+				}
+
+				if (size == 1)
+				{
+					if (comparator(it->value, first->value))
+					{
+						//it is first now
+						it->placeNext(last);
+						first = it;
+						++size;
+					}
+					else
+					{
+						//it is last now
+						it->placePrevious(last);
+						first = last;
+						last = it;
+						++size;
+					}
+					return it;
+				}
+
+				for (Iterator<T>* iterator = first; iterator != nullptr; iterator = iterator->next)
+				{
+					if (comparator(it->value, iterator->value))
+					{
+						if (iterator == first)
+						{
+							iterator->placePrevious(it);
+							first = it;
+							++size;
+							return it;
+						}
+
+						if (iterator != first)
+						{
+							iterator->previous->placeNext(it);
+							iterator->placePrevious(it);
+							++size;
+							return it;
+						}
+					}
+				}
+				last->placeNext(it);
+				last = it;
+				++size;
+				return it;
+			}
+
 			__device__ bool remove(const T& value)
 			{
 				for(auto it = first; it != nullptr; it = it->next)
@@ -140,6 +196,7 @@ namespace spark {
 							last = it->previous;
 							--size;
 							delete it;
+							return true;
 						}
 					}
 				}
