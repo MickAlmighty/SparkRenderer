@@ -82,16 +82,11 @@ void TerrainGenerator::drawGUI()
 		cudaDeviceSetLimit(cudaLimitMallocHeapSize, 256 * 1024 * 1024);
 
 		Timer timer1("CUDA Memalloc and kernels launch");
-		Map* mapDev = nullptr;
-
-		cudaMalloc(&mapDev, sizeof(Map));
-
-		cudaMemcpy(&mapDev->width, reinterpret_cast<const void*>(&terrainSize), sizeof(int), cudaMemcpyHostToDevice);
-		cudaMemcpy(&mapDev->height, reinterpret_cast<const void*>(&terrainSize), sizeof(int), cudaMemcpyHostToDevice);
 
 		float* nodes = nullptr;
 		cudaMalloc(&nodes, sizeof(float) * terrainSize * terrainSize);
 		cudaMemcpy(nodes, terrain.data(), sizeof(float) * terrainSize * terrainSize, cudaMemcpyHostToDevice);
+		initMap(nodes, terrainSize, terrainSize);
 
 		glm::ivec2 path[] = { {10, 10}, {15, 10}};
 		int* pathDev;
@@ -105,12 +100,11 @@ void TerrainGenerator::drawGUI()
 		cudaMalloc(&memSizeDev, sizeof(int));
 		{
 			Timer timer("CUDA Kernels");
-			runKernel(mapDev, nodes, pathDev, memSizeDev, agents);
+			runKernel(pathDev, memSizeDev, agents);
 		}
 		cudaFree(memSizeDev);
 		cudaFree(agents);
 		cudaFree(nodes);
-		cudaFree(mapDev);
 	}
 
 	if(ImGui::Button("Map from .bmp"))

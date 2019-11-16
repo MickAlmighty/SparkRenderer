@@ -11,7 +11,7 @@ namespace spark {
 		public:
 			int x{};
 			int y{};
-			__device__ ivec2() = default;
+			__device__ ivec2() {}
 			__device__ ivec2(int x, int y)
 			{
 				this->x = x;
@@ -33,7 +33,7 @@ namespace spark {
 			float valueH{};
 			Node* parent = nullptr;
 
-			__device__ Node() = default;
+			__device__ Node() {}
 
 			__device__ Node(int* position, float distance) : distanceFromBeginning(distance)
 			{

@@ -36,7 +36,7 @@ namespace spark {
 			Iterator<T>* first = nullptr;
 			Iterator<T>* last = nullptr;
 
-			__device__ List() = default;
+			__device__ List() {}
 
 			__device__ List(nvstd::function<bool(const T& lhs, const T& rhs)>& compare) : comparator(compare) { }
 
