@@ -27,9 +27,9 @@ namespace spark {
 		std::chrono::duration<double, std::milli> duration = t2 - startTime;
 		measurements[name] = duration.count();
 
-		const auto future = std::async(std::launch::async, [this, &duration]()
-		{
+		//const auto future = std::async(std::launch::async, [this, &duration]()
+		//{
 			std::cout << name.c_str() << ", duration: " << duration.count() << " ms" << std::endl;
-		});
+		//});
 	}
 }

@@ -112,10 +112,11 @@
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
       <GenerateLineInfo>false</GenerateLineInfo>
-      <CodeGeneration>compute_35,sm_35</CodeGeneration>
+      <CodeGeneration>compute_61,sm_61</CodeGeneration>
       <AdditionalOptions>--expt-extended-lambda %(AdditionalOptions)</AdditionalOptions>
       <MaxRegCount>0</MaxRegCount>
       <FastMath>true</FastMath>
+      <GenerateRelocatableDeviceCode>false</GenerateRelocatableDeviceCode>
     </CudaCompile>
     <CudaLink>
       <GPUDebugInfo>true</GPUDebugInfo>
@@ -159,10 +160,11 @@
       <TargetMachinePlatform>64</TargetMachinePlatform>
       <GPUDebugInfo>false</GPUDebugInfo>
       <GenerateLineInfo>false</GenerateLineInfo>
-      <CodeGeneration>compute_35,sm_35</CodeGeneration>
+      <CodeGeneration>compute_61,sm_61</CodeGeneration>
       <AdditionalOptions>--expt-extended-lambda %(AdditionalOptions)</AdditionalOptions>
       <FastMath>true</FastMath>
       <InterleaveSourceInPTX>false</InterleaveSourceInPTX>
+      <GenerateRelocatableDeviceCode>false</GenerateRelocatableDeviceCode>
     </CudaCompile>
     <CudaLink />
   </ItemDefinitionGroup>
@@ -214,6 +216,7 @@
     <CudaCompile Include="CUDA\kernel.cuh" />
     <CudaCompile Include="CUDA\List.cuh" />
     <ClInclude Include="CUDA\Agent.cuh" />
+    <ClInclude Include="CUDA\DeviceMemory.h" />
     <ClInclude Include="CUDA\Map.cuh" />
     <CudaCompile Include="CUDA\Node.cuh" />
     <ClInclude Include="DirectionalLight.h" />

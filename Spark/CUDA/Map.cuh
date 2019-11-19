@@ -12,6 +12,11 @@ namespace spark {
 			int width;
 			int height;
 
+			__device__ ~Map()
+			{
+				delete[] nodes;
+			}
+
 			__device__ int getLength() const
 			{
 				return width * height;

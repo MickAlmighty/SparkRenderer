@@ -31,7 +31,7 @@ namespace spark {
 			const double measureStart = glfwGetTime();
 			findPathStack();
 			timer = glfwGetTime() - measureStart;
-			std::cout << timer * 1000.0 << " ms" << std::endl;
+			//std::cout << timer * 1000.0 << " ms" << std::endl;
 		}
 		else if (const bool firstNodeAchieved = path.begin()->first; firstNodeAchieved)
 		{
@@ -39,7 +39,7 @@ namespace spark {
 			const double measureStart = glfwGetTime();
 			findPathStack();
 			timer = glfwGetTime() - measureStart;
-			std::cout << timer * 1000.0 << " ms" << std::endl;
+			//std::cout << timer * 1000.0 << " ms" << std::endl;
 		}
 		
 		if (!path.empty())

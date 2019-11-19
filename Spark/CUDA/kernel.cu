@@ -14,7 +14,56 @@
 
 namespace spark {
 	namespace cuda {
-		__device__ Map map{};
+		__device__ Map* map = nullptr;
+
+		__host__ void runKernel(int* path, int* memSize, Agent* agents)
+		{
+
+			//checkMapValues <<<1, 1 >>> (map);
+			cudaDeviceSynchronize();
+			Timer t3("	findPath");
+			findPath << <32, 32, 400 * sizeof(unsigned int) >> > (path, memSize, agents);
+			gpuErrchk(cudaGetLastError());
+			cudaDeviceSynchronize();
+			//int memorySize = 0;
+			//int* pathBuffer = nullptr;
+			//{
+			//	Timer t("CUDA KERNEL: filling pathBuffer");
+			//	
+			//	cudaMemcpy(&memorySize, memSize, sizeof(int), cudaMemcpyDeviceToHost);
+			//	
+			//	cudaMalloc(&pathBuffer, sizeof(int) * memorySize);
+			//	//cudaDeviceSynchronize();
+			//	fillPathBuffer <<<1, 1>>> (agents, pathBuffer, 1);
+			//	cudaDeviceSynchronize();
+			//}
+			//
+			//{
+			//	Timer t2("CUDA KERNEL: Filling agent path");
+			//	Agent* agentLookup = new Agent[1];
+			//	cudaMemcpy(agentLookup, agents, sizeof(Agent), cudaMemcpyDeviceToHost);
+			//	int* paths = new int[memorySize];
+			//	cudaMemcpy(paths, pathBuffer, sizeof(int) * memorySize, cudaMemcpyDeviceToHost);
+
+			//	for (int i = 0; i < 1; ++i)
+			//	{
+			//		std::deque<std::pair<bool, glm::ivec2>> agentPath;
+			//		for (int j = agentLookup[i].indexBegin; j < agentLookup[i].pathSize * 2; j += 2)
+			//		{
+			//			agentPath.push_back({ false, {paths[j], paths[j + 1]} });
+			//		}
+			//	}
+
+			//	delete[] paths;
+			//	cudaFree(pathBuffer);
+		}
+
+		__host__ void initMap(float* nodes, int width, int height)
+		{
+			Timer t("		initMap");
+			createMap << <1, 1 >> > (nodes, width, height);
+			gpuErrchk(cudaGetLastError());
+		}
 
 		__global__ void checkMapValues(Map* mapDev)
 		{
@@ -38,9 +87,17 @@ namespace spark {
 
 		__global__  void createMap(float* nodes, int width, int height)
 		{
-			map.nodes = nodes;
-			map.width = width;
-			map.height = height;
+			if(map != nullptr)
+			{
+				delete map;
+			}
+
+			map = new Map();
+			map->nodes = new float[width * height];
+			memcpy(map->nodes, nodes, width * height * sizeof(float));
+			//map->nodes = nodes;
+			map->width = width;
+			map->height = height;
 		}
 
 		__global__ void findPath(int* path, int* memSize, Agent* agents)
@@ -51,14 +108,17 @@ namespace spark {
 			thrust::sort(thrust::seq, integers, integers + 4);*/
 
 
-			int startPoint[] = { agents[0].points[0], agents[0].points[1] };
-			int endPoint[] = { agents[0].points[2], agents[0].points[3] };
+			/*int startPoint[] = { *(path + 4 * threadIdx.x + 0), *(path + 4 * threadIdx.x + 1) };
+			int endPoint[] = { *(path + 4 * threadIdx.x + 2), *(path + 4* threadIdx.x + 3) };*/
+
+			int startPoint[] = { *(path + 0), *(path + 1) };
+			int endPoint[] = { *(path + 2), *(path + 3) };
 
 			const Node startNode(startPoint, 0.0f);
 			List<Node> openNodes;
 			List<Node> closedNodes;
-			Node* finishNode = nullptr;
-			openNodes.insert(startNode);
+			//Node* finishNode = nullptr;
+			//openNodes.insert(startNode);
 
 			//while(true)
 			//{
@@ -135,15 +195,16 @@ namespace spark {
 			//		}
 			//	}
 			//}
-			//int pathLength = 0;
+			//
 			//if(!finishNode)
 			//{
 			//	return;
 			//}
 
+			//int pathLength = 0;
 			//finishNode->getPathLength(pathLength);
-			//int* tab = new int[2 * pathLength]; //x,y * length
-			//finishNode->recreatePath(tab, pathLength);
+			////int* tab = new int[2 * pathLength]; //x,y * length
+			////finishNode->recreatePath(tab, pathLength);
 			//atomicAdd(memSize, pathLength * 2);
 
 			//agents[0].pathOutput = tab;
@@ -165,53 +226,6 @@ namespace spark {
 				pathIndex += agents[i].pathSize * 2;
 				delete[] agents[i].pathOutput;
 			}
-		}
-
-		__host__ void runKernel(int* path, int* memSize, Agent* agents)
-		{
-			{
-				Timer t3("findPath");
-				//checkMapValues <<<1, 1 >>> (map);
-				findPath <<<1, 1, 400 * sizeof(unsigned int)>>> (path, memSize, agents);
-				cudaDeviceSynchronize();
-			}
-			//int memorySize = 0;
-			//int* pathBuffer = nullptr;
-			//{
-			//	Timer t("CUDA KERNEL: filling pathBuffer");
-			//	
-			//	cudaMemcpy(&memorySize, memSize, sizeof(int), cudaMemcpyDeviceToHost);
-			//	
-			//	cudaMalloc(&pathBuffer, sizeof(int) * memorySize);
-			//	//cudaDeviceSynchronize();
-			//	fillPathBuffer <<<1, 1>>> (agents, pathBuffer, 1);
-			//	cudaDeviceSynchronize();
-			//}
-			//
-			//{
-			//	Timer t2("CUDA KERNEL: Filling agent path");
-			//	Agent* agentLookup = new Agent[1];
-			//	cudaMemcpy(agentLookup, agents, sizeof(Agent), cudaMemcpyDeviceToHost);
-			//	int* paths = new int[memorySize];
-			//	cudaMemcpy(paths, pathBuffer, sizeof(int) * memorySize, cudaMemcpyDeviceToHost);
-
-			//	for (int i = 0; i < 1; ++i)
-			//	{
-			//		std::deque<std::pair<bool, glm::ivec2>> agentPath;
-			//		for (int j = agentLookup[i].indexBegin; j < agentLookup[i].pathSize * 2; j += 2)
-			//		{
-			//			agentPath.push_back({ false, {paths[j], paths[j + 1]} });
-			//		}
-			//	}
-
-			//	delete[] paths;
-			//	cudaFree(pathBuffer);
-		}
-
-		__host__ void initMap(float* nodes, int width, int height)
-		{
-			Timer t("initMap");
-			createMap<<<1, 1 >>>(nodes, width, height);
 		}
 	}
 }

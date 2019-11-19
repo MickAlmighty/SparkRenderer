@@ -265,6 +265,9 @@
     <ClInclude Include="CUDA\Agent.cuh">
       <Filter>CUDA</Filter>
     </ClInclude>
+    <ClInclude Include="CUDA\DeviceMemory.h">
+      <Filter>CUDA</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\res\shaders\default.glsl">

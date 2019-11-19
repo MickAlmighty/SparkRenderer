@@ -7,7 +7,6 @@ namespace spark {
 		public:
 			int indexBegin { 0 };
 			int pathSize { 0 };
-			int points[4] = {0, 0, 0, 0};
 			int* pathOutput = nullptr;
 		};
 	}

@@ -4,9 +4,9 @@
 #include <glm/gtc/random.hpp>
 #include <stb_image/stb_image.h>
 
-#include "CUDA/Map.cuh"
-#include "CUDA/kernel.cuh"
 #include "CUDA/Agent.cuh"
+#include "CUDA/DeviceMemory.h"
+#include "CUDA/kernel.cuh"
 #include "EngineSystems/ResourceManager.h"
 #include "GameObject.h"
 #include "JsonSerializer.h"
@@ -75,36 +75,58 @@ void TerrainGenerator::fixedUpdate()
 void TerrainGenerator::drawGUI()
 {
 	ImGui::Text("TerrainSize: "); ImGui::SameLine(); ImGui::Text(std::to_string(terrainSize).c_str());
-
-	if (ImGui::Button("Cuda Map"))
+	
+	static cudaStream_t stream1, stream2;
+	if (ImGui::Button("InitMap"))
 	{
 		using namespace cuda;
-		cudaDeviceSetLimit(cudaLimitMallocHeapSize, 256 * 1024 * 1024);
+		const auto nodes = DeviceMemory<float>::AllocateElements(terrainSize * terrainSize);
+		gpuErrchk(cudaGetLastError());
+		cudaMemcpy(nodes.ptr, terrain.data(), sizeof(float) * terrainSize * terrainSize, cudaMemcpyHostToDevice);
+		gpuErrchk(cudaGetLastError());
 
-		Timer timer1("CUDA Memalloc and kernels launch");
+		initMap(nodes.ptr, terrainSize, terrainSize);
 
-		float* nodes = nullptr;
-		cudaMalloc(&nodes, sizeof(float) * terrainSize * terrainSize);
-		cudaMemcpy(nodes, terrain.data(), sizeof(float) * terrainSize * terrainSize, cudaMemcpyHostToDevice);
-		initMap(nodes, terrainSize, terrainSize);
+		cudaStreamCreate(&stream1);
+		cudaStreamCreate(&stream2);
+	}
+
+	if (ImGui::Button("FindPath"))
+	{
+		using namespace cuda;
+		//cudaDeviceSetLimit(cudaLimitMallocHeapSize, 256 * 1024 * 1024);
+		//gpuErrchk(cudaGetLastError());
+		Timer timer1("CUDA");
 
 		glm::ivec2 path[] = { {10, 10}, {15, 10}};
-		int* pathDev;
-		cudaMalloc(&pathDev, sizeof(glm::ivec2) * 2);
-		cudaMemcpy(pathDev, &path, sizeof(glm::ivec2) * 2, cudaMemcpyHostToDevice);
-		Agent* agents = nullptr;
-		cudaMalloc(&agents, sizeof(Agent));
-		cudaMemcpy(agents->points, &path, sizeof(glm::ivec2) * 2, cudaMemcpyHostToDevice);
+		/*const auto pathDev = DeviceMemory<int>::AllocateBytes(sizeof(glm::ivec2) * 2);
+		gpuErrchk(cudaGetLastError());
+		cudaMemcpyAsync(pathDev.ptr, &path, sizeof(glm::ivec2) * 2, cudaMemcpyHostToDevice, stream1);
+		gpuErrchk(cudaGetLastError());
 		
-		int* memSizeDev = nullptr;
-		cudaMalloc(&memSizeDev, sizeof(int));
-		{
-			Timer timer("CUDA Kernels");
-			runKernel(pathDev, memSizeDev, agents);
-		}
-		cudaFree(memSizeDev);
-		cudaFree(agents);
-		cudaFree(nodes);
+		const auto agents = DeviceMemory<Agent>::AllocateElements(1);
+		gpuErrchk(cudaGetLastError());
+		
+		const auto memSize = DeviceMemory<int>::AllocateElements(1);
+		gpuErrchk(cudaGetLastError());*/
+
+		const std::size_t byteCount = sizeof(glm::ivec2) * 2 + sizeof(Agent) + sizeof(int);
+		const int pathOffset = 0;
+		const int agentsOffset = sizeof(glm::ivec2) * 2;
+		const int memSizeOffset = agentsOffset + sizeof(int);
+
+		const auto devMem = DeviceMemory<char>::AllocateBytes(byteCount);
+		gpuErrchk(cudaGetLastError());
+
+		cudaMemcpyAsync(devMem.ptr, &path, sizeof(glm::ivec2) * 2, cudaMemcpyHostToDevice, stream1);
+		gpuErrchk(cudaGetLastError());
+
+		const auto pathDev = reinterpret_cast<int*>(devMem.ptr + pathOffset);
+		const auto agentsDev = reinterpret_cast<Agent*>(devMem.ptr + agentsOffset);
+		const auto memSizeDev = reinterpret_cast<int*>(devMem.ptr + memSizeOffset);
+		runKernel(pathDev, memSizeDev, agentsDev);
+		//cudaStreamDestroy(stream1);
+		//cudaStreamDestroy(stream2);
 	}
 
 	if(ImGui::Button("Map from .bmp"))
