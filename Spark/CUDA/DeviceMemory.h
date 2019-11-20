@@ -23,8 +23,9 @@ namespace spark {
 			{
 				if (ptr)
 				{
+					cudaFree(ptr);
 					//const auto future = std::async(std::launch::async, cudaFreeHost, ptr);
-					const auto future = std::async(std::launch::async, cudaFree, ptr);
+					//const auto future = std::async(std::launch::async, cudaFree, ptr);
 				}
 			}
 		};

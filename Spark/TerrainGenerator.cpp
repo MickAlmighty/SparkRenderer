@@ -80,6 +80,9 @@ void TerrainGenerator::drawGUI()
 	if (ImGui::Button("InitMap"))
 	{
 		using namespace cuda;
+		cudaDeviceSetLimit(cudaLimitMallocHeapSize, 256 * 1024 * 1024);
+		gpuErrchk(cudaGetLastError());
+
 		const auto nodes = DeviceMemory<float>::AllocateElements(terrainSize * terrainSize);
 		gpuErrchk(cudaGetLastError());
 		cudaMemcpy(nodes.ptr, terrain.data(), sizeof(float) * terrainSize * terrainSize, cudaMemcpyHostToDevice);
@@ -94,23 +97,12 @@ void TerrainGenerator::drawGUI()
 	if (ImGui::Button("FindPath"))
 	{
 		using namespace cuda;
-		//cudaDeviceSetLimit(cudaLimitMallocHeapSize, 256 * 1024 * 1024);
-		//gpuErrchk(cudaGetLastError());
 		Timer timer1("CUDA");
 
-		glm::ivec2 path[] = { {10, 10}, {15, 10}};
-		/*const auto pathDev = DeviceMemory<int>::AllocateBytes(sizeof(glm::ivec2) * 2);
-		gpuErrchk(cudaGetLastError());
-		cudaMemcpyAsync(pathDev.ptr, &path, sizeof(glm::ivec2) * 2, cudaMemcpyHostToDevice, stream1);
-		gpuErrchk(cudaGetLastError());
-		
-		const auto agents = DeviceMemory<Agent>::AllocateElements(1);
-		gpuErrchk(cudaGetLastError());
-		
-		const auto memSize = DeviceMemory<int>::AllocateElements(1);
-		gpuErrchk(cudaGetLastError());*/
+		glm::ivec2 path[] = { {00, 00}, {19, 19}};
 
 		const std::size_t byteCount = sizeof(glm::ivec2) * 2 + sizeof(Agent) + sizeof(int);
+		std::cout << "Allocation of " << byteCount / 1024 / 1024 << " MB of memory" << std::endl;
 		const int pathOffset = 0;
 		const int agentsOffset = sizeof(glm::ivec2) * 2;
 		const int memSizeOffset = agentsOffset + sizeof(int);

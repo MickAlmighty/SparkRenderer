@@ -31,6 +31,7 @@ namespace spark {
 			int pos[2] = {};
 			float distanceFromBeginning{ 0 };
 			float valueH{};
+			bool valid = false;
 			Node* parent = nullptr;
 
 			__device__ Node() {}
@@ -39,6 +40,7 @@ namespace spark {
 			{
 				pos[0] = position[0];
 				pos[1] = position[1];
+				valid = true;
 			}
 
 			__device__ bool operator<(const Node& node) const
@@ -60,34 +62,31 @@ namespace spark {
 				return xDistance + yDistance;
 			}
 
-			__device__ List<Node> getNeighbors(Map* map)
+			__device__ void getNeighbors(Map* map, Node* nodes)
 			{
-				List<Node> nodes;
 				const float distanceFromNode = 1.0f;
-				const float diagonalDistanceFromNode = 1.41f;
+				const float diagonalDistanceFromNode = 1.0f;
 				tryToCreateNeighbor(nodes, { pos[0] - 1, pos[1] }, map, distanceFromNode);
-				tryToCreateNeighbor(nodes, { pos[0] + 1, pos[1] }, map, distanceFromNode);
-				tryToCreateNeighbor(nodes, { pos[0], pos[1] - 1 }, map, distanceFromNode);
-				tryToCreateNeighbor(nodes, { pos[0], pos[1] + 1 }, map, distanceFromNode);
-				tryToCreateNeighbor(nodes, { pos[0] - 1, pos[1] - 1 }, map, diagonalDistanceFromNode);
-				tryToCreateNeighbor(nodes, { pos[0] + 1, pos[1] - 1}, map, diagonalDistanceFromNode);
-				tryToCreateNeighbor(nodes, { pos[0] + 1, pos[1] + 1}, map, diagonalDistanceFromNode);
-				tryToCreateNeighbor(nodes, { pos[0] - 1, pos[1] + 1}, map, diagonalDistanceFromNode);
-				return nodes;
+				tryToCreateNeighbor(nodes + 1, { pos[0] + 1, pos[1] }, map, distanceFromNode);
+				tryToCreateNeighbor(nodes + 2, { pos[0], pos[1] - 1 }, map, distanceFromNode);
+				tryToCreateNeighbor(nodes + 3, { pos[0], pos[1] + 1 }, map, distanceFromNode);
+				tryToCreateNeighbor(nodes + 4, { pos[0] - 1, pos[1] - 1 }, map, diagonalDistanceFromNode);
+				tryToCreateNeighbor(nodes + 5, { pos[0] + 1, pos[1] - 1}, map, diagonalDistanceFromNode);
+				tryToCreateNeighbor(nodes + 6, { pos[0] + 1, pos[1] + 1}, map, diagonalDistanceFromNode);
+				tryToCreateNeighbor(nodes + 7, { pos[0] - 1, pos[1] + 1}, map, diagonalDistanceFromNode);
 			}
 
-			__device__ void tryToCreateNeighbor(List<Node>& list, ivec2 position,
+			__device__ void tryToCreateNeighbor(Node* node, ivec2 position,
 				Map* map, const float depth) const
 			{
 				if (map->areIndexesValid(position.x, position.y))
 				{
 					if (map->getTerrainValue(position.x, position.y) != 1.0f)
 					{
-						Node child;
-						child.pos[0] = position.x;
-						child.pos[1] = position.y;
-						child.distanceFromBeginning = this->distanceFromBeginning + depth;
-						list.insert(child);
+						node->pos[0] = position.x;
+						node->pos[1] = position.y;
+						node->distanceFromBeginning = this->distanceFromBeginning + depth;
+						node->valid = true;
 					}
 				}
 			}

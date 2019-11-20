@@ -3,6 +3,8 @@
 
 #include <nvfunctional>
 
+#include "CUDA/MemoryAllocator.cuh"
+
 namespace spark {
 	namespace cuda {
 		template <typename T>
@@ -35,24 +37,27 @@ namespace spark {
 			int size = 0;
 			Iterator<T>* first = nullptr;
 			Iterator<T>* last = nullptr;
+			MemoryAllocator* memoryAllocator = nullptr;
 
-			__device__ List() {}
+			__device__ List(MemoryAllocator* memoryAllocator_): memoryAllocator(memoryAllocator_) {}
 
-			__device__ List(nvstd::function<bool(const T& lhs, const T& rhs)>& compare) : comparator(compare) { }
+			__device__ List(MemoryAllocator* memoryAllocator_, nvstd::function<bool(const T& lhs, const T& rhs)>& compare) : 
+				memoryAllocator(memoryAllocator_), comparator(compare) { }
 
 			__device__ ~List<T>()
 			{
-				for (Iterator<T>* iterator = first; iterator != nullptr;)
+				/*for (Iterator<T>* iterator = first; iterator != nullptr;)
 				{
 					Iterator<T>* toDelete = iterator;
 					iterator = iterator->next;
 					delete toDelete;
-				}
+				}*/
 			}
 
 			__device__ Iterator<T>* insert(T value)
 			{
-				Iterator<T>* it = new Iterator<T>(value);
+				
+				Iterator<T>* it = memoryAllocator->allocate<Iterator<T>>(value);
 				if (size == 0)
 				{
 					first = it;
@@ -176,7 +181,7 @@ namespace spark {
 						{
 							first = nullptr;
 							last = nullptr;
-							delete it;
+							//delete it;
 							size = 0;
 							return true;
 						}
@@ -185,7 +190,7 @@ namespace spark {
 						{
 							it->next->previous = nullptr;
 							first = it->next;
-							delete it;
+							//delete it;
 							--size;
 							return true;
 						}
@@ -195,7 +200,7 @@ namespace spark {
 							it->previous->next = nullptr;
 							last = it->previous;
 							--size;
-							delete it;
+							//delete it;
 							return true;
 						}
 					}
@@ -213,7 +218,7 @@ namespace spark {
 						{
 							first = nullptr;
 							last = nullptr;
-							delete it;
+							//delete it;
 							size = 0;
 							return true;
 						}
@@ -222,7 +227,7 @@ namespace spark {
 						{
 							it->next->previous = nullptr;
 							first = it->next;
-							delete it;
+							//delete it;
 							--size;
 							return true;
 						}
@@ -232,7 +237,7 @@ namespace spark {
 							it->previous->next = nullptr;
 							last = it->previous;
 							--size;
-							delete it;
+							//delete it;
 						}
 					}
 				}
