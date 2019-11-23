@@ -9,41 +9,28 @@ namespace spark {
 		
 		class MemoryAllocator
 		{
-			void* memoryStack = nullptr;
+			void* memoryPool = nullptr;
 			int size{ 0 };
-			void* stackPointer = nullptr;
 		
 		public:
+			__device__ MemoryAllocator() {}
+			
 			__device__ MemoryAllocator(int byteCount)
 			{
-				memoryStack = malloc(byteCount);
-				stackPointer = memoryStack;
+				memoryPool = malloc(byteCount);
 				size = byteCount;
 			}
 
 			__device__ ~MemoryAllocator()
 			{
-				free(memoryStack);
+				if(memoryPool)
+					free(memoryPool);
 			}
 
 			template <typename T>
-			__device__ T* allocate()
+			__device__ T* ptr(size_t offsetFromBeginning) const
 			{
-				T toCopy = T();
-				T* object = (T*)stackPointer;
-				memcpy(object, &toCopy, sizeof(T));
-				stackPointer = object + 1;
-				return object;
-			}
-
-			template <typename T, typename ... Types>
-			__device__ T* allocate(Types ... args)
-			{
-				T toCopy = T(args...);
-				T* object = (T*)stackPointer;
-				memcpy(object, &toCopy, sizeof(T));
-				stackPointer = object + 1;
-				return object;
+				return static_cast<T*>(memoryPool) + offsetFromBeginning;
 			}
 		};
 	}

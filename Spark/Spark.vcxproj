@@ -216,11 +216,13 @@
     <CudaCompile Include="CUDA\kernel.cuh" />
     <CudaCompile Include="CUDA\List.cuh" />
     <ClInclude Include="CUDA\Agent.cuh" />
+    <ClInclude Include="CUDA\BinaryHeap.cuh" />
     <ClInclude Include="CUDA\DeviceMemory.h" />
     <ClInclude Include="CUDA\DeviceTimer.cuh" />
     <ClInclude Include="CUDA\Map.cuh" />
     <CudaCompile Include="CUDA\Node.cuh" />
     <ClInclude Include="CUDA\MemoryAllocator.cuh" />
+    <ClInclude Include="CUDA\MemoryManager.cuh" />
     <ClInclude Include="DirectionalLight.h" />
     <ClInclude Include="EngineSystems\ResourceManager.h" />
     <ClInclude Include="EngineSystems\SceneManager.h" />

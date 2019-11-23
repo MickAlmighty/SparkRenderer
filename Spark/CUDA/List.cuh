@@ -3,7 +3,7 @@
 
 #include <nvfunctional>
 
-#include "CUDA/MemoryAllocator.cuh"
+#include "CUDA/MemoryManager.cuh"
 
 namespace spark {
 	namespace cuda {
@@ -31,20 +31,20 @@ namespace spark {
 		};
 
 		template <typename T>
-		class List
+		class SortedList
 		{
 		public:
 			int size = 0;
 			Iterator<T>* first = nullptr;
 			Iterator<T>* last = nullptr;
-			MemoryAllocator* memoryAllocator = nullptr;
+			MemoryManager* memoryAllocator = nullptr;
 
-			__device__ List(MemoryAllocator* memoryAllocator_): memoryAllocator(memoryAllocator_) {}
+			__device__ SortedList(MemoryManager* memoryAllocator_): memoryAllocator(memoryAllocator_) {}
 
-			__device__ List(MemoryAllocator* memoryAllocator_, nvstd::function<bool(const T& lhs, const T& rhs)>& compare) : 
+			__device__ SortedList(MemoryManager* memoryAllocator_, nvstd::function<bool(const T& lhs, const T& rhs)>& compare) :
 				memoryAllocator(memoryAllocator_), comparator(compare) { }
 
-			__device__ ~List<T>()
+			__device__ ~SortedList<T>()
 			{
 				/*for (Iterator<T>* iterator = first; iterator != nullptr;)
 				{
@@ -54,7 +54,7 @@ namespace spark {
 				}*/
 			}
 
-			__device__ Iterator<T>* insert(T value)
+			__device__ Iterator<T>* insert(const T& value)
 			{
 				
 				Iterator<T>* it = memoryAllocator->allocate<Iterator<T>>(value);

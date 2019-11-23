@@ -65,7 +65,7 @@ namespace spark {
 			__device__ void getNeighbors(Map* map, Node* nodes)
 			{
 				const float distanceFromNode = 1.0f;
-				const float diagonalDistanceFromNode = 1.0f;
+				const float diagonalDistanceFromNode = 1.41f;
 				tryToCreateNeighbor(nodes, { pos[0] - 1, pos[1] }, map, distanceFromNode);
 				tryToCreateNeighbor(nodes + 1, { pos[0] + 1, pos[1] }, map, distanceFromNode);
 				tryToCreateNeighbor(nodes + 2, { pos[0], pos[1] - 1 }, map, distanceFromNode);

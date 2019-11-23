@@ -274,6 +274,12 @@
     <ClInclude Include="CUDA\DeviceTimer.cuh">
       <Filter>CUDA</Filter>
     </ClInclude>
+    <ClInclude Include="CUDA\BinaryHeap.cuh">
+      <Filter>CUDA</Filter>
+    </ClInclude>
+    <ClInclude Include="CUDA\MemoryManager.cuh">
+      <Filter>CUDA</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\res\shaders\default.glsl">
