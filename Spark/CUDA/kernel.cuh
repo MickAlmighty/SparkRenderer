@@ -13,6 +13,7 @@ namespace spark {
 		__global__ void createMap(float* nodes, int width, int height);
 		__global__ void findPath(int* path, int* memSize, Agent* agents);
 		__global__ void fillPathBuffer(Agent* agents, int* pathBuffer, int numberOfAgents);
+		__global__ void deleteAgentPaths(Agent* agents);
 		__host__ void runKernel(int* path, int* memSize, Agent* agents);
 		__host__ void initMap(float* nodes, int width, int height);
 	}
@@ -23,9 +24,9 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort =
 {
 	if (code != cudaSuccess)
 	{
-		fprintf(stderr, "GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
-		if (abort) 
-			exit(code);
+		fprintf(stderr, "GPUassert, error %d: %s %s %d\n", code, cudaGetErrorString(code), file, line);
+		/*if (abort) 
+			exit(code);*/
 	}
 }
 

@@ -6,6 +6,7 @@
 
 #include "Agent.cuh"
 #include "BinaryHeap.cuh"
+#include "DeviceMemory.h"
 #include "DeviceTimer.cuh"
 #include "List.cuh"
 #include "Map.cuh"
@@ -13,6 +14,7 @@
 #include "MemoryManager.cuh"
 #include "Node.cuh"
 #include "Timer.h"
+#include <glm/vec2.hpp>
 
 namespace spark {
 	namespace cuda {
@@ -21,44 +23,55 @@ namespace spark {
 
 		__host__ void runKernel(int* path, int* memSize, Agent* agents)
 		{
-
-			//checkMapValues <<<1, 1 >>> (map);
+			{
+				cudaDeviceSynchronize();
+				Timer t3("	findPath");
+				findPath << <32, 32, 400 * sizeof(unsigned int) + 32 * 8 * sizeof(Node) >> > (path, memSize, agents);
+				cudaDeviceSynchronize();
+				gpuErrchk(cudaGetLastError());
+			}
+			
+			Timer t("	CUDA KERNEL: filling pathBuffer");
+			//cudaDeviceSynchronize();
+			int memorySize = 0;
+			cudaMemcpy(&memorySize, memSize, sizeof(int), cudaMemcpyDeviceToHost);
 			cudaDeviceSynchronize();
-			Timer t3("	findPath");
-			findPath << <32, 32, 400 * sizeof(unsigned int) >> > (path, memSize, agents);
+			const DeviceMemory<int> pathBuffer = DeviceMemory<int>::AllocateElements(memorySize);
+			fillPathBuffer<<<1, 1>>>(agents, pathBuffer.ptr, 1024);
 			gpuErrchk(cudaGetLastError());
-			cudaDeviceSynchronize();
-			//int memorySize = 0;
-			//int* pathBuffer = nullptr;
-			//{
-			//	Timer t("CUDA KERNEL: filling pathBuffer");
-			//	
-			//	cudaMemcpy(&memorySize, memSize, sizeof(int), cudaMemcpyDeviceToHost);
-			//	
-			//	cudaMalloc(&pathBuffer, sizeof(int) * memorySize);
-			//	//cudaDeviceSynchronize();
-			//	fillPathBuffer <<<1, 1>>> (agents, pathBuffer, 1);
-			//	cudaDeviceSynchronize();
-			//}
-			//
-			//{
-			//	Timer t2("CUDA KERNEL: Filling agent path");
-			//	Agent* agentLookup = new Agent[1];
-			//	cudaMemcpy(agentLookup, agents, sizeof(Agent), cudaMemcpyDeviceToHost);
-			//	int* paths = new int[memorySize];
-			//	cudaMemcpy(paths, pathBuffer, sizeof(int) * memorySize, cudaMemcpyDeviceToHost);
 
-			//	for (int i = 0; i < 1; ++i)
-			//	{
-			//		std::deque<std::pair<bool, glm::ivec2>> agentPath;
-			//		for (int j = agentLookup[i].indexBegin; j < agentLookup[i].pathSize * 2; j += 2)
-			//		{
-			//			agentPath.push_back({ false, {paths[j], paths[j + 1]} });
-			//		}
-			//	}
+			{
+				Timer t4("	CUDA KERNEL: deleting deleteAgentPaths");
+				cudaDeviceSynchronize();
+				deleteAgentPaths << <32, 32 >> > (agents);
+				gpuErrchk(cudaGetLastError());
+			}
+			
+			Timer t2("	CUDA KERNEL: Filling agent paths");
+			std::vector<Agent> agentLookup(1024);
+			cudaMemcpy(agentLookup.data(), agents, sizeof(Agent) * 1024, cudaMemcpyDeviceToHost);
 
-			//	delete[] paths;
-			//	cudaFree(pathBuffer);
+			std::vector<glm::ivec2> paths(memorySize / 2);
+			cudaMemcpy(paths.data(), pathBuffer.ptr, sizeof(int) * memorySize, cudaMemcpyDeviceToHost);
+			
+			//cudaDeviceSynchronize();
+			std::vector<std::vector<glm::ivec2>> agentPaths;
+			agentPaths.reserve(1024);
+			for (int i = 0; i < 1024; ++i)
+			{
+				agentPaths.push_back(std::vector<glm::ivec2>(agentLookup[i].pathSize));
+				memcpy(agentPaths[i].data(), reinterpret_cast<int*>(paths.data()) + agentLookup[i].indexBegin, sizeof(int) * agentLookup[i].pathSize * 2);
+				/*for (int j = agentLookup[i].indexBegin; j < agentLookup[i].pathSize * 2; j += 2)
+				{
+					agentPath.push_back({ false, {paths[j], paths[j + 1]} });
+				}*/
+			}
+
+			/*for(const glm::ivec2& wayPoint : agentPaths[0])
+			{
+				std::cout << "{" << wayPoint.x << " " << wayPoint.y << "} ";
+			}
+			std::cout << "\n";*/
 		}
 
 		__host__ void initMap(float* nodes, int width, int height)
@@ -84,42 +97,49 @@ namespace spark {
 
 		__global__ void findPath(int* path, int* memSize, Agent* agents)
 		{
-			extern __shared__ int closedNodesLookup[];
+			extern __shared__ unsigned char sharedMemory[];
+			
+			unsigned int* closedNodesLookup = reinterpret_cast<unsigned int*>(sharedMemory);
+
 			if (threadIdx.x == 0)
 			{
-				allocator[blockIdx.x] = new MemoryAllocator(sizeof(Node) * 400 * 8 * 32);
+				memset(sharedMemory, 0, sizeof(unsigned int) * map->width * map->height + 8 * 32 * sizeof(Node));
+				allocator[blockIdx.x] = new MemoryAllocator(sizeof(Node) * map->width * map->height * 8 * 32);
 			}
 			__syncthreads();
 
-			const size_t memoryOffset = 400 * 8;
+			Node* neighborsMemoryPool = reinterpret_cast<Node*>(sharedMemory + 400 * sizeof(unsigned int));
+			Node* neighbors = neighborsMemoryPool + threadIdx.x * 8; // 8 is neighbor array size
+
+			const size_t memoryOffset = map->width * map->height * 8;
 			const size_t kernelMemOffset = memoryOffset * threadIdx.x;
-			MemoryManager manager = MemoryManager(allocator[blockIdx.x]->ptr<Node>(kernelMemOffset));
+			MemoryManager manager = MemoryManager(allocator[blockIdx.x]->ptr<Node>(kernelMemOffset + map->width * map->height * 7));
 			/*int startPoint[] = { *(path + 4 * threadIdx.x + 0), *(path + 4 * threadIdx.x + 1) };
 			int endPoint[] = { *(path + 4 * threadIdx.x + 2), *(path + 4* threadIdx.x + 3) };*/
-			//DeviceTimer timer2;
+			DeviceTimer timer;
 			int startPoint[] = { *(path + 0), *(path + 1) };
 			int endPoint[] = { *(path + 2), *(path + 3) };
-
+			
 			const Node startNode(startPoint, 0.0f);
-			BinaryHeap<Node> heap(allocator[blockIdx.x]->ptr<Node>(kernelMemOffset + map->width * map->height * 7));
+			BinaryHeap<Node> heap(allocator[blockIdx.x]->ptr<Node>(kernelMemOffset));
 			Node* finishNode = nullptr;
 			Iterator<Node>* closedNodeIt = manager.allocate<Iterator<Node>>(startNode);
 			heap.insert(startNode);
-
+			int whileLoopCounter = 0;
 			while (true)
 			{
+				++whileLoopCounter;
 				if (heap.size == 0)
 				{
 					break;
 				}
 
-				//const auto closedNode = openNodes.pop_front();
 				//timer.reset();
 				auto closedNode = heap.pop_front();
 				//timer.printTime("Pop front from heap %f ms\n");
 
 				//timer.reset();
-				closedNodeIt->next = manager.allocate<Iterator<Node>>(closedNode);
+				closedNodeIt->placeNext(manager.allocate<Iterator<Node>>(closedNode));
 				closedNodeIt = closedNodeIt->next;
 				//timer.printTime("Inserting closed node to closed list %f ms\n");
 
@@ -133,12 +153,12 @@ namespace spark {
 
 				//timer.reset();
 				const int nodeIndex = map->getTerrainNodeIndex(closedNode.pos[0], closedNode.pos[1]);
-				closedNodesLookup[nodeIndex] |= (1 << threadIdx.x);
+				atomicOr(closedNodesLookup + nodeIndex, 1 << threadIdx.x);
 				//timer.printTime("Bitwise setting that node is now closed %f ms\n");
 
 				//timer.reset();
-				Node neighbors[8];
-				//closedNode->value.getNeighbors(map, neighbors);
+				//Node neighbors[8];
+				//memset(neighbors, 0, 8 * sizeof(Node));
 				closedNode.getNeighbors(map, neighbors);
 				//timer.printTime("Getting node neighbors %f ms\n");
 
@@ -167,7 +187,8 @@ namespace spark {
 					}
 
 					//timer.reset();
-					if (closedNodesLookup[map->getTerrainNodeIndex(neighbors[i].pos[0], neighbors[i].pos[1])] & (1 << threadIdx.x))
+					const int nodeIdx = map->getTerrainNodeIndex(neighbors[i].pos[0], neighbors[i].pos[1]);
+					if (closedNodesLookup[nodeIdx] & (1 << threadIdx.x))
 					{
 						continue;
 					}
@@ -208,25 +229,22 @@ namespace spark {
 				return;
 			}
 
-			int pathLength = finishNode->distanceFromBeginning + 1;
-			//finishNode->getPathLength(pathLength);
-			//timer2.printTime("Kernel overall time %f ms\n");
-			//printf("path length %d\nopened nodes %d\n", pathLength, openNodes.size);
-			//printf("path length %d\nopened nodes %d\n", pathLength, int(heap.size));
+			int pathLength = 0;
+			finishNode->getPathLength(pathLength);
+			atomicAdd(memSize, pathLength * 2);
+			int* agentPath = static_cast<int*>(malloc(sizeof(int) * pathLength * 2));
+			finishNode->recreatePath(agentPath, pathLength);
+			//printf("thread %d, block %d, path length %d\nopened nodes %d, loopCounter %d\n", threadIdx.x, blockIdx.x, pathLength, int(heap.size), whileLoopCounter);
 
+			agents[blockIdx.x * 32 + threadIdx.x].pathOutput = agentPath;
+			agents[blockIdx.x * 32 + threadIdx.x].pathSize = pathLength;
 			
-			//int* tab = new int[2 * pathLength]; //x,y * length
-			//finishNode->recreatePath(tab, pathLength);
-			//atomicAdd(memSize, pathLength * 2);
-
-			//agents[0].pathOutput = tab;
-			//agents[0].pathSize = pathLength;
 			__syncthreads();
 			if (threadIdx.x == 0)
 			{
 				delete allocator[blockIdx.x];
 			}
-			
+			//timer2.printTime("Kernel overall time %f ms\n");
 		}
 
 		__global__ void fillPathBuffer(Agent* agents, int* pathBuffer, int numberOfAgents)
@@ -240,10 +258,15 @@ namespace spark {
 					pathBuffer[pathIndex] = agents[i].pathOutput[j];
 					++pathIndex;
 				}*/
-				memcpy(pathBuffer + agents[i].indexBegin, agents[i].pathOutput, agents[i].pathSize * 2);
+				const size_t numberOfBytes = sizeof(int) * agents[i].pathSize * 2;
+				memcpy(pathBuffer + agents[i].indexBegin, agents[i].pathOutput, numberOfBytes);
 				pathIndex += agents[i].pathSize * 2;
-				delete[] agents[i].pathOutput;
 			}
+		}
+
+		__global__ void deleteAgentPaths(Agent* agents)
+		{
+			free(agents[blockIdx.x * 32 + threadIdx.x].pathOutput);
 		}
 
 		__global__ void checkMapValues(Map* mapDev)
@@ -266,5 +289,5 @@ namespace spark {
 			}
 		}
 	}
-}
+	}
 

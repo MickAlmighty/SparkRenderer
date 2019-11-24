@@ -94,7 +94,6 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
@@ -106,21 +105,19 @@
       <WholeProgramOptimization>false</WholeProgramOptimization>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>glfw3.lib;glfw3dll.lib;glm_static.lib;assimp-vc141-mtd.lib;jsoncpp.lib;%(AdditionalDependencies);cudart_static.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)thirdparty\lib;$(SolutionDir)thirdparty\lib\DebugLib;%(AdditionalLibraryDirectories);$(CudaToolkitLibDir)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glfw3.lib;glfw3dll.lib;glm_static.lib;assimp-vc141-mt.lib;jsoncpp.lib;%(AdditionalDependencies);cudart_static.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)thirdparty\lib;$(SolutionDir)thirdparty\lib\DebugLib;%(AdditionalLibraryDirectories);$(CudaToolkitLibDir);$(SolutionDir)thirdparty\lib\ReleaseLib</AdditionalLibraryDirectories>
     </Link>
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
       <GenerateLineInfo>false</GenerateLineInfo>
       <CodeGeneration>compute_61,sm_61</CodeGeneration>
       <AdditionalOptions>--expt-extended-lambda %(AdditionalOptions)</AdditionalOptions>
-      <MaxRegCount>0</MaxRegCount>
       <FastMath>true</FastMath>
       <GenerateRelocatableDeviceCode>false</GenerateRelocatableDeviceCode>
-    </CudaCompile>
-    <CudaLink>
       <GPUDebugInfo>true</GPUDebugInfo>
-    </CudaLink>
+    </CudaCompile>
+    <CudaLink />
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>

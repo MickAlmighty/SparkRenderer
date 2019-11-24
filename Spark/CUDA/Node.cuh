@@ -88,6 +88,10 @@ namespace spark {
 						node->distanceFromBeginning = this->distanceFromBeginning + depth;
 						node->valid = true;
 					}
+					else
+					{
+						node->valid = false;
+					}
 				}
 			}
 

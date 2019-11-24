@@ -90,8 +90,8 @@ void TerrainGenerator::drawGUI()
 
 		initMap(nodes.ptr, terrainSize, terrainSize);
 
-		cudaStreamCreate(&stream1);
-		cudaStreamCreate(&stream2);
+		//cudaStreamCreate(&stream1);
+		//cudaStreamCreate(&stream2);
 	}
 
 	if (ImGui::Button("FindPath"))
@@ -101,16 +101,16 @@ void TerrainGenerator::drawGUI()
 
 		glm::ivec2 path[] = { {00, 00}, {19, 19}};
 
-		const std::size_t byteCount = sizeof(glm::ivec2) * 2 + sizeof(Agent) + sizeof(int);
+		const std::size_t byteCount = sizeof(glm::ivec2) * 2 + sizeof(Agent) * 1024 + sizeof(int);
 		std::cout << "Allocation of " << byteCount / 1024 / 1024 << " MB of memory" << std::endl;
 		const int pathOffset = 0;
 		const int agentsOffset = sizeof(glm::ivec2) * 2;
-		const int memSizeOffset = agentsOffset + sizeof(int);
+		const int memSizeOffset = agentsOffset + sizeof(Agent) * 1024;
 
 		const auto devMem = DeviceMemory<char>::AllocateBytes(byteCount);
 		gpuErrchk(cudaGetLastError());
 
-		cudaMemcpyAsync(devMem.ptr, &path, sizeof(glm::ivec2) * 2, cudaMemcpyHostToDevice, stream1);
+		cudaMemcpy(devMem.ptr, &path, sizeof(glm::ivec2) * 2, cudaMemcpyHostToDevice);
 		gpuErrchk(cudaGetLastError());
 
 		const auto pathDev = reinterpret_cast<int*>(devMem.ptr + pathOffset);
