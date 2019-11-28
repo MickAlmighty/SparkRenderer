@@ -11,10 +11,8 @@ namespace spark {
 		class Map;
 		__global__ void checkMapValues(Map* mapDev);
 		__global__ void createMap(float* nodes, int width, int height);
-		__global__ void findPath(int* path, int* memSize, Agent* agents);
-		__global__ void fillPathBuffer(Agent* agents, int* pathBuffer, int numberOfAgents);
-		__global__ void deleteAgentPaths(Agent* agents);
-		__host__ void runKernel(int* path, int* memSize, Agent* agents);
+		__global__ void findPath(int* path, unsigned int* agentPaths);
+		__host__ void runKernel(int* path, unsigned int* agentPaths);
 		__host__ void initMap(float* nodes, int width, int height);
 	}
 }

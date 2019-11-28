@@ -43,6 +43,17 @@ namespace spark {
 				valid = true;
 			}
 
+			__device__ Node(const Node& n) 
+				: valueF(n.valueF), 
+				distanceFromBeginning(n.distanceFromBeginning), 
+				valueH(n.valueH), 
+				valid(n.valid), 
+				parent(n.parent)
+			{
+				pos[0] = n.pos[0];
+				pos[1] = n.pos[1];
+			}
+
 			__device__ bool operator<(const Node& node) const
 			{
 				return this->valueF < node.valueF;
@@ -104,7 +115,7 @@ namespace spark {
 				}
 			}
 			
-			__device__ void recreatePath(int* path, int index)
+			__device__ void recreatePath(unsigned int* path, int index)
 			{
 				index = index - 1;
 				path[index * 2] = pos[0];

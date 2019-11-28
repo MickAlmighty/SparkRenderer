@@ -100,12 +100,11 @@ void TerrainGenerator::drawGUI()
 		Timer timer1("CUDA");
 
 		glm::ivec2 path[] = { {00, 00}, {19, 19}};
-
-		const std::size_t byteCount = sizeof(glm::ivec2) * 2 + sizeof(Agent) * 1024 + sizeof(int);
+		const size_t agentPathsSize = 400 * 2 * sizeof(int) * 1024;
+		const std::size_t byteCount = sizeof(glm::ivec2) * 2 + agentPathsSize;
 		std::cout << "Allocation of " << byteCount / 1024 / 1024 << " MB of memory" << std::endl;
 		const int pathOffset = 0;
-		const int agentsOffset = sizeof(glm::ivec2) * 2;
-		const int memSizeOffset = agentsOffset + sizeof(Agent) * 1024;
+		const int agentPathsOffset = sizeof(glm::ivec2) * 2;
 
 		const auto devMem = DeviceMemory<char>::AllocateBytes(byteCount);
 		gpuErrchk(cudaGetLastError());
@@ -114,9 +113,8 @@ void TerrainGenerator::drawGUI()
 		gpuErrchk(cudaGetLastError());
 
 		const auto pathDev = reinterpret_cast<int*>(devMem.ptr + pathOffset);
-		const auto agentsDev = reinterpret_cast<Agent*>(devMem.ptr + agentsOffset);
-		const auto memSizeDev = reinterpret_cast<int*>(devMem.ptr + memSizeOffset);
-		runKernel(pathDev, memSizeDev, agentsDev);
+		const auto agentPathsDev = reinterpret_cast<unsigned int*>(devMem.ptr + agentPathsOffset);
+		runKernel(pathDev, agentPathsDev);
 		//cudaStreamDestroy(stream1);
 		//cudaStreamDestroy(stream2);
 	}
