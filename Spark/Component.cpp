@@ -64,12 +64,17 @@ namespace spark {
 	void Component::setActive(bool active_) {
 		active = active_;
 	}
+
+    std::shared_ptr<Component> Component::getComponentPtr() {
+        return std::static_pointer_cast<Component>(shared_from_this());
+    }
 }
 
 RTTR_REGISTRATION{
 	rttr::registration::class_<spark::Component>("Component")
 	.property("active", &spark::Component::active)
 	.property("name", &spark::Component::name)
+    .method("getComponentPtr", &spark::Component::getComponentPtr)
 	.property
 	("gameObject", &spark::Component::getGameObject, &spark::Component::setGameObject, rttr::registration::public_access);
 }

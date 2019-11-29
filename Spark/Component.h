@@ -9,11 +9,12 @@
 #include <GUI/ImGui/imgui.h>
 #include "Logging.h"
 
-#define COMPONENT_CONVERTER(ComponentName) \
+#define COMPONENT_CONVERTER(ComponentName)                                                                        \
     std::shared_ptr<Component> get##ComponentName##ComponentPtr(std::shared_ptr<##ComponentName##> ptr, bool& ok) \
     {                                                                                                             \
         ok = true;                                                                                                \
-        return ptr;                                                                                               \
+        SPARK_WARN("CONVERTING '{}' ({:#0x})", ptr->getName(), reinterpret_cast<uintptr_t>(ptr.get()));           \
+        return spark::getComponentSharedPtr<##ComponentName##>(ptr);                                              \
     }
 
 #define REGISTER_COMPONENT_CONVERTER(ComponentName) \
@@ -64,6 +65,7 @@ namespace spark {
         std::shared_ptr<Derived> shared_from_base() {
             return std::static_pointer_cast<Derived>(shared_from_this());
         }
+        std::shared_ptr<Component> getComponentPtr();
     private:
 		std::string name{ "Component" };
 		std::weak_ptr<GameObject> gameObject;
@@ -72,11 +74,11 @@ namespace spark {
 	};
 
     template<typename T>
-    std::shared_ptr<Component> getComponentSharedPtr(std::shared_ptr<T> comp)
+    std::shared_ptr<Component> getComponentSharedPtr(const std::shared_ptr<T>& comp)
     {
         if(rttr::type::get<T>().is_derived_from(rttr::type::get<Component>()))
         {
-            return std::static_pointer_cast<T>(comp);
+            return std::static_pointer_cast<Component>(comp);
         }
         SPARK_WARN("Invalid Component shared pointer cast attempt!");
         return nullptr;

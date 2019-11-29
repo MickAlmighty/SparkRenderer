@@ -221,6 +221,25 @@ TEST(SerializationTest, StructsSerializedProperly)
     ASSERT_EQ(source.s.vec, target.s.vec);
 }
 
+TEST(SerializationTest, ComponentPointersConvertible)
+{
+    std::shared_ptr<spark::Camera> cam = std::make_shared<spark::Camera>();
+    Json::Value root;
+    spark::JsonSerializer* serializer{spark::JsonSerializer::getInstance()};
+    ASSERT_TRUE(serializer->save(cam, root));
+    std::shared_ptr<spark::Component> comp1{cam}, comp2;
+    try
+    {
+        comp2 = serializer->loadJsonShared<spark::Component>(root);
+    }
+    catch(std::exception& e)
+    {
+        ASSERT_FALSE("Unable to deserialize camera as component!");
+    }
+    ASSERT_NE(nullptr, comp2);
+    ASSERT_EQ(rttr::instance(rttr::variant(cam).extract_wrapped_value()).get_derived_type(), rttr::instance(rttr::variant(comp2).extract_wrapped_value()).get_derived_type());
+}
+
 TEST(SerializationTest, GameObjectWithComponentSerializedProperly)
 {
     std::shared_ptr<spark::GameObject> obj = std::make_shared<spark::GameObject>("TestObj");
@@ -239,5 +258,6 @@ TEST(SerializationTest, GameObjectWithComponentSerializedProperly)
         ASSERT_FALSE("Unable to deserialize gameobject!");
     }
     ASSERT_EQ(obj->getName(), obj2->getName());
-    ASSERT_NE(nullptr, obj->getComponent<spark::Camera>(), obj2->getComponent<spark::Camera>());
+    ASSERT_NE(nullptr, obj->getComponent<spark::Camera>());
+    ASSERT_NE(nullptr, obj2->getComponent<spark::Camera>());
 }

@@ -173,6 +173,36 @@ rttr::variant JsonSerializer::loadVariant(const std::filesystem::path& filePath)
     return loadVariant(root);
 }
 
+rttr::variant JsonSerializer::tryConvertVar(rttr::variant& variant, const rttr::type& type, bool& conversionOk)
+{
+    conversionOk = true;
+    if(type == variant.get_type())
+    {
+        return variant;
+    }
+    if(isWrappedPtr(variant.get_type()) && !isWrappedPtr(type))
+    {
+        return variant.extract_wrapped_value();
+    }
+    if(isWrappedPtr(variant.get_type()) && isWrappedPtr(type))
+    {
+        // this is a temporary solution (or so I hope).
+        // basically using a custom converter to upcast shared pointers of classes deriving from Component
+        // recreates the shared pointers from raw pointers. Guess it's a RTTR-related problem.
+        if(rttr::type::get<std::shared_ptr<Component>>() == type &&
+           variant.get_type().get_wrapped_type().is_derived_from(rttr::type::get<Component*>()))
+        {
+            
+        }
+    }
+    if(variant.can_convert(type))
+    {
+        return variant.convert(type);
+    }
+    conversionOk = false;
+    return nullptr;
+}
+
 void JsonSerializer::writePropertyToJson(Json::Value& root, const rttr::type& type, const rttr::variant& var)
 {
     SPARK_TRACE("Writing prop of type '{}'...", type.get_name().cbegin());
@@ -403,7 +433,7 @@ void JsonSerializer::serialize(const rttr::variant& var, Json::Value& root)
             SPARK_TRACE("Assigning ID {}", id);
             root[ID_NAME] = id;
             bindObject(var, id);
-            //TODO: find a better way to get derived type maybe?
+            // TODO: find a better way to get derived type maybe?
             rttr::variant wrapped{isWrappedPtr(var.get_type()) ? var.extract_wrapped_value() : var};
             rttr::instance inst{wrapped};
             const rttr::type derivedType{inst.get_derived_type()};
@@ -447,17 +477,11 @@ rttr::variant JsonSerializer::readPropertyFromJson(const Json::Value& root, cons
             return nullptr;
         }
         // todo: i'd really love to see outcome library arrive here as well xd
-        if(type == sparkPtr.get_type())
+        bool conversionOk;
+        rttr::variant result{tryConvertVar(sparkPtr, type, conversionOk)};
+        if(conversionOk)
         {
-            return sparkPtr;
-        }
-        if(isWrappedPtr(sparkPtr.get_type()) && !isWrappedPtr(type))
-        {
-            return sparkPtr.extract_wrapped_value();
-        }
-        if(sparkPtr.can_convert(type))
-        {
-            return sparkPtr.convert(type);
+            return result;
         }
         status = 3;
         SPARK_WARN("Property of type '{}' could not be properly deserialized with var of type '{}' (valid: {})!", type.get_name().cbegin(),
@@ -1095,7 +1119,7 @@ rttr::variant JsonSerializer::deserialize(const Json::Value& root)
                 {
                     SPARK_WARN("Unable to set value for property '{}' of type '{}' with value of type '{}'!", prop.get_name().cbegin(),
                                propType.get_name().cbegin(), propVar.get_type().get_name().cbegin());
-                    //TODO: insert nullptr values here!
+                    // TODO: insert nullptr values here!
                     // throw std::exception("Unable to set value for property!");
                 }
             }

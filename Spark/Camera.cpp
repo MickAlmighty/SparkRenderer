@@ -5,6 +5,7 @@
 #include "Spark.h"
 
 namespace spark {
+    Camera::Camera() : Component("Camera") {}
 
 	Camera::Camera(glm::vec3 position, float yaw, float pitch) : Component("Camera"),
 	Position(position), Front(glm::vec3(0.0f, 0.0f, -1.0f)), Yaw(yaw), Pitch(pitch) {
