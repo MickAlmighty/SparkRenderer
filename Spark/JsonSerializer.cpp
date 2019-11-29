@@ -189,10 +189,15 @@ rttr::variant JsonSerializer::tryConvertVar(rttr::variant& variant, const rttr::
         // this is a temporary solution (or so I hope).
         // basically using a custom converter to upcast shared pointers of classes deriving from Component
         // recreates the shared pointers from raw pointers. Guess it's a RTTR-related problem.
-        if(rttr::type::get<std::shared_ptr<Component>>() == type &&
-           variant.get_type().get_wrapped_type().is_derived_from(rttr::type::get<Component*>()))
+        rttr::type wrapped{variant.get_type().get_wrapped_type()};
+        if(rttr::type::get<std::shared_ptr<Component>>() == type && wrapped.is_derived_from(rttr::type::get<Component*>()))
         {
-            
+            rttr::method convMethod{wrapped.get_method("getComponentPtr")};
+            rttr::variant wrappedVal{variant.extract_wrapped_value()};
+            if(convMethod.is_valid() && convMethod.get_return_type() == type)
+            {
+                return convMethod.invoke(wrappedVal);
+            }
         }
     }
     if(variant.can_convert(type))
