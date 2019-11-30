@@ -280,6 +280,9 @@
     <ClInclude Include="CUDA\MemoryManager.cuh">
       <Filter>CUDA</Filter>
     </ClInclude>
+    <ClInclude Include="CUDA\PathFindingManager.h">
+      <Filter>CUDA</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\res\shaders\default.glsl">

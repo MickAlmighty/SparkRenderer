@@ -7,6 +7,7 @@
 #include <GUI/ImGui/imgui_impl_opengl3.h>
 
 #include "Clock.h"
+#include "CUDA/PathfindingManager.h"
 #include "EngineSystems/SparkRenderer.h"
 #include "EngineSystems/ResourceManager.h"
 #include "EngineSystems/SceneManager.h"
@@ -105,6 +106,7 @@ namespace spark {
 			Clock::tick();
 			glfwPollEvents();
 			SceneManager::getInstance()->update();
+			PathFindingManager::getInstance()->findPaths();
 			sparkGui.drawGui();
 			SparkRenderer::getInstance()->renderPass();
 			HID::clearStates();

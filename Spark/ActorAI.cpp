@@ -6,52 +6,44 @@
 #include <glm/gtc/random.inl>
 
 #include "Clock.h"
+#include "CUDA/PathfindingManager.h"
 #include "EngineSystems/SparkRenderer.h"
 #include "GameObject.h"
 #include "GUI/SparkGui.h"
 #include "JsonSerializer.h"
 #include "NodeAI.h"
-#include "TerrainGenerator.h"
 
 namespace spark {
 
 	void ActorAI::update()
 	{
-		if(terrainGenerator.expired())
-			return;
-
 		glm::vec3 pos = getGameObject()->transform.world.getPosition();
-		
-		validateActorPosition(pos);
-		setStartPosition(pos);		
-		//findPath();
-		if(path.empty())
+
+		if (path.empty())
 		{
+			validateActorPosition(pos);
+			setStartPosition(pos);
 			randomizeEndPoint();
-			const double measureStart = glfwGetTime();
-			findPathStack();
-			timer = glfwGetTime() - measureStart;
-			//std::cout << timer * 1000.0 << " ms" << std::endl;
+			PathFindingManager::getInstance()->addAgent(shared_from_base<ActorAI>());
 		}
 		else if (const bool firstNodeAchieved = path.begin()->first; firstNodeAchieved)
 		{
+			validateActorPosition(pos);
+			setStartPosition(pos);
 			randomizeEndPoint();
-			const double measureStart = glfwGetTime();
-			findPathStack();
-			timer = glfwGetTime() - measureStart;
-			//std::cout << timer * 1000.0 << " ms" << std::endl;
+			PathFindingManager::getInstance()->addAgent(shared_from_base<ActorAI>());
 		}
-		
+
 		if (!path.empty())
 		{
 			isTraveling = true;
 		}
-		
+
 		if (isTraveling)
 		{
 			walkToEndOfThePath();
 			const int indicesCount = updatePathMesh(path);
-			const auto f = [shared_ptr = shared_from_base<ActorAI>(), indicesCount] (std::shared_ptr<Shader>& shader)
+			const auto f = [shared_ptr = shared_from_base<ActorAI>(), indicesCount](std::shared_ptr<Shader>& shader)
 			{
 				glBindVertexArray(shared_ptr->vao);
 				glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indicesCount), GL_UNSIGNED_INT, 0);
@@ -63,41 +55,38 @@ namespace spark {
 
 	void ActorAI::validateActorPosition(glm::vec3& position) const
 	{
-		const auto terrainSize = static_cast<float>(terrainGenerator.lock()->terrainSize) - 1;
+		const auto mapWidth = PathFindingManager::getInstance()->map.width - 1;
+		const auto mapHeight = PathFindingManager::getInstance()->map.height - 1;
 		if (position.x < 0) position.x = 0;
 		if (position.z < 0) position.z = 0;
-		if (position.x > terrainSize) position.x = terrainSize;
-		if (position.z > terrainSize) position.z = terrainSize;
+		if (position.x > mapWidth) position.x = static_cast<float>(mapWidth);
+		if (position.z > mapHeight) position.z = static_cast<float>(mapHeight);
 	}
 
 	void ActorAI::setStartPosition(glm::vec3& position)
 	{
+		glm::vec2 pos{};
 		if (position.x - static_cast<int>(position.x) < 0.5)
-		{
-			startPos.x = static_cast<int>(position.x);
-		}
+			pos.x = std::floor(position.x);
 		else
-		{
-			startPos.x = static_cast<int>(position.x + 1);
-		}
+			pos.x = std::ceil(position.x);
 
 		if (position.z - static_cast<int>(position.z) < 0.5)
-		{
-			startPos.y = static_cast<int>(position.z);
-		}
+			pos.y = std::floor(position.z);
 		else
-		{
-			startPos.y = static_cast<int>(position.z + 1);
-		}
+			pos.y = std::ceil(position.z);
+
+		startPos = static_cast<glm::ivec2>(pos);
 	}
 
 	void ActorAI::randomizeEndPoint()
 	{
 		do
 		{
-			const float terrainSize = static_cast<float>(terrainGenerator.lock()->terrainSize);
-			endPos = { static_cast<int>(glm::linearRand(0.0f, terrainSize)), static_cast<int>(glm::linearRand(0.0f, terrainSize)) };
-		} while (terrainGenerator.lock()->getTerrainValue(endPos.x, endPos.y) == 1.0f);
+			const auto mapWidth = static_cast<float>(PathFindingManager::getInstance()->map.width);
+			const auto mapHeight = static_cast<float>(PathFindingManager::getInstance()->map.height);
+			endPos = { static_cast<int>(glm::linearRand(0.0f, mapWidth)), static_cast<int>(glm::linearRand(0.0f, mapHeight)) };
+		} while (PathFindingManager::getInstance()->map.getTerrainValue(endPos.x, endPos.y) == 1.0f);
 	}
 
 	void ActorAI::initPathMesh()
@@ -128,7 +117,7 @@ namespace spark {
 		std::vector<glm::vec3> vertices;
 		std::vector<unsigned int> indices;
 
-		const auto insertVertex = [&vertices, &indices] (glm::vec3&& vertex)
+		const auto insertVertex = [&vertices, &indices](glm::vec3&& vertex)
 		{
 			const auto vertexIt = std::find(vertices.begin(), vertices.end(), vertex);
 			if (vertexIt != vertices.end())
@@ -142,7 +131,7 @@ namespace spark {
 			}
 		};
 
-		for(int i = -1; i < lineSegments; ++i)
+		for (int i = -1; i < lineSegments; ++i)
 		{
 			glm::vec3 segmentStart;
 			if (i == -1)
@@ -157,7 +146,7 @@ namespace spark {
 
 			glm::vec3 direction = glm::normalize(segmentEnd - segmentStart);
 			glm::vec3 perpendicularToDirection = glm::cross(direction, glm::vec3(0.0f, 1.0f, 0.0f));
-		
+
 			insertVertex(segmentStart + perpendicularToDirection * 0.1f);
 			insertVertex(segmentEnd - perpendicularToDirection * 0.1f);
 			insertVertex(segmentStart - perpendicularToDirection * 0.1f);
@@ -182,79 +171,6 @@ namespace spark {
 
 	}
 
-	void ActorAI::findPath()
-	{
-		path.clear();
-		nodesToProcess.emplace(0.0f, std::make_shared<NodeAI>(startPos, 0.0f));
-		std::shared_ptr<NodeAI> finishNode = nullptr;
-		while (true)
-		{
-			if (nodesToProcess.empty())
-			{
-				std::cout << "Path hasn't been found" << std::endl;
-				break;
-			}
-
-			const auto& closedNode = getTheNearestNodeFromOpen();
-			if (closedNode->position == endPos)
-			{
-				finishNode = closedNode;
-				break;
-			}
-			processedNodes.push_back(closedNode);
-			auto neighbors = closedNode->getNeighbors(terrainGenerator.lock());
-
-			for (const std::shared_ptr<NodeAI>& neighbor : neighbors)
-			{
-				if (isNodeClosed(neighbor))
-					continue;
-
-				neighbor->parent = closedNode;
-
-				const float functionH = neighbor->measureManhattanDistance(endPos);
-				const float functionG = neighbor->depth = neighbor->measureManhattanDistance(startPos);
-				const float terrainValue = terrainGenerator.lock()->getTerrainValue(neighbor->position.x, neighbor->position.y);
-				float heuristicsValue = (1 - terrainValue) * (functionH + functionG);
-				
-				nodesToProcess.emplace(heuristicsValue, neighbor);
-			}
-		}
-		if (finishNode)
-		{
-			if (auto terrain_g = terrainGenerator.lock(); terrain_g != nullptr)
-			{
-				path.clear();
-				//finishNode->drawReturnPath(terrain_g);
-				finishNode->getPath(path);
-				path.pop_front();
-				//terrain_g->updateTerrain();
-			}
-		}
-		nodesToProcess.clear();
-		processedNodes.clear();
-	}
-
-	std::shared_ptr<NodeAI> ActorAI::getTheNearestNodeFromOpen()
-	{
-		const auto node_it = std::begin(nodesToProcess);
-		if (node_it != std::end(nodesToProcess))
-		{
-			std::shared_ptr<NodeAI> n = node_it->second;
-			nodesToProcess.erase(node_it);
-			return n;
-		}
-		return nullptr;
-	}
-
-	bool ActorAI::isNodeClosed(const std::shared_ptr<NodeAI>& node)
-	{
-		const auto& it = std::find_if(std::begin(processedNodes), std::end(processedNodes), [&node](const std::shared_ptr<NodeAI>& n)
-		{
-			return n->position == node->position;
-		});
-		return it != std::end(processedNodes);
-	}
-
 	void ActorAI::walkToEndOfThePath()
 	{
 		if (path.empty())
@@ -262,20 +178,20 @@ namespace spark {
 			isTraveling = false;
 			return;
 		}
-			
+
 
 		const auto wayPoint_it = std::find_if(path.begin(), path.end(),
 			[](const std::pair<bool, glm::vec2>& p)
-			{
-				return !p.first;
-			});
+		{
+			return !p.first;
+		});
 		if (wayPoint_it == path.end())
 		{
 			path.clear();
 			isTraveling = false;
 			return;
 		}
-		
+
 		for (auto& wayPoint : path)
 		{
 			if (wayPoint.first)
@@ -306,106 +222,6 @@ namespace spark {
 		}
 	}
 
-	void ActorAI::findPathStack()
-	{
-		path.clear();
-		nodesToProcessStack.emplace( 0.0f, NodeAI(startPos, 0.0f));
-		NodeAI* finishNode = nullptr;
-		while (true)
-		{
-			if (nodesToProcessStack.empty())
-			{
-				isTraveling = false;
-				std::cout << "Path hasn't been found" << std::endl;
-				break;
-			}
-
-			const auto closedNode = getTheNearestNodeFromOpenStack();
-			processedNodesStack.push_back(closedNode);
-			
-			if (closedNode.position == endPos)
-			{
-				finishNode = &(*std::prev(processedNodesStack.end()));
-				break;
-			}
-			
-			auto neighbors = closedNode.getNeighborsStack(terrainGenerator.lock());
-			for (NodeAI& neighbor : neighbors)
-			{
-				if (isNodeClosedStack(neighbor))
-					continue;
-				
-				neighbor.parentAddress = &(*std::prev(processedNodesStack.end()));
-
-				const float functionH = neighbor.measureManhattanDistance(endPos);
-				const float functionG = neighbor.depth;
-				const float terrainValue = terrainGenerator.lock()->getTerrainValue(neighbor.position.x, neighbor.position.y);
-				const float heuristicsValue = (1 - terrainValue) * (functionH + functionG);
-
-				insertOrSwapNodeIntoOpenedList(heuristicsValue, neighbor);
-			}
-		}
-		if (finishNode)
-		{
-			if (auto terrain_g = terrainGenerator.lock(); terrain_g != nullptr)
-			{
-				//finishNode->drawReturnPathStack(terrain_g);
-				finishNode->getPathStack(path);
-				path.pop_front();
-				//terrain_g->updateTerrain();
-			}
-		}
-		
-		nodesToProcessStack.clear();
-		processedNodesStack.clear();
-	}
-
-	NodeAI ActorAI::getTheNearestNodeFromOpenStack()
-	{
-		const auto node_it = std::begin(nodesToProcessStack);
-		if (node_it != std::end(nodesToProcessStack))
-		{
-			NodeAI n = node_it->second;
-			nodesToProcessStack.erase(node_it);
-			return n;
-		}
-		return {};
-	}
-
-	bool ActorAI::isNodeClosedStack(const NodeAI& node)
-	{
-		const auto& it = std::find_if(std::begin(processedNodesStack), std::end(processedNodesStack), [&node](const NodeAI& n)
-		{
-			return n.position == node.position;
-		});
-		return it != std::end(processedNodesStack);
-	}
-
-	void ActorAI::insertOrSwapNodeIntoOpenedList(float f, const NodeAI& node)
-	{
-		const auto& it = std::find_if(std::begin(nodesToProcessStack), std::end(nodesToProcessStack), [&node](const std::pair<float, NodeAI>& n)
-		{
-			const bool nodesEqual = n.second.position == node.position;
-			if (!nodesEqual)
-			{
-				return false;
-			}
-			const bool betterFunctionG = node.depth < n.second.depth;
-			
-			return nodesEqual && betterFunctionG;
-		});
-
-		if (it != std::end(nodesToProcessStack))
-		{
-			nodesToProcessStack.erase(it);
-			nodesToProcessStack.emplace(f, node);
-		}
-		else
-		{
-			nodesToProcessStack.emplace(f, node);
-		}
-	}
-
 	SerializableType ActorAI::getSerializableType()
 	{
 		return SerializableType::SActorAI;
@@ -416,7 +232,6 @@ namespace spark {
 		Json::Value root;
 		root["name"] = name;
 		root["movementSpeed"] = movementSpeed;
-		root["terrainGenerator"] = JsonSerializer::serialize(terrainGenerator.lock());
 		return root;
 	}
 
@@ -424,22 +239,16 @@ namespace spark {
 	{
 		name = root.get("name", "ActorAI").asString();
 		movementSpeed = root.get("movementSpeed", 1.0f).asFloat();
-		terrainGenerator = std::dynamic_pointer_cast<TerrainGenerator>(JsonSerializer::deserialize(root["terrainGenerator"]));
 	}
 
 	void ActorAI::drawGUI()
 	{
-		terrainGenerator = SparkGui::getObject("terrainGenerator", terrainGenerator.lock());
 
 		ImGui::DragInt2("startPos", &startPos.x);
 		ImGui::DragInt2("endPos", &endPos.x);
 		ImGui::DragFloat("movementSpeed", &movementSpeed, 0.1f);
-		ImGui::InputDouble("PathFindingTimeDuration", &timer, 0, 0, "%.8f");
 		if (ImGui::Button("FindPath"))
 		{
-			const double measureStart = glfwGetTime();
-			findPath();
-			timer = glfwGetTime() - measureStart;
 			isTraveling = true;
 		}
 		removeComponentGUI<ActorAI>();
@@ -457,4 +266,12 @@ namespace spark {
 		glDeleteVertexArrays(1, &vao);
 	}
 
+	void ActorAI::setPath(const std::deque<glm::ivec2>& path_)
+	{
+		path.clear();
+		for (const glm::ivec2& wayPoint : path_)
+		{
+			path.emplace_back(std::make_pair(false, wayPoint));
+		}
+	}
 }

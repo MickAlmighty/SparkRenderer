@@ -1,20 +1,16 @@
 #include "NodeAI.h"
 
+#include "CUDA/Map.cuh"
 #include "TerrainGenerator.h"
 
 namespace spark {
 
 	NodeAI::NodeAI(const glm::ivec2 pos, const float depth_) : position(pos), depth(depth_)
 	{
-		//std::cout << "NodeAI Constructor!" << std::endl;
 	}
 
 	NodeAI::NodeAI(const NodeAI& rhs) : position(rhs.position), depth(rhs.depth), parentAddress(rhs.parentAddress)
 	{
-		if (!rhs.parent.expired())
-		{
-			parent = rhs.parent;
-		}
 	}
 
 	NodeAI::NodeAI(const NodeAI&& rhs) noexcept : position(rhs.position), depth(rhs.depth), parentAddress(rhs.parentAddress)
@@ -34,74 +30,37 @@ namespace spark {
 		//return glm::distance(position, endPoint);
 	}
 
-	std::vector<std::shared_ptr<NodeAI>> NodeAI::getNeighbors(const std::shared_ptr<TerrainGenerator>& terrainGenerator) const
-	{
-		std::vector<std::shared_ptr<NodeAI>> neighbors;
-		neighbors.reserve(8);
-		const float distanceFromNode = 1.0f;
-		const float diagonalDistanceFromNode = 1.41f;
-		tryToCreateNeighbor(neighbors, { position.x - 1, position.y }, terrainGenerator, distanceFromNode);
-		tryToCreateNeighbor(neighbors, { position.x + 1, position.y }, terrainGenerator, distanceFromNode);
-		tryToCreateNeighbor(neighbors, { position.x, position.y - 1 }, terrainGenerator, distanceFromNode);
-		tryToCreateNeighbor(neighbors, { position.x, position.y + 1 }, terrainGenerator, distanceFromNode);
-		tryToCreateNeighbor(neighbors, { position.x - 1, position.y - 1 }, terrainGenerator, diagonalDistanceFromNode);
-		tryToCreateNeighbor(neighbors, { position.x + 1, position.y - 1 }, terrainGenerator, diagonalDistanceFromNode);
-		tryToCreateNeighbor(neighbors, { position.x + 1, position.y + 1 }, terrainGenerator, diagonalDistanceFromNode);
-		tryToCreateNeighbor(neighbors, { position.x - 1, position.y + 1 }, terrainGenerator, diagonalDistanceFromNode);
-
-		return neighbors;
-	}
-
-	std::vector<NodeAI> NodeAI::getNeighborsStack(const std::shared_ptr<TerrainGenerator>& terrainGenerator) const
+	std::vector<NodeAI> NodeAI::getNeighbors(const cuda::Map& map) const
 	{
 		std::vector<NodeAI> neighbors;
 		neighbors.reserve(8);
 		const float distanceFromNode = 1.0f;
 		const float diagonalDistanceFromNode = 1.41f;
-		tryToCreateNeighbor(neighbors, { position.x - 1, position.y }, terrainGenerator, distanceFromNode);
-		tryToCreateNeighbor(neighbors, { position.x + 1, position.y }, terrainGenerator, distanceFromNode);
-		tryToCreateNeighbor(neighbors, { position.x, position.y - 1 }, terrainGenerator, distanceFromNode);
-		tryToCreateNeighbor(neighbors, { position.x, position.y + 1 }, terrainGenerator, distanceFromNode);
-		tryToCreateNeighbor(neighbors, { position.x - 1, position.y - 1 }, terrainGenerator, diagonalDistanceFromNode);
-		tryToCreateNeighbor(neighbors, { position.x + 1, position.y - 1 }, terrainGenerator, diagonalDistanceFromNode);
-		tryToCreateNeighbor(neighbors, { position.x + 1, position.y + 1 }, terrainGenerator, diagonalDistanceFromNode);
-		tryToCreateNeighbor(neighbors, { position.x - 1, position.y + 1 }, terrainGenerator, diagonalDistanceFromNode);
+		tryToCreateNeighbor(neighbors, { position.x - 1, position.y }, map, distanceFromNode);
+		tryToCreateNeighbor(neighbors, { position.x + 1, position.y }, map, distanceFromNode);
+		tryToCreateNeighbor(neighbors, { position.x, position.y - 1 }, map, distanceFromNode);
+		tryToCreateNeighbor(neighbors, { position.x, position.y + 1 }, map, distanceFromNode);
+		tryToCreateNeighbor(neighbors, { position.x - 1, position.y - 1 }, map, diagonalDistanceFromNode);
+		tryToCreateNeighbor(neighbors, { position.x + 1, position.y - 1 }, map, diagonalDistanceFromNode);
+		tryToCreateNeighbor(neighbors, { position.x + 1, position.y + 1 }, map, diagonalDistanceFromNode);
+		tryToCreateNeighbor(neighbors, { position.x - 1, position.y + 1 }, map, diagonalDistanceFromNode);
 
 		return neighbors;
 	}
 
-	void NodeAI::getPath(std::deque<std::pair<bool, glm::ivec2>>& path) const
+	void NodeAI::getPath(std::deque<glm::ivec2>& path) const
 	{
-		path.push_front({ false, { static_cast<float>(position.x), static_cast<float>(position.y) } });
-		if (!parent.expired())
-			parent.lock()->getPath(path);
-	}
-
-	void NodeAI::getPathStack(std::deque<std::pair<bool, glm::ivec2>>& path) const
-	{
-		path.push_front({ false, { static_cast<float>(position.x), static_cast<float>(position.y) } });
+		path.push_front({ static_cast<float>(position.x), static_cast<float>(position.y) });
 		if (parentAddress)
-			parentAddress->getPathStack(path);
+			parentAddress->getPath(path);
 	}
 
-	void NodeAI::tryToCreateNeighbor(std::vector<std::shared_ptr<NodeAI>>& container, glm::ivec2&& pos,
-	                                 const std::shared_ptr<TerrainGenerator>& terrainGenerator, const float depth) const
+	void NodeAI::tryToCreateNeighbor(std::vector<NodeAI>& container, glm::ivec2&& pos, const cuda::Map& map,
+		const float depth) const
 	{
-		if (terrainGenerator->areIndexesValid(pos.x, pos.y))
+		if (map.areIndexesValid(pos.x, pos.y))
 		{
-			if (terrainGenerator->getTerrainValue(pos.x, pos.y) != 1.0f)
-			{
-				container.emplace_back(std::make_shared<NodeAI>(pos, this->depth + depth));
-			}
-		}
-	}
-
-	void NodeAI::tryToCreateNeighbor(std::vector<NodeAI>& container, glm::ivec2&& pos,
-		const std::shared_ptr<TerrainGenerator>& terrainGenerator, const float depth) const
-	{
-		if (terrainGenerator->areIndexesValid(pos.x, pos.y))
-		{
-			if (terrainGenerator->getTerrainValue(pos.x, pos.y) != 1.0f)
+			if (map.getTerrainValue(pos.x, pos.y) != 1.0f)
 			{
 				container.emplace_back(pos, this->depth + depth);
 			}

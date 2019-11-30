@@ -61,12 +61,7 @@ namespace spark {
 			{
 				delete map;
 			}
-			map = new Map();
-			map->nodes = new float[width * height];
-			memcpy(map->nodes, nodes, width * height * sizeof(float));
-			//map->nodes = nodes;
-			map->width = width;
-			map->height = height;
+			map = new Map(width, height, nodes);
 		}
 
 		__global__ void findPath(int* path, unsigned int* agentPaths)

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef NODE_AI_H
+#define NODE_AI_H
 
 #include <deque>
 #include <list>
@@ -8,35 +9,32 @@
 
 #include "TerrainGenerator.h"
 
-
 namespace spark {
+	namespace cuda {
+		class Map;
+	}
 
-class NodeAI
-{
-public:
-	std::weak_ptr<NodeAI> parent;
-	const glm::ivec2 position;
-	float depth = 0.0f;
-	NodeAI* parentAddress = nullptr;
+	class NodeAI
+	{
+	public:
+		const glm::ivec2 position;
+		float depth = 0.0f;
+		NodeAI* parentAddress = nullptr;
 
-	NodeAI(const glm::ivec2 pos, const float depth_);
-	NodeAI(const NodeAI& rhs);
-	NodeAI(const NodeAI&& rhs) noexcept;
-	NodeAI();
-	~NodeAI() = default;
+		NodeAI(const glm::ivec2 pos, const float depth_);
+		NodeAI(const NodeAI& rhs);
+		NodeAI(const NodeAI&& rhs) noexcept;
+		NodeAI();
+		~NodeAI() = default;
 
-	float measureManhattanDistance(glm::vec2 point) const;
-	std::vector<std::shared_ptr<NodeAI>> getNeighbors(const std::shared_ptr<TerrainGenerator>& terrainGenerator) const;
-	void getPath(std::deque<std::pair<bool, glm::ivec2>>& path) const;
+		float measureManhattanDistance(glm::vec2 point) const;
+		std::vector<NodeAI> getNeighbors(const cuda::Map& map) const;
+		void getPath(std::deque<glm::ivec2>& path) const;
 
-
-	std::vector<NodeAI> getNeighborsStack(const std::shared_ptr<TerrainGenerator>& terrainGenerator) const;
-	void getPathStack(std::deque<std::pair<bool, glm::ivec2>>& path) const;
-
-private:
-	inline void tryToCreateNeighbor(std::vector<std::shared_ptr<NodeAI>>& container, glm::ivec2&& pos,
-	                         const std::shared_ptr<TerrainGenerator>& terrainGenerator, const float depth) const;
-	inline void tryToCreateNeighbor(std::vector<NodeAI>& container, glm::ivec2&& pos,
-	                         const std::shared_ptr<TerrainGenerator>& terrainGenerator, const float depth) const;
-};
+	private:
+		inline void tryToCreateNeighbor(std::vector<NodeAI>& container, glm::ivec2&& pos,
+		                         const cuda::Map& map, const float depth) const;
+	};
 }
+
+#endif
