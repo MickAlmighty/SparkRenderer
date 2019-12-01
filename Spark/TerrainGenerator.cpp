@@ -12,6 +12,8 @@
 #include "JsonSerializer.h"
 #include "MeshPlane.h"
 #include "Timer.h"
+#include "ActorAI.h"
+#include "ModelMesh.h"
 
 namespace spark {
 
@@ -76,47 +78,32 @@ void TerrainGenerator::drawGUI()
 {
 	ImGui::Text("TerrainSize: "); ImGui::SameLine(); ImGui::Text(std::to_string(terrainSize).c_str());
 	
-	static cudaStream_t stream1, stream2;
-	if (ImGui::Button("InitMap"))
+	if (ImGui::Button("Add 100 actors"))
 	{
-		using namespace cuda;
-		cudaDeviceSetLimit(cudaLimitMallocHeapSize, 256 * 1024 * 1024);
-		gpuErrchk(cudaGetLastError());
-
-		const auto nodes = DeviceMemory<float>::AllocateElements(terrainSize * terrainSize);
-		gpuErrchk(cudaGetLastError());
-		cudaMemcpy(nodes.ptr, terrain.data(), sizeof(float) * terrainSize * terrainSize, cudaMemcpyHostToDevice);
-		gpuErrchk(cudaGetLastError());
-
-		initMap(nodes.ptr, terrainSize, terrainSize);
-
-		//cudaStreamCreate(&stream1);
-		//cudaStreamCreate(&stream2);
+		const auto parent = getGameObject()->getParent();
+		for (int i = 0; i < 100; ++i)
+		{
+			auto gameObject = std::make_shared<GameObject>();
+			const auto actorAiComponent = std::make_shared<ActorAI>();
+			actorAiComponent->movementSpeed = 4.0f;
+			gameObject->addComponent(actorAiComponent, gameObject);
+			//auto modelMesh = std::make_shared<ModelMesh>();
+			getGameObject()->getParent()->addChild(gameObject, parent);
+		}
 	}
 
-	if (ImGui::Button("FindPath"))
+	if (ImGui::Button("Add 1024 actors"))
 	{
-		using namespace cuda;
-		Timer timer1("CUDA");
-
-		glm::ivec2 path[] = { {00, 00}, {19, 19}};
-		const size_t agentPathsSize = 400 * 2 * sizeof(int) * 1024;
-		const std::size_t byteCount = sizeof(glm::ivec2) * 2 + agentPathsSize;
-		std::cout << "Allocation of " << byteCount / 1024 / 1024 << " MB of memory" << std::endl;
-		const int pathOffset = 0;
-		const int agentPathsOffset = sizeof(glm::ivec2) * 2;
-
-		const auto devMem = DeviceMemory<char>::AllocateBytes(byteCount);
-		gpuErrchk(cudaGetLastError());
-
-		cudaMemcpy(devMem.ptr, &path, sizeof(glm::ivec2) * 2, cudaMemcpyHostToDevice);
-		gpuErrchk(cudaGetLastError());
-
-		const auto pathDev = reinterpret_cast<int*>(devMem.ptr + pathOffset);
-		const auto agentPathsDev = reinterpret_cast<unsigned int*>(devMem.ptr + agentPathsOffset);
-		runKernel(pathDev, agentPathsDev);
-		//cudaStreamDestroy(stream1);
-		//cudaStreamDestroy(stream2);
+		const auto parent = getGameObject()->getParent();
+		for (int i = 0; i < 1024; ++i)
+		{
+			auto gameObject = std::make_shared<GameObject>();
+			const auto actorAiComponent = std::make_shared<ActorAI>();
+			actorAiComponent->movementSpeed = 4.0f;
+			gameObject->addComponent(actorAiComponent, gameObject);
+			//auto modelMesh = std::make_shared<ModelMesh>();
+			getGameObject()->getParent()->addChild(gameObject, parent);
+		}
 	}
 
 	if(ImGui::Button("Map from .bmp"))

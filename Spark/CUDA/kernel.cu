@@ -3,49 +3,53 @@
 #include <deque>
 
 #include <device_launch_parameters.h>
+#include <glm/vec2.hpp>
 
-#include "Agent.cuh"
 #include "BinaryHeap.cuh"
 #include "DeviceMemory.h"
 #include "DeviceTimer.cuh"
-#include "List.cuh"
 #include "Map.cuh"
 #include "MemoryAllocator.cuh"
 #include "MemoryManager.cuh"
 #include "Node.cuh"
 #include "Timer.h"
-#include <glm/vec2.hpp>
+
 
 namespace spark {
 	namespace cuda {
 		__device__ Map* map = nullptr;
 		__device__ MemoryAllocator* allocator[32];
 
-		__host__ void runKernel(int* path, unsigned int* agentPaths)
+		__host__ std::vector<std::vector<glm::ivec2>> runKernel(int blocks, int threads, int* path, unsigned int* agentPaths)
 		{
 			{
 				cudaDeviceSynchronize();
-				Timer t3("	findPath");
-				findPath << <32, 32, 400 * sizeof(unsigned int) + 32 * 8 * sizeof(Node) >> > (path, agentPaths);
+				//Timer t3("	findPath");
+				findPath << <blocks, threads, 400 * sizeof(unsigned int) + 32 * 8 * sizeof(Node) >> > (path, agentPaths);
 				cudaDeviceSynchronize();
 				gpuErrchk(cudaGetLastError());
 			}
 
 			const size_t agentPathSize = 400 * 2;
-			const size_t agentPathsBufferSize = agentPathSize * 1024;
+			const size_t agentPathsBufferSize = agentPathSize * blocks * 32;
 			std::vector<unsigned int> paths(agentPathsBufferSize);
 			cudaMemcpy(paths.data(), agentPaths, agentPathsBufferSize * sizeof(unsigned int), cudaMemcpyDeviceToHost);
 			cudaDeviceSynchronize();
 
 			std::vector<std::vector<glm::ivec2>> pathsForAgents;
-			pathsForAgents.reserve(1024);
-			for (int i = 0; i < 1024; ++i)
+			pathsForAgents.reserve(blocks * 32);
+			int pathsForAgentsIndex = 0;
+			for (int i = 0; i < blocks * 32; ++i)
 			{
 				const size_t pathSize = paths[agentPathSize * i];
-				pathsForAgents.push_back(std::vector<glm::ivec2>(pathSize));
-				memcpy(pathsForAgents[i].data(), reinterpret_cast<int*>(paths.data()) + agentPathSize * i + 1, sizeof(int) *  pathSize * 2);
+				if (pathSize != 0)
+				{
+					pathsForAgents.push_back(std::vector<glm::ivec2>(pathSize));
+					memcpy(pathsForAgents[pathsForAgentsIndex].data(), reinterpret_cast<int*>(paths.data()) + agentPathSize * i + 1, sizeof(int) *  pathSize * 2);
+					++pathsForAgentsIndex;
+				}
 			}
-			float f = 5.0f;
+			return pathsForAgents;
 		}
 
 		__host__ void initMap(float* nodes, int width, int height)
@@ -67,7 +71,7 @@ namespace spark {
 		__global__ void findPath(int* path, unsigned int* agentPaths)
 		{
 			extern __shared__ unsigned char sharedMemory[];
-			
+
 			unsigned int* closedNodesLookup = reinterpret_cast<unsigned int*>(sharedMemory);
 
 			if (threadIdx.x == 0)
@@ -90,11 +94,15 @@ namespace spark {
 
 			BinaryHeap<Node> heap(allocator[blockIdx.x]->ptr<Node>(kernelMemOffset));
 			MemoryManager manager = MemoryManager(allocator[blockIdx.x]->ptr<Node>(kernelMemOffset + map->width * map->height * 7));
-			/*int startPoint[] = { *(path + 4 * threadIdx.x + 0), *(path + 4 * threadIdx.x + 1) };
-			int endPoint[] = { *(path + 4 * threadIdx.x + 2), *(path + 4* threadIdx.x + 3) };*/
-			DeviceTimer timer;
-			int startPoint[] = { *(path + 0), *(path + 1) };
-			int endPoint[] = { *(path + 2), *(path + 3) };
+
+			const unsigned int startEndPointsBlockMemorySize = 4 * 32;
+			int startPoint[] = { path[startEndPointsBlockMemorySize * blockIdx.x + 4 * threadIdx.x + 0], path[startEndPointsBlockMemorySize * blockIdx.x + 4 * threadIdx.x + 1] };
+			int endPoint[] = { path[startEndPointsBlockMemorySize * blockIdx.x + 4 * threadIdx.x + 2], path[startEndPointsBlockMemorySize * blockIdx.x + 4 * threadIdx.x + 3] };
+
+			if (startPoint[0] == endPoint[0] && startPoint[1] == endPoint[1])
+				return;
+			//int startPoint[] = { *(path + 0), *(path + 1) };
+			//int endPoint[] = { *(path + 2), *(path + 3) };
 
 			Node* finishNode = nullptr;
 
@@ -190,7 +198,7 @@ namespace spark {
 			agentPath[0] = pathLength;
 			finishNode->recreatePath(agentPath + 1, pathLength);
 			//printf("thread %d, block %d, path length %d\nopened nodes %d, loopCounter %d\n", threadIdx.x, blockIdx.x, pathLength, int(heap.size), whileLoopCounter);
-			
+
 			__syncthreads();
 			if (threadIdx.x == 0)
 			{
@@ -218,5 +226,5 @@ namespace spark {
 			}
 		}
 	}
-	}
+}
 

@@ -4,6 +4,9 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <memory>
+#include <vector>
+
+#include <glm/vec2.hpp>
 
 namespace spark {
 	namespace cuda {
@@ -12,7 +15,7 @@ namespace spark {
 		__global__ void checkMapValues(Map* mapDev);
 		__global__ void createMap(float* nodes, int width, int height);
 		__global__ void findPath(int* path, unsigned int* agentPaths);
-		__host__ void runKernel(int* path, unsigned int* agentPaths);
+		__host__ std::vector<std::vector<glm::ivec2>> runKernel(int blocks, int threads, int* path, unsigned int* agentPaths);
 		__host__ void initMap(float* nodes, int width, int height);
 	}
 }

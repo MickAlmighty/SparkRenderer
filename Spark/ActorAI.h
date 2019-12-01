@@ -17,11 +17,13 @@ namespace spark {
 	public:
 		glm::ivec2 startPos{};
 		glm::ivec2 endPos{};
+		float movementSpeed = 1.0f;
 
 		ActorAI(std::string&& newName = "ActorAI");
 		~ActorAI();
 
 		void setPath(const std::deque<glm::ivec2>& path_);
+		void setPath(const std::vector<glm::ivec2>& path_);
 
 		SerializableType getSerializableType() override;
 		Json::Value serialize() override;
@@ -31,7 +33,6 @@ namespace spark {
 		void drawGUI() override;
 
 	private:
-		float movementSpeed = 1.0f;
 		bool isTraveling = false;
 		GLuint vao{};
 		GLuint vbo{}, ebo{};

@@ -43,13 +43,16 @@ namespace spark {
 		{
 			walkToEndOfThePath();
 			const int indicesCount = updatePathMesh(path);
-			const auto f = [shared_ptr = shared_from_base<ActorAI>(), indicesCount](std::shared_ptr<Shader>& shader)
+			if (indicesCount != 0)
 			{
-				glBindVertexArray(shared_ptr->vao);
-				glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indicesCount), GL_UNSIGNED_INT, 0);
-				glBindVertexArray(0);
-			};
-			SparkRenderer::getInstance()->renderQueue[ShaderType::PATH_SHADER].push_back(f);
+				const auto f = [shared_ptr = shared_from_base<ActorAI>(), indicesCount](std::shared_ptr<Shader>& shader)
+				{
+					glBindVertexArray(shared_ptr->vao);
+					glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indicesCount), GL_UNSIGNED_INT, 0);
+					glBindVertexArray(0);
+				};
+				SparkRenderer::getInstance()->renderQueue[ShaderType::PATH_SHADER].push_back(f);
+			}
 		}
 	}
 
@@ -86,7 +89,7 @@ namespace spark {
 			const auto mapWidth = static_cast<float>(PathFindingManager::getInstance()->map.width);
 			const auto mapHeight = static_cast<float>(PathFindingManager::getInstance()->map.height);
 			endPos = { static_cast<int>(glm::linearRand(0.0f, mapWidth)), static_cast<int>(glm::linearRand(0.0f, mapHeight)) };
-		} while (PathFindingManager::getInstance()->map.getTerrainValue(endPos.x, endPos.y) == 1.0f);
+		} while (PathFindingManager::getInstance()->map.getTerrainValue(endPos.x, endPos.y) == 1.0f && startPos != endPos);
 	}
 
 	void ActorAI::initPathMesh()
@@ -267,6 +270,15 @@ namespace spark {
 	}
 
 	void ActorAI::setPath(const std::deque<glm::ivec2>& path_)
+	{
+		path.clear();
+		for (const glm::ivec2& wayPoint : path_)
+		{
+			path.emplace_back(std::make_pair(false, wayPoint));
+		}
+	}
+
+	void ActorAI::setPath(const std::vector<glm::ivec2>& path_)
 	{
 		path.clear();
 		for (const glm::ivec2& wayPoint : path_)
