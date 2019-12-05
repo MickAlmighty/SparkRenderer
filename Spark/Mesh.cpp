@@ -21,30 +21,39 @@ void Mesh::setup()
 	glCreateVertexArrays(1, &vao);
 	glBindVertexArray(vao);
 
+	const GLuint vertexBindingPoint = 0;
+
+	//this attribute layout is connected to vao, not to vbo by glVertexAttribPointer
+	glVertexAttribFormat(0, 3, GL_FLOAT, false, offsetof(Vertex, pos));
+	glVertexAttribBinding(0, vertexBindingPoint);
+	glEnableVertexAttribArray(0);
+
+	glVertexAttribFormat(1, 3, GL_FLOAT, false, offsetof(Vertex, normal));
+	glVertexAttribBinding(1, vertexBindingPoint);
+	glEnableVertexAttribArray(1);
+
+	glVertexAttribFormat(2, 2, GL_FLOAT, false, offsetof(Vertex, texCoords));
+	glVertexAttribBinding(2, vertexBindingPoint);
+	glEnableVertexAttribArray(2);
+
+	glVertexAttribFormat(3, 3, GL_FLOAT, false, offsetof(Vertex, tangent));
+	glVertexAttribBinding(3, vertexBindingPoint);
+	glEnableVertexAttribArray(3);
+
+	glVertexAttribFormat(4, 4, GL_FLOAT, false, offsetof(Vertex, bitangent));
+	glVertexAttribBinding(4, vertexBindingPoint);
+	glEnableVertexAttribArray(4);
+
 	glCreateBuffers(1, &vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
 	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), reinterpret_cast<const void*>(vertices.data()), GL_STATIC_DRAW);
+	glBindVertexBuffer(vertexBindingPoint, vbo, 0, sizeof(Vertex));
 
 	glCreateBuffers(1, &ebo);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), reinterpret_cast<const void*>(indices.data()), GL_STATIC_DRAW);
-
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<const void*>(offsetof(Vertex, pos)));
-
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<const void*>(offsetof(Vertex, normal)));
-
-	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<const void*>(offsetof(Vertex, texCoords)));
-
-	glEnableVertexAttribArray(3);
-	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<const void*>(offsetof(Vertex, tangent)));
-
-	glEnableVertexAttribArray(4);
-	glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<const void*>(offsetof(Vertex, bitangent)));
 
 	glBindVertexArray(0);
 }

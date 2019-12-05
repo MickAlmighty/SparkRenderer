@@ -11,6 +11,7 @@ namespace spark {
 	{
 	public:
 		int terrainSize = 20;
+		std::size_t agentCounter{0};
 
 		TerrainGenerator(std::string&& newName = "TerrainGenerator");
 		~TerrainGenerator();

@@ -77,6 +77,7 @@ void TerrainGenerator::fixedUpdate()
 void TerrainGenerator::drawGUI()
 {
 	ImGui::Text("TerrainSize: "); ImGui::SameLine(); ImGui::Text(std::to_string(terrainSize).c_str());
+	ImGui::Text("Agents Count: "); ImGui::SameLine(); ImGui::Text(std::to_string(agentCounter).c_str());
 	
 	if (ImGui::Button("Add 100 actors"))
 	{
@@ -90,6 +91,7 @@ void TerrainGenerator::drawGUI()
 			//auto modelMesh = std::make_shared<ModelMesh>();
 			getGameObject()->getParent()->addChild(gameObject, parent);
 		}
+		agentCounter += 100;
 	}
 
 	if (ImGui::Button("Add 1024 actors"))
@@ -104,6 +106,7 @@ void TerrainGenerator::drawGUI()
 			//auto modelMesh = std::make_shared<ModelMesh>();
 			getGameObject()->getParent()->addChild(gameObject, parent);
 		}
+		agentCounter += 1024;
 	}
 
 	if(ImGui::Button("Map from .bmp"))

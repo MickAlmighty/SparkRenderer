@@ -28,7 +28,7 @@ namespace spark {
 
 		const double startTime = glfwGetTime();
 
-		/*if (mode == PathFindingMode::HOST)
+		if (mode == PathFindingMode::HOST)
 		{
 			for (const auto& agent : agents)
 			{
@@ -43,10 +43,8 @@ namespace spark {
 
 		if (mode == PathFindingMode::DEVICE)
 		{
-
-		}*/
-		findPathsCUDA();
-
+			findPathsCUDA();
+		}
 
 		printf("Agents: %d, path finding time: %fms\n", static_cast<int>(agents.size()),
 			(glfwGetTime() - startTime) * 1000.0f);

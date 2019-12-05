@@ -10,6 +10,7 @@
 #include <json/value.h>
 
 #include "LocalTranform.h"
+#include "Timer.h"
 #include "WorldTransform.h"
 
 namespace spark {
@@ -223,6 +224,118 @@ namespace spark {
 		{
 			glBindVertexArray(vao);
 			glDrawArrays(GL_TRIANGLES, 0, 36);
+			glBindVertexArray(0);
+		}
+	};
+
+	typedef  struct {
+		GLuint  count;
+		GLuint  instanceCount;
+		GLuint  firstIndex;
+		GLuint  baseVertex;
+		GLuint  baseInstance;
+	} DrawElementsIndirectCommand;
+
+	struct MeshInfo
+	{
+		unsigned int verticesSize{ 0 };
+		unsigned int elementsCount{ 0 };
+		unsigned int verticesOffset{ 0 };
+		unsigned int indicesOffset{ 0 };
+	};
+
+	struct MultiDrawIndirectBuffer
+	{
+		GLuint vao{};
+		GLuint vbo{};
+		GLuint ebo{};
+
+		unsigned int meshCounter{ 0 };
+
+		std::vector<glm::vec3> vertices;
+		std::vector<GLuint> indices;
+
+		GLuint lastVertexOffset{ 0 };
+		GLuint lastIndexOffset{ 0 };
+		std::vector<MeshInfo> meshInfos;
+
+		MultiDrawIndirectBuffer()
+		{
+			glGenVertexArrays(1, &vao);
+			glGenBuffers(1, &vbo);
+			glGenBuffers(1, &ebo);
+
+			const GLuint vertexBindingPoint = 0;
+
+			glBindVertexArray(vao);
+			
+			glVertexAttribFormat(0, 3, GL_FLOAT, false, 0);
+			glVertexAttribBinding(0, vertexBindingPoint);
+			glEnableVertexAttribArray(0);
+			glBindVertexBuffer(vertexBindingPoint, vbo, 0, sizeof(glm::vec3));
+
+			glBindVertexArray(0);
+		}
+
+		void clear() const
+		{
+			glDeleteBuffers(1, &vbo);
+			glDeleteBuffers(1, &ebo);
+			glDeleteVertexArrays(1, &vao);
+		}
+
+		void addMesh(const std::vector<glm::vec3>& vertices_, const std::vector<GLuint>& indices_)
+		{
+			vertices.insert(vertices.end(), vertices_.begin(), vertices_.end());
+			indices.insert(indices.end(), indices_.begin(), indices_.end());
+
+			MeshInfo info;
+			info.verticesSize = static_cast<GLuint>(vertices_.size());
+			info.elementsCount = static_cast<GLuint>(indices_.size());
+			info.verticesOffset = lastVertexOffset;
+			info.indicesOffset = lastIndexOffset;
+			meshInfos.push_back(info);
+
+			lastVertexOffset += static_cast<GLuint>(vertices_.size());
+			lastIndexOffset += static_cast<GLuint>(indices_.size());
+			++meshCounter;
+		}
+
+		void draw()
+		{
+			//Timer pathRenderingTimer("Paths rendering");
+			if (meshCounter == 0)
+				return;
+
+			glBindVertexArray(vao);
+
+			glBindBuffer(GL_ARRAY_BUFFER, vbo);
+			glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), vertices.data(), GL_STREAM_DRAW);
+
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), indices.data(), GL_STREAM_DRAW);
+
+			std::vector<DrawElementsIndirectCommand> commands(meshCounter);
+
+			for(unsigned int i = 0; i < meshCounter; ++i)
+			{
+				commands[i].count = meshInfos[i].elementsCount;
+				commands[i].instanceCount = 1;
+				commands[i].firstIndex = meshInfos[i].indicesOffset;
+				commands[i].baseVertex = meshInfos[i].verticesOffset;
+				commands[i].baseInstance = 0;
+			}
+
+			GLuint indirectBuffer{0};
+			glGenBuffers(1, &indirectBuffer);
+			glBindBuffer(GL_DRAW_INDIRECT_BUFFER, indirectBuffer);
+			glBufferData(GL_DRAW_INDIRECT_BUFFER, commands.size() * sizeof(DrawElementsIndirectCommand), commands.data(), GL_STREAM_COPY);
+
+			glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, 0, static_cast<GLsizei>(commands.size()), 0);
+
+			glDeleteBuffers(1, &indirectBuffer);
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 			glBindVertexArray(0);
 		}
 	};

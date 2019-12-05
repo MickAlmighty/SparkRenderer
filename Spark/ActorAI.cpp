@@ -6,7 +6,7 @@
 #include <glm/gtc/random.inl>
 
 #include "Clock.h"
-#include "CUDA/PathfindingManager.h"
+#include "CUDA/PathFindingManager.h"
 #include "EngineSystems/SparkRenderer.h"
 #include "GameObject.h"
 #include "GUI/SparkGui.h"
@@ -113,11 +113,13 @@ namespace spark {
 
 	int ActorAI::updatePathMesh(const std::deque<std::pair<bool, glm::ivec2>>& path) const
 	{
+		//Timer t("Path creation");
 		if (path.size() < 2)
 			return 0;
 		const int numberOfVertices = 6;
 		const int lineSegments = static_cast<int>(path.size() - 1);
 		std::vector<glm::vec3> vertices;
+		//vertices.reserve(6 * lineSegments);
 		std::vector<unsigned int> indices;
 
 		const auto insertVertex = [&vertices, &indices](glm::vec3&& vertex)
@@ -156,17 +158,27 @@ namespace spark {
 			insertVertex(segmentStart + perpendicularToDirection * 0.1f);
 			insertVertex(segmentEnd + perpendicularToDirection * 0.1f);
 			insertVertex(segmentEnd - perpendicularToDirection * 0.1f);
+
+			/*vertices.push_back(segmentStart + perpendicularToDirection * 0.1f);
+			vertices.push_back(segmentEnd - perpendicularToDirection * 0.1f);
+			vertices.push_back(segmentStart - perpendicularToDirection * 0.1f);
+			vertices.push_back(segmentStart + perpendicularToDirection * 0.1f);
+			vertices.push_back(segmentEnd + perpendicularToDirection * 0.1f);
+			vertices.push_back(segmentEnd - perpendicularToDirection * 0.1f);*/
 		}
 
-		glBindBuffer(GL_ARRAY_BUFFER, vbo);
+		/*glBindBuffer(GL_ARRAY_BUFFER, vbo);
 		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), vertices.data(), GL_STATIC_DRAW);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);*/
+
+		SparkRenderer::getInstance()->addMeshDataToBuffer(vertices, indices);
 
 		return static_cast<int>(indices.size());
+		//return static_cast<int>(0);
 	}
 
 	void ActorAI::fixedUpdate()
@@ -271,19 +283,25 @@ namespace spark {
 
 	void ActorAI::setPath(const std::deque<glm::ivec2>& path_)
 	{
-		path.clear();
+		path.resize(path_.size());
+		int index = 0;
 		for (const glm::ivec2& wayPoint : path_)
 		{
-			path.emplace_back(std::make_pair(false, wayPoint));
+			path[index].first = false;
+			path[index].second = wayPoint;
+			++index;
 		}
 	}
 
 	void ActorAI::setPath(const std::vector<glm::ivec2>& path_)
 	{
-		path.clear();
+		path.resize(path_.size());
+		int index = 0;
 		for (const glm::ivec2& wayPoint : path_)
 		{
-			path.emplace_back(std::make_pair(false, wayPoint));
+			path[index].first = false;
+			path[index].second = wayPoint;
+			++index;
 		}
 	}
 }

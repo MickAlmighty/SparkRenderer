@@ -24,6 +24,7 @@ public:
 	void cleanup() const;
 
 	static SparkRenderer* getInstance();
+	void addMeshDataToBuffer(const std::vector<glm::vec3>& vertices, const std::vector<GLuint>& indices);
 
 private:
 	ScreenQuad screenQuad{};
@@ -52,6 +53,7 @@ private:
 	std::weak_ptr<Shader> motionBlurShader;
 	std::weak_ptr<Shader> cubemapShader;
 	Cube cube = Cube();
+	MultiDrawIndirectBuffer bufer{};
 
 	~SparkRenderer() = default;
 	SparkRenderer() = default;

@@ -100,11 +100,14 @@ namespace spark {
 		const std::shared_ptr<Shader> pathShader = ResourceManager::getInstance()->getShader(ShaderType::PATH_SHADER);
 		pathShader->use();
 		pathShader->setMat4("VP", projection * view);
-		for (auto& drawPath : renderQueue[ShaderType::PATH_SHADER])
+		/*for (auto& drawPath : renderQueue[ShaderType::PATH_SHADER])
 		{
 			drawPath(shader);
 		}
-		renderQueue[ShaderType::PATH_SHADER].clear();
+		renderQueue[ShaderType::PATH_SHADER].clear();*/
+		bufer.draw();
+		bufer.clear();
+		bufer = MultiDrawIndirectBuffer();
 		POP_DEBUG_GROUP();
 
 		postprocessingPass();
@@ -452,6 +455,11 @@ namespace spark {
 			throw std::exception("Framebuffer incomplete!");
 		}
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	}
+
+	void SparkRenderer::addMeshDataToBuffer(const std::vector<glm::vec3>& vertices, const std::vector<GLuint>& indices)
+	{
+		bufer.addMesh(vertices, indices);
 	}
 
 	void SparkRenderer::createTexture(GLuint& texture, GLuint width, GLuint height, GLenum internalFormat, GLenum format,
