@@ -54,7 +54,7 @@ namespace spark {
 
 		__host__ void initMap(float* nodes, int width, int height)
 		{
-			Timer t("		initMap");
+			PROFILE_FUNCTION();
 			createMap << <1, 1 >> > (nodes, width, height);
 			gpuErrchk(cudaGetLastError());
 		}

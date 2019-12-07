@@ -35,13 +35,11 @@ namespace spark {
 
 	std::vector<Mesh> ResourceLoader::loadModel(const Path& path)
 	{
-		Timer timer("ResourceLoader::loadModel( " + path.string() + " )");
+		PROFILE_FUNCTION();
 		
 		Assimp::Importer importer;
 		const aiScene* scene = nullptr;
 		{
-			Timer timer2("	Loading mesh from file and mesh postprocessing");
-			
 			scene = importer.ReadFile(path.string(), aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
 			
 			if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)

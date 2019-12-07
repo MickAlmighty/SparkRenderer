@@ -30,6 +30,7 @@ void SceneManager::setup()
 
 void SceneManager::update() const
 {
+	PROFILE_FUNCTION();
 	current_scene->update();
 }
 

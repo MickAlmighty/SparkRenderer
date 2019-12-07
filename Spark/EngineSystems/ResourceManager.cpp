@@ -151,11 +151,11 @@ namespace spark {
 
 	void ResourceManager::loadResources()
 	{
-		Timer timer("ResourceManager::loadResources");
+		PROFILE_SCOPE("ResourceManager::loadResources");
 		std::filesystem::path shaderDir = Spark::pathToResources;
 		shaderDir.append("shaders\\");
 		{
-			Timer timer2("ResourceManager::loadResources -> shaders");
+			PROFILE_SCOPE("ResourceManager::loadResources -> shaders");
 			shaders.emplace(ShaderType::DEFAULT_SHADER, std::make_shared<Shader>(shaderDir.string() + "default.glsl"));
 			shaders.emplace(ShaderType::SCREEN_SHADER, std::make_shared<Shader>(shaderDir.string() + "screen.glsl"));
 			shaders.emplace(ShaderType::POSTPROCESSING_SHADER, std::make_shared<Shader>(shaderDir.string() + "postprocessing.glsl"));
@@ -173,12 +173,12 @@ namespace spark {
 		}
 		
 		{
-			Timer timer3("ResourceManager::loadResources -> textures");
+			PROFILE_SCOPE("ResourceManager::loadResources -> textures");
 			textures = ResourceLoader::loadTextures(Spark::pathToResources);
 		}
 
 		{
-			Timer timer3("ResourceManager::loadResources -> models");
+			PROFILE_SCOPE("ResourceManager::loadResources -> models");
 			models = ResourceLoader::loadModels(Spark::pathToModelMeshes);
 		}
 	}

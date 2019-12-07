@@ -12,6 +12,7 @@ namespace spark {
 
 	void SparkGui::drawGui()
 	{
+		PROFILE_FUNCTION();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 		ImGuizmo::BeginFrame();

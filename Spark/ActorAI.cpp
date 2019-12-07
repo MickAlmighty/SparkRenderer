@@ -17,6 +17,7 @@ namespace spark {
 
 	void ActorAI::update()
 	{
+		PROFILE_FUNCTION();
 		glm::vec3 pos = getGameObject()->transform.world.getPosition();
 
 		if (path.empty())
@@ -43,7 +44,7 @@ namespace spark {
 		{
 			walkToEndOfThePath();
 			const int indicesCount = updatePathMesh(path);
-			if (indicesCount != 0)
+			/*if (indicesCount != 0)
 			{
 				const auto f = [shared_ptr = shared_from_base<ActorAI>(), indicesCount](std::shared_ptr<Shader>& shader)
 				{
@@ -52,12 +53,13 @@ namespace spark {
 					glBindVertexArray(0);
 				};
 				SparkRenderer::getInstance()->renderQueue[ShaderType::PATH_SHADER].push_back(f);
-			}
+			}*/
 		}
 	}
 
 	void ActorAI::validateActorPosition(glm::vec3& position) const
 	{
+		PROFILE_FUNCTION();
 		const auto mapWidth = PathFindingManager::getInstance()->map.width - 1;
 		const auto mapHeight = PathFindingManager::getInstance()->map.height - 1;
 		if (position.x < 0) position.x = 0;
@@ -68,6 +70,7 @@ namespace spark {
 
 	void ActorAI::setStartPosition(glm::vec3& position)
 	{
+		PROFILE_FUNCTION();
 		glm::vec2 pos{};
 		if (position.x - static_cast<int>(position.x) < 0.5)
 			pos.x = std::floor(position.x);
@@ -84,6 +87,7 @@ namespace spark {
 
 	void ActorAI::randomizeEndPoint()
 	{
+		PROFILE_FUNCTION();
 		do
 		{
 			const auto mapWidth = static_cast<float>(PathFindingManager::getInstance()->map.width);
@@ -113,72 +117,72 @@ namespace spark {
 
 	int ActorAI::updatePathMesh(const std::deque<std::pair<bool, glm::ivec2>>& path) const
 	{
-		//Timer t("Path creation");
+		PROFILE_FUNCTION();
 		if (path.size() < 2)
 			return 0;
-		const int numberOfVertices = 6;
-		const int lineSegments = static_cast<int>(path.size() - 1);
-		std::vector<glm::vec3> vertices;
-		//vertices.reserve(6 * lineSegments);
-		std::vector<unsigned int> indices;
+		//const int numberOfVertices = 6;
+		//const int lineSegments = static_cast<int>(path.size() - 1);
+		//std::vector<glm::vec3> vertices;
+		////vertices.reserve(6 * lineSegments);
+		//std::vector<unsigned int> indices;
 
-		const auto insertVertex = [&vertices, &indices](glm::vec3&& vertex)
-		{
-			const auto vertexIt = std::find(vertices.begin(), vertices.end(), vertex);
-			if (vertexIt != vertices.end())
-			{
-				indices.push_back(static_cast<unsigned int>(std::distance(vertices.begin(), vertexIt)));
-			}
-			else
-			{
-				vertices.push_back(vertex);
-				indices.push_back(static_cast<unsigned int>(vertices.size() - 1));
-			}
-		};
+		//const auto insertVertex = [&vertices, &indices](glm::vec3&& vertex)
+		//{
+		//	const auto vertexIt = std::find(vertices.begin(), vertices.end(), vertex);
+		//	if (vertexIt != vertices.end())
+		//	{
+		//		indices.push_back(static_cast<unsigned int>(std::distance(vertices.begin(), vertexIt)));
+		//	}
+		//	else
+		//	{
+		//		vertices.push_back(vertex);
+		//		indices.push_back(static_cast<unsigned int>(vertices.size() - 1));
+		//	}
+		//};
 
-		for (int i = -1; i < lineSegments; ++i)
-		{
-			glm::vec3 segmentStart;
-			if (i == -1)
-			{
-				segmentStart = getGameObject()->transform.world.getPosition();
-			}
-			else
-			{
-				segmentStart = { path[i].second.x, 0.0f, path[i].second.y };
-			}
-			glm::vec3 segmentEnd = { path[i + 1].second.x, 0.0f, path[i + 1].second.y };
+		//for (int i = -1; i < lineSegments; ++i)
+		//{
+		//	glm::vec3 segmentStart;
+		//	if (i == -1)
+		//	{
+		//		segmentStart = getGameObject()->transform.world.getPosition();
+		//	}
+		//	else
+		//	{
+		//		segmentStart = { path[i].second.x, 0.0f, path[i].second.y };
+		//	}
+		//	glm::vec3 segmentEnd = { path[i + 1].second.x, 0.0f, path[i + 1].second.y };
 
-			glm::vec3 direction = glm::normalize(segmentEnd - segmentStart);
-			glm::vec3 perpendicularToDirection = glm::cross(direction, glm::vec3(0.0f, 1.0f, 0.0f));
+		//	glm::vec3 direction = glm::normalize(segmentEnd - segmentStart);
+		//	glm::vec3 perpendicularToDirection = glm::cross(direction, glm::vec3(0.0f, 1.0f, 0.0f));
 
-			insertVertex(segmentStart + perpendicularToDirection * 0.1f);
-			insertVertex(segmentEnd - perpendicularToDirection * 0.1f);
-			insertVertex(segmentStart - perpendicularToDirection * 0.1f);
-			insertVertex(segmentStart + perpendicularToDirection * 0.1f);
-			insertVertex(segmentEnd + perpendicularToDirection * 0.1f);
-			insertVertex(segmentEnd - perpendicularToDirection * 0.1f);
+		//	insertVertex(segmentStart + perpendicularToDirection * 0.1f);
+		//	insertVertex(segmentEnd - perpendicularToDirection * 0.1f);
+		//	insertVertex(segmentStart - perpendicularToDirection * 0.1f);
+		//	insertVertex(segmentStart + perpendicularToDirection * 0.1f);
+		//	insertVertex(segmentEnd + perpendicularToDirection * 0.1f);
+		//	insertVertex(segmentEnd - perpendicularToDirection * 0.1f);
 
-			/*vertices.push_back(segmentStart + perpendicularToDirection * 0.1f);
-			vertices.push_back(segmentEnd - perpendicularToDirection * 0.1f);
-			vertices.push_back(segmentStart - perpendicularToDirection * 0.1f);
-			vertices.push_back(segmentStart + perpendicularToDirection * 0.1f);
-			vertices.push_back(segmentEnd + perpendicularToDirection * 0.1f);
-			vertices.push_back(segmentEnd - perpendicularToDirection * 0.1f);*/
-		}
+		//	/*vertices.push_back(segmentStart + perpendicularToDirection * 0.1f);
+		//	vertices.push_back(segmentEnd - perpendicularToDirection * 0.1f);
+		//	vertices.push_back(segmentStart - perpendicularToDirection * 0.1f);
+		//	vertices.push_back(segmentStart + perpendicularToDirection * 0.1f);
+		//	vertices.push_back(segmentEnd + perpendicularToDirection * 0.1f);
+		//	vertices.push_back(segmentEnd - perpendicularToDirection * 0.1f);*/
+		//}
 
-		/*glBindBuffer(GL_ARRAY_BUFFER, vbo);
-		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), vertices.data(), GL_STATIC_DRAW);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		///*glBindBuffer(GL_ARRAY_BUFFER, vbo);
+		//glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), vertices.data(), GL_STATIC_DRAW);
+		//glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);*/
+		//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+		//glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
+		//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);*/
 
-		SparkRenderer::getInstance()->addMeshDataToBuffer(vertices, indices);
+		//SparkRenderer::getInstance()->addMeshDataToBuffer(vertices, indices);
 
-		return static_cast<int>(indices.size());
-		//return static_cast<int>(0);
+		//return static_cast<int>(indices.size());
+		return static_cast<int>(0);
 	}
 
 	void ActorAI::fixedUpdate()
@@ -188,6 +192,7 @@ namespace spark {
 
 	void ActorAI::walkToEndOfThePath()
 	{
+		PROFILE_FUNCTION();
 		if (path.empty())
 		{
 			isTraveling = false;

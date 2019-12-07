@@ -42,11 +42,13 @@ namespace spark {
 
 	void SparkRenderer::setup()
 	{
+		PROFILE_FUNCTION();
 		initMembers();
 	}
 
 	void SparkRenderer::initMembers()
 	{
+		PROFILE_FUNCTION();
 		screenQuad.setup();
 		mainShader = ResourceManager::getInstance()->getShader(ShaderType::DEFAULT_SHADER);
 		screenShader = ResourceManager::getInstance()->getShader(ShaderType::SCREEN_SHADER);
@@ -66,6 +68,7 @@ namespace spark {
 
 	void SparkRenderer::renderPass()
 	{
+		PROFILE_FUNCTION();
 		resizeWindowIfNecessary();
 
 		const auto camera = SceneManager::getInstance()->getCurrentScene()->getCamera();
@@ -114,10 +117,15 @@ namespace spark {
 		motionBlur();
 		renderToScreen();
 
-		PUSH_DEBUG_GROUP(GUI);
-		ImGui::Render();
-		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-		POP_DEBUG_GROUP();
+		{
+			PROFILE_SCOPE("RenderPass::DrawGUI");
+			PUSH_DEBUG_GROUP(GUI);
+			ImGui::Render();
+			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+			POP_DEBUG_GROUP();
+		}
+
+		PROFILE_SCOPE("Swap Buffers");
 		glfwSwapBuffers(Spark::window);
 	}
 
@@ -137,6 +145,8 @@ namespace spark {
 
 	void SparkRenderer::renderLights() const
 	{
+		PROFILE_FUNCTION();
+
 		PUSH_DEBUG_GROUP(PBR_LIGHT);
 
 		glBindFramebuffer(GL_FRAMEBUFFER, lightFrameBuffer);
@@ -175,6 +185,7 @@ namespace spark {
 
 	void SparkRenderer::renderCubemap() const
 	{
+		PROFILE_FUNCTION();
 		const auto cubemap = SceneManager::getInstance()->getCurrentScene()->cubemap;
 		if (!cubemap)
 			return;
@@ -205,6 +216,7 @@ namespace spark {
 
 	void SparkRenderer::bloom() const
 	{
+		PROFILE_FUNCTION();
 		PUSH_DEBUG_GROUP(BRIGHT_PASS);
 		glBindFramebuffer(GL_FRAMEBUFFER, brightPassFramebuffer);
 		//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, brightPassFramebuffer, 0);
@@ -302,6 +314,7 @@ namespace spark {
 
 	void SparkRenderer::postprocessingPass()
 	{
+		PROFILE_FUNCTION();
 		PUSH_DEBUG_GROUP(POSTPROCESSING);
 		/*glBindFramebuffer(GL_FRAMEBUFFER, lightFrameBuffer);
 		const auto downScaleShader = ResourceManager::getInstance()->getShader(ShaderType::DOWNSCALE_SHADER);
@@ -330,6 +343,8 @@ namespace spark {
 
 	void SparkRenderer::motionBlur()
 	{
+		PROFILE_FUNCTION();
+
 		const auto camera = SceneManager::getInstance()->getCurrentScene()->getCamera();
 		const glm::mat4 projectionView = camera->getProjectionMatrix() * camera->getViewMatrix();
 		static glm::mat4 prevProjectionView = projectionView;
@@ -371,6 +386,7 @@ namespace spark {
 
 	void SparkRenderer::renderToScreen() const
 	{
+		PROFILE_FUNCTION();
 		PUSH_DEBUG_GROUP(RENDER_TO_SCREEN);
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glDisable(GL_DEPTH_TEST);
@@ -385,6 +401,7 @@ namespace spark {
 
 	void SparkRenderer::createFrameBuffersAndTextures()
 	{
+		PROFILE_FUNCTION();
 		GLuint renderbuffer;
 		glCreateRenderbuffers(1, &renderbuffer);
 		glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer);

@@ -286,6 +286,7 @@ namespace spark {
 
 		void addMesh(const std::vector<glm::vec3>& vertices_, const std::vector<GLuint>& indices_)
 		{
+			PROFILE_FUNCTION();
 			vertices.insert(vertices.end(), vertices_.begin(), vertices_.end());
 			indices.insert(indices.end(), indices_.begin(), indices_.end());
 
@@ -303,7 +304,7 @@ namespace spark {
 
 		void draw()
 		{
-			//Timer pathRenderingTimer("Paths rendering");
+			PROFILE_FUNCTION();
 			if (meshCounter == 0)
 				return;
 
@@ -359,6 +360,13 @@ namespace spark {
 		glm::vec3 color;
 		float outerCutOff;
 		glm::vec3 direction;
+	};
+
+	struct ProfileRecord
+	{
+		std::string name;
+		long long start, end;
+		uint32_t ThreadID;
 	};
 
 }

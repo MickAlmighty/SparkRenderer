@@ -196,6 +196,7 @@
     <ClCompile Include="ModelMesh.cpp" />
     <ClCompile Include="NodeAI.cpp" />
     <ClCompile Include="PointLight.cpp" />
+    <ClCompile Include="ProfilingWriter.cpp" />
     <ClCompile Include="ResourceLoader.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="Shader.cpp" />
@@ -249,6 +250,7 @@
     <ClInclude Include="ModelMesh.h" />
     <ClInclude Include="NodeAI.h" />
     <ClInclude Include="PointLight.h" />
+    <ClInclude Include="ProfilingWriter.h" />
     <ClInclude Include="ResourceLoader.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="Shader.h" />

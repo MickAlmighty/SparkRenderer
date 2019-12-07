@@ -23,6 +23,7 @@ namespace spark {
 
 	void PathFindingManager::findPaths()
 	{
+		PROFILE_FUNCTION();
 		if (agents.empty())
 			return;
 
@@ -46,8 +47,8 @@ namespace spark {
 			findPathsCUDA();
 		}
 
-		printf("Agents: %d, path finding time: %fms\n", static_cast<int>(agents.size()),
-			(glfwGetTime() - startTime) * 1000.0f);
+		//printf("Agents: %d, path finding time: %fms\n", static_cast<int>(agents.size()),
+			//(glfwGetTime() - startTime) * 1000.0f);
 		agents.clear();
 	}
 

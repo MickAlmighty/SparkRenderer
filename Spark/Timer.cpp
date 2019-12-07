@@ -1,18 +1,11 @@
 #include "Timer.h"
-#include <future>
+
+#include <thread>
+
+#include "ProfilingWriter.h"
 
 namespace spark {
-	std::map<std::string, double> Timer::measurements{};
-
-	double Timer::getMeasurement(const std::string&& measurementName)
-	{
-		const auto measurementIt = measurements.find(measurementName);
-		if (measurementIt != std::end(measurements))
-		{
-			return measurementIt->second;
-		}
-		return -1.0;
-	}
+	bool Timer::capture = false;
 
 	Timer::Timer(const std::string&& measurementName)
 	{
@@ -20,16 +13,26 @@ namespace spark {
 		startTime = std::chrono::high_resolution_clock::now();
 	}
 
+	void Timer::stop()
+	{
+		if (!capture)
+			return;
+		const auto endTime = std::chrono::high_resolution_clock::now();
+
+		const auto start = std::chrono::time_point_cast<std::chrono::microseconds>(startTime).time_since_epoch().count();
+		const auto end = std::chrono::time_point_cast<std::chrono::microseconds>(endTime).time_since_epoch().count();
+
+		const auto threadID = static_cast<uint32_t>(std::hash<std::thread::id>{}(std::this_thread::get_id()));
+
+		
+		ProfilingWriter::get().writeRecord({ name, start, end, threadID });
+
+		stopped = true;
+	}
+
 	Timer::~Timer()
 	{
-		const auto t2 = std::chrono::high_resolution_clock::now();
-
-		std::chrono::duration<double, std::milli> duration = t2 - startTime;
-		measurements[name] = duration.count();
-
-		//const auto future = std::async(std::launch::async, [this, &duration]()
-		//{
-			std::cout << name.c_str() << ", duration: " << duration.count() << " ms" << std::endl;
-		//});
+		if(!stopped)
+			stop();
 	}
 }

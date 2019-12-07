@@ -143,6 +143,9 @@
     <ClCompile Include="CUDA\PathFindingManager.cpp">
       <Filter>CUDA</Filter>
     </ClCompile>
+    <ClCompile Include="ProfilingWriter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Spark.h">
@@ -285,6 +288,9 @@
     </ClInclude>
     <ClInclude Include="CUDA\PathFindingManager.h">
       <Filter>CUDA</Filter>
+    </ClInclude>
+    <ClInclude Include="ProfilingWriter.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -38,13 +38,13 @@ namespace spark {
 		GLuint vbo{}, ebo{};
 		std::deque<std::pair<bool, glm::ivec2>> path;
 
-		void walkToEndOfThePath();
-		void validateActorPosition(glm::vec3& position) const;
-		void setStartPosition(glm::vec3& position);
-		void randomizeEndPoint();
+		inline void walkToEndOfThePath();
+		inline void validateActorPosition(glm::vec3& position) const;
+		inline void setStartPosition(glm::vec3& position);
+		inline void randomizeEndPoint();
 
 		void initPathMesh();
-		int updatePathMesh(const std::deque<std::pair<bool, glm::ivec2>>& path) const;
+		inline int updatePathMesh(const std::deque<std::pair<bool, glm::ivec2>>& path) const;
 	};
 }
 #endif

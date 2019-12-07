@@ -13,11 +13,13 @@
 #include "EngineSystems/SceneManager.h"
 #include "HID.h"
 #include "JsonSerializer.h"
+#include "Timer.h"
 
 namespace spark {
 
 	void Spark::setup(InitializationVariables& variables)
 	{
+		PROFILE_FUNCTION();
 		WIDTH = variables.width;
 		HEIGHT = variables.height;
 		pathToModelMeshes = variables.pathToModels;
@@ -103,6 +105,8 @@ namespace spark {
 	{
 		while (!glfwWindowShouldClose(window) && runProgram)
 		{
+			Timer::capture = glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) && glfwGetKey(window, GLFW_KEY_H);
+			PROFILE_FUNCTION();
 			Clock::tick();
 			glfwPollEvents();
 			SceneManager::getInstance()->update();
