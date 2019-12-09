@@ -107,9 +107,17 @@ namespace spark {
 			glm::ivec2 end;
 		};
 
+		struct agentPathAssociation
+		{
+			uint32_t agentIdInAgentsVector;
+			uint32_t pathIdInPathsVector;
+		};
+		std::vector<agentPathAssociation> associations;
+		associations.reserve(agents.size());
+
 		std::vector<path> pathsStartsEnds(32 * blockCount);
 
-		std::size_t actorId = 0;
+		unsigned int actorId = 0;
 		for (std::uint16_t blockId = 0; blockId < blockCount; ++blockId)
 		{
 			for (std::uint8_t threadId = 0; threadId < threadsPerBlock; ++threadId)
@@ -118,6 +126,7 @@ namespace spark {
 					break;
 				pathsStartsEnds[blockId * 32 + threadId].start = agents[actorId].lock()->startPos;
 				pathsStartsEnds[blockId * 32 + threadId].end = agents[actorId].lock()->endPos;
+				associations.push_back({ static_cast<uint32_t>(actorId), static_cast<uint32_t>(blockId * 32 + threadId) });
 				++actorId;
 			}
 		}
@@ -135,17 +144,44 @@ namespace spark {
 
 		const auto pathsStartsEndsDev = reinterpret_cast<int*>(devMem.ptr + 0);
 		const auto agentPathsDev = reinterpret_cast<unsigned int*>(devMem.ptr + pathsStartsEndsSizeInBytes);
-		const auto paths = cuda::runKernel(blockCount, threadsPerBlock, pathsStartsEndsDev, agentPathsDev);
+		auto paths = cuda::runKernel(blockCount, threadsPerBlock, pathsStartsEndsDev, agentPathsDev);
 
-		int index = 0;
+		const size_t agentPathSize = 400 * 2;
+		const size_t agentPathsBufferSize = agentPathSize * blockCount * 32;
+
+		std::vector<std::vector<glm::ivec2>> pathsForAgents(blockCount * 32);
+		//pathsForAgents.reserve(blockCount * 32);
+		for (int i = 0; i < blockCount * 32; ++i)
+		{
+			const size_t pathSize = paths[agentPathSize * i];
+			if (pathSize != 0)
+			{
+				pathsForAgents[i].resize(pathSize);
+				memcpy(pathsForAgents[i].data(), reinterpret_cast<int*>(paths.data()) + agentPathSize * i + 1, sizeof(int) *  pathSize * 2);
+			}
+		}
+
+		for (const auto& association :associations)
+		{
+			if (pathsForAgents[association.pathIdInPathsVector].empty())
+			{
+				//std::cout << "There is no path for agent!" << std::endl;
+			}
+			else
+			{
+				agents[association.agentIdInAgentsVector].lock()->setPath(pathsForAgents[association.pathIdInPathsVector]);
+			}
+		}
+
+		/*int index = 0;
 		for (auto& actor : agents)
 		{
-			if (index < static_cast<int>(paths.size()))
+			if (index < static_cast<int>(pathsForAgents.size()))
 			{
-				actor.lock()->setPath(paths[index]);
+				actor.lock()->setPath(pathsForAgents[index]);
 			}
 			++index;
-		}
+		}*/
 	}
 
 	void PathFindingManager::findPathsCPU() const

@@ -20,7 +20,7 @@ namespace spark {
 		__device__ Map* map = nullptr;
 		__device__ MemoryAllocator* allocator[32];
 
-		__host__ std::vector<std::vector<glm::ivec2>> runKernel(int blocks, int threads, int* path, unsigned int* agentPaths)
+		__host__ std::vector<unsigned int> runKernel(int blocks, int threads, int* path, unsigned int* agentPaths)
 		{
 			{
 				cudaDeviceSynchronize();
@@ -36,20 +36,7 @@ namespace spark {
 			cudaMemcpy(paths.data(), agentPaths, agentPathsBufferSize * sizeof(unsigned int), cudaMemcpyDeviceToHost);
 			cudaDeviceSynchronize();
 
-			std::vector<std::vector<glm::ivec2>> pathsForAgents;
-			pathsForAgents.reserve(blocks * 32);
-			int pathsForAgentsIndex = 0;
-			for (int i = 0; i < blocks * 32; ++i)
-			{
-				const size_t pathSize = paths[agentPathSize * i];
-				if (pathSize != 0)
-				{
-					pathsForAgents.push_back(std::vector<glm::ivec2>(pathSize));
-					memcpy(pathsForAgents[pathsForAgentsIndex].data(), reinterpret_cast<int*>(paths.data()) + agentPathSize * i + 1, sizeof(int) *  pathSize * 2);
-					++pathsForAgentsIndex;
-				}
-			}
-			return pathsForAgents;
+			return paths;
 		}
 
 		__host__ void initMap(float* nodes, int width, int height)

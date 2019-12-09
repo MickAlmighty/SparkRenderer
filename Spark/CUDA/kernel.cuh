@@ -15,7 +15,7 @@ namespace spark {
 		__global__ void checkMapValues(Map* mapDev);
 		__global__ void createMap(float* nodes, int width, int height);
 		__global__ void findPath(int* path, unsigned int* agentPaths);
-		__host__ std::vector<std::vector<glm::ivec2>> runKernel(int blocks, int threads, int* path, unsigned int* agentPaths);
+		__host__ std::vector<unsigned int> runKernel(int blocks, int threads, int* path, unsigned int* agentPaths);
 		__host__ void initMap(float* nodes, int width, int height);
 	}
 }

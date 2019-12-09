@@ -32,7 +32,6 @@ namespace spark {
 
 	void ModelMesh::update()
 	{
-		PROFILE_FUNCTION();
 		const glm::mat4 model = getGameObject()->transform.world.getMatrix();
 		if (instanced)
 		{
