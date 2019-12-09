@@ -15,6 +15,7 @@ class SparkRenderer
 {
 public:
 	std::map<ShaderType, std::list<std::function<void(std::shared_ptr<Shader>&)>>> renderQueue;
+	std::map<ShaderType, std::vector<std::shared_ptr<ModelMesh>>> renderInstancedQueue;
 	
 	SparkRenderer(const SparkRenderer&) = delete;
 	SparkRenderer operator=(const SparkRenderer&) = delete;
@@ -45,6 +46,7 @@ private:
 	GLuint gaussianBlurHalfFramebuffer{}, gaussianBlurHalfTexture{};
 	GLuint gaussianBlurHalfFramebuffer2{}, gaussianBlurHalfTexture2{};
 	GLuint textureHandle{}; //temporary its only a handle to other texture -> dont delete it
+	SSBO instancedSSBO{};
 
 	std::weak_ptr<Shader> mainShader;
 	std::weak_ptr<Shader> screenShader;
@@ -52,8 +54,10 @@ private:
 	std::weak_ptr<Shader> lightShader;
 	std::weak_ptr<Shader> motionBlurShader;
 	std::weak_ptr<Shader> cubemapShader;
+	std::weak_ptr<Shader> defaultInstancedShader;
 	Cube cube = Cube();
 	MultiDrawIndirectBuffer bufer{};
+	MultiDrawInstancedIndirectBuffer instancedIndirectBuffer{};
 
 	~SparkRenderer() = default;
 	SparkRenderer() = default;

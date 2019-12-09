@@ -275,6 +275,10 @@ namespace spark {
 			glBindVertexBuffer(vertexBindingPoint, vbo, 0, sizeof(glm::vec3));
 
 			glBindVertexArray(0);
+
+			meshInfos.reserve(2000);
+			vertices.reserve(2000 * 30);
+			indices.reserve(2000 * 60);
 		}
 
 		void clear() const
@@ -341,6 +345,58 @@ namespace spark {
 		}
 	};
 
+	class Mesh;
+	struct MultiDrawInstancedIndirectBuffer
+	{
+		unsigned int meshCounter{ 0 };
+
+		GLuint lastVertexOffset{ 0 };
+		GLuint lastIndexOffset{ 0 };
+		std::vector<MeshInfo> meshInfos;
+
+		MultiDrawInstancedIndirectBuffer() = default;
+
+		void addMesh(const Mesh& mesh);
+		void drawInstances(const Mesh& mesh, int numberOfInstances);
+		void cleanup()
+		{
+			meshCounter = 0;
+			lastVertexOffset = 0;
+			lastIndexOffset = 0;
+			meshInfos.clear();
+		}
+	};
+
+	struct SSBO
+	{
+		GLuint ID{ 0 };
+		
+		SSBO()
+		{
+			glGenBuffers(1, &ID);
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, ID);
+			glBufferData(GL_SHADER_STORAGE_BUFFER, 0, nullptr, GL_DYNAMIC_DRAW);
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+		}
+
+		SSBO(const SSBO& ssbo) = default;
+		SSBO& operator=(const SSBO& ssbo) = default;
+		~SSBO() = default;
+
+		template <typename T>
+		void update(const std::vector<T>& buffer) const
+		{
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, ID);
+			glBufferData(GL_SHADER_STORAGE_BUFFER, buffer.size() * sizeof(T), buffer.data(), GL_DYNAMIC_DRAW);
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+		}
+
+		void cleanup() const
+		{
+			glDeleteBuffers(1, &ID);
+		}
+	};
+
 	struct DirectionalLightData
 	{
 		alignas(16) glm::vec3 direction;
@@ -364,7 +420,7 @@ namespace spark {
 
 	struct ProfileRecord
 	{
-		std::string name;
+		const char* name;
 		long long start, end;
 		uint32_t ThreadID;
 	};

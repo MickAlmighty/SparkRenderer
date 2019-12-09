@@ -23,21 +23,22 @@ void spark::ProfilingWriter::endSession()
 
 void spark::ProfilingWriter::writeRecord(const spark::ProfileRecord& result)
 {
+	std::lock_guard<std::mutex> lock(ofstreamMutex);
 	if (profileCount++ > 0)
 		outputStream << ",";
 
 	std::string name = result.name;
 	std::replace(name.begin(), name.end(), '"', '\'');
 
-	outputStream << "{";
-	outputStream << "\"cat\":\"function\",";
-	outputStream << "\"dur\":" << (result.end - result.start) << ',';
-	outputStream << "\"name\":\"" << name << "\",";
-	outputStream << "\"ph\":\"X\",";
-	outputStream << "\"pid\":0,";
-	outputStream << "\"tid\":" << result.ThreadID << ",";
-	outputStream << "\"ts\":" << result.start;
-	outputStream << "}";
+	outputStream << "{"
+	<< "\"cat\":\"function\","
+	<< "\"dur\":" << (result.end - result.start) << ','
+	<< "\"name\":\"" << name << "\","
+	<< "\"ph\":\"X\","
+	<< "\"pid\":0,"
+	<< "\"tid\":" << result.ThreadID << ","
+	<< "\"ts\":" << result.start
+	<< "}";
 
 	outputStream.flush();
 }

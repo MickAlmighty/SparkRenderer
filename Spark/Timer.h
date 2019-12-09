@@ -21,12 +21,12 @@ namespace spark {
 	public:
 		static bool capture;
 
-		Timer(const std::string&& measurementName);
+		Timer(const char* measurementName);
 		~Timer();
 
 		void stop();
 	private:
-		std::string name;
+		const char* name;
 		std::chrono::time_point<std::chrono::steady_clock> startTime;
 		bool stopped{ false };
 	};

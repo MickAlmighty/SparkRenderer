@@ -9,6 +9,7 @@
 #include "Structs.h"
 
 namespace spark {
+	std::map<std::string, GLuint> Shader::bufferBindings;
 
 	GLenum Shader::shaderTypeFromString(const std::string& type)
 	{

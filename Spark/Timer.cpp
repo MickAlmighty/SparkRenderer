@@ -7,7 +7,7 @@
 namespace spark {
 	bool Timer::capture = false;
 
-	Timer::Timer(const std::string&& measurementName)
+	Timer::Timer(const char* measurementName)
 	{
 		name = measurementName;
 		startTime = std::chrono::high_resolution_clock::now();
@@ -24,7 +24,6 @@ namespace spark {
 
 		const auto threadID = static_cast<uint32_t>(std::hash<std::thread::id>{}(std::this_thread::get_id()));
 
-		
 		ProfilingWriter::get().writeRecord({ name, start, end, threadID });
 
 		stopped = true;

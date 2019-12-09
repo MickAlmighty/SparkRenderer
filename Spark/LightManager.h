@@ -8,6 +8,8 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#include "Structs.h"
+
 namespace spark {
 	class DirectionalLight;
 	class PointLight;
@@ -16,14 +18,14 @@ namespace spark {
 	class LightManager
 	{
 	public:
-		GLuint dirLightSSBO{}, pointLightSSBO{}, spotLightSSBO{};
+		SSBO dirLightSSBO{}, pointLightSSBO{}, spotLightSSBO{};
 
 		void addDirectionalLight(const std::shared_ptr<DirectionalLight>& directionalLight);
 		void addPointLight(const std::shared_ptr<PointLight>& pointLight);
 		void addSpotLight(const std::shared_ptr<SpotLight>& spotLight);
 		void updateLightBuffers();
 		
-		LightManager();
+		LightManager() = default;
 		~LightManager();
 		LightManager(const LightManager& lightManager) = delete;
 		LightManager(const LightManager&& lightManager) = delete;
@@ -38,14 +40,11 @@ namespace spark {
 		bool updateBuffer = false;
 
 		template <typename T>
-		void updateBufferIfNecessary(const std::vector<T>& bufferLightData, GLuint ssbo)
+		void updateBufferIfNecessary(const std::vector<T>& bufferLightData, const SSBO& ssbo)
 		{
 			if (updateBuffer)
 			{
-				const GLuint size = sizeof(T);
-				glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
-				glBufferData(GL_SHADER_STORAGE_BUFFER, bufferLightData.size() * size, bufferLightData.data(), GL_DYNAMIC_DRAW);
-				glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+				ssbo.update(bufferLightData);
 				updateBuffer = false;
 			}
 		}

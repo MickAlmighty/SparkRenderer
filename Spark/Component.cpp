@@ -55,23 +55,5 @@ namespace spark
 		ImGui::PopID();
 	}
 
-	std::shared_ptr<GameObject> Component::getGameObject() const
-	{
-		return gameObject.lock();
-	}
-
-	bool Component::getActive() const
-	{
-		return active;
-	}
-
-	void Component::setGameObject(std::shared_ptr<GameObject>& game_object)
-	{
-		gameObject = game_object;
-	}
-
-	void Component::setActive(bool active_)
-	{
-		active = active_;
-	}
+	
 }

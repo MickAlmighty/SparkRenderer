@@ -11,11 +11,14 @@ class Mesh;
 class ModelMesh : public Component
 {
 public:
+	bool instanced{ false };
+	std::vector<Mesh> meshes{};
+
 	ModelMesh(std::vector<Mesh>& meshes, std::string&& modelName = "ModelMesh");
 	ModelMesh() = default;
 	~ModelMesh();
 
-	void setModel(std::pair<std::string, std::vector<Mesh>> model);
+	void setModel(const std::pair<std::string, std::vector<Mesh>>& model);
 	
 	void update() override;
 	void fixedUpdate() override;
@@ -26,7 +29,6 @@ public:
 
 private:
 	std::string modelPath;
-	std::vector<Mesh> meshes{};
 };
 
 }

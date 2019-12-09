@@ -43,7 +43,7 @@ public:
 private:
 	GLuint ID {0};
 	std::map<Uniform, GLuint> uniformLocations;
-	mutable std::map<std::string, GLuint> bufferBindings;
+	static std::map<std::string, GLuint> bufferBindings;
 };
 
 }

@@ -31,7 +31,7 @@ void GameObject::update()
 		transform.world.setMatrix(parent.lock()->transform.world.getMatrix() * transform.local.getMatrix());
 	}
 
-	for (auto& component : components)
+	for (const auto& component : components)
 	{
 		if(component->getActive())
 		{

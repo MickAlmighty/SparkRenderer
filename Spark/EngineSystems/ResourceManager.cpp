@@ -170,6 +170,7 @@ namespace spark {
 			shaders.emplace(ShaderType::BRIGHT_PASS_SHADER, std::make_shared<Shader>(shaderDir.string() + "brightPass.glsl"));
 			shaders.emplace(ShaderType::DOWNSCALE_SHADER, std::make_shared<Shader>(shaderDir.string() + "downScale.glsl"));
 			shaders.emplace(ShaderType::GAUSSIAN_BLUR_SHADER, std::make_shared<Shader>(shaderDir.string() + "gaussianBlur.glsl"));
+			shaders.emplace(ShaderType::DEFAULT_INSTANCED_SHADER, std::make_shared<Shader>(shaderDir.string() + "defaultInstanced.glsl"));
 		}
 		
 		{

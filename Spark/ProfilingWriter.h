@@ -5,6 +5,7 @@
 #include <fstream>
 
 #include "Structs.h"
+#include <mutex>
 
 namespace spark {
 
@@ -24,6 +25,7 @@ namespace spark {
 		//InstrumentationSession* m_CurrentSession;
 		std::ofstream outputStream;
 		int profileCount;
+		std::mutex ofstreamMutex;
 
 		void writeHeader();
 		void writeFooter();

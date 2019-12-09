@@ -18,7 +18,8 @@ namespace spark {
 		PATH_SHADER,
 		BRIGHT_PASS_SHADER,
 		DOWNSCALE_SHADER,
-		GAUSSIAN_BLUR_SHADER
+		GAUSSIAN_BLUR_SHADER,
+		DEFAULT_INSTANCED_SHADER
 	};
 
 	enum class TextureTarget : uint16_t

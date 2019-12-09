@@ -4,15 +4,14 @@
 #include <glm/gtc/random.hpp>
 #include <stb_image/stb_image.h>
 
-#include "CUDA/Agent.cuh"
+#include "ActorAI.h"
 #include "CUDA/DeviceMemory.h"
 #include "CUDA/kernel.cuh"
 #include "EngineSystems/ResourceManager.h"
 #include "GameObject.h"
 #include "JsonSerializer.h"
+#include "Mesh.h"
 #include "MeshPlane.h"
-#include "Timer.h"
-#include "ActorAI.h"
 #include "ModelMesh.h"
 
 namespace spark {
@@ -88,7 +87,14 @@ void TerrainGenerator::drawGUI()
 			const auto actorAiComponent = std::make_shared<ActorAI>();
 			actorAiComponent->movementSpeed = 4.0f;
 			gameObject->addComponent(actorAiComponent, gameObject);
-			//auto modelMesh = std::make_shared<ModelMesh>();
+
+			const auto modelMesh = std::make_shared<ModelMesh>();
+			modelMesh->instanced = true;
+			const auto pathsToModels = ResourceManager::getInstance()->getPathsToModels();
+			const auto meshes = ResourceManager::getInstance()->findModelMeshes(pathsToModels[0]);
+			modelMesh->setModel(std::make_pair(pathsToModels[0], meshes));
+			gameObject->addComponent(modelMesh, gameObject);
+
 			getGameObject()->getParent()->addChild(gameObject, parent);
 		}
 		agentCounter += 100;
@@ -103,7 +109,14 @@ void TerrainGenerator::drawGUI()
 			const auto actorAiComponent = std::make_shared<ActorAI>();
 			actorAiComponent->movementSpeed = 4.0f;
 			gameObject->addComponent(actorAiComponent, gameObject);
-			//auto modelMesh = std::make_shared<ModelMesh>();
+
+			const auto modelMesh = std::make_shared<ModelMesh>();
+			modelMesh->instanced = true;
+			const auto pathsToModels = ResourceManager::getInstance()->getPathsToModels();
+			const auto meshes = ResourceManager::getInstance()->findModelMeshes(pathsToModels[0]);
+			modelMesh->setModel(std::make_pair(pathsToModels[0], meshes));
+			gameObject->addComponent(modelMesh, gameObject);
+
 			getGameObject()->getParent()->addChild(gameObject, parent);
 		}
 		agentCounter += 1024;

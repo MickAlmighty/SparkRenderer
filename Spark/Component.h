@@ -18,18 +18,33 @@ public:
 	Component() = default;
 	Component(std::string& componentName);
 	virtual ~Component();
-	virtual void update() = 0;
+	inline virtual void update() = 0;
 	virtual void fixedUpdate() = 0;
 	
 	void drawComponentGUI();
-	void beginDrawingWindow();
-	virtual void drawGUI() = 0;
-	void endDrawingWindow();
+	inline void beginDrawingWindow();
+	inline virtual void drawGUI() = 0;
+	inline void endDrawingWindow();
 
-	std::shared_ptr<GameObject> getGameObject() const;
-	bool getActive() const;
-	void setGameObject(std::shared_ptr<GameObject>& game_object);
-	virtual void setActive(bool active_);
+	inline std::shared_ptr<GameObject> getGameObject() const
+	{
+		return gameObject.lock();
+	}
+	
+	inline bool getActive() const
+	{
+		return active;
+	}
+
+	inline void setGameObject(std::shared_ptr<GameObject>& game_object)
+	{
+		gameObject = game_object;
+	}
+
+	inline virtual 	void setActive(bool active_)
+	{
+		active = active_;
+	}
 
 	template <class T>
 	void removeComponent()

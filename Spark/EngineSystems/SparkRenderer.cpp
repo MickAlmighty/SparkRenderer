@@ -56,12 +56,17 @@ namespace spark {
 		lightShader = ResourceManager::getInstance()->getShader(ShaderType::LIGHT_SHADER);
 		motionBlurShader = ResourceManager::getInstance()->getShader(ShaderType::MOTION_BLUR_SHADER);
 		cubemapShader = ResourceManager::getInstance()->getShader(ShaderType::CUBEMAP_SHADER);
+		defaultInstancedShader = ResourceManager::getInstance()->getShader(ShaderType::DEFAULT_INSTANCED_SHADER);
 
 		const std::shared_ptr<Shader> lShader = lightShader.lock();
 		lShader->use();
-		lShader->bindSSBO("DirLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->dirLightSSBO);
-		lShader->bindSSBO("PointLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->pointLightSSBO);
-		lShader->bindSSBO("SpotLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->spotLightSSBO);
+		lShader->bindSSBO("DirLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->dirLightSSBO.ID);
+		lShader->bindSSBO("PointLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->pointLightSSBO.ID);
+		lShader->bindSSBO("SpotLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->spotLightSSBO.ID);
+
+		const std::shared_ptr<Shader> instancedShader = defaultInstancedShader.lock();
+		instancedShader->use();
+		instancedShader->bindSSBO("Models", instancedSSBO.ID);
 
 		createFrameBuffersAndTextures();
 	}
@@ -92,6 +97,43 @@ namespace spark {
 		}
 		renderQueue[ShaderType::DEFAULT_SHADER].clear();
 		POP_DEBUG_GROUP();
+
+		if (!renderInstancedQueue[ShaderType::DEFAULT_INSTANCED_SHADER].empty())
+		{
+			PROFILE_SCOPE("Instanced rendering");
+			const std::shared_ptr<Shader> instancedShader = defaultInstancedShader.lock();
+			instancedShader->use();
+			instancedShader->setMat4("view", view);
+			instancedShader->setMat4("projection", projection);
+
+			std::map<Mesh, unsigned int> instancedMeshes{};
+			std::vector<glm::mat4> models;
+			models.reserve(renderInstancedQueue[ShaderType::DEFAULT_INSTANCED_SHADER].size());
+			for (auto& modelMeshPtr : renderInstancedQueue[ShaderType::DEFAULT_INSTANCED_SHADER])
+			{
+				for (const auto& mesh : modelMeshPtr->meshes)
+				{
+					if (instancedMeshes.find(mesh) != instancedMeshes.end())
+					{
+						instancedMeshes[mesh] += 1;
+					}
+					else
+					{
+						instancedMeshes.insert(std::make_pair(mesh, 1));
+					}
+					models.push_back(modelMeshPtr->getGameObject()->transform.world.getMatrix());
+				}
+			}
+			instancedSSBO.update(models);
+			for (const auto& [mesh, instances] : instancedMeshes)
+			{
+				mesh.bindTextures();
+				instancedIndirectBuffer.addMesh(mesh);
+				instancedIndirectBuffer.drawInstances(mesh, instances);
+				instancedIndirectBuffer.cleanup();
+			}
+			renderInstancedQueue[ShaderType::DEFAULT_INSTANCED_SHADER].clear();
+		}
 		
 		renderLights();
 		renderCubemap();
@@ -402,11 +444,11 @@ namespace spark {
 	void SparkRenderer::createFrameBuffersAndTextures()
 	{
 		PROFILE_FUNCTION();
-		GLuint renderbuffer;
-		glCreateRenderbuffers(1, &renderbuffer);
-		glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer);
+		GLuint renderBuffer{0};
+		glCreateRenderbuffers(1, &renderBuffer);
+		glBindRenderbuffer(GL_RENDERBUFFER, renderBuffer);
 		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, Spark::WIDTH, Spark::HEIGHT);
-		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, renderbuffer);
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, renderBuffer);
 
 		createTexture(colorTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
 		createTexture(positionTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
@@ -429,10 +471,10 @@ namespace spark {
 		createTexture(gaussianBlurQuarterTexture2, Spark::WIDTH / 4, Spark::HEIGHT / 4, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
 		createTexture(gaussianBlurOneEightsTexture2, Spark::WIDTH / 8, Spark::HEIGHT / 8, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
 
-		createFramebuffer(mainFramebuffer, { positionTexture, colorTexture, normalsTexture, roughnessTexture, metalnessTexture }, renderbuffer);
-		createFramebuffer(lightFrameBuffer, { lightColorTexture }, renderbuffer);
+		createFramebuffer(mainFramebuffer, { positionTexture, colorTexture, normalsTexture, roughnessTexture, metalnessTexture }, renderBuffer);
+		createFramebuffer(lightFrameBuffer, { lightColorTexture }, renderBuffer);
 		createFramebuffer(postprocessingFramebuffer, { postProcessingTexture });
-		createFramebuffer(cubemapFramebuffer, { lightColorTexture, positionTexture }, renderbuffer);
+		createFramebuffer(cubemapFramebuffer, { lightColorTexture, positionTexture }, renderBuffer);
 		createFramebuffer(motionBlurFramebuffer, { motionBlurTexture });
 		createFramebuffer(brightPassFramebuffer, { brightPassTexture });
 		createFramebuffer(brightPassHalfFramebuffer, { brightHalf });

@@ -1,7 +1,7 @@
 #ifndef GAME_OBJECT_H
 #define GAME_OBJECT_H
 
-#include <list>
+#include <vector>
 #include <memory>
 
 #include "ISerializable.h"
@@ -120,8 +120,8 @@ public:
 private:
 	friend class Scene;
 	std::weak_ptr<GameObject> parent;
-	std::list<std::shared_ptr<GameObject>> children;
-	std::list<std::shared_ptr<Component>> components;
+	std::vector<std::shared_ptr<GameObject>> children;
+	std::vector<std::shared_ptr<Component>> components;
 	std::shared_ptr<GameObject> get_ptr();
 	void update();
 	void fixedUpdate();

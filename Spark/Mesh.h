@@ -17,20 +17,23 @@ public:
 	std::vector<Vertex> vertices;
 	std::vector<unsigned int> indices;
 	std::map<TextureTarget, Texture> textures;
-
-	Mesh(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices, std::map<TextureTarget, Texture>& meshTextures, std::string&& newName_ = "Mesh");
-	~Mesh() = default;
-
-	void setup();
-	void addToRenderQueue(glm::mat4 model);
-	void draw(std::shared_ptr<Shader>& shader, glm::mat4 model);
-	void cleanup() const;
+	glm::mat4 model;
 	
-
-private:
 	GLuint vao{};
 	GLuint vbo{};
 	GLuint ebo{};
+	
+	Mesh(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices, std::map<TextureTarget, Texture>& meshTextures, std::string&& newName_ = "Mesh");
+	~Mesh() = default;
+	bool operator==(const Mesh& mesh) const;
+	bool operator<(const Mesh& mesh) const;
+
+	void setup();
+	void addToRenderQueue(const glm::mat4& model);
+	void draw(std::shared_ptr<Shader>& shader, glm::mat4 model);
+	void draw(std::shared_ptr<Shader>& shader);
+	void bindTextures() const;
+	void cleanup() const;
 };
 
 }

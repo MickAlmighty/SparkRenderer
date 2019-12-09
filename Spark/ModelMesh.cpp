@@ -8,78 +8,90 @@
 #include "GameObject.h"
 #include "GUI/SparkGui.h"
 #include "Mesh.h"
+#include "EngineSystems/SparkRenderer.h"
 
 namespace spark {
 
-ModelMesh::ModelMesh(std::vector<Mesh>& meshes, std::string&& modelName) : Component(modelName)
-{
-	this->meshes = meshes;
-}
-
-void ModelMesh::setModel(std::pair<std::string, std::vector<Mesh>> model)
-{
-	modelPath = model.first;
-	meshes = model.second;
-}
-
-ModelMesh::~ModelMesh()
-{
-#ifdef DEBUG
-	std::cout << "ModelMesh deleted!" << std::endl;
-#endif
-}
-
-void ModelMesh::update()
-{
-	glm::mat4 model = getGameObject()->transform.world.getMatrix();
-	for (Mesh& mesh : meshes)
+	ModelMesh::ModelMesh(std::vector<Mesh>& meshes, std::string&& modelName) : Component(modelName)
 	{
-		mesh.addToRenderQueue(model);
-	}
-}
-
-void ModelMesh::fixedUpdate()
-{
-}
-
-void ModelMesh::drawGUI()
-{
-	for (Mesh& mesh : meshes)
-	{
-		ImGui::Text("Vertices:"); ImGui::SameLine(); ImGui::Text(std::to_string(mesh.vertices.size()).c_str());
-		ImGui::Text("Indices:"); ImGui::SameLine(); ImGui::Text(std::to_string(mesh.indices.size()).c_str());
-		ImGui::Text("Textures:"); ImGui::SameLine(); ImGui::Text(std::to_string(mesh.textures.size()).c_str());
-		ImGui::Text("Shader enum:"); ImGui::SameLine(); ImGui::Text(std::to_string(static_cast<int>(mesh.shaderType)).c_str());
-		SparkGui::getShader();
+		this->meshes = meshes;
 	}
 
-	if (meshes.empty())
+	void ModelMesh::setModel(const std::pair<std::string, std::vector<Mesh>>& model)
 	{
-		const auto model = SparkGui::getMeshes();
 		modelPath = model.first;
 		meshes = model.second;
 	}
 
-	removeComponentGUI<ModelMesh>();
-}
+	ModelMesh::~ModelMesh()
+	{
+#ifdef DEBUG
+		std::cout << "ModelMesh deleted!" << std::endl;
+#endif
+	}
 
-SerializableType ModelMesh::getSerializableType()
-{
-	return SerializableType::SModelMesh;
-}
+	void ModelMesh::update()
+	{
+		PROFILE_FUNCTION();
+		const glm::mat4 model = getGameObject()->transform.world.getMatrix();
+		if (instanced)
+		{
+			SparkRenderer::getInstance()->renderInstancedQueue[ShaderType::DEFAULT_INSTANCED_SHADER].push_back(shared_from_base<ModelMesh>());
+		}
+		else
+		{
+			for (Mesh& mesh : meshes)
+			{
+				mesh.addToRenderQueue(model);
+			}
+		}
+	}
 
-Json::Value ModelMesh::serialize()
-{
-	Json::Value root;
-	root["modelPath"] = modelPath;
-	root["name"] = name;
-	return root;
-}
+	void ModelMesh::fixedUpdate()
+	{
+	}
 
-void ModelMesh::deserialize(Json::Value& root)
-{
-	modelPath = root.get("modelPath", "").asString();
-	name = root.get("name", "ModelMesh").asString();
-	meshes = ResourceManager::getInstance()->findModelMeshes(modelPath);
-}
+	void ModelMesh::drawGUI()
+	{
+		ImGui::Checkbox("Instanced", &instanced);
+		for (Mesh& mesh : meshes)
+		{
+			ImGui::Text("Vertices:"); ImGui::SameLine(); ImGui::Text(std::to_string(mesh.vertices.size()).c_str());
+			ImGui::Text("Indices:"); ImGui::SameLine(); ImGui::Text(std::to_string(mesh.indices.size()).c_str());
+			ImGui::Text("Textures:"); ImGui::SameLine(); ImGui::Text(std::to_string(mesh.textures.size()).c_str());
+			ImGui::Text("Shader enum:"); ImGui::SameLine(); ImGui::Text(std::to_string(static_cast<int>(mesh.shaderType)).c_str());
+			SparkGui::getShader();
+		}
+
+		if (meshes.empty())
+		{
+			const auto model = SparkGui::getMeshes();
+			modelPath = model.first;
+			meshes = model.second;
+		}
+
+		removeComponentGUI<ModelMesh>();
+	}
+
+	SerializableType ModelMesh::getSerializableType()
+	{
+		return SerializableType::SModelMesh;
+	}
+
+	Json::Value ModelMesh::serialize()
+	{
+		Json::Value root;
+		root["modelPath"] = modelPath;
+		root["name"] = name;
+		root["instanced"] = instanced;
+		return root;
+	}
+
+	void ModelMesh::deserialize(Json::Value& root)
+	{
+		modelPath = root.get("modelPath", "").asString();
+		name = root.get("name", "ModelMesh").asString();
+		meshes = ResourceManager::getInstance()->findModelMeshes(modelPath);
+		instanced = root.get("instanced", false).asBool();
+	}
 }

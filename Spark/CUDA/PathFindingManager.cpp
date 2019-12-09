@@ -31,19 +31,12 @@ namespace spark {
 
 		if (mode == PathFindingMode::HOST)
 		{
-			for (const auto& agent : agents)
-			{
-				if (agent.expired())
-					continue;
-
-				const auto agentPtr = agent.lock();
-				auto path = findPath(agentPtr->startPos, agentPtr->endPos);
-				agentPtr->setPath(path);
-			}
+			findPathsCPU();
 		}
 
 		if (mode == PathFindingMode::DEVICE)
 		{
+			const auto future = std::async(std::launch::async, [this] { findPathsCPU(); });
 			findPathsCUDA();
 		}
 
@@ -104,6 +97,7 @@ namespace spark {
 
 	void PathFindingManager::findPathsCUDA() const
 	{
+		PROFILE_FUNCTION();
 		const std::uint16_t blockCount = calculateNumberOfBlocks();
 		const std::uint8_t threadsPerBlock = calculateNumberOfThreadsPerBlock(blockCount);
 
@@ -151,6 +145,20 @@ namespace spark {
 				actor.lock()->setPath(paths[index]);
 			}
 			++index;
+		}
+	}
+
+	void PathFindingManager::findPathsCPU() const
+	{
+		PROFILE_FUNCTION();
+		for (const auto& agent : agents)
+		{
+			if (agent.expired())
+				continue;
+
+			const auto agentPtr = agent.lock();
+			auto path = findPath(agentPtr->startPos, agentPtr->endPos);
+			//agentPtr->setPath(path);
 		}
 	}
 

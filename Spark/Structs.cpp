@@ -4,6 +4,7 @@
 #include <glm/ext/matrix_transform.hpp>
 
 #include "EngineSystems/ResourceManager.h"
+#include "Mesh.h"
 #include "Shader.h"
 
 namespace spark {
@@ -171,5 +172,55 @@ namespace spark {
 		glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap);
 		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+	}
+
+	void MultiDrawInstancedIndirectBuffer::addMesh(const Mesh& mesh)
+	{
+		PROFILE_FUNCTION();
+
+		MeshInfo info;
+		info.verticesSize = static_cast<GLuint>(mesh.vertices.size());
+		info.elementsCount = static_cast<GLuint>(mesh.indices.size());
+		info.verticesOffset = lastVertexOffset;
+		info.indicesOffset = lastIndexOffset;
+		meshInfos.push_back(info);
+
+		lastVertexOffset += static_cast<GLuint>(mesh.vertices.size());
+		lastIndexOffset += static_cast<GLuint>(mesh.indices.size());
+		++meshCounter;
+	}
+
+	void MultiDrawInstancedIndirectBuffer::drawInstances(const Mesh& mesh, int numberOfInstances)
+	{
+		PROFILE_FUNCTION();
+		if (meshCounter == 0)
+			return;
+
+		glBindVertexArray(mesh.vao);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.ebo);
+
+		std::vector<DrawElementsIndirectCommand> commands(meshCounter);
+
+		for (unsigned int i = 0; i < meshCounter; ++i)
+		{
+			commands[i].count = meshInfos[i].elementsCount;
+			commands[i].instanceCount = numberOfInstances;
+			commands[i].firstIndex = meshInfos[i].indicesOffset;
+			commands[i].baseVertex = meshInfos[i].verticesOffset;
+			commands[i].baseInstance = 0;
+		}
+
+		GLuint indirectBuffer{0};
+		glGenBuffers(1, &indirectBuffer);
+		glBindBuffer(GL_DRAW_INDIRECT_BUFFER, indirectBuffer);
+		glBufferData(GL_DRAW_INDIRECT_BUFFER, commands.size() * sizeof(DrawElementsIndirectCommand), commands.data(),
+		             GL_STREAM_COPY);
+
+		glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, 0, static_cast<GLsizei>(commands.size()), 0);
+
+		glDeleteBuffers(1, &indirectBuffer);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		glBindVertexArray(0);
 	}
 }
