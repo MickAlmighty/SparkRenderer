@@ -6,16 +6,14 @@
 #include <memory>
 #include <vector>
 
-#include <glm/vec2.hpp>
-
 namespace spark {
 	namespace cuda {
 		class Agent;
 		class Map;
 		__global__ void checkMapValues(Map* mapDev);
 		__global__ void createMap(float* nodes, int width, int height);
-		__global__ void findPath(int* path, unsigned int* agentPaths);
-		__host__ std::vector<unsigned int> runKernel(int blocks, int threads, int* path, unsigned int* agentPaths);
+		__global__ void findPath(int* path, unsigned int* agentPaths, void* kernelMemory);
+		__host__ std::vector<unsigned int> runKernel(int blocks, int threads, int* path, unsigned int* agentPaths, void* kernelMemory, const Map& mapHost);
 		__host__ void initMap(float* nodes, int width, int height);
 	}
 }

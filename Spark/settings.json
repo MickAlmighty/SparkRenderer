@@ -3,5 +3,6 @@
 	"pathToModels" : "..\\res\\models",
 	"pathToResources" : "..\\res",
 	"vsync" : false,
-	"width" : 1280
+	"width" : 1280,
+	"mapPath" : "map.png"
 }

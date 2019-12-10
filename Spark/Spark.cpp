@@ -29,7 +29,7 @@ namespace spark {
 		initOpenGL();
 		ResourceManager::getInstance()->loadResources();
 		SceneManager::getInstance()->setup();
-
+		PathFindingManager::getInstance()->loadMap(variables.mapPath);
 		SparkRenderer::getInstance()->setup();
 	}
 
@@ -105,13 +105,24 @@ namespace spark {
 	{
 		while (!glfwWindowShouldClose(window) && runProgram)
 		{
-			Timer::capture = glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) && glfwGetKey(window, GLFW_KEY_H);
+			Timer::capture = glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) && glfwGetKey(window, GLFW_KEY_L);
+			if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) && glfwGetKey(window, GLFW_KEY_H))
+			{
+				Spark::gui = false;
+			}
+			if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) && glfwGetKey(window, GLFW_KEY_G))
+			{
+				Spark::gui = true;
+			}
 			PROFILE_FUNCTION();
 			Clock::tick();
 			glfwPollEvents();
 			SceneManager::getInstance()->update();
 			PathFindingManager::getInstance()->findPaths();
-			sparkGui.drawGui();
+			
+			if (gui)
+				sparkGui.drawGui();
+
 			SparkRenderer::getInstance()->renderPass();
 			HID::clearStates();
 	#ifdef DEBUG

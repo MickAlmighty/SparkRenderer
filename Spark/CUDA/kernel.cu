@@ -1,9 +1,6 @@
 #include "CUDA/kernel.cuh"
 
-#include <deque>
-
 #include <device_launch_parameters.h>
-#include <glm/vec2.hpp>
 
 #include "BinaryHeap.cuh"
 #include "DeviceMemory.h"
@@ -18,19 +15,19 @@
 namespace spark {
 	namespace cuda {
 		__device__ Map* map = nullptr;
-		__device__ MemoryAllocator* allocator[32];
+		__device__ MemoryAllocator* allocator[128];
 
-		__host__ std::vector<unsigned int> runKernel(int blocks, int threads, int* path, unsigned int* agentPaths)
+		__host__ std::vector<unsigned int> runKernel(int blocks, int threads, int* path, unsigned int* agentPaths, void* kernelMemory, const Map& mapHost)
 		{
 			{
 				cudaDeviceSynchronize();
 				//Timer t3("	findPath");
-				findPath << <blocks, threads, 400 * sizeof(unsigned int) + 32 * 8 * sizeof(Node) >> > (path, agentPaths);
+				findPath << <blocks, threads, mapHost.width * mapHost.height * sizeof(unsigned int) + 32 * 8 * sizeof(Node) >> > (path, agentPaths, kernelMemory);
 				cudaDeviceSynchronize();
 				gpuErrchk(cudaGetLastError());
 			}
 
-			const size_t agentPathSize = 400 * 2;
+			const size_t agentPathSize = mapHost.width * mapHost.height * 2;
 			const size_t agentPathsBufferSize = agentPathSize * blocks * 32;
 			std::vector<unsigned int> paths(agentPathsBufferSize);
 			cudaMemcpy(paths.data(), agentPaths, agentPathsBufferSize * sizeof(unsigned int), cudaMemcpyDeviceToHost);
@@ -55,7 +52,7 @@ namespace spark {
 			map = new Map(width, height, nodes);
 		}
 
-		__global__ void findPath(int* path, unsigned int* agentPaths)
+		__global__ void findPath(int* path, unsigned int* agentPaths, void* kernelMemory)
 		{
 			extern __shared__ unsigned char sharedMemory[];
 
@@ -64,23 +61,24 @@ namespace spark {
 			if (threadIdx.x == 0)
 			{
 				memset(sharedMemory, 0, sizeof(unsigned int) * map->width * map->height + 8 * 32 * sizeof(Node));
-				allocator[blockIdx.x] = new MemoryAllocator(sizeof(Node) * map->width * map->height * 8 * 32);
+				//allocator[blockIdx.x] = new MemoryAllocator(sizeof(Node) * map->width * map->height * 8 * 32);
 			}
 			__syncthreads();
 
-			Node* neighborsMemoryPool = reinterpret_cast<Node*>(sharedMemory + 400 * sizeof(unsigned int));
+			Node* neighborsMemoryPool = reinterpret_cast<Node*>(sharedMemory + map->width * map->height * sizeof(unsigned int));
 			Node* neighbors = neighborsMemoryPool + threadIdx.x * 8; // 8 is the neighbor array size
-
-			const size_t memoryOffset = map->width * map->height * 8;
-			const size_t kernelMemOffset = memoryOffset * threadIdx.x;
 
 			const size_t agentPathMemorySize = map->width * map->height * 2;
 			const size_t agentPathWarpMemorySize = agentPathMemorySize * 32;
 			const int agentPathOffset = agentPathWarpMemorySize * blockIdx.x + agentPathMemorySize * threadIdx.x;
 			unsigned int* agentPath = agentPaths + agentPathOffset;
 
-			BinaryHeap<Node> heap(allocator[blockIdx.x]->ptr<Node>(kernelMemOffset));
-			MemoryManager manager = MemoryManager(allocator[blockIdx.x]->ptr<Node>(kernelMemOffset + map->width * map->height * 7));
+			const size_t memoryOffset = map->width * map->height * 8;
+			const size_t threadMemOffset = memoryOffset * threadIdx.x;
+			const size_t blockSizeElements = memoryOffset * 32;
+			const size_t blockMemOffset = blockSizeElements * blockIdx.x;
+			BinaryHeap<Node> heap(static_cast<Node*>(kernelMemory) + blockMemOffset + threadMemOffset);
+			MemoryManager manager = MemoryManager(static_cast<Node*>(kernelMemory) + blockMemOffset + threadMemOffset + map->width * map->height * 6);
 
 			const unsigned int startEndPointsBlockMemorySize = 4 * 32;
 			int startPoint[] = { path[startEndPointsBlockMemorySize * blockIdx.x + 4 * threadIdx.x + 0], path[startEndPointsBlockMemorySize * blockIdx.x + 4 * threadIdx.x + 1] };
@@ -102,6 +100,12 @@ namespace spark {
 				++whileLoopCounter;
 				if (heap.size == 0)
 				{
+					break;
+				}
+
+				if (whileLoopCounter >= map->width * map->height)
+				{
+					//printf("Closed nodes limit reached!\n");
 					break;
 				}
 
@@ -159,16 +163,14 @@ namespace spark {
 					const float terrainValue = map->getTerrainValue(neighborPos[0], neighborPos[1]);
 					neighbors[i].valueF = (1.0f - terrainValue) * (neighbors[i].valueH + functionG);
 
-					//const int nodeToSwapIndex = heap.findIndex_if(findOpened);
+					/*const int nodeToSwapIndex = heap.findIndex_if(findOpened);
 
-					//if (nodeToSwapIndex != -1)
-					//{
-					//	//timer.reset();
-					//	heap.removeValue(nodeToSwapIndex);
-					//	heap.insert(neighbors[i]);
-					//	//timer.printTime("	Node insertion after node deletion %f ms\n");
-					//}
-					//else
+					if (nodeToSwapIndex != -1)
+					{
+						heap.removeValue(nodeToSwapIndex);
+						heap.insert(neighbors[i]);
+					}
+					else*/
 					{
 						heap.insert(neighbors[i]);
 					}
@@ -186,11 +188,11 @@ namespace spark {
 			finishNode->recreatePath(agentPath + 1, pathLength);
 			//printf("thread %d, block %d, path length %d\nopened nodes %d, loopCounter %d\n", threadIdx.x, blockIdx.x, pathLength, int(heap.size), whileLoopCounter);
 
-			__syncthreads();
-			if (threadIdx.x == 0)
-			{
-				delete allocator[blockIdx.x];
-			}
+			//__syncthreads();
+			//if (threadIdx.x == 0)
+			//{
+			//	//delete allocator[blockIdx.x];
+			//}
 		}
 
 		__global__ void checkMapValues(Map* mapDev)

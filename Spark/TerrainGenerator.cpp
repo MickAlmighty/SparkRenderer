@@ -86,6 +86,7 @@ void TerrainGenerator::drawGUI()
 			auto gameObject = std::make_shared<GameObject>();
 			const auto actorAiComponent = std::make_shared<ActorAI>();
 			actorAiComponent->movementSpeed = 4.0f;
+			actorAiComponent->autoWalking = true;
 			gameObject->addComponent(actorAiComponent, gameObject);
 
 			const auto modelMesh = std::make_shared<ModelMesh>();
@@ -108,6 +109,7 @@ void TerrainGenerator::drawGUI()
 			auto gameObject = std::make_shared<GameObject>();
 			const auto actorAiComponent = std::make_shared<ActorAI>();
 			actorAiComponent->movementSpeed = 4.0f;
+			actorAiComponent->autoWalking = true;
 			gameObject->addComponent(actorAiComponent, gameObject);
 
 			const auto modelMesh = std::make_shared<ModelMesh>();
@@ -161,11 +163,6 @@ void TerrainGenerator::drawGUI()
 	removeComponentGUI<TerrainGenerator>();
 }
 
-int TerrainGenerator::getTerrainNodeIndex(const int x, const int y) const
-{
-	return y * terrainSize + x;
-}
-
 Texture TerrainGenerator::generateTerrain()
 {
 	updateTerrain();
@@ -183,12 +180,6 @@ void TerrainGenerator::updateTerrain() const
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glBindTexture(GL_TEXTURE_2D, 0);
-}
-
-float TerrainGenerator::getTerrainValue(const int x, const int y)
-{
-	const unsigned int index = getTerrainNodeIndex(x, y);
-	return terrain[index];
 }
 
 TerrainGenerator::TerrainGenerator(std::string&& newName) : Component(newName)

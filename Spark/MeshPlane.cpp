@@ -70,11 +70,14 @@ void MeshPlane::draw(std::shared_ptr<Shader>& shader, glm::mat4 model) const
 		glBindTextureUnit(static_cast<GLuint>(texture_it.first), texture_it.second.ID);
 	}
 
+	glDisable(GL_CULL_FACE);
+
 	glBindVertexArray(vao);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 	glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indices.size()), GL_UNSIGNED_INT, nullptr);
 	glBindVertexArray(0);
 
+	glEnable(GL_CULL_FACE);
 	glBindTextures(static_cast<GLuint>(TextureTarget::DIFFUSE_TARGET), static_cast<GLsizei>(textures.size()), nullptr);
 }
 

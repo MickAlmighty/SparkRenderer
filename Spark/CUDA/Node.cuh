@@ -2,7 +2,6 @@
 #define NODE_CUH
 
 #include "Map.cuh"
-#include "List.cuh"
 
 namespace spark {
 	namespace cuda {

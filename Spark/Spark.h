@@ -19,6 +19,7 @@ public:
 	inline static bool runProgram = true;
 	inline static float maxAnisotropicFiltering = 1.0f;
 	inline static bool vsync = false;
+	inline static bool gui = true;
 	
 	static void setup(InitializationVariables& variables);
 	static void run();

@@ -1,7 +1,6 @@
 #include "ActorAI.h"
 
 #include <deque>
-#include <iostream>
 
 #include <glm/gtc/random.inl>
 
@@ -17,57 +16,39 @@ namespace spark {
 
 	void ActorAI::update()
 	{
-		glm::vec3 pos = getGameObject()->transform.world.getPosition();
+		if (drawPath && !path.empty())
+			const int indicesCount = updatePathMesh(path);
+
+		if (!autoWalking)
+			return;
 
 		if (path.empty())
 		{
-			validateActorPosition(pos);
-			setStartPosition(pos);
-			randomizeEndPoint();
-			PathFindingManager::getInstance()->addAgent(shared_from_base<ActorAI>());
+			pathFindingRequest();
 		}
 		else if (const bool firstNodeAchieved = path.begin()->first; firstNodeAchieved)
 		{
-			validateActorPosition(pos);
-			setStartPosition(pos);
-			randomizeEndPoint();
-			PathFindingManager::getInstance()->addAgent(shared_from_base<ActorAI>());
-		}
-
-		if (!path.empty())
-		{
-			isTraveling = true;
+			pathFindingRequest();
 		}
 
 		if (isTraveling)
 		{
 			walkToEndOfThePath();
-			//const int indicesCount = updatePathMesh(path);
-			/*if (indicesCount != 0)
-			{
-				const auto f = [shared_ptr = shared_from_base<ActorAI>(), indicesCount](std::shared_ptr<Shader>& shader)
-				{
-					glBindVertexArray(shared_ptr->vao);
-					glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indicesCount), GL_UNSIGNED_INT, 0);
-					glBindVertexArray(0);
-				};
-				SparkRenderer::getInstance()->renderQueue[ShaderType::PATH_SHADER].push_back(f);
-			}*/
 		}
 	}
 
-	void ActorAI::validateActorPosition(glm::vec3& position) const
+	void ActorAI::pathFindingRequest()
 	{
-		const auto mapWidth = PathFindingManager::getInstance()->map.width - 1;
-		const auto mapHeight = PathFindingManager::getInstance()->map.height - 1;
-		if (position.x < 0) position.x = 0;
-		if (position.z < 0) position.z = 0;
-		if (position.x > mapWidth) position.x = static_cast<float>(mapWidth);
-		if (position.z > mapHeight) position.z = static_cast<float>(mapHeight);
+		setStartPosition();
+		randomizeEndPoint();
+		PathFindingManager::getInstance()->addAgent(shared_from_base<ActorAI>());
 	}
 
-	void ActorAI::setStartPosition(glm::vec3& position)
+	void ActorAI::setStartPosition()
 	{
+		glm::vec3 position = getGameObject()->transform.world.getPosition();
+		validateActorPosition(position);
+
 		glm::vec2 pos{};
 		if (position.x - static_cast<int>(position.x) < 0.5)
 			pos.x = std::floor(position.x);
@@ -82,6 +63,16 @@ namespace spark {
 		startPos = static_cast<glm::ivec2>(pos);
 	}
 
+	void ActorAI::validateActorPosition(glm::vec3& position) const
+	{
+		const auto mapWidth = PathFindingManager::getInstance()->map.width - 1;
+		const auto mapHeight = PathFindingManager::getInstance()->map.height - 1;
+		if (position.x < 0) position.x = 0;
+		if (position.z < 0) position.z = 0;
+		if (position.x > mapWidth) position.x = static_cast<float>(mapWidth);
+		if (position.z > mapHeight) position.z = static_cast<float>(mapHeight);
+	}
+
 	void ActorAI::randomizeEndPoint()
 	{
 		do
@@ -90,25 +81,6 @@ namespace spark {
 			const auto mapHeight = static_cast<float>(PathFindingManager::getInstance()->map.height);
 			endPos = { static_cast<int>(glm::linearRand(0.0f, mapWidth)), static_cast<int>(glm::linearRand(0.0f, mapHeight)) };
 		} while (PathFindingManager::getInstance()->map.getTerrainValue(endPos.x, endPos.y) == 1.0f && startPos != endPos);
-	}
-
-	void ActorAI::initPathMesh()
-	{
-		glGenVertexArrays(1, &vao);
-		glBindVertexArray(vao);
-
-		glGenBuffers(1, &vbo);
-		glBindBuffer(GL_ARRAY_BUFFER, vbo);
-		glBufferData(GL_ARRAY_BUFFER, 0, nullptr, GL_STATIC_DRAW);
-
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), reinterpret_cast<const void*>(0));
-
-		glGenBuffers(1, &ebo);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, 0, nullptr, GL_STATIC_DRAW);
-
-		glBindVertexArray(0);
 	}
 
 	int ActorAI::updatePathMesh(const std::deque<std::pair<bool, glm::ivec2>>& path) const
@@ -159,27 +131,11 @@ namespace spark {
 			insertVertex(segmentStart + perpendicularToDirection * 0.1f);
 			insertVertex(segmentEnd + perpendicularToDirection * 0.1f);
 			insertVertex(segmentEnd - perpendicularToDirection * 0.1f);
-
-			/*vertices.push_back(segmentStart + perpendicularToDirection * 0.1f);
-			vertices.push_back(segmentEnd - perpendicularToDirection * 0.1f);
-			vertices.push_back(segmentStart - perpendicularToDirection * 0.1f);
-			vertices.push_back(segmentStart + perpendicularToDirection * 0.1f);
-			vertices.push_back(segmentEnd + perpendicularToDirection * 0.1f);
-			vertices.push_back(segmentEnd - perpendicularToDirection * 0.1f);*/
 		}
-
-		/*glBindBuffer(GL_ARRAY_BUFFER, vbo);
-		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), vertices.data(), GL_STATIC_DRAW);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);*/
 
 		SparkRenderer::getInstance()->addMeshDataToBuffer(vertices, indices);
 
 		return static_cast<int>(indices.size());
-		//return static_cast<int>(0);
 	}
 
 	void ActorAI::fixedUpdate()
@@ -248,6 +204,7 @@ namespace spark {
 		Json::Value root;
 		root["name"] = name;
 		root["movementSpeed"] = movementSpeed;
+		root["drawPath"] = drawPath;
 		return root;
 	}
 
@@ -255,35 +212,30 @@ namespace spark {
 	{
 		name = root.get("name", "ActorAI").asString();
 		movementSpeed = root.get("movementSpeed", 1.0f).asFloat();
+		drawPath = root.get("drawPath", false).asBool();
 	}
 
 	void ActorAI::drawGUI()
 	{
-
 		ImGui::DragInt2("startPos", &startPos.x);
 		ImGui::DragInt2("endPos", &endPos.x);
 		ImGui::DragFloat("movementSpeed", &movementSpeed, 0.1f);
-		if (ImGui::Button("FindPath"))
+		ImGui::Checkbox("drawPaths", &drawPath);
+		ImGui::Checkbox("autoWalking", &autoWalking);
+		if (ImGui::Button("PathFindingRequest"))
 		{
-			isTraveling = true;
+			pathFindingRequest();
 		}
 		removeComponentGUI<ActorAI>();
 	}
 
 	ActorAI::ActorAI(std::string&& newName) : Component(newName)
 	{
-		initPathMesh();
-	}
-
-	ActorAI::~ActorAI()
-	{
-		glDeleteBuffers(1, &vbo);
-		glDeleteBuffers(1, &ebo);
-		glDeleteVertexArrays(1, &vao);
 	}
 
 	void ActorAI::setPath(const std::deque<glm::ivec2>& path_)
 	{
+		path.clear();
 		path.resize(path_.size());
 		int index = 0;
 		for (const glm::ivec2& wayPoint : path_)
@@ -292,10 +244,14 @@ namespace spark {
 			path[index].second = wayPoint;
 			++index;
 		}
+
+		if (autoWalking)
+			isTraveling = true;
 	}
 
 	void ActorAI::setPath(const std::vector<glm::ivec2>& path_)
 	{
+		path.clear();
 		path.resize(path_.size());
 		int index = 0;
 		for (const glm::ivec2& wayPoint : path_)
@@ -304,5 +260,8 @@ namespace spark {
 			path[index].second = wayPoint;
 			++index;
 		}
+
+		if (autoWalking)
+			isTraveling = true;
 	}
 }

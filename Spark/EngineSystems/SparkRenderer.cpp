@@ -164,10 +164,13 @@ namespace spark {
 
 		{
 			PROFILE_SCOPE("RenderPass::DrawGUI");
-			PUSH_DEBUG_GROUP(GUI);
-			ImGui::Render();
-			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-			POP_DEBUG_GROUP();
+			if (Spark::gui)
+			{
+				PUSH_DEBUG_GROUP(GUI);
+				ImGui::Render();
+				ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+				POP_DEBUG_GROUP();
+			}
 		}
 
 		PROFILE_SCOPE("Swap Buffers");

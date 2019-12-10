@@ -6,7 +6,9 @@
 #include "DeviceMemory.h"
 #include "kernel.cuh"
 #include "Map.cuh"
+#include "Node.cuh"
 #include "NodeAI.h"
+#include <stb_image.h>
 
 namespace spark {
 
@@ -45,17 +47,10 @@ namespace spark {
 		agents.clear();
 	}
 
-	PathFindingManager::PathFindingManager()
-	{
-		loadMap();
-		initializeMapOnGPU();
-	}
-
-	void PathFindingManager::loadMap()
+	void PathFindingManager::loadMap(const std::string& mapPath)
 	{
 		int texWidth, texHeight, nrChannels;
-
-		unsigned char* pixels = stbi_load("map.png", &texWidth, &texHeight, &nrChannels, 0);
+		unsigned char* pixels = stbi_load(mapPath.c_str(), &texWidth, &texHeight, &nrChannels, 0);
 
 		std::vector<glm::vec3> pix;
 		pix.reserve(texWidth * texHeight);
@@ -71,21 +66,44 @@ namespace spark {
 				pix.push_back(pixel);
 		}
 
+		/*float mapTable[] = {
+			0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+			0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+			0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+			0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+			0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+			0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+			0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+			0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+			0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+			0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+		};*/
+
 		std::vector<float> mapNodes;
 		mapNodes.resize(texWidth * texHeight);
 		for (int i = 0; i < texWidth * texHeight; ++i)
 		{
-			mapNodes[i] = pix[i].x;
+			//mapNodes[i] = mapTable[i];
+			mapNodes[i] = pix[i].r;
 		}
 
 		map = cuda::Map(texWidth, texHeight, mapNodes.data());
+		for (unsigned int i = 0; i < map.width * map.height; ++i)
+		{
+			if (i % map.width == 0)
+				printf("\n");
+			printf("%.1f ", map.nodes[i]);
+		}
+
+		stbi_image_free(pixels);
+		initializeMapOnGPU();
 	}
 
 	void PathFindingManager::initializeMapOnGPU() const
 	{
 		using namespace cuda;
-		cudaDeviceSetLimit(cudaLimitMallocHeapSize, 1024 * 1024 * 1024); // max 1GB of GPU dynamic memory
-		gpuErrchk(cudaGetLastError());
+		//cudaDeviceSetLimit(cudaLimitMallocHeapSize, 1024 * 1024 * 1424); // max 1GB of GPU dynamic memory
+		//gpuErrchk(cudaGetLastError());
 
 		const auto nodes = DeviceMemory<float>::AllocateElements(map.width * map.height);
 		gpuErrchk(cudaGetLastError());
@@ -97,7 +115,7 @@ namespace spark {
 
 	void PathFindingManager::findPathsCUDA() const
 	{
-		PROFILE_FUNCTION();
+		Timer t("void PathFindingManager::findPathsCUDA() const");
 		const std::uint16_t blockCount = calculateNumberOfBlocks();
 		const std::uint8_t threadsPerBlock = calculateNumberOfThreadsPerBlock(blockCount);
 
@@ -133,20 +151,22 @@ namespace spark {
 
 		const std::size_t pathsStartsEndsSizeInBytes = pathsStartsEnds.size() * sizeof(path);
 		const std::size_t agentPathsSizeInBytes = map.width * map.height * sizeof(glm::ivec2) * blockCount * 32;
-		const std::size_t overallBufferSizeInBytes = pathsStartsEndsSizeInBytes + agentPathsSizeInBytes;
+		const std::size_t kernelMemoryInBytes = sizeof(cuda::Node) * map.width * map.height * 8 * 32 * blockCount;
+		const std::size_t overallBufferSizeInBytes = pathsStartsEndsSizeInBytes + agentPathsSizeInBytes + kernelMemoryInBytes;
 		const auto devMem = cuda::DeviceMemory<std::uint8_t>::AllocateBytes(overallBufferSizeInBytes);
 		gpuErrchk(cudaGetLastError());
 
-		//printf("Allocation of %f mb device memory\n", overallBufferSizeInBytes / 1024.0f / 1024.0f);
+		//printf("Allocation of %f mb device memory for %d agents\n", overallBufferSizeInBytes / 1024.0f / 1024.0f, static_cast<int>(agents.size()));
 
 		cudaMemcpy(devMem.ptr, pathsStartsEnds.data(), pathsStartsEndsSizeInBytes, cudaMemcpyHostToDevice);
 		gpuErrchk(cudaGetLastError());
 
 		const auto pathsStartsEndsDev = reinterpret_cast<int*>(devMem.ptr + 0);
 		const auto agentPathsDev = reinterpret_cast<unsigned int*>(devMem.ptr + pathsStartsEndsSizeInBytes);
-		auto paths = cuda::runKernel(blockCount, threadsPerBlock, pathsStartsEndsDev, agentPathsDev);
+		const auto kernelMemoryDev = reinterpret_cast<void*>(devMem.ptr + pathsStartsEndsSizeInBytes + agentPathsSizeInBytes);
+		auto paths = cuda::runKernel(blockCount, threadsPerBlock, pathsStartsEndsDev, agentPathsDev, kernelMemoryDev, map);
 
-		const size_t agentPathSize = 400 * 2;
+		const size_t agentPathSize = map.width * map.height * 2;
 		const size_t agentPathsBufferSize = agentPathSize * blockCount * 32;
 
 		std::vector<std::vector<glm::ivec2>> pathsForAgents(blockCount * 32);
@@ -160,8 +180,9 @@ namespace spark {
 				memcpy(pathsForAgents[i].data(), reinterpret_cast<int*>(paths.data()) + agentPathSize * i + 1, sizeof(int) *  pathSize * 2);
 			}
 		}
+		t.stop();
 
-		for (const auto& association :associations)
+		for (const auto& association : associations)
 		{
 			if (pathsForAgents[association.pathIdInPathsVector].empty())
 			{
@@ -172,16 +193,6 @@ namespace spark {
 				agents[association.agentIdInAgentsVector].lock()->setPath(pathsForAgents[association.pathIdInPathsVector]);
 			}
 		}
-
-		/*int index = 0;
-		for (auto& actor : agents)
-		{
-			if (index < static_cast<int>(pathsForAgents.size()))
-			{
-				actor.lock()->setPath(pathsForAgents[index]);
-			}
-			++index;
-		}*/
 	}
 
 	void PathFindingManager::findPathsCPU() const

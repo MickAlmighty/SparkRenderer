@@ -13,6 +13,7 @@
 
 #include "Map.cuh"
 #include "Enums.h"
+#include <thread>
 
 namespace spark {
 	class ActorAI;
@@ -22,6 +23,7 @@ namespace spark {
 	{
 	public:
 		cuda::Map map;
+		std::string mapPath;
 
 		PathFindingManager(const PathFindingManager& p) = delete;
 		PathFindingManager(const PathFindingManager&& p) = delete;
@@ -32,15 +34,14 @@ namespace spark {
 
 		__host__ void addAgent(const std::shared_ptr<ActorAI>& agent);
 		__host__ void findPaths();
-
+		__host__ void loadMap(const std::string& mapPath);
 	private:
 		std::vector<std::weak_ptr<ActorAI>> agents;
 		PathFindingMode mode = PathFindingMode::DEVICE;
 
-		__host__ PathFindingManager();
+		__host__ PathFindingManager() = default;
 		__host__ ~PathFindingManager() = default;
 
-		__host__ void loadMap();
 		__host__ void initializeMapOnGPU() const;
 		__host__ void findPathsCUDA() const;
 		__host__ void findPathsCPU() const;

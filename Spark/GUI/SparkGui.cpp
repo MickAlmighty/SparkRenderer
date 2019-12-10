@@ -7,6 +7,7 @@
 #include "JsonSerializer.h"
 #include "Spark.h"
 #include "ResourceLoader.h"
+#include "CUDA/PathFindingManager.h"
 
 namespace spark {
 
@@ -100,6 +101,7 @@ namespace spark {
 			variables.pathToResources = Spark::pathToResources;
 			variables.pathToModels = Spark::pathToModelMeshes;
 			variables.vsync = Spark::vsync;
+			variables.mapPath = PathFindingManager::getInstance()->mapPath;
 			JsonSerializer::writeToFile("settings.json", variables.serialize());
 		}
 		ImGui::End();

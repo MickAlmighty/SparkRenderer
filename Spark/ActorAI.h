@@ -8,19 +8,21 @@
 #include <Component.h>
 
 namespace spark {
-	
+
 	class TerrainGenerator;
 	class NodeAI;
 
 	class ActorAI : public Component
 	{
 	public:
-		glm::ivec2 startPos{};
-		glm::ivec2 endPos{};
-		float movementSpeed = 1.0f;
+		glm::ivec2 startPos{ };
+		glm::ivec2 endPos{ };
+		float movementSpeed{ 1.0f };
+		bool drawPath{ false };
+		bool autoWalking{ false };
 
 		ActorAI(std::string&& newName = "ActorAI");
-		~ActorAI();
+		~ActorAI() = default;
 
 		void setPath(const std::deque<glm::ivec2>& path_);
 		void setPath(const std::vector<glm::ivec2>& path_);
@@ -34,16 +36,14 @@ namespace spark {
 
 	private:
 		bool isTraveling = false;
-		GLuint vao{};
-		GLuint vbo{}, ebo{};
 		std::deque<std::pair<bool, glm::ivec2>> path;
 
+		inline void pathFindingRequest();
 		inline void walkToEndOfThePath();
 		inline void validateActorPosition(glm::vec3& position) const;
-		inline void setStartPosition(glm::vec3& position);
+		inline void setStartPosition();
 		inline void randomizeEndPoint();
 
-		void initPathMesh();
 		inline int updatePathMesh(const std::deque<std::pair<bool, glm::ivec2>>& path) const;
 	};
 }
