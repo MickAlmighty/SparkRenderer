@@ -19,13 +19,22 @@ namespace spark {
 	public:
 		const glm::ivec2 position;
 		float depth = 0.0f;
+		float functionF{ 0 };
 		NodeAI* parentAddress = nullptr;
 
 		NodeAI(const glm::ivec2 pos, const float depth_);
-		NodeAI(const NodeAI& rhs);
-		NodeAI(const NodeAI&& rhs) noexcept;
 		NodeAI();
 		~NodeAI() = default;
+
+		bool operator<(const NodeAI& node) const
+		{
+			if (functionF == node.functionF)
+			{
+				return depth < node.depth;
+			}
+			else
+				return functionF < node.functionF;
+		}
 
 		float measureManhattanDistance(glm::vec2 point) const;
 		std::vector<NodeAI> getNeighbors(const cuda::Map& map) const;

@@ -55,7 +55,13 @@ namespace spark {
 
 			__device__ bool operator<(const Node& node) const
 			{
-				return this->valueF < node.valueF;
+				if (valueF == node.valueF)
+				{
+					return distanceFromBeginning < node.distanceFromBeginning;
+				}
+				else
+					return valueF < node.valueF;
+				//return this->valueF < node.valueF;
 			}
 
 			__device__ bool operator==(const Node& node) const
@@ -67,9 +73,15 @@ namespace spark {
 
 			__device__ float measureManhattanDistance(int* point) const
 			{
+				/*const float xDistance = fabsf(static_cast<float>(pos[0] - point[0]));
+				const float yDistance = fabsf(static_cast<float>(pos[1] - point[1]));
+				return xDistance + yDistance;*/
+				
+				const float D = 1.0f;
+				const float D2 = 1.41f;
 				const float xDistance = fabsf(static_cast<float>(pos[0] - point[0]));
 				const float yDistance = fabsf(static_cast<float>(pos[1] - point[1]));
-				return xDistance + yDistance;
+				return D * (xDistance + yDistance) + (D2 - 2 * D) * fmin(xDistance, yDistance);
 			}
 
 			__device__ void getNeighbors(Map* map, Node* nodes)
@@ -89,19 +101,31 @@ namespace spark {
 			__device__ void tryToCreateNeighbor(Node* node, ivec2 position,
 				Map* map, const float depth) const
 			{
-				if (map->areIndexesValid(position.x, position.y))
+				if (!map->areIndexesValid(position.x, position.y) || 
+					!map->getTerrainValue(position.x, position.y) != 1.0f)
 				{
-					if (map->getTerrainValue(position.x, position.y) != 1.0f)
-					{
-						node->pos[0] = position.x;
-						node->pos[1] = position.y;
-						node->distanceFromBeginning = this->distanceFromBeginning + depth;
-						node->valid = true;
-					}
-					else
+					node->valid = false;
+					return;
+				}
+					
+				if (parent)
+				{
+					if (parent->pos[0] == position.x && parent->pos[1] == position.y)
 					{
 						node->valid = false;
+						return;
 					}
+					node->pos[0] = position.x;
+					node->pos[1] = position.y;
+					node->distanceFromBeginning = this->distanceFromBeginning + depth;
+					node->valid = true;
+				}
+				else
+				{
+					node->pos[0] = position.x;
+					node->pos[1] = position.y;
+					node->distanceFromBeginning = this->distanceFromBeginning + depth;
+					node->valid = true;
 				}
 			}
 

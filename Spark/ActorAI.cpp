@@ -44,6 +44,13 @@ namespace spark {
 		PathFindingManager::getInstance()->addAgent(shared_from_base<ActorAI>());
 	}
 
+	void ActorAI::pathFindingRequest(glm::ivec2 endPos)
+	{
+		this->endPos = endPos;
+		setStartPosition();
+		PathFindingManager::getInstance()->addAgent(shared_from_base<ActorAI>());
+	}
+
 	void ActorAI::setStartPosition()
 	{
 		glm::vec3 position = getGameObject()->transform.world.getPosition();
@@ -80,7 +87,7 @@ namespace spark {
 			const auto mapWidth = static_cast<float>(PathFindingManager::getInstance()->map.width);
 			const auto mapHeight = static_cast<float>(PathFindingManager::getInstance()->map.height);
 			endPos = { static_cast<int>(glm::linearRand(0.0f, mapWidth)), static_cast<int>(glm::linearRand(0.0f, mapHeight)) };
-		} while (PathFindingManager::getInstance()->map.getTerrainValue(endPos.x, endPos.y) == 1.0f && startPos != endPos);
+		} while (PathFindingManager::getInstance()->map.getTerrainValue(endPos.x, endPos.y) == 1.0f || startPos == endPos);
 	}
 
 	int ActorAI::updatePathMesh(const std::deque<std::pair<bool, glm::ivec2>>& path) const
@@ -222,9 +229,14 @@ namespace spark {
 		ImGui::DragFloat("movementSpeed", &movementSpeed, 0.1f);
 		ImGui::Checkbox("drawPaths", &drawPath);
 		ImGui::Checkbox("autoWalking", &autoWalking);
-		if (ImGui::Button("PathFindingRequest"))
+		if (ImGui::Button("PathFindingRequestRandom"))
 		{
 			pathFindingRequest();
+		}
+
+		if (ImGui::Button("PathFindingRequestEndPoint"))
+		{
+			pathFindingRequest(endPos);
 		}
 		removeComponentGUI<ActorAI>();
 	}

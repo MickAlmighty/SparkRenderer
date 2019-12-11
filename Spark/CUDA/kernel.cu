@@ -73,12 +73,12 @@ namespace spark {
 			const int agentPathOffset = agentPathWarpMemorySize * blockIdx.x + agentPathMemorySize * threadIdx.x;
 			unsigned int* agentPath = agentPaths + agentPathOffset;
 
-			const size_t memoryOffset = map->width * map->height * 8;
+			const size_t memoryOffset = map->width * map->height * 32;
 			const size_t threadMemOffset = memoryOffset * threadIdx.x;
-			const size_t blockSizeElements = memoryOffset * 32;
+			const size_t blockSizeElements = memoryOffset * 16;
 			const size_t blockMemOffset = blockSizeElements * blockIdx.x;
 			BinaryHeap<Node> heap(static_cast<Node*>(kernelMemory) + blockMemOffset + threadMemOffset);
-			MemoryManager manager = MemoryManager(static_cast<Node*>(kernelMemory) + blockMemOffset + threadMemOffset + map->width * map->height * 6);
+			MemoryManager manager = MemoryManager(static_cast<Node*>(kernelMemory) + blockMemOffset + threadMemOffset + map->width * map->height * 8);
 
 			const unsigned int startEndPointsBlockMemorySize = 4 * 32;
 			int startPoint[] = { path[startEndPointsBlockMemorySize * blockIdx.x + 4 * threadIdx.x + 0], path[startEndPointsBlockMemorySize * blockIdx.x + 4 * threadIdx.x + 1] };
@@ -86,8 +86,6 @@ namespace spark {
 
 			if (startPoint[0] == endPoint[0] && startPoint[1] == endPoint[1])
 				return;
-			//int startPoint[] = { *(path + 0), *(path + 1) };
-			//int endPoint[] = { *(path + 2), *(path + 3) };
 
 			Node* finishNode = nullptr;
 
@@ -95,17 +93,24 @@ namespace spark {
 			heap.insert(startNode);
 
 			int whileLoopCounter = 0;
-			while (true)
+			while (!finishNode)
 			{
 				++whileLoopCounter;
 				if (heap.size == 0)
 				{
+					printf("Heap is empty\n");
 					break;
 				}
 
-				if (whileLoopCounter >= map->width * map->height)
+				if (heap.size >= map->width * map->height * 8)
 				{
-					//printf("Closed nodes limit reached!\n");
+					printf("Heap size = %llu limit reached!\n", heap.size);
+					break;
+				}
+
+				if (whileLoopCounter >= map->width * map->height * 8)
+				{
+					printf("Closed nodes limit reached!\n");
 					break;
 				}
 
@@ -113,34 +118,23 @@ namespace spark {
 
 				const auto closedNode = manager.allocate<Node>(theBestNode); //it will be deleted with allocator deletion
 
-				if (closedNode->pos[0] == endPoint[0] &&
-					closedNode->pos[1] == endPoint[1])
-				{
-					finishNode = closedNode;
-					break;
-				}
-
 				const int nodeIndex = map->getTerrainNodeIndex(closedNode->pos[0], closedNode->pos[1]);
 				atomicOr(closedNodesLookup + nodeIndex, 1 << threadIdx.x);
 
 				closedNode->getNeighbors(map, neighbors);
 
 				int i = 0;
-				/*nvstd::function<bool(const Node& node)> findOpened = [&neighbors, &i] __device__(const Node& node)
-				{
-					const bool positionEqual = node.pos[0] == neighbors[i].pos[0] &&
-						node.pos[1] == neighbors[i].pos[1];
-
-					if (!positionEqual)
-					{
-						return false;
-					}
-
-					const bool betterFunctionG = neighbors[i].distanceFromBeginning < node.distanceFromBeginning;
-
-					return betterFunctionG;
-				};*/
-
+				//nvstd::function<bool(const Node& node)> findOpened = [&neighbors, &i] __device__(const Node& node)
+				//{
+				//	if (node.pos[0] != neighbors[i].pos[0] ||
+				//		node.pos[1] != neighbors[i].pos[1])
+				//	{
+				//		return false;
+				//	}
+				//	
+				//	//betterFunctionG
+				//	return neighbors[i].distanceFromBeginning < node.distanceFromBeginning;
+				//};
 #pragma unroll
 				for (i = 0; i < 8; ++i)
 				{
@@ -156,6 +150,13 @@ namespace spark {
 					}
 
 					neighbors[i].parent = closedNode;
+
+					if (neighbors[i].pos[0] == endPoint[0] &&
+						neighbors[i].pos[1] == endPoint[1])
+					{
+						finishNode = manager.allocate<Node>(neighbors[i]);
+						break;
+					}
 
 					neighbors[i].valueH = neighbors[i].measureManhattanDistance(endPoint);
 					const float functionG = neighbors[i].distanceFromBeginning;
@@ -187,12 +188,7 @@ namespace spark {
 			agentPath[0] = pathLength;
 			finishNode->recreatePath(agentPath + 1, pathLength);
 			//printf("thread %d, block %d, path length %d\nopened nodes %d, loopCounter %d\n", threadIdx.x, blockIdx.x, pathLength, int(heap.size), whileLoopCounter);
-
-			//__syncthreads();
-			//if (threadIdx.x == 0)
-			//{
-			//	//delete allocator[blockIdx.x];
-			//}
+			printf("GPU: Nodes processed %d, nodesToProcess %d, pathSize %d\n", whileLoopCounter, int(heap.size), pathLength);
 		}
 
 		__global__ void checkMapValues(Map* mapDev)

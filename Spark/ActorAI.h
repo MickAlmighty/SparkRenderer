@@ -39,6 +39,7 @@ namespace spark {
 		std::deque<std::pair<bool, glm::ivec2>> path;
 
 		inline void pathFindingRequest();
+		inline void pathFindingRequest(glm::ivec2 endPos);
 		inline void walkToEndOfThePath();
 		inline void validateActorPosition(glm::vec3& position) const;
 		inline void setStartPosition();

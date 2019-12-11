@@ -3,8 +3,9 @@
 
 #include <deque>
 #include <list>
-#include <memory>
 #include <map>
+#include <memory>
+#include <set>
 #include <vector>
 
 #include <cuda.h>
@@ -51,6 +52,7 @@ namespace spark {
 		__host__ NodeAI popFrom(std::multimap<float, NodeAI>& openedNodes) const;
 		__host__ bool isNodeClosed(const std::list<NodeAI>& closedNodes, const NodeAI& node) const;
 		__host__ void insertOrSwapNode(std::multimap<float, NodeAI>& openedNodes, float f, const NodeAI& node) const;
+		__host__ void insertOrSwapNode(std::set<NodeAI>& openedNodes, const NodeAI& node) const;
 	};
 }
 

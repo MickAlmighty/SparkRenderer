@@ -54,7 +54,7 @@ namespace spark {
 
 		std::vector<glm::vec3> pix;
 		pix.reserve(texWidth * texHeight);
-		for (int i = 0; i < texWidth * texHeight * nrChannels; i += 3)
+		for (int i = 0; i < texWidth * texHeight * nrChannels; i += nrChannels)
 		{
 			glm::vec3 pixel;
 			pixel.x = *(pixels + i);
@@ -66,34 +66,14 @@ namespace spark {
 				pix.push_back(pixel);
 		}
 
-		/*float mapTable[] = {
-			0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-			0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-			0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-			0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-			0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-			0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-			0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-			0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-			0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-			0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-		};*/
-
 		std::vector<float> mapNodes;
 		mapNodes.resize(texWidth * texHeight);
 		for (int i = 0; i < texWidth * texHeight; ++i)
 		{
-			//mapNodes[i] = mapTable[i];
 			mapNodes[i] = pix[i].r;
 		}
 
 		map = cuda::Map(texWidth, texHeight, mapNodes.data());
-		for (unsigned int i = 0; i < map.width * map.height; ++i)
-		{
-			if (i % map.width == 0)
-				printf("\n");
-			printf("%.1f ", map.nodes[i]);
-		}
 
 		stbi_image_free(pixels);
 		initializeMapOnGPU();
@@ -151,7 +131,7 @@ namespace spark {
 
 		const std::size_t pathsStartsEndsSizeInBytes = pathsStartsEnds.size() * sizeof(path);
 		const std::size_t agentPathsSizeInBytes = map.width * map.height * sizeof(glm::ivec2) * blockCount * 32;
-		const std::size_t kernelMemoryInBytes = sizeof(cuda::Node) * map.width * map.height * 8 * 32 * blockCount;
+		const std::size_t kernelMemoryInBytes = sizeof(cuda::Node) * map.width * map.height * 16 * 32 * blockCount;
 		const std::size_t overallBufferSizeInBytes = pathsStartsEndsSizeInBytes + agentPathsSizeInBytes + kernelMemoryInBytes;
 		const auto devMem = cuda::DeviceMemory<std::uint8_t>::AllocateBytes(overallBufferSizeInBytes);
 		gpuErrchk(cudaGetLastError());
@@ -186,7 +166,7 @@ namespace spark {
 		{
 			if (pathsForAgents[association.pathIdInPathsVector].empty())
 			{
-				//std::cout << "There is no path for agent!" << std::endl;
+				std::cout << "There is no path for agent!" << std::endl;
 			}
 			else
 			{
@@ -205,7 +185,7 @@ namespace spark {
 
 			const auto agentPtr = agent.lock();
 			auto path = findPath(agentPtr->startPos, agentPtr->endPos);
-			//agentPtr->setPath(path);
+			agentPtr->setPath(path);
 		}
 	}
 
@@ -248,12 +228,19 @@ namespace spark {
 	std::deque<glm::ivec2> PathFindingManager::findPath(const glm::ivec2 startPoint, const glm::ivec2 endPoint) const
 	{
 		std::deque<glm::ivec2> path;
-		std::multimap<float, NodeAI> openedNodes;
+		std::set<NodeAI> openedNodes;
 		std::list<NodeAI> closedNodes;
 
-		openedNodes.emplace(0.0f, NodeAI(startPoint, 0.0f));
+		std::vector<std::vector<bool>> closedNodesTable(map.width);
+		for(auto& cols: closedNodesTable)
+		{
+			cols.resize(map.height);
+		}
+
+		openedNodes.emplace(NodeAI(startPoint, 0.0f));
 		NodeAI* finishNode = nullptr;
-		while (true)
+		
+		while (!finishNode)
 		{
 			if (openedNodes.empty())
 			{
@@ -261,30 +248,39 @@ namespace spark {
 				break;
 			}
 
-			const auto closedNode = popFrom(openedNodes);
+			//const auto closedNode = popFrom(openedNodes);
+			const auto closedNode = *openedNodes.begin();
+			openedNodes.erase(openedNodes.begin());
+
 			closedNodes.push_back(closedNode);
 
-			if (closedNode.position == endPoint)
-			{
-				finishNode = &(*std::prev(closedNodes.end()));
-				break;
-			}
+			closedNodesTable[closedNode.position.x][closedNode.position.y] = true;
 
 			auto neighbors = closedNode.getNeighbors(map);
 			for (NodeAI& neighbor : neighbors)
 			{
-				if (isNodeClosed(closedNodes, neighbor))
+				/*if (isNodeClosed(closedNodes, neighbor))
+					continue;*/
+				if (closedNodesTable[neighbor.position.x][neighbor.position.y])
 					continue;
 
 				neighbor.parentAddress = &(*std::prev(closedNodes.end()));
+
+				if (neighbor.position == endPoint)
+				{
+					closedNodes.push_back(neighbor);
+					finishNode = &(*std::prev(closedNodes.end()));
+					break;
+				}
 
 				const float functionH = neighbor.measureManhattanDistance(endPoint);
 				const float functionG = neighbor.depth;
 
 				const float terrainValue = map.getTerrainValue(neighbor.position.x, neighbor.position.y);
 				const float heuristicsValue = (1 - terrainValue) * (functionH + functionG);
+				neighbor.functionF = heuristicsValue;
 
-				insertOrSwapNode(openedNodes, heuristicsValue, neighbor);
+				insertOrSwapNode(openedNodes, neighbor);
 			}
 		}
 		if (finishNode)
@@ -292,6 +288,8 @@ namespace spark {
 			finishNode->getPath(path);
 		}
 
+		printf("CPU: Nodes processed %d, nodesToProcess %d, pathSize %d\n", 
+			static_cast<int>(closedNodes.size()), static_cast<int>(openedNodes.size()), static_cast<int>(path.size()));
 		openedNodes.clear();
 		closedNodes.clear();
 		return path;
@@ -342,6 +340,32 @@ namespace spark {
 		else
 		{
 			openedNodes.emplace(f, node);
+		}
+	}
+
+	void PathFindingManager::insertOrSwapNode(std::set<NodeAI>& openedNodes,const NodeAI& node) const
+	{
+		const auto& it = std::find_if(std::begin(openedNodes), std::end(openedNodes),
+			[&node](const NodeAI& n)
+		{
+			const bool nodesEqual = n.position == node.position;
+			if (!nodesEqual)
+			{
+				return false;
+			}
+			const bool betterFunctionG = node.depth < n.depth;
+
+			return nodesEqual && betterFunctionG;
+		});
+
+		if (it != std::end(openedNodes))
+		{
+			openedNodes.erase(it);
+			openedNodes.insert(node);
+		}
+		else
+		{
+			openedNodes.insert(node);
 		}
 	}
 }

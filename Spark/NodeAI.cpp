@@ -9,23 +9,24 @@ namespace spark {
 	{
 	}
 
-	NodeAI::NodeAI(const NodeAI& rhs) : position(rhs.position), depth(rhs.depth), parentAddress(rhs.parentAddress)
-	{
-	}
-
-	NodeAI::NodeAI(const NodeAI&& rhs) noexcept : position(rhs.position), depth(rhs.depth), parentAddress(rhs.parentAddress)
-	{
-	}
-
 	NodeAI::NodeAI() : position(glm::ivec2(0, 0))
 	{
 	}
 
 	float NodeAI::measureManhattanDistance(glm::vec2 point) const
 	{
+		/*const float xDistance = glm::abs(position.x - point.x);
+		const float yDistance = glm::abs(position.y - point.y);
+		return xDistance + yDistance;*/
+
+		//diagonal distance 
+		const float D = 1.0f;
+		const float D2 = 1.41f;
 		const float xDistance = glm::abs(position.x - point.x);
 		const float yDistance = glm::abs(position.y - point.y);
-		return xDistance + yDistance;
+		return D * (xDistance + yDistance) + (D2 - 2 * D) * glm::min(xDistance, yDistance);
+
+		//euclidean distance without sqrt
 		//return glm::pow(position.x - endPoint.x, 2) + glm::pow(position.y - endPoint.y, 2);
 		//return glm::distance(position, endPoint);
 	}
@@ -36,6 +37,7 @@ namespace spark {
 		neighbors.reserve(8);
 		const float distanceFromNode = 1.0f;
 		const float diagonalDistanceFromNode = 1.41f;
+		//const float diagonalDistanceFromNode = 1.0f;
 		tryToCreateNeighbor(neighbors, { position.x - 1, position.y }, map, distanceFromNode);
 		tryToCreateNeighbor(neighbors, { position.x + 1, position.y }, map, distanceFromNode);
 		tryToCreateNeighbor(neighbors, { position.x, position.y - 1 }, map, distanceFromNode);
@@ -62,7 +64,18 @@ namespace spark {
 		{
 			if (map.getTerrainValue(pos.x, pos.y) != 1.0f)
 			{
-				container.emplace_back(pos, this->depth + depth);
+				if (parentAddress)
+				{
+					if (parentAddress->position == pos)
+					{
+						return;
+					}
+					container.emplace_back(pos, this->depth + depth);
+				}
+				else
+				{
+					container.emplace_back(pos, this->depth + depth);
+				}
 			}
 		}
 	}
