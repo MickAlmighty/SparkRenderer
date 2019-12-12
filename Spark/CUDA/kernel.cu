@@ -13,37 +13,33 @@
 #include "MemoryAllocator.cuh"
 #include "MemoryManager.cuh"
 #include "Node.cuh"
+#include "Enums.h"
 #include "Timer.h"
+
 
 namespace spark {
 	namespace cuda {
 		__device__ Map* map = nullptr;
 		__device__ MemoryAllocator* allocator[128];
 
-		__host__ std::vector<unsigned int> runKernel(int blocks, int threads, int* path, unsigned int* agentPaths, void* kernelMemory, const Map& mapHost)
+		__host__ void runKernel(int blocks, int threads, int* path, unsigned int* agentPaths, void* kernelMemory, const Map& mapHost, PathFindingMode mode)
 		{
-			{
-				cudaDeviceSynchronize();
-				//Timer t3("	findPath");
-				//findPathV1<<<blocks, threads, mapHost.width * mapHost.height * sizeof(unsigned int) + 32 * 8 * sizeof(Node)>>> (path, agentPaths, kernelMemory);
-				findPathV2<<<blocks, threads, mapHost.width * mapHost.height * sizeof(unsigned int) + 32 * 8 * sizeof(Node)>>> (path, agentPaths, kernelMemory);
-				cudaDeviceSynchronize();
-				gpuErrchk(cudaGetLastError());
-			}
-
-			const size_t agentPathSize = mapHost.width * mapHost.height * 2;
-			const size_t agentPathsBufferSize = agentPathSize * blocks * 32;
-			std::vector<unsigned int> paths(agentPathsBufferSize);
-			cudaMemcpy(paths.data(), agentPaths, agentPathsBufferSize * sizeof(unsigned int), cudaMemcpyDeviceToHost);
 			cudaDeviceSynchronize();
-
-			return paths;
+			if (mode == PathFindingMode::DEVICE_IMPL)
+			{
+				findPathV1<<<blocks, threads, mapHost.width * mapHost.height * sizeof(unsigned int) + 32 * 8 * sizeof(Node)>>> (path, agentPaths, kernelMemory);
+			}
+			if (mode == PathFindingMode::DEVICE_IMPL_V2)
+			{
+				findPathV2<<<blocks, threads, mapHost.width * mapHost.height * sizeof(unsigned int) + 32 * 8 * sizeof(Node)>>> (path, agentPaths, kernelMemory);
+			}
+			gpuErrchk(cudaGetLastError());
 		}
 
 		__host__ void initMap(float* nodes, int width, int height)
 		{
 			PROFILE_FUNCTION();
-			createMap << <1, 1 >> > (nodes, width, height);
+			createMap<<<1, 1 >>>(nodes, width, height);
 			gpuErrchk(cudaGetLastError());
 		}
 
@@ -65,22 +61,21 @@ namespace spark {
 			if (threadIdx.x == 0)
 			{
 				memset(sharedMemory, 0, sizeof(unsigned int) * map->width * map->height + 8 * 32 * sizeof(Node));
-				//allocator[blockIdx.x] = new MemoryAllocator(sizeof(Node) * map->width * map->height * 8 * 32);
 			}
 			__syncthreads();
 
 			Node* neighborsMemoryPool = reinterpret_cast<Node*>(sharedMemory + map->width * map->height * sizeof(unsigned int));
 			Node* neighbors = neighborsMemoryPool + threadIdx.x * 8; // 8 is the neighbor array size
 
-			const size_t agentPathMemorySize = map->width * map->height * 2;
-			const size_t agentPathWarpMemorySize = agentPathMemorySize * 32;
+			const auto agentPathMemorySize = map->width * map->height * 2;
+			const auto agentPathWarpMemorySize = agentPathMemorySize * 32;
 			const int agentPathOffset = agentPathWarpMemorySize * blockIdx.x + agentPathMemorySize * threadIdx.x;
 			unsigned int* agentPath = agentPaths + agentPathOffset;
 
-			const size_t memoryOffset = map->width * map->height * 16;
-			const size_t threadMemOffset = memoryOffset * threadIdx.x;
-			const size_t blockSizeElements = memoryOffset * 32;
-			const size_t blockMemOffset = blockSizeElements * blockIdx.x;
+			const auto memoryOffset = map->width * map->height * 16;
+			const auto threadMemOffset = memoryOffset * threadIdx.x;
+			const auto blockSizeElements = memoryOffset * 32;
+			const auto blockMemOffset = blockSizeElements * blockIdx.x;
 			BinaryHeap<Node> heap(static_cast<Node*>(kernelMemory) + blockMemOffset + threadMemOffset);
 			MemoryManager manager = MemoryManager(static_cast<Node*>(kernelMemory) + blockMemOffset + threadMemOffset + map->width * map->height * 8);
 
@@ -135,7 +130,7 @@ namespace spark {
 				
 				auto theBestNode = heap.pop_front();
 
-				const auto closedNode = manager.allocate<Node>(theBestNode); //it will be deleted with allocator deletion
+				const auto closedNode = manager.allocate<Node>(theBestNode);
 
 				const int nodeIndex = map->getTerrainNodeIndex(closedNode->pos[0], closedNode->pos[1]);
 				atomicOr(closedNodesLookup + nodeIndex, 1 << threadIdx.x);
@@ -206,24 +201,23 @@ namespace spark {
 			if (threadIdx.x == 0)
 			{
 				memset(sharedMemory, 0, sizeof(unsigned int) * map->width * map->height + 8 * 32 * sizeof(Node));
-				//allocator[blockIdx.x] = new MemoryAllocator(sizeof(Node) * map->width * map->height * 8 * 32);
 			}
 			__syncthreads();
 
 			Node* neighborsMemoryPool = reinterpret_cast<Node*>(sharedMemory + map->width * map->height * sizeof(unsigned int));
 			Node* neighbors = neighborsMemoryPool + threadIdx.x * 8; // 8 is the neighbor array size
 
-			const size_t agentPathMemorySize = map->width * map->height * 2;
-			const size_t agentPathWarpMemorySize = agentPathMemorySize * 32;
+			const auto agentPathMemorySize = map->width * map->height * 2;
+			const auto agentPathWarpMemorySize = agentPathMemorySize * 32;
 			const int agentPathOffset = agentPathWarpMemorySize * blockIdx.x + agentPathMemorySize * threadIdx.x;
 			unsigned int* agentPath = agentPaths + agentPathOffset;
 
-			const size_t memoryOffset = map->width * map->height * 16;
-			const size_t threadMemOffset = memoryOffset * threadIdx.x;
-			const size_t blockSizeElements = memoryOffset * 32;
-			const size_t blockMemOffset = blockSizeElements * blockIdx.x;
+			const auto memoryOffset = map->width * map->height * 2;
+			const auto threadMemOffset = memoryOffset * threadIdx.x;
+			const auto blockSizeElements = memoryOffset * 32;
+			const auto blockMemOffset = blockSizeElements * blockIdx.x;
 			BinaryHeap<Node> heap(static_cast<Node*>(kernelMemory) + blockMemOffset + threadMemOffset);
-			MemoryManager manager = MemoryManager(static_cast<Node*>(kernelMemory) + blockMemOffset + threadMemOffset + map->width * map->height * 8);
+			MemoryManager manager = MemoryManager(static_cast<Node*>(kernelMemory) + blockMemOffset + threadMemOffset + map->width * map->height);
 
 			const unsigned int startEndPointsBlockMemorySize = 4 * 32;
 			int startPoint[] = { path[startEndPointsBlockMemorySize * blockIdx.x + 4 * threadIdx.x + 0], path[startEndPointsBlockMemorySize * blockIdx.x + 4 * threadIdx.x + 1] };
@@ -259,30 +253,23 @@ namespace spark {
 					break;
 				}
 
-				if (heap.size >= map->width * map->height * 8)
+				if (heap.size >= map->width * map->height)
 				{
 					printf("Heap size = %d limit %d reached!\n", heap.size, map->width * map->height * 8);
 					break;
 				}
 
-				if (whileLoopCounter >= map->width * map->height * 8)
+				if (whileLoopCounter >= map->width * map->height)
 				{
 					printf("Closed nodes limit reached!\n");
 					break;
 				}
 
-				/*const auto end = thrust::unique(thrust::seq, heap.array, heap.array + heap.size);
-				heap.size = end - heap.array;*/
-
 				auto theBestNode = heap.pop_front();
 
-				const auto closedNode = manager.allocate<Node>(theBestNode); //it will be deleted with allocator deletion
-
-				/*const int nodeIndex = map->getTerrainNodeIndex(closedNode->pos[0], closedNode->pos[1]);
-				atomicOr(closedNodesLookup + nodeIndex, 1 << threadIdx.x);*/
+				const auto closedNode = manager.allocate<Node>(theBestNode);
 
 				closedNode->getNeighbors(map, neighbors);
-
 #pragma unroll
 				for (i = 0; i < 8; ++i)
 				{
@@ -313,14 +300,6 @@ namespace spark {
 					const float terrainValue = map->getTerrainValue(neighborPos[0], neighborPos[1]);
 					neighbors[i].valueF = (1.0f - terrainValue) * (neighbors[i].valueH + functionG);
 
-					/*const auto lastNode = thrust::remove(thrust::device, heap.array, heap.array + heap.size, neighbors[i]);
-					heap.size = lastNode - heap.array;*/
-
-					/*const  auto nodeAddress = thrust::find(thrust::seq, heap.array, heap.array + heap.size, neighbors[i]);
-					if (nodeAddress - heap.array != heap.size)
-					{
-						heap.removeValue(nodeAddress - heap.array);
-					}*/
 					heap.insert(neighbors[i]);
 				}
 			}
@@ -334,7 +313,6 @@ namespace spark {
 			finishNode->getPathLength(pathLength);
 			agentPath[0] = pathLength;
 			finishNode->recreatePath(agentPath + 1, pathLength);
-			//printf("thread %d, block %d, path length %d\nopened nodes %d, loopCounter %d\n", threadIdx.x, blockIdx.x, pathLength, int(heap.size), whileLoopCounter);
 			//printf("GPU: Nodes processed %d, nodesToProcess %d, pathSize %d\n", whileLoopCounter, int(heap.size), pathLength);
 		}
 

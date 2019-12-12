@@ -3,8 +3,10 @@
 
 #include <cuda.h>
 #include <cuda_runtime.h>
-#include <memory>
-#include <vector>
+
+namespace spark {
+	enum class PathFindingMode : unsigned char;
+}
 
 namespace spark {
 	namespace cuda {
@@ -14,7 +16,7 @@ namespace spark {
 		__global__ void createMap(float* nodes, int width, int height);
 		__global__ void findPathV1(int* path, unsigned int* agentPaths, void* kernelMemory);
 		__global__ void findPathV2(int* path, unsigned int* agentPaths, void* kernelMemory);
-		__host__ std::vector<unsigned int> runKernel(int blocks, int threads, int* path, unsigned int* agentPaths, void* kernelMemory, const Map& mapHost);
+		__host__ void runKernel(int blocks, int threads, int* path, unsigned int* agentPaths, void* kernelMemory, const Map& mapHost, PathFindingMode mode);
 		__host__ void initMap(float* nodes, int width, int height);
 	}
 }

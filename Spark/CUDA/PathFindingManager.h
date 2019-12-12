@@ -34,11 +34,13 @@ namespace spark {
 		static PathFindingManager* getInstance();
 
 		__host__ void addAgent(const std::shared_ptr<ActorAI>& agent);
+		__host__ void setMode(PathFindingMode implementationMode);
 		__host__ void findPaths();
 		__host__ void loadMap(const std::string& mapPath);
+		__host__ void drawGui();
 	private:
 		std::vector<std::weak_ptr<ActorAI>> agents;
-		PathFindingMode mode = PathFindingMode::DEVICE;
+		PathFindingMode mode = PathFindingMode::DEVICE_IMPL;
 
 		__host__ PathFindingManager() = default;
 		__host__ ~PathFindingManager() = default;

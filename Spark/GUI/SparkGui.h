@@ -101,7 +101,7 @@ namespace spark {
 
 	private:
 		void drawMainMenuGui();
-		void drawSparkSettings(bool *p_open);
+		void drawSparkSettings(bool *p_open) const;
 		int checkCurrentItem(const char** items) const;
 	};
 

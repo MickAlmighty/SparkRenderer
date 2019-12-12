@@ -25,6 +25,7 @@ namespace spark {
 			drawMainMenuGui();
 			SceneManager::getInstance()->drawGui();
 			ResourceManager::getInstance()->drawGui();
+			PathFindingManager::getInstance()->drawGui();
 			ImGui::EndMainMenuBar();
 		}
 	}
@@ -46,7 +47,7 @@ namespace spark {
 		if (showEngineSettings)	drawSparkSettings(&showEngineSettings);
 	}
 
-	void SparkGui::drawSparkSettings(bool* p_open)
+	void SparkGui::drawSparkSettings(bool* p_open) const
 	{
 		if (!ImGui::Begin("Spark Settings", p_open, ImGuiWindowFlags_AlwaysAutoResize))
 		{

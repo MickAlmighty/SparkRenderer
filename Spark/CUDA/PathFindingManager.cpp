@@ -23,6 +23,11 @@ namespace spark {
 		agents.push_back(agent);
 	}
 
+	void PathFindingManager::setMode(PathFindingMode implementationMode)
+	{
+		mode = implementationMode;
+	}
+
 	void PathFindingManager::findPaths()
 	{
 		PROFILE_FUNCTION();
@@ -31,20 +36,20 @@ namespace spark {
 
 		const double startTime = glfwGetTime();
 
-		if (mode == PathFindingMode::HOST)
+		if (mode == PathFindingMode::HOST_IMPL)
 		{
 			findPathsCPU();
 		}
 
-		if (mode == PathFindingMode::DEVICE)
+		if (mode == PathFindingMode::DEVICE_IMPL || mode == PathFindingMode::DEVICE_IMPL_V2)
 		{
-			const auto future = std::async(std::launch::async, [this] { findPathsCPU(); });
+			//const auto future = std::async(std::launch::async, [this] { findPathsCPU(); });
 			findPathsCUDA();
 		}
 
-		//printf("Agents: %d, path finding time: %fms\n", static_cast<int>(agents.size()),
-			//(glfwGetTime() - startTime) * 1000.0f);
+		const auto nextFrameAgentsCapacity = agents.capacity();
 		agents.clear();
+		agents.reserve(nextFrameAgentsCapacity);
 	}
 
 	void PathFindingManager::loadMap(const std::string& mapPath)
@@ -79,12 +84,47 @@ namespace spark {
 		initializeMapOnGPU();
 	}
 
+	void PathFindingManager::drawGui()
+	{
+		static bool propertiesWindowOpened = false;
+		if (ImGui::BeginMenu("PathFindingManager"))
+		{
+			std::string menuName = "Properties";
+			if (ImGui::MenuItem(menuName.c_str()))
+			{
+				propertiesWindowOpened = true;
+			}
+			ImGui::EndMenu();
+		}
+
+		if (propertiesWindowOpened)
+		{
+			if (ImGui::Begin("Properties", &propertiesWindowOpened, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize))
+			{
+				static int implMode = 0;
+				const auto r1 = ImGui::RadioButton("Host_impl", &implMode, static_cast<int>(PathFindingMode::HOST_IMPL)); ImGui::SameLine();
+				const auto r2 = ImGui::RadioButton("Device_impl", &implMode, static_cast<int>(PathFindingMode::DEVICE_IMPL)); ImGui::SameLine();
+				const auto r3 = ImGui::RadioButton("Device_impl_V2", &implMode, static_cast<int>(PathFindingMode::DEVICE_IMPL_V2));
+
+				if (r1 || r2 || r3)
+				{
+					mode = static_cast<PathFindingMode>(implMode);
+				}
+
+				static const char* items[3] = { "map.png", "map2.png", "map3.png" };
+				static int current_item = 0;
+				if (ImGui::Combo("Map", &current_item, items, IM_ARRAYSIZE(items)))
+				{
+					loadMap(items[current_item]);
+				}
+				ImGui::End();
+			}
+		}
+	}
+
 	void PathFindingManager::initializeMapOnGPU() const
 	{
 		using namespace cuda;
-		//cudaDeviceSetLimit(cudaLimitMallocHeapSize, 1024 * 1024 * 1424); // max 1GB of GPU dynamic memory
-		//gpuErrchk(cudaGetLastError());
-
 		const auto nodes = DeviceMemory<float>::AllocateElements(map.width * map.height);
 		gpuErrchk(cudaGetLastError());
 		cudaMemcpy(nodes.ptr, map.nodes, sizeof(float) * map.width * map.height, cudaMemcpyHostToDevice);
@@ -129,10 +169,17 @@ namespace spark {
 			}
 		}
 
-		const std::size_t pathsStartsEndsSizeInBytes = pathsStartsEnds.size() * sizeof(path);
-		const std::size_t agentPathsSizeInBytes = map.width * map.height * sizeof(glm::ivec2) * blockCount * 32;
-		const std::size_t kernelMemoryInBytes = sizeof(cuda::Node) * map.width * map.height * 16 * 32 * blockCount;
-		const std::size_t overallBufferSizeInBytes = pathsStartsEndsSizeInBytes + agentPathsSizeInBytes + kernelMemoryInBytes;
+		const auto pathsStartsEndsSizeInBytes = pathsStartsEnds.size() * sizeof(path);
+		const auto agentPathsSizeInBytes = map.width * map.height * sizeof(glm::ivec2) * blockCount * 32;
+
+		auto threadMemoryMultiplier = 1;
+		if (mode == PathFindingMode::DEVICE_IMPL)
+			threadMemoryMultiplier = 16;
+		if (mode == PathFindingMode::DEVICE_IMPL_V2)
+			threadMemoryMultiplier = 2;
+
+		const auto kernelMemoryInBytes = sizeof(cuda::Node) * map.width * map.height * 32 * blockCount * threadMemoryMultiplier;
+		const auto overallBufferSizeInBytes = pathsStartsEndsSizeInBytes + agentPathsSizeInBytes + kernelMemoryInBytes;
 		const auto devMem = cuda::DeviceMemory<std::uint8_t>::AllocateBytes(overallBufferSizeInBytes);
 		gpuErrchk(cudaGetLastError());
 
@@ -144,16 +191,18 @@ namespace spark {
 		const auto pathsStartsEndsDev = reinterpret_cast<int*>(devMem.ptr + 0);
 		const auto agentPathsDev = reinterpret_cast<unsigned int*>(devMem.ptr + pathsStartsEndsSizeInBytes);
 		const auto kernelMemoryDev = reinterpret_cast<void*>(devMem.ptr + pathsStartsEndsSizeInBytes + agentPathsSizeInBytes);
-		auto paths = cuda::runKernel(blockCount, threadsPerBlock, pathsStartsEndsDev, agentPathsDev, kernelMemoryDev, map);
+		cuda::runKernel(blockCount, threadsPerBlock, pathsStartsEndsDev, agentPathsDev, kernelMemoryDev, map, mode);
 
-		const size_t agentPathSize = map.width * map.height * 2;
-		const size_t agentPathsBufferSize = agentPathSize * blockCount * 32;
+		const auto agentPathSize = map.width * map.height * 2;
+		const auto agentPathsBufferSize = agentPathSize * blockCount * 32;
+		std::vector<unsigned int> paths(agentPathsBufferSize);
+		cudaDeviceSynchronize();
+		cudaMemcpy(paths.data(), agentPathsDev, agentPathsBufferSize * sizeof(unsigned int), cudaMemcpyDeviceToHost);
 
 		std::vector<std::vector<glm::ivec2>> pathsForAgents(blockCount * 32);
-		//pathsForAgents.reserve(blockCount * 32);
 		for (int i = 0; i < blockCount * 32; ++i)
 		{
-			const size_t pathSize = paths[agentPathSize * i];
+			const auto pathSize = paths[agentPathSize * i];
 			if (pathSize != 0)
 			{
 				pathsForAgents[i].resize(pathSize);
@@ -185,7 +234,7 @@ namespace spark {
 
 			const auto agentPtr = agent.lock();
 			auto path = findPath(agentPtr->startPos, agentPtr->endPos);
-			//agentPtr->setPath(path);
+			agentPtr->setPath(path);
 		}
 	}
 
@@ -232,14 +281,14 @@ namespace spark {
 		std::list<NodeAI> closedNodes;
 
 		std::vector<std::vector<bool>> closedNodesTable(map.width);
-		for(auto& cols: closedNodesTable)
+		for (auto& cols : closedNodesTable)
 		{
 			cols.resize(map.height);
 		}
 
 		openedNodes.emplace(NodeAI(startPoint, 0.0f));
 		NodeAI* finishNode = nullptr;
-		
+
 		while (!finishNode)
 		{
 			if (openedNodes.empty())
@@ -343,7 +392,7 @@ namespace spark {
 		}
 	}
 
-	void PathFindingManager::insertOrSwapNode(std::set<NodeAI>& openedNodes,const NodeAI& node) const
+	void PathFindingManager::insertOrSwapNode(std::set<NodeAI>& openedNodes, const NodeAI& node) const
 	{
 		const auto& it = std::find_if(std::begin(openedNodes), std::end(openedNodes),
 			[&node](const NodeAI& n)

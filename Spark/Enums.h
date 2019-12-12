@@ -32,8 +32,9 @@ namespace spark {
 
 	enum class PathFindingMode : uint8_t
 	{
-		HOST = 0,
-		DEVICE
+		HOST_IMPL = 0,
+		DEVICE_IMPL,
+		DEVICE_IMPL_V2
 	};
 }
 #endif
