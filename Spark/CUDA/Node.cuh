@@ -59,16 +59,17 @@ namespace spark {
 				{
 					return distanceFromBeginning < node.distanceFromBeginning;
 				}
-				else
-					return valueF < node.valueF;
+				
+				return valueF < node.valueF;
 				//return this->valueF < node.valueF;
 			}
 
 			__device__ bool operator==(const Node& node) const
 			{
-				const bool xpos = this->pos[0] == node.pos[0];
-				const bool ypos = this->pos[1] == node.pos[1];
-				return xpos && ypos;
+				//const bool xpos = this->pos[0] == node.pos[0];
+				//const bool ypos = this->pos[1] == node.pos[1];
+				//return xpos && ypos;
+				return !(*this < node) && !(node < *this);
 			}
 
 			__device__ float measureManhattanDistance(int* point) const
@@ -76,12 +77,18 @@ namespace spark {
 				/*const float xDistance = fabsf(static_cast<float>(pos[0] - point[0]));
 				const float yDistance = fabsf(static_cast<float>(pos[1] - point[1]));
 				return xDistance + yDistance;*/
-				
+
+				//diagonal non uniform cost
 				const float D = 1.0f;
 				const float D2 = 1.41f;
 				const float xDistance = fabsf(static_cast<float>(pos[0] - point[0]));
 				const float yDistance = fabsf(static_cast<float>(pos[1] - point[1]));
 				return D * (xDistance + yDistance) + (D2 - 2 * D) * fmin(xDistance, yDistance);
+
+				//diagonal uniform cost
+				/*const float xDistance = fabsf(static_cast<float>(pos[0] - point[0]));
+				const float yDistance = fabsf(static_cast<float>(pos[1] - point[1]));
+				return fmax(xDistance, yDistance);*/
 			}
 
 			__device__ void getNeighbors(Map* map, Node* nodes)

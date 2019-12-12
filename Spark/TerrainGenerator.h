@@ -2,17 +2,13 @@
 #define TERRAIN_GENERATOR_H
 
 #include "Component.h"
-#include "Structs.h"
 
 namespace spark {
 	class TerrainGenerator : public Component
 	{
 	public:
 		TerrainGenerator(std::string&& newName = "TerrainGenerator");
-		~TerrainGenerator();
-
-		Texture generateTerrain();
-		void updateTerrain() const;
+		~TerrainGenerator() = default;
 
 		SerializableType getSerializableType() override;
 		Json::Value serialize() override;
@@ -22,11 +18,7 @@ namespace spark {
 		void drawGUI() override;
 
 	private:
-		int terrainSize = 20;
 		std::size_t agentCounter{ 0 };
-
-		Texture generatedTerrain{};
-		std::vector<float> terrain;
 	};
 
 }

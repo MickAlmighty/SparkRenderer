@@ -10,7 +10,8 @@ namespace spark {
 		class BinaryHeap
 		{
 		public:
-			size_t size{ 0 };
+			unsigned int size{ 0 };
+			T* array = nullptr;
 
 			__device__ BinaryHeap(T* array_) : array(array_) {}
 			__device__ ~BinaryHeap() {}
@@ -20,8 +21,6 @@ namespace spark {
 			__device__ int findIndex(const T& value);
 			__device__ int findIndex_if(const nvstd::function<bool(const T& value)>& isEqual);
 		private:
-			T* array = nullptr;
-
 			__device__ int parent(int index) const;
 			__device__ int left(int index) const;
 			__device__ int right(int index) const;

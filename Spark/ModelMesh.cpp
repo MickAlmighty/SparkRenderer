@@ -83,6 +83,7 @@ namespace spark {
 		root["modelPath"] = modelPath;
 		root["name"] = name;
 		root["instanced"] = instanced;
+		root["active"] = active;
 		return root;
 	}
 
@@ -92,5 +93,6 @@ namespace spark {
 		name = root.get("name", "ModelMesh").asString();
 		meshes = ResourceManager::getInstance()->findModelMeshes(modelPath);
 		instanced = root.get("instanced", false).asBool();
+		active = root.get("active", true).asBool();
 	}
 }

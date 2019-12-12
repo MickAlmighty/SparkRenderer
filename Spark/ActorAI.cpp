@@ -212,6 +212,7 @@ namespace spark {
 		root["name"] = name;
 		root["movementSpeed"] = movementSpeed;
 		root["drawPath"] = drawPath;
+		root["autoWalking"] = autoWalking;
 		return root;
 	}
 
@@ -220,6 +221,7 @@ namespace spark {
 		name = root.get("name", "ActorAI").asString();
 		movementSpeed = root.get("movementSpeed", 1.0f).asFloat();
 		drawPath = root.get("drawPath", false).asBool();
+		autoWalking = root.get("autoWalking", true).asBool();
 	}
 
 	void ActorAI::drawGUI()

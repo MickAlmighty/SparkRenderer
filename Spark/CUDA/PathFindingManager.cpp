@@ -185,7 +185,7 @@ namespace spark {
 
 			const auto agentPtr = agent.lock();
 			auto path = findPath(agentPtr->startPos, agentPtr->endPos);
-			agentPtr->setPath(path);
+			//agentPtr->setPath(path);
 		}
 	}
 
@@ -288,8 +288,8 @@ namespace spark {
 			finishNode->getPath(path);
 		}
 
-		printf("CPU: Nodes processed %d, nodesToProcess %d, pathSize %d\n", 
-			static_cast<int>(closedNodes.size()), static_cast<int>(openedNodes.size()), static_cast<int>(path.size()));
+		//printf("CPU: Nodes processed %d, nodesToProcess %d, pathSize %d\n", 
+			//static_cast<int>(closedNodes.size()) - 1, static_cast<int>(openedNodes.size()), static_cast<int>(path.size()));
 		openedNodes.clear();
 		closedNodes.clear();
 		return path;
