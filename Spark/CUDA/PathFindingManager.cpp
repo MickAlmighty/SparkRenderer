@@ -55,7 +55,7 @@ namespace spark {
 	void PathFindingManager::loadMap(const std::string& mapPath)
 	{
 		int texWidth, texHeight, nrChannels;
-		unsigned char* pixels = stbi_load(mapPath.c_str(), &texWidth, &texHeight, &nrChannels, 0);
+		float* pixels = stbi_loadf(mapPath.c_str(), &texWidth, &texHeight, &nrChannels, 0);
 
 		std::vector<glm::vec3> pix;
 		pix.reserve(texWidth * texHeight);
@@ -65,10 +65,7 @@ namespace spark {
 			pixel.x = *(pixels + i);
 			pixel.y = *(pixels + i + 1);
 			pixel.z = *(pixels + i + 2);
-			if (pixel != glm::vec3(0))
-				pix.push_back(glm::normalize(pixel));
-			else
-				pix.push_back(pixel);
+			pix.push_back(pixel);
 		}
 
 		std::vector<float> mapNodes;
@@ -76,6 +73,7 @@ namespace spark {
 		for (int i = 0; i < texWidth * texHeight; ++i)
 		{
 			mapNodes[i] = pix[i].r;
+			printf("{%.1f}", mapNodes[i]);
 		}
 
 		map = cuda::Map(texWidth, texHeight, mapNodes.data());
@@ -337,7 +335,7 @@ namespace spark {
 				const float functionG = neighbor.depth;
 
 				const float terrainValue = map.getTerrainValue(neighbor.position.x, neighbor.position.y);
-				const float heuristicsValue = (1 - terrainValue) * (functionH + functionG);
+				const float heuristicsValue = (1 + terrainValue) * (functionH + functionG);
 				neighbor.functionF = heuristicsValue;
 
 				insertOrSwapNode(openedNodes, neighbor);
@@ -374,33 +372,6 @@ namespace spark {
 			return n.position == node.position;
 		});
 		return it != std::end(closedNodes);
-	}
-
-	void PathFindingManager::insertOrSwapNode(std::multimap<float, NodeAI>& openedNodes, float f,
-		const NodeAI& node) const
-	{
-		const auto& it = std::find_if(std::begin(openedNodes), std::end(openedNodes),
-			[&node](const std::pair<float, NodeAI>& n)
-		{
-			const bool nodesEqual = n.second.position == node.position;
-			if (!nodesEqual)
-			{
-				return false;
-			}
-			const bool betterFunctionG = node.depth < n.second.depth;
-
-			return nodesEqual && betterFunctionG;
-		});
-
-		if (it != std::end(openedNodes))
-		{
-			openedNodes.erase(it);
-			openedNodes.emplace(f, node);
-		}
-		else
-		{
-			openedNodes.emplace(f, node);
-		}
 	}
 
 	void PathFindingManager::insertOrSwapNode(std::set<NodeAI>& openedNodes, const NodeAI& node) const

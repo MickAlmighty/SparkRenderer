@@ -92,7 +92,7 @@ namespace spark {
 			__device__ void calculateHeuristic(const Map* map, int* endPoint)
 			{
 				const float terrainValue = map->getTerrainValue(pos[0], pos[1]);
-				valueF = (1.0f - terrainValue) * (measureDistanceTo(endPoint) + distanceFromBeginning);
+				valueF = (1.0f + terrainValue) * (measureDistanceTo(endPoint) + distanceFromBeginning);
 			}
 
 			__device__ void getNeighbors(Map* map, Node* nodes)
@@ -113,7 +113,7 @@ namespace spark {
 				Map* map, const float depth) const
 			{
 				if (!map->areIndexesValid(position.x, position.y) || 
-					!map->getTerrainValue(position.x, position.y) != 1.0f)
+					map->getTerrainValue(position.x, position.y) == 1.0f)
 				{
 					node->valid = false;
 					return;

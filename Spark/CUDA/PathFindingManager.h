@@ -53,7 +53,6 @@ namespace spark {
 		__host__ std::deque<glm::ivec2> findPath(const glm::ivec2 startPoint, const glm::ivec2 endPoint) const;
 		__host__ NodeAI popFrom(std::multimap<float, NodeAI>& openedNodes) const;
 		__host__ bool isNodeClosed(const std::list<NodeAI>& closedNodes, const NodeAI& node) const;
-		__host__ void insertOrSwapNode(std::multimap<float, NodeAI>& openedNodes, float f, const NodeAI& node) const;
 		__host__ void insertOrSwapNode(std::set<NodeAI>& openedNodes, const NodeAI& node) const;
 	};
 }
