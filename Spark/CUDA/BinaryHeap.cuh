@@ -87,13 +87,17 @@ namespace spark {
 			if (size == 0)
 				return {};
 
-			size -= 1;
 			if (size == 1)
 			{
-				return array[0];
+				size -= 1;
+				const T value = array[size];
+				//memset(array + size, 0, sizeof(T));
+				return value;
 			}
-			swap(array[index], array[size]);
 
+			swap(array[index], array[size - 1]);
+			
+			size -= 1;
 			int keyIndex = index;
 			while (true)
 			{
@@ -136,7 +140,10 @@ namespace spark {
 				}
 				break;
 			}
-			return array[size];
+
+			const T value = array[size];
+			//memset(array + size, 0, sizeof(T));
+			return value;
 		}
 
 		template <typename T>

@@ -365,7 +365,13 @@ namespace spark {
 				++whileLoopCounter;
 				if (heap.size == 0)
 				{
-					printf("Heap is empty\n");
+					printf("Heap is empty, nodes processed %d\n", whileLoopCounter);
+					break;
+				}
+
+				if (heap.size >= map->width * map->height)
+				{
+					printf("Heap size = %d limit %d reached!\n", heap.size, map->width * map->height);
 					break;
 				}
 
@@ -419,7 +425,7 @@ namespace spark {
 			finishNode->getPathLength(pathLength);
 			agentPath[0] = pathLength;
 			finishNode->recreatePath(agentPath + 1, pathLength);
-			printf("GPU: Nodes processed %d, nodesToProcess %d, pathSize %d\n", whileLoopCounter, int(heap.size), pathLength);
+			//printf("GPU: Nodes processed %d, nodesToProcess %d, pathSize %d\n", whileLoopCounter, int(heap.size), pathLength);
 		}
 
 		__global__ void checkMapValues(Map* mapDev)
