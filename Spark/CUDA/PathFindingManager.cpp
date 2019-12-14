@@ -101,7 +101,7 @@ namespace spark {
 		{
 			if (ImGui::Begin("Properties", &propertiesWindowOpened, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize))
 			{
-				static int implMode = 0;
+				static int implMode = static_cast<int>(mode);
 				const auto r1 = ImGui::RadioButton("Host_impl", &implMode, static_cast<int>(PathFindingMode::HOST_IMPL)); ImGui::SameLine();
 				const auto r2 = ImGui::RadioButton("Device_impl", &implMode, static_cast<int>(PathFindingMode::DEVICE_IMPL)); ImGui::SameLine();
 				const auto r3 = ImGui::RadioButton("Device_impl_V2", &implMode, static_cast<int>(PathFindingMode::DEVICE_IMPL_V2));
@@ -135,8 +135,20 @@ namespace spark {
 
 	void PathFindingManager::findPathsCUDA() const
 	{
-		Timer t("void PathFindingManager::findPathsCUDA() const");
-		const std::uint16_t blockCount = calculateNumberOfBlocks();
+		PROFILE_FUNCTION();
+		std::uint16_t maxThreadsPerBlock = 32;
+		auto threadMemoryMultiplier = 1;
+		if (mode == PathFindingMode::DEVICE_IMPL)
+		{ 
+			threadMemoryMultiplier = 16;
+		}
+		if (mode == PathFindingMode::DEVICE_IMPL_V2)
+		{
+			threadMemoryMultiplier = 3;
+			maxThreadsPerBlock = 128;
+		}
+			
+		const std::uint16_t blockCount = calculateNumberOfBlocks(maxThreadsPerBlock);
 		const std::uint8_t threadsPerBlock = calculateNumberOfThreadsPerBlock(blockCount);
 
 		struct path
@@ -153,7 +165,7 @@ namespace spark {
 		std::vector<agentPathAssociation> associations;
 		associations.reserve(agents.size());
 
-		std::vector<path> pathsStartsEnds(32 * blockCount);
+		std::vector<path> pathsStartsEnds(maxThreadsPerBlock * blockCount);
 
 		unsigned int actorId = 0;
 		for (std::uint16_t blockId = 0; blockId < blockCount; ++blockId)
@@ -162,45 +174,45 @@ namespace spark {
 			{
 				if (actorId == agents.size())
 					break;
-				pathsStartsEnds[blockId * 32 + threadId].start = agents[actorId].lock()->startPos;
-				pathsStartsEnds[blockId * 32 + threadId].end = agents[actorId].lock()->endPos;
-				associations.push_back({ static_cast<uint32_t>(actorId), static_cast<uint32_t>(blockId * 32 + threadId) });
+				pathsStartsEnds[blockId * maxThreadsPerBlock + threadId].start = agents[actorId].lock()->startPos;
+				pathsStartsEnds[blockId * maxThreadsPerBlock + threadId].end = agents[actorId].lock()->endPos;
+				associations.push_back({ static_cast<uint32_t>(actorId), static_cast<uint32_t>(blockId * maxThreadsPerBlock + threadId) });
 				++actorId;
 			}
 		}
 
+		Timer t("findPathsCUDA() GPU mem alloc and copy");
 		const auto pathsStartsEndsSizeInBytes = pathsStartsEnds.size() * sizeof(path);
-		const auto agentPathsSizeInBytes = map.width * map.height * sizeof(glm::ivec2) * blockCount * 32;
+		const auto agentPathsSizeInBytes = map.width * map.height * sizeof(glm::ivec2) * blockCount * maxThreadsPerBlock;
 
-		auto threadMemoryMultiplier = 1;
-		if (mode == PathFindingMode::DEVICE_IMPL)
-			threadMemoryMultiplier = 16;
-		if (mode == PathFindingMode::DEVICE_IMPL_V2)
-			threadMemoryMultiplier = 2;
-
-		const auto kernelMemoryInBytes = sizeof(cuda::Node) * map.width * map.height * 32 * blockCount * threadMemoryMultiplier;
+		const auto kernelMemoryInBytes = sizeof(cuda::Node) * map.width * map.height * maxThreadsPerBlock * blockCount * threadMemoryMultiplier;
 		const auto overallBufferSizeInBytes = pathsStartsEndsSizeInBytes + agentPathsSizeInBytes + kernelMemoryInBytes;
 		const auto devMem = cuda::DeviceMemory<std::uint8_t>::AllocateBytes(overallBufferSizeInBytes);
 		gpuErrchk(cudaGetLastError());
 
-		//printf("Allocation of %f mb device memory for %d agents\n", overallBufferSizeInBytes / 1024.0f / 1024.0f, static_cast<int>(agents.size()));
-
 		cudaMemcpy(devMem.ptr, pathsStartsEnds.data(), pathsStartsEndsSizeInBytes, cudaMemcpyHostToDevice);
 		gpuErrchk(cudaGetLastError());
+		cudaDeviceSynchronize();
+		t.stop();
 
 		const auto pathsStartsEndsDev = reinterpret_cast<int*>(devMem.ptr + 0);
 		const auto agentPathsDev = reinterpret_cast<unsigned int*>(devMem.ptr + pathsStartsEndsSizeInBytes);
 		const auto kernelMemoryDev = reinterpret_cast<void*>(devMem.ptr + pathsStartsEndsSizeInBytes + agentPathsSizeInBytes);
-		cuda::runKernel(blockCount, threadsPerBlock, pathsStartsEndsDev, agentPathsDev, kernelMemoryDev, map, mode);
-
+		
+		{
+			PROFILE_SCOPE("CUDA PathFinding Kernel");
+			cuda::runKernel(blockCount, threadsPerBlock, pathsStartsEndsDev, agentPathsDev, kernelMemoryDev, map, mode, maxThreadsPerBlock);
+			cudaDeviceSynchronize();
+		}
 		const auto agentPathSize = map.width * map.height * 2;
-		const auto agentPathsBufferSize = agentPathSize * blockCount * 32;
+		const auto agentPathsBufferSize = agentPathSize * blockCount * maxThreadsPerBlock;
 		std::vector<unsigned int> paths(agentPathsBufferSize);
-		cudaDeviceSynchronize();
-		cudaMemcpy(paths.data(), agentPathsDev, agentPathsBufferSize * sizeof(unsigned int), cudaMemcpyDeviceToHost);
-
-		std::vector<std::vector<glm::ivec2>> pathsForAgents(blockCount * 32);
-		for (int i = 0; i < blockCount * 32; ++i)
+		{
+			PROFILE_SCOPE("Copying paths from GPU");
+			cudaMemcpy(paths.data(), agentPathsDev, agentPathsBufferSize * sizeof(unsigned int), cudaMemcpyDeviceToHost);
+		}
+		std::vector<std::vector<glm::ivec2>> pathsForAgents(blockCount * maxThreadsPerBlock);
+		for (int i = 0; i < blockCount * maxThreadsPerBlock; ++i)
 		{
 			const auto pathSize = paths[agentPathSize * i];
 			if (pathSize != 0)
@@ -209,7 +221,6 @@ namespace spark {
 				memcpy(pathsForAgents[i].data(), reinterpret_cast<int*>(paths.data()) + agentPathSize * i + 1, sizeof(int) *  pathSize * 2);
 			}
 		}
-		t.stop();
 
 		for (const auto& association : associations)
 		{
@@ -238,16 +249,16 @@ namespace spark {
 		}
 	}
 
-	std::uint16_t PathFindingManager::calculateNumberOfBlocks() const
+	std::uint16_t PathFindingManager::calculateNumberOfBlocks(std::uint16_t maxThreadsPerBlock) const
 	{
 		std::uint16_t blockCount;
-		if (agents.size() % 32 != 0)
+		if (agents.size() % maxThreadsPerBlock != 0)
 		{
-			blockCount = static_cast<std::uint16_t>(agents.size() / 32 + 1);
+			blockCount = static_cast<std::uint16_t>(agents.size() / maxThreadsPerBlock + 1);
 		}
 		else
 		{
-			blockCount = static_cast<std::uint16_t>(agents.size() / 32);
+			blockCount = static_cast<std::uint16_t>(agents.size() / maxThreadsPerBlock);
 		}
 		return blockCount;
 	}
@@ -337,8 +348,8 @@ namespace spark {
 			finishNode->getPath(path);
 		}
 
-		//printf("CPU: Nodes processed %d, nodesToProcess %d, pathSize %d\n", 
-			//static_cast<int>(closedNodes.size()) - 1, static_cast<int>(openedNodes.size()), static_cast<int>(path.size()));
+		printf("CPU: Nodes processed %d, nodesToProcess %d, pathSize %d\n", 
+			static_cast<int>(closedNodes.size()) - 1, static_cast<int>(openedNodes.size()), static_cast<int>(path.size()));
 		openedNodes.clear();
 		closedNodes.clear();
 		return path;

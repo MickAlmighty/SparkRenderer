@@ -40,7 +40,7 @@ namespace spark {
 		__host__ void drawGui();
 	private:
 		std::vector<std::weak_ptr<ActorAI>> agents;
-		PathFindingMode mode = PathFindingMode::DEVICE_IMPL;
+		PathFindingMode mode = PathFindingMode::HOST_IMPL;
 
 		__host__ PathFindingManager() = default;
 		__host__ ~PathFindingManager() = default;
@@ -48,7 +48,7 @@ namespace spark {
 		__host__ void initializeMapOnGPU() const;
 		__host__ void findPathsCUDA() const;
 		__host__ void findPathsCPU() const;
-		__host__ std::uint16_t calculateNumberOfBlocks() const;
+		__host__ std::uint16_t calculateNumberOfBlocks(std::uint16_t maxThreadsPerBlock) const;
 		__host__ std::uint8_t calculateNumberOfThreadsPerBlock(std::uint16_t numberOfBlocks) const;
 		__host__ std::deque<glm::ivec2> findPath(const glm::ivec2 startPoint, const glm::ivec2 endPoint) const;
 		__host__ NodeAI popFrom(std::multimap<float, NodeAI>& openedNodes) const;

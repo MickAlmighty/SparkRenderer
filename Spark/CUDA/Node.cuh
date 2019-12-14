@@ -29,9 +29,8 @@ namespace spark {
 			float valueF{};
 			int pos[2] = {};
 			float distanceFromBeginning{ 0 };
-			float valueH{};
-			bool valid = false;
-			Node* parent = nullptr;
+			bool valid{ false };
+			Node* parent{ nullptr };
 
 			__device__ Node() {}
 
@@ -45,7 +44,6 @@ namespace spark {
 			__device__ Node(const Node& n) 
 				: valueF(n.valueF), 
 				distanceFromBeginning(n.distanceFromBeginning), 
-				valueH(n.valueH), 
 				valid(n.valid), 
 				parent(n.parent)
 			{
@@ -72,7 +70,7 @@ namespace spark {
 				return !(*this < node) && !(node < *this);
 			}
 
-			__device__ float measureManhattanDistance(int* point) const
+			__device__ float measureDistanceTo(int* point) const
 			{
 				/*const float xDistance = fabsf(static_cast<float>(pos[0] - point[0]));
 				const float yDistance = fabsf(static_cast<float>(pos[1] - point[1]));
@@ -89,6 +87,12 @@ namespace spark {
 				/*const float xDistance = fabsf(static_cast<float>(pos[0] - point[0]));
 				const float yDistance = fabsf(static_cast<float>(pos[1] - point[1]));
 				return fmax(xDistance, yDistance);*/
+			}
+
+			__device__ void calculateHeuristic(const Map* map, int* endPoint)
+			{
+				const float terrainValue = map->getTerrainValue(pos[0], pos[1]);
+				valueF = (1.0f - terrainValue) * (measureDistanceTo(endPoint) + distanceFromBeginning);
 			}
 
 			__device__ void getNeighbors(Map* map, Node* nodes)

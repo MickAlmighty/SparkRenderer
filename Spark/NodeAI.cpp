@@ -37,7 +37,6 @@ namespace spark {
 		neighbors.reserve(8);
 		const float distanceFromNode = 1.0f;
 		const float diagonalDistanceFromNode = 1.41f;
-		//const float diagonalDistanceFromNode = 1.0f;
 		tryToCreateNeighbor(neighbors, { position.x - 1, position.y }, map, distanceFromNode);
 		tryToCreateNeighbor(neighbors, { position.x + 1, position.y }, map, distanceFromNode);
 		tryToCreateNeighbor(neighbors, { position.x, position.y - 1 }, map, distanceFromNode);

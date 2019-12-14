@@ -133,6 +133,29 @@ namespace spark {
 			agentCounter += 1024;
 		}
 
+		if (ImGui::Button("Add 16384 actors"))
+		{
+			const auto parent = getGameObject()->getParent();
+			for (int i = 0; i < 1024 * 16; ++i)
+			{
+				auto gameObject = std::make_shared<GameObject>();
+				const auto actorAiComponent = std::make_shared<ActorAI>();
+				actorAiComponent->movementSpeed = 4.0f;
+				actorAiComponent->autoWalking = true;
+				gameObject->addComponent(actorAiComponent, gameObject);
+
+				const auto modelMesh = std::make_shared<ModelMesh>();
+				modelMesh->instanced = true;
+				const auto pathsToModels = ResourceManager::getInstance()->getPathsToModels();
+				const auto meshes = ResourceManager::getInstance()->findModelMeshes(pathsToModels[0]);
+				modelMesh->setModel(std::make_pair(pathsToModels[0], meshes));
+				gameObject->addComponent(modelMesh, gameObject);
+
+				getGameObject()->getParent()->addChild(gameObject, parent);
+			}
+			agentCounter += 1024 * 16;
+		}
+
 		removeComponentGUI<TerrainGenerator>();
 	}
 
