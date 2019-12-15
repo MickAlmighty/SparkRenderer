@@ -43,6 +43,28 @@ namespace spark {
 			gpuErrchk(cudaGetLastError());
 		}
 
+		__device__ void constructPath(unsigned int* path, Node* const finishNode)
+		{
+			int pathLength = 0;
+			Node* node = finishNode;
+			while (node)
+			{
+				++pathLength;
+				node = node->parent;
+			}
+			path[0] = pathLength;
+
+			node = finishNode;
+			int index = pathLength;
+			while (node)
+			{
+				index -= 1;
+				path[1 + index * 2] = node->pos[0];
+				path[1 + index * 2 + 1] = node->pos[1];
+				node = node->parent;
+			}
+		}
+
 		__global__  void createMap(float* nodes, int width, int height)
 		{
 			if (map != nullptr)
@@ -64,7 +86,8 @@ namespace spark {
 			}
 			__syncthreads();
 
-			Node* neighborsMemoryPool = reinterpret_cast<Node*>(sharedMemory + map->width * map->height * sizeof(unsigned int));
+			Node* neighborsMemoryPool = reinterpret_cast<Node*>(sharedMemory + map->width * map->height * sizeof(
+				unsigned int));
 			Node* neighbors = neighborsMemoryPool + threadIdx.x * 8; // 8 is the neighbor array size
 
 			const auto agentPathMemorySize = map->width * map->height * 2;
@@ -77,10 +100,12 @@ namespace spark {
 			const auto blockSizeElements = memoryOffset * 32;
 			const auto blockMemOffset = blockSizeElements * blockIdx.x;
 			BinaryHeap<Node> heap(static_cast<Node*>(kernelMemory) + blockMemOffset + threadMemOffset);
-			MemoryManager manager = MemoryManager(static_cast<Node*>(kernelMemory) + blockMemOffset + threadMemOffset + map->width * map->height * 8);
+			MemoryManager manager = MemoryManager(
+				static_cast<Node*>(kernelMemory) + blockMemOffset + threadMemOffset + map->width * map->height * 8);
 
 			const unsigned int startEndPointsBlockMemorySize = 4 * 32;
-			const unsigned int startEndPointsThreadOffset = startEndPointsBlockMemorySize * blockIdx.x + 4 * threadIdx.x;
+			const unsigned int startEndPointsThreadOffset = startEndPointsBlockMemorySize * blockIdx.x + 4 * threadIdx.
+				x;
 			int startPoint[] = { path[startEndPointsThreadOffset + 0], path[startEndPointsThreadOffset + 1] };
 			int endPoint[] = { path[startEndPointsThreadOffset + 2], path[startEndPointsThreadOffset + 3] };
 
@@ -164,12 +189,14 @@ namespace spark {
 					const float functionG = neighbors[i].distanceFromBeginning;
 					const int neighborPos[2] = { neighbors[i].pos[0], neighbors[i].pos[1] };
 					const float terrainValue = map->getTerrainValue(neighborPos[0], neighborPos[1]);
-					neighbors[i].valueF = (1.0f - terrainValue) * (neighbors[i].measureDistanceTo(endPoint) + functionG);
+					neighbors[i].valueF = (1.0f - terrainValue) * (neighbors[i].measureDistanceTo(endPoint) + functionG
+					);
 
 					/*const auto lastNode = thrust::remove(thrust::device, heap.array, heap.array + heap.size, neighbors[i]);
 					heap.size = lastNode - heap.array;*/
 
-					const  auto nodeAddress = thrust::find(thrust::seq, heap.array, heap.array + heap.size, neighbors[i]);
+					const  auto nodeAddress = thrust::find(thrust::seq, heap.array, heap.array + heap.size,
+					                                       neighbors[i]);
 					if (nodeAddress - heap.array != heap.size)
 					{
 						heap.removeValue(nodeAddress - heap.array);
@@ -183,10 +210,7 @@ namespace spark {
 				return;
 			}
 
-			int pathLength = 0;
-			finishNode->getPathLength(pathLength);
-			agentPath[0] = pathLength;
-			finishNode->recreatePath(agentPath + 1, pathLength);
+			constructPath(agentPath, finishNode);
 			//printf("GPU: Nodes processed %d, nodesToProcess %d, pathSize %d\n", whileLoopCounter, int(heap.size), pathLength);
 		}
 
@@ -202,7 +226,8 @@ namespace spark {
 			}
 			__syncthreads();
 
-			Node* neighborsMemoryPool = reinterpret_cast<Node*>(sharedMemory + map->width * map->height * sizeof(unsigned int));
+			Node* neighborsMemoryPool = reinterpret_cast<Node*>(sharedMemory + map->width * map->height * sizeof(
+				unsigned int));
 			Node* neighbors = neighborsMemoryPool + threadIdx.x * 8; // 8 is the neighbor array size
 
 			const auto agentPathMemorySize = map->width * map->height * 2;
@@ -215,10 +240,12 @@ namespace spark {
 			const auto blockSizeElements = memoryOffset * 32;
 			const auto blockMemOffset = blockSizeElements * blockIdx.x;
 			BinaryHeap<Node> heap(static_cast<Node*>(kernelMemory) + blockMemOffset + threadMemOffset);
-			MemoryManager manager = MemoryManager(static_cast<Node*>(kernelMemory) + blockMemOffset + threadMemOffset + map->width * map->height);
+			MemoryManager manager = MemoryManager(
+				static_cast<Node*>(kernelMemory) + blockMemOffset + threadMemOffset + map->width * map->height);
 
 			const unsigned int startEndPointsBlockMemorySize = 4 * 32;
-			const unsigned int startEndPointsThreadOffset = startEndPointsBlockMemorySize * blockIdx.x + 4 * threadIdx.x;
+			const unsigned int startEndPointsThreadOffset = startEndPointsBlockMemorySize * blockIdx.x + 4 * threadIdx.
+				x;
 			int startPoint[] = { path[startEndPointsThreadOffset + 0], path[startEndPointsThreadOffset + 1] };
 			int endPoint[] = { path[startEndPointsThreadOffset + 2], path[startEndPointsThreadOffset + 3] };
 
@@ -296,7 +323,8 @@ namespace spark {
 					const float functionG = neighbors[i].distanceFromBeginning;
 					const int neighborPos[2] = { neighbors[i].pos[0], neighbors[i].pos[1] };
 					const float terrainValue = map->getTerrainValue(neighborPos[0], neighborPos[1]);
-					neighbors[i].valueF = (1.0f - terrainValue) * (neighbors[i].measureDistanceTo(endPoint) + functionG);
+					neighbors[i].valueF = (1.0f - terrainValue) * (neighbors[i].measureDistanceTo(endPoint) + functionG
+					);
 
 					heap.insert(neighbors[i]);
 				}
@@ -307,10 +335,7 @@ namespace spark {
 				return;
 			}
 
-			int pathLength = 0;
-			finishNode->getPathLength(pathLength);
-			agentPath[0] = pathLength;
-			finishNode->recreatePath(agentPath + 1, pathLength);
+			constructPath(agentPath, finishNode);
 			//printf("GPU: Nodes processed %d, nodesToProcess %d, pathSize %d\n", whileLoopCounter, int(heap.size), pathLength);
 		}
 
@@ -321,7 +346,8 @@ namespace spark {
 			const int mapSize = map->width * map->height;
 
 			const unsigned int startEndPointsBlockMemorySize = 4 * maxThreadsPerBlock;
-			const unsigned int startEndPointsThreadOffset = startEndPointsBlockMemorySize * blockIdx.x + 4 * threadIdx.x;
+			const unsigned int startEndPointsThreadOffset = startEndPointsBlockMemorySize * blockIdx.x + 4 * threadIdx.
+				x;
 			int startPoint[] = { path[startEndPointsThreadOffset + 0], path[startEndPointsThreadOffset + 1] };
 			int endPoint[] = { path[startEndPointsThreadOffset + 2], path[startEndPointsThreadOffset + 3] };
 
@@ -344,7 +370,8 @@ namespace spark {
 			Node* closedNodes = threadMemoryBegin + mapSize;
 			MemoryManager manager = MemoryManager(closedNodes);
 
-			int* closedNodesIndices = reinterpret_cast<int*>(threadMemoryBegin + mapSize * 2); // it is more than needed now but it need to be equal to map width * map height
+			int* closedNodesIndices = reinterpret_cast<int*>(threadMemoryBegin + mapSize * 2);
+			// it is more than needed now but it need to be equal to map width * map height
 			memset(closedNodesIndices, -1, mapSize * sizeof(int));
 
 			Node* finishNode = nullptr;
@@ -377,7 +404,8 @@ namespace spark {
 
 				auto theBestNode = heap.pop_front();
 				theBestNode.getNeighbors(map, neighbors);
-#pragma unroll (8)
+				
+				#pragma unroll
 				for (int i = 0; i < 8; ++i)
 				{
 					if (!neighbors[i].valid)
@@ -389,10 +417,13 @@ namespace spark {
 					const int parentIndex = map->getTerrainNodeIndex(theBestNode.pos[0], theBestNode.pos[1]);
 					if (closedNodesIndices[nodeIdx] != -1)
 					{
-						if (neighbors[i].distanceFromBeginning < closedNodes[closedNodesIndices[nodeIdx]].distanceFromBeginning)
+						if (neighbors[i].distanceFromBeginning < closedNodes[closedNodesIndices[nodeIdx]].
+							distanceFromBeginning)
 						{
-							closedNodes[closedNodesIndices[nodeIdx]].parent = &closedNodes[closedNodesIndices[parentIndex]];
-							closedNodes[closedNodesIndices[nodeIdx]].distanceFromBeginning = neighbors[i].distanceFromBeginning;
+							closedNodes[closedNodesIndices[nodeIdx]].parent = &closedNodes[closedNodesIndices[
+								parentIndex]];
+							closedNodes[closedNodesIndices[nodeIdx]].distanceFromBeginning = neighbors[i].
+								distanceFromBeginning;
 							
 							neighbors[i].calculateHeuristic(map, endPoint);
 							heap.insert(neighbors[i]);
@@ -421,10 +452,7 @@ namespace spark {
 				return;
 			}
 
-			int pathLength = 0;
-			finishNode->getPathLength(pathLength);
-			agentPath[0] = pathLength;
-			finishNode->recreatePath(agentPath + 1, pathLength);
+			constructPath(agentPath, finishNode);
 			//printf("GPU: Nodes processed %d, nodesToProcess %d, pathSize %d\n", whileLoopCounter, int(heap.size), pathLength);
 		}
 

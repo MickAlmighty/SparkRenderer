@@ -191,6 +191,8 @@ namespace spark {
 		cudaDeviceSynchronize();
 		t.stop();
 
+		//printf("GPU allocation of %f mb memory\n", overallBufferSizeInBytes / 1024.0f / 1024.0f);
+
 		const auto pathsStartsEndsDev = reinterpret_cast<int*>(devMem.ptr + 0);
 		const auto agentPathsDev = reinterpret_cast<unsigned int*>(devMem.ptr + pathsStartsEndsSizeInBytes);
 		const auto kernelMemoryDev = reinterpret_cast<void*>(devMem.ptr + pathsStartsEndsSizeInBytes + agentPathsSizeInBytes);

@@ -202,26 +202,6 @@ namespace spark {
 				}
 			}
 
-			__device__ void getPathLength(int& length) const
-			{
-				++length;
-				if (parent != nullptr)
-				{
-					parent->getPathLength(length);
-				}
-			}
-
-			__device__ void recreatePath(unsigned int* path, int index)
-			{
-				index = index - 1;
-				path[index * 2] = pos[0];
-				path[index * 2 + 1] = pos[1];
-				if (parent != nullptr)
-				{
-					parent->recreatePath(path, index);
-				}
-			}
-
 			void getPath(std::deque<glm::ivec2>& path) const
 			{
 				path.push_front({ static_cast<float>(pos[0]), static_cast<float>(pos[1]) });
