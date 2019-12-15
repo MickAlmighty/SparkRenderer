@@ -10,7 +10,6 @@
 #include "GameObject.h"
 #include "GUI/SparkGui.h"
 #include "JsonSerializer.h"
-#include "NodeAI.h"
 
 namespace spark {
 

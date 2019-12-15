@@ -7,7 +7,6 @@
 #include "kernel.cuh"
 #include "Map.cuh"
 #include "Node.cuh"
-#include "NodeAI.h"
 #include <stb_image.h>
 
 namespace spark {
@@ -73,7 +72,6 @@ namespace spark {
 		for (int i = 0; i < texWidth * texHeight; ++i)
 		{
 			mapNodes[i] = pix[i].r;
-			printf("{%.1f}", mapNodes[i]);
 		}
 
 		map = cuda::Map(texWidth, texHeight, mapNodes.data());
@@ -285,9 +283,10 @@ namespace spark {
 
 	std::deque<glm::ivec2> PathFindingManager::findPath(const glm::ivec2 startPoint, const glm::ivec2 endPoint) const
 	{
+		using namespace cuda;
 		std::deque<glm::ivec2> path;
-		std::set<NodeAI> openedNodes;
-		std::list<NodeAI> closedNodes;
+		std::set<Node> openedNodes;
+		std::list<Node> closedNodes;
 
 		std::vector<std::vector<bool>> closedNodesTable(map.width);
 		for (auto& cols : closedNodesTable)
@@ -295,8 +294,8 @@ namespace spark {
 			cols.resize(map.height);
 		}
 
-		openedNodes.emplace(NodeAI(startPoint, 0.0f));
-		NodeAI* finishNode = nullptr;
+		openedNodes.emplace(Node(startPoint, 0.0f));
+		Node* finishNode = nullptr;
 
 		while (!finishNode)
 		{
@@ -306,38 +305,30 @@ namespace spark {
 				break;
 			}
 
-			//const auto closedNode = popFrom(openedNodes);
 			const auto closedNode = *openedNodes.begin();
 			openedNodes.erase(openedNodes.begin());
 
 			closedNodes.push_back(closedNode);
 
-			closedNodesTable[closedNode.position.x][closedNode.position.y] = true;
+			closedNodesTable[closedNode.pos[0]][closedNode.pos[1]] = true;
 
 			auto neighbors = closedNode.getNeighbors(map);
-			for (NodeAI& neighbor : neighbors)
+			for (Node& neighbor : neighbors)
 			{
-				/*if (isNodeClosed(closedNodes, neighbor))
-					continue;*/
-				if (closedNodesTable[neighbor.position.x][neighbor.position.y])
+				if (closedNodesTable[neighbor.pos[0]][neighbor.pos[1]])
 					continue;
 
-				neighbor.parentAddress = &(*std::prev(closedNodes.end()));
+				neighbor.parent = &(*std::prev(closedNodes.end()));
 
-				if (neighbor.position == endPoint)
+				if (neighbor.pos[0] == endPoint.x && neighbor.pos[1] == endPoint.y)
 				{
 					closedNodes.push_back(neighbor);
 					finishNode = &(*std::prev(closedNodes.end()));
 					break;
 				}
 
-				const float functionH = neighbor.measureManhattanDistance(endPoint);
-				const float functionG = neighbor.depth;
-
-				const float terrainValue = map.getTerrainValue(neighbor.position.x, neighbor.position.y);
-				const float heuristicsValue = (1 + terrainValue) * (functionH + functionG);
-				neighbor.functionF = heuristicsValue;
-
+				neighbor.calculateHeuristic(map, endPoint);
+				
 				insertOrSwapNode(openedNodes, neighbor);
 			}
 		}
@@ -353,38 +344,17 @@ namespace spark {
 		return path;
 	}
 
-	NodeAI PathFindingManager::popFrom(std::multimap<float, NodeAI>& openedNodes) const
-	{
-		const auto node_it = std::begin(openedNodes);
-		if (node_it != std::end(openedNodes))
-		{
-			NodeAI n = node_it->second;
-			openedNodes.erase(node_it);
-			return n;
-		}
-		return {};
-	}
-
-	bool PathFindingManager::isNodeClosed(const std::list<NodeAI>& closedNodes, const NodeAI& node) const
-	{
-		const auto& it = std::find_if(std::begin(closedNodes), std::end(closedNodes), [&node](const NodeAI& n)
-		{
-			return n.position == node.position;
-		});
-		return it != std::end(closedNodes);
-	}
-
-	void PathFindingManager::insertOrSwapNode(std::set<NodeAI>& openedNodes, const NodeAI& node) const
+	void PathFindingManager::insertOrSwapNode(std::set<cuda::Node>& openedNodes, const cuda::Node& node) const
 	{
 		const auto& it = std::find_if(std::begin(openedNodes), std::end(openedNodes),
-			[&node](const NodeAI& n)
+			[&node](const cuda::Node& n)
 		{
-			const bool nodesEqual = n.position == node.position;
+			const bool nodesEqual = n.pos[0] == node.pos[0] && n.pos[1] == node.pos[1];
 			if (!nodesEqual)
 			{
 				return false;
 			}
-			const bool betterFunctionG = node.depth < n.depth;
+			const bool betterFunctionG = node.distanceFromBeginning < n.distanceFromBeginning;
 
 			return nodesEqual && betterFunctionG;
 		});
@@ -392,11 +362,8 @@ namespace spark {
 		if (it != std::end(openedNodes))
 		{
 			openedNodes.erase(it);
-			openedNodes.insert(node);
 		}
-		else
-		{
-			openedNodes.insert(node);
-		}
+
+		openedNodes.insert(node);
 	}
 }

@@ -2,8 +2,6 @@
 #define PATH_FINDING_MANAGER_CUH
 
 #include <deque>
-#include <list>
-#include <map>
 #include <memory>
 #include <set>
 #include <vector>
@@ -17,8 +15,11 @@
 #include <thread>
 
 namespace spark {
+	namespace cuda {
+		class Node;
+	}
+
 	class ActorAI;
-	class NodeAI;
 
 	class PathFindingManager
 	{
@@ -51,9 +52,7 @@ namespace spark {
 		__host__ std::uint16_t calculateNumberOfBlocks(std::uint16_t maxThreadsPerBlock) const;
 		__host__ std::uint8_t calculateNumberOfThreadsPerBlock(std::uint16_t numberOfBlocks) const;
 		__host__ std::deque<glm::ivec2> findPath(const glm::ivec2 startPoint, const glm::ivec2 endPoint) const;
-		__host__ NodeAI popFrom(std::multimap<float, NodeAI>& openedNodes) const;
-		__host__ bool isNodeClosed(const std::list<NodeAI>& closedNodes, const NodeAI& node) const;
-		__host__ void insertOrSwapNode(std::set<NodeAI>& openedNodes, const NodeAI& node) const;
+		__host__ void insertOrSwapNode(std::set<cuda::Node>& openedNodes, const cuda::Node& node) const;
 	};
 }
 
