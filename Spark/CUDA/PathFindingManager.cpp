@@ -7,6 +7,7 @@
 #include "kernel.cuh"
 #include "Map.cuh"
 #include "Node.cuh"
+#include "NodeAI.h"
 #include <stb_image.h>
 
 namespace spark {
@@ -147,6 +148,9 @@ namespace spark {
 		const std::uint16_t blockCount = calculateNumberOfBlocks(maxThreadsPerBlock);
 		const std::uint8_t threadsPerBlock = calculateNumberOfThreadsPerBlock(blockCount);
 
+		if (agents.size() < maxThreadsPerBlock)
+			maxThreadsPerBlock = threadsPerBlock;
+
 		struct path
 		{
 			glm::ivec2 start;
@@ -180,8 +184,9 @@ namespace spark {
 		Timer t("findPathsCUDA() GPU mem alloc and copy");
 		const auto pathsStartsEndsSizeInBytes = pathsStartsEnds.size() * sizeof(path);
 		const auto agentPathsSizeInBytes = map.width * map.height * sizeof(glm::ivec2) * blockCount * maxThreadsPerBlock;
-
-		const auto kernelMemoryInBytes = sizeof(cuda::Node) * map.width * map.height * maxThreadsPerBlock * blockCount * threadMemoryMultiplier;
+		
+		const int nodeSize = sizeof(cuda::Node);
+		const auto kernelMemoryInBytes = nodeSize * map.width * map.height * maxThreadsPerBlock * blockCount * threadMemoryMultiplier;
 		const auto overallBufferSizeInBytes = pathsStartsEndsSizeInBytes + agentPathsSizeInBytes + kernelMemoryInBytes;
 		const auto devMem = cuda::DeviceMemory<std::uint8_t>::AllocateBytes(overallBufferSizeInBytes);
 		gpuErrchk(cudaGetLastError());
@@ -285,10 +290,9 @@ namespace spark {
 
 	std::deque<glm::ivec2> PathFindingManager::findPath(const glm::ivec2 startPoint, const glm::ivec2 endPoint) const
 	{
-		using namespace cuda;
 		std::deque<glm::ivec2> path;
-		std::set<Node> openedNodes;
-		std::list<Node> closedNodes;
+		std::set<NodeAI> openedNodes;
+		std::list<NodeAI> closedNodes;
 
 		std::vector<std::vector<bool>> closedNodesTable(map.width);
 		for (auto& cols : closedNodesTable)
@@ -296,8 +300,8 @@ namespace spark {
 			cols.resize(map.height);
 		}
 
-		openedNodes.emplace(Node(startPoint, 0.0f));
-		Node* finishNode = nullptr;
+		openedNodes.emplace(NodeAI(startPoint, 0.0f));
+		NodeAI* finishNode = nullptr;
 
 		while (!finishNode)
 		{
@@ -307,22 +311,25 @@ namespace spark {
 				break;
 			}
 
+			//const auto closedNode = popFrom(openedNodes);
 			const auto closedNode = *openedNodes.begin();
 			openedNodes.erase(openedNodes.begin());
 
 			closedNodes.push_back(closedNode);
 
-			closedNodesTable[closedNode.pos[0]][closedNode.pos[1]] = true;
+			closedNodesTable[closedNode.position.x][closedNode.position.y] = true;
 
 			auto neighbors = closedNode.getNeighbors(map);
-			for (Node& neighbor : neighbors)
+			for (NodeAI& neighbor : neighbors)
 			{
-				if (closedNodesTable[neighbor.pos[0]][neighbor.pos[1]])
+				/*if (isNodeClosed(closedNodes, neighbor))
+					continue;*/
+				if (closedNodesTable[neighbor.position.x][neighbor.position.y])
 					continue;
 
-				neighbor.parent = &(*std::prev(closedNodes.end()));
+				neighbor.parentAddress = &(*std::prev(closedNodes.end()));
 
-				if (neighbor.pos[0] == endPoint.x && neighbor.pos[1] == endPoint.y)
+				if (neighbor.position == endPoint)
 				{
 					closedNodes.push_back(neighbor);
 					finishNode = &(*std::prev(closedNodes.end()));
@@ -330,7 +337,6 @@ namespace spark {
 				}
 
 				neighbor.calculateHeuristic(map, endPoint);
-				
 				insertOrSwapNode(openedNodes, neighbor);
 			}
 		}
@@ -346,17 +352,17 @@ namespace spark {
 		return path;
 	}
 
-	void PathFindingManager::insertOrSwapNode(std::set<cuda::Node>& openedNodes, const cuda::Node& node) const
+	void PathFindingManager::insertOrSwapNode(std::set<NodeAI>& openedNodes, const NodeAI& node) const
 	{
 		const auto& it = std::find_if(std::begin(openedNodes), std::end(openedNodes),
-			[&node](const cuda::Node& n)
+			[&node](const NodeAI& n)
 		{
-			const bool nodesEqual = n.pos[0] == node.pos[0] && n.pos[1] == node.pos[1];
+			const bool nodesEqual = n.position == node.position;
 			if (!nodesEqual)
 			{
 				return false;
 			}
-			const bool betterFunctionG = node.distanceFromBeginning < n.distanceFromBeginning;
+			const bool betterFunctionG = node.depth < n.depth;
 
 			return nodesEqual && betterFunctionG;
 		});
@@ -364,6 +370,7 @@ namespace spark {
 		if (it != std::end(openedNodes))
 		{
 			openedNodes.erase(it);
+			openedNodes.insert(node);
 		}
 
 		openedNodes.insert(node);

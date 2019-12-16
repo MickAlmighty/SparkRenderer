@@ -20,7 +20,7 @@ namespace spark {
 		__global__ void findPathV3(int* path, unsigned int* agentPaths, void* kernelMemory, const int maxThreadsPerBlock);
 		__host__ void runKernel(int blocks, int threads, int* path, unsigned int* agentPaths, void* kernelMemory, const Map& mapHost, PathFindingMode mode, const int maxThreadsPerBlock);
 		__host__ void initMap(float* nodes, int width, int height);
-		inline __device__ void constructPath(unsigned int* path, Node* const finishNode);
+		inline __device__ void constructPath(unsigned int* path, Node* const finishNode, Node* closedNodes);
 	}
 }
 

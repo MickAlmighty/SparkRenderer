@@ -143,6 +143,9 @@
     <ClCompile Include="ProfilingWriter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="NodeAI.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Spark.h">
@@ -281,6 +284,9 @@
       <Filter>CUDA</Filter>
     </ClInclude>
     <ClInclude Include="ProfilingWriter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NodeAI.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

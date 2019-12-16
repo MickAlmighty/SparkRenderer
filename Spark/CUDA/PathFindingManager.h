@@ -15,10 +15,7 @@
 #include <thread>
 
 namespace spark {
-	namespace cuda {
-		class Node;
-	}
-
+	class NodeAI;
 	class ActorAI;
 
 	class PathFindingManager
@@ -52,7 +49,7 @@ namespace spark {
 		__host__ std::uint16_t calculateNumberOfBlocks(std::uint16_t maxThreadsPerBlock) const;
 		__host__ std::uint8_t calculateNumberOfThreadsPerBlock(std::uint16_t numberOfBlocks) const;
 		__host__ std::deque<glm::ivec2> findPath(const glm::ivec2 startPoint, const glm::ivec2 endPoint) const;
-		__host__ void insertOrSwapNode(std::set<cuda::Node>& openedNodes, const cuda::Node& node) const;
+		__host__ void insertOrSwapNode(std::set<NodeAI>& openedNodes, const NodeAI& node) const;
 	};
 }
 
