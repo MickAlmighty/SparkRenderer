@@ -141,12 +141,12 @@ namespace spark {
 		}
 		if (mode == PathFindingMode::DEVICE_IMPL_V2)
 		{
-			threadMemoryMultiplier = 3;
-			maxThreadsPerBlock = 128;
+			threadMemoryMultiplier = 2;
+			maxThreadsPerBlock = 256;
 		}
 			
-		const std::uint16_t blockCount = calculateNumberOfBlocks(maxThreadsPerBlock);
-		const std::uint8_t threadsPerBlock = calculateNumberOfThreadsPerBlock(blockCount);
+		const auto blockCount = calculateNumberOfBlocks(maxThreadsPerBlock);
+		const auto threadsPerBlock = calculateNumberOfThreadsPerBlock(blockCount);
 
 		if (agents.size() < maxThreadsPerBlock)
 			maxThreadsPerBlock = threadsPerBlock;
@@ -266,22 +266,22 @@ namespace spark {
 		return blockCount;
 	}
 
-	std::uint8_t PathFindingManager::calculateNumberOfThreadsPerBlock(std::uint16_t numberOfBlocks) const
+	std::uint16_t PathFindingManager::calculateNumberOfThreadsPerBlock(std::uint16_t numberOfBlocks) const
 	{
-		std::uint8_t threadsPerBlock;
+		std::uint16_t threadsPerBlock;
 		if (numberOfBlocks == 1)
 		{
-			threadsPerBlock = static_cast<std::uint8_t>(agents.size());
+			threadsPerBlock = static_cast<std::uint16_t>(agents.size());
 		}
 		else
 		{
 			if (agents.size() % 2 != 0)
 			{
-				threadsPerBlock = static_cast<std::uint8_t>((agents.size() + 1) / numberOfBlocks);
+				threadsPerBlock = static_cast<std::uint16_t>((agents.size() + 1) / numberOfBlocks);
 			}
 			else
 			{
-				threadsPerBlock = static_cast<std::uint8_t>(agents.size() / numberOfBlocks);
+				threadsPerBlock = static_cast<std::uint16_t>(agents.size() / numberOfBlocks);
 			}
 		}
 

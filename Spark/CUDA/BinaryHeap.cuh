@@ -11,9 +11,14 @@ namespace spark {
 		{
 		public:
 			unsigned int size{ 0 };
+			nvstd::function<bool(const T& lhs, const T& rhs)> comparator{ [] __device__(const T& lhs, const T& rhs)
+			{
+				return lhs < rhs;
+			} };
 			T* array = nullptr;
 
 			__device__ BinaryHeap(T* array_) : array(array_) {}
+			__device__ BinaryHeap(T* array_, const nvstd::function<bool(const T& lhs, const T& rhs)>& comp) : array(array_), comparator(comp) {}
 			__device__ ~BinaryHeap() {}
 			__device__ void insert(const T& key);
 			__device__ T pop_front();
@@ -63,7 +68,7 @@ namespace spark {
 			{
 				if (keyIndex == parentIndex)
 					break;
-				if (array[keyIndex] < array[parentIndex])
+				if (comparator(array[keyIndex], array[parentIndex]))
 				{
 					swap(array[keyIndex], array[parentIndex]);
 				}
@@ -109,7 +114,7 @@ namespace spark {
 
 				if (rightIndex >= size)
 				{
-					if (array[leftIndex] < array[keyIndex])
+					if (comparator(array[leftIndex], array[keyIndex]))
 					{
 						swap(array[leftIndex], array[keyIndex]);
 					}
@@ -117,9 +122,9 @@ namespace spark {
 				}
 
 				//it means both leftIndex and rightIndex are < size
-				if (array[leftIndex] < array[keyIndex])
+				if (comparator(array[leftIndex], array[keyIndex]))
 				{
-					if (array[leftIndex] < array[rightIndex])
+					if (comparator(array[leftIndex], array[rightIndex]))
 					{
 						swap(array[leftIndex], array[keyIndex]);
 						keyIndex = leftIndex;
@@ -132,7 +137,7 @@ namespace spark {
 					continue;
 				}
 
-				if (array[rightIndex] < array[keyIndex])
+				if (comparator(array[rightIndex], array[keyIndex]))
 				{
 					swap(array[rightIndex], array[keyIndex]);
 					keyIndex = rightIndex;

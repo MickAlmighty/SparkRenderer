@@ -389,6 +389,7 @@ namespace spark {
 		template <typename T>
 		void update(const std::vector<T>& buffer) const
 		{
+			PROFILE_FUNCTION();
 			glBindBuffer(GL_SHADER_STORAGE_BUFFER, ID);
 			glBufferData(GL_SHADER_STORAGE_BUFFER, buffer.size() * sizeof(T), buffer.data(), GL_DYNAMIC_DRAW);
 			glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
