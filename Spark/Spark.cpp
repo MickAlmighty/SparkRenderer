@@ -105,7 +105,7 @@ namespace spark {
 	{
 		while (!glfwWindowShouldClose(window) && runProgram)
 		{
-			Timer::capture = glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) && glfwGetKey(window, GLFW_KEY_L);
+			Timer::capture = glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) && glfwGetKey(window, GLFW_KEY_C);
 			if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) && glfwGetKey(window, GLFW_KEY_H))
 			{
 				Spark::gui = false;

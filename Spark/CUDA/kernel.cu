@@ -47,7 +47,7 @@ namespace spark {
 		{
 			int pathLength = 0;
 			Node* node = finishNode;
-			while (node->parentIdx != -1)
+			while (node->parentIdx != 65'535)
 			{
 				++pathLength;
 				node = &closedNodes[node->parentIdx];
@@ -56,7 +56,7 @@ namespace spark {
 
 			node = finishNode;
 			int index = pathLength;
-			while (node->parentIdx != -1)
+			while (node->parentIdx != 65'535)
 			{
 				index -= 1;
 				path[1 + index * 2] = node->pos[0];
@@ -228,7 +228,10 @@ namespace spark {
 			int endPoint[] = { path[startEndPointsThreadOffset + 2], path[startEndPointsThreadOffset + 3] };
 
 			if (startPoint[0] == endPoint[0] && startPoint[1] == endPoint[1])
+			{
+				//printf("start == end");
 				return;
+			}
 
 			Node* neighbors = reinterpret_cast<Node*>(sharedMemory) + threadIdx.x * 8; // 8 is the neighbor array size
 
@@ -237,18 +240,18 @@ namespace spark {
 			const int agentPathOffset = agentPathWarpMemorySize * blockIdx.x + agentPathMemorySize * threadIdx.x;
 			unsigned int* agentPath = agentPaths + agentPathOffset;
 
-			const auto memoryOffset = mapSize * 2;
-			const auto threadMemOffset = memoryOffset * threadIdx.x;
-			const auto blockSizeElements = memoryOffset * maxThreadsPerBlock;
-			const auto blockMemOffset = blockSizeElements * blockIdx.x;
-			const auto threadMemoryBegin = static_cast<Node*>(kernelMemory) + blockMemOffset + threadMemOffset;
+			const auto memoryOffsetInBytes = (sizeof(cuda::Node) + sizeof(uint32_t))* mapSize;
+			const auto threadMemOffsetInBytes = memoryOffsetInBytes * threadIdx.x;
+			const auto blockSizeElementsInBytes = memoryOffsetInBytes * maxThreadsPerBlock;
+			const auto blockMemOffsetInBytes = blockSizeElementsInBytes * blockIdx.x;
+			const auto threadMemoryBegin = static_cast<uint8_t*>(kernelMemory) + blockMemOffsetInBytes + threadMemOffsetInBytes;
 
-			Node* closedNodes = threadMemoryBegin;
+			Node* closedNodes = reinterpret_cast<Node*>(threadMemoryBegin);
 			MemoryManager manager = MemoryManager(closedNodes);
 
-			int* closedNodesIndices = reinterpret_cast<int*>(threadMemoryBegin + mapSize);
+			uint32_t* closedNodesIndices = reinterpret_cast<uint32_t*>(closedNodes + mapSize);
 			// it is more than needed now but it need to be equal to map width * map height
-			memset(closedNodesIndices, -1, mapSize * sizeof(int));
+			memset(closedNodesIndices, 65'535, mapSize * sizeof(uint32_t));
 			BinaryHeap<uint16_t> heap(reinterpret_cast<uint16_t*>(agentPath),
 				[&closedNodes] (const uint16_t& lhs, const uint16_t& rhs)
 			{
@@ -277,7 +280,7 @@ namespace spark {
 					break;
 				}
 
-				if (heap.size >= map->width * map->height)
+				if (heap.size >= map->width * map->height * 4)
 				{
 					printf("Heap size = %d limit %d reached!\n", heap.size, map->width * map->height);
 					break;
@@ -296,25 +299,27 @@ namespace spark {
 
 					const int nodeIdx = map->getTerrainNodeIndex(neighbors[i].pos[0], neighbors[i].pos[1]);
 					const int parentIndex = map->getTerrainNodeIndex(theBestNode.pos[0], theBestNode.pos[1]);
-					if (closedNodesIndices[nodeIdx] != -1)
+					const int neighborIdxToClosedNodes = closedNodesIndices[nodeIdx];
+					const int parentIdxToClosedNodes = closedNodesIndices[parentIndex];
+					if (neighborIdxToClosedNodes != -1)
 					{
-						if (neighbors[i].distanceFromBeginning < closedNodes[closedNodesIndices[nodeIdx]].
-							distanceFromBeginning)
+						if (neighbors[i].distanceFromBeginning < closedNodes[neighborIdxToClosedNodes].distanceFromBeginning)
 						{
-							closedNodes[closedNodesIndices[nodeIdx]].parentIdx = closedNodesIndices[parentIndex];
-							closedNodes[closedNodesIndices[nodeIdx]].distanceFromBeginning = neighbors[i].distanceFromBeginning;
+							closedNodes[neighborIdxToClosedNodes].parentIdx = parentIdxToClosedNodes;
+							closedNodes[neighborIdxToClosedNodes].distanceFromBeginning = neighbors[i].distanceFromBeginning;
 
 							neighbors[i].calculateHeuristic(map, endPoint);
-							heap.insert(closedNodesIndices[nodeIdx]);
+							heap.insert(neighborIdxToClosedNodes);
 						}
 						continue;
 					}
 
-					neighbors[i].parentIdx = closedNodesIndices[parentIndex];
+					neighbors[i].parentIdx = parentIdxToClosedNodes;
 					neighbors[i].calculateHeuristic(map, endPoint);
 					const auto closedNode = manager.allocate<Node>(neighbors[i]);
+
 					closedNodesIndices[nodeIdx] = closedNode - closedNodes; // info that node is closed
-					heap.insert(closedNodesIndices[nodeIdx]);
+					heap.insert(closedNode - closedNodes);
 
 					if (neighbors[i].pos[0] == endPoint[0] &&
 						neighbors[i].pos[1] == endPoint[1])

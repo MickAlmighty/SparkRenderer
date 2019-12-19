@@ -38,7 +38,7 @@ namespace spark {
 		__host__ void drawGui();
 	private:
 		std::vector<std::weak_ptr<ActorAI>> agents;
-		PathFindingMode mode = PathFindingMode::HOST_IMPL;
+		PathFindingMode mode = PathFindingMode::DEVICE_IMPL_V2;
 
 		__host__ PathFindingManager() = default;
 		__host__ ~PathFindingManager() = default;

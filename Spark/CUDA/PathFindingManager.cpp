@@ -141,7 +141,7 @@ namespace spark {
 		}
 		if (mode == PathFindingMode::DEVICE_IMPL_V2)
 		{
-			threadMemoryMultiplier = 2;
+			threadMemoryMultiplier = 1;
 			maxThreadsPerBlock = 256;
 		}
 			
@@ -170,7 +170,7 @@ namespace spark {
 		unsigned int actorId = 0;
 		for (std::uint16_t blockId = 0; blockId < blockCount; ++blockId)
 		{
-			for (std::uint8_t threadId = 0; threadId < threadsPerBlock; ++threadId)
+			for (std::uint16_t threadId = 0; threadId < threadsPerBlock; ++threadId)
 			{
 				if (actorId == agents.size())
 					break;
@@ -185,8 +185,7 @@ namespace spark {
 		const auto pathsStartsEndsSizeInBytes = pathsStartsEnds.size() * sizeof(path);
 		const auto agentPathsSizeInBytes = map.width * map.height * sizeof(glm::ivec2) * blockCount * maxThreadsPerBlock;
 		
-		const int nodeSize = sizeof(cuda::Node);
-		const auto kernelMemoryInBytes = nodeSize * map.width * map.height * maxThreadsPerBlock * blockCount * threadMemoryMultiplier;
+		const auto kernelMemoryInBytes = (sizeof(cuda::Node) + sizeof(uint32_t)) * map.width * map.height * maxThreadsPerBlock * blockCount * threadMemoryMultiplier;
 		const auto overallBufferSizeInBytes = pathsStartsEndsSizeInBytes + agentPathsSizeInBytes + kernelMemoryInBytes;
 		const auto devMem = cuda::DeviceMemory<std::uint8_t>::AllocateBytes(overallBufferSizeInBytes);
 		gpuErrchk(cudaGetLastError());

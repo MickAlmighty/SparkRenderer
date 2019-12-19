@@ -31,8 +31,8 @@ namespace spark {
 			uint16_t pos[2] = {};
 			float valueF{};
 			float distanceFromBeginning{ 0 };
-			int16_t valid{ 0 };
-			int16_t parentIdx{ -1 };
+			uint16_t valid{ 0 };
+			uint16_t parentIdx{ 65'535 };
 
 			__device__ Node() {}
 
