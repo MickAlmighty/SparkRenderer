@@ -179,7 +179,7 @@ namespace spark {
 
 			if (!wayPoint.first)
 			{
-				const glm::vec3 position = getGameObject()->transform.world.getPosition();
+				const glm::vec3 position = getGameObject()->transform.local.getPosition();
 				glm::vec3 pointOnPath = glm::vec3(wayPoint.second.x, 0.0f, wayPoint.second.y);
 				if (glm::distance(position, pointOnPath) < 0.1f)
 				{
@@ -188,12 +188,12 @@ namespace spark {
 				}
 				else
 				{
-					const glm::mat4 worldMatrix = getGameObject()->getParent()->transform.world.getMatrix();
+					//const glm::mat4 worldMatrix = getGameObject()->getParent()->transform.world.getMatrix();
 
 					const glm::vec3 direction = glm::normalize(pointOnPath - position);
-					const glm::vec3 updatedWorldPosition = position + direction * static_cast<float>(Clock::getDeltaTime()) * movementSpeed;
-					const glm::vec4 localPosition = glm::inverse(worldMatrix) * glm::vec4(updatedWorldPosition, 1);
-					getGameObject()->transform.local.setPosition(localPosition);
+					const glm::vec3 updatedPositionPosition = position + direction * static_cast<float>(Clock::getDeltaTime()) * movementSpeed;
+					//const glm::vec4 localPosition = glm::inverse(worldMatrix) * glm::vec4(updatedWorldPosition, 1);
+					getGameObject()->transform.local.setPosition(updatedPositionPosition);
 					break;
 				}
 			}

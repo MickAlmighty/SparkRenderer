@@ -58,7 +58,7 @@ namespace spark {
 			{
 				if (valueF == node.valueF)
 				{
-					return distanceFromBeginning < node.distanceFromBeginning;
+					return distanceFromBeginning > node.distanceFromBeginning;
 				}
 
 				return valueF < node.valueF;

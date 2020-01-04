@@ -28,7 +28,10 @@ void GameObject::update()
 	}
 	else
 	{
-		transform.world.setMatrix(parent.lock()->transform.world.getMatrix() * transform.local.getMatrix());
+		if(parent.lock()->transform.world.dirty || transform.local.dirty)
+		{
+			transform.world.setMatrix(parent.lock()->transform.world.getMatrix() * transform.local.getMatrix());
+		}
 	}
 
 	for (const auto& component : components)
@@ -43,6 +46,8 @@ void GameObject::update()
 	{
 		child->update();
 	}
+
+	transform.world.dirty = false;
 }
 
 void GameObject::fixedUpdate()
