@@ -18,7 +18,9 @@ public:
 	std::map<ShaderType, std::vector<std::shared_ptr<ModelMesh>>> renderInstancedQueue;
 	
 	SparkRenderer(const SparkRenderer&) = delete;
+	SparkRenderer(const SparkRenderer&&) = delete;
 	SparkRenderer operator=(const SparkRenderer&) = delete;
+	SparkRenderer operator=(const SparkRenderer&&) = delete;
 
 	void setup();
 	void renderPass();

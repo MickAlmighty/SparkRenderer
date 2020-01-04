@@ -7,36 +7,40 @@
 #include "Enums.h"
 
 namespace spark {
+	class Mesh;
+	class Shader;
+	class ResourceManager
+	{
+	public:
+		static ResourceManager* getInstance();
 
-class Mesh;
-class Shader;
-class ResourceManager
-{
-public:
-	static ResourceManager* getInstance();
+		ResourceManager(const ResourceManager&) = delete;
+		ResourceManager(const ResourceManager&&) = delete;
+		ResourceManager& operator=(const ResourceManager&) = delete;
+		ResourceManager& operator=(const ResourceManager&&) = delete;
 
-	void addTexture(Texture tex);
-	void addCubemapTexturePath(const std::string& path);
-	Texture findTexture(const std::string&& path) const;
-	std::vector<Mesh> findModelMeshes(const std::string& path) const;
-	std::vector<std::string> getPathsToModels() const;
-	std::shared_ptr<Shader> getShader(const ShaderType& type) const;
-	std::shared_ptr<Shader> getShader(const std::string& name) const;
-	std::vector<std::string> getShaderNames() const;
-	std::vector<Texture> getTextures() const;
-	const std::vector<std::string>& getCubemapTexturePaths() const;
-	void drawGui();
-	void loadResources();
-	void cleanup();
+		void addTexture(Texture tex);
+		void addCubemapTexturePath(const std::string& path);
+		Texture findTexture(const std::string&& path) const;
+		std::vector<Mesh> findModelMeshes(const std::string& path) const;
+		std::vector<std::string> getPathsToModels() const;
+		std::shared_ptr<Shader> getShader(const ShaderType& type) const;
+		std::shared_ptr<Shader> getShader(const std::string& name) const;
+		std::vector<std::string> getShaderNames() const;
+		std::vector<Texture> getTextures() const;
+		const std::vector<std::string>& getCubemapTexturePaths() const;
+		void drawGui();
+		void loadResources();
+		void cleanup();
 
-private:
-	std::vector<Texture> textures;
-	std::map<std::string, std::vector<Mesh>> models;
-	std::map<ShaderType, std::shared_ptr<Shader>> shaders;
-	std::vector<std::string> cubemapTexturePaths;
+	private:
+		std::vector<Texture> textures;
+		std::map<std::string, std::vector<Mesh>> models;
+		std::map<ShaderType, std::shared_ptr<Shader>> shaders;
+		std::vector<std::string> cubemapTexturePaths;
 
-	ResourceManager() = default;
-	~ResourceManager() = default;
-};
+		ResourceManager() = default;
+		~ResourceManager() = default;
+	};
 }
 #endif

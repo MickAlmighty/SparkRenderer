@@ -27,7 +27,7 @@ namespace spark {
 		PathFindingManager(const PathFindingManager& p) = delete;
 		PathFindingManager(const PathFindingManager&& p) = delete;
 		PathFindingManager& operator=(const PathFindingManager& p) = delete;
-		PathFindingManager&& operator=(const PathFindingManager&& p) = delete;
+		PathFindingManager& operator=(const PathFindingManager&& p) = delete;
 
 		static PathFindingManager* getInstance();
 
