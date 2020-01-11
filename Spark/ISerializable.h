@@ -11,7 +11,7 @@ enum class SerializableType : uint16_t
 	SModelMesh,
 	SCamera,
 	SMeshPlane,
-	STerrainGenerator,
+	SAgentSpawner,
 	SActorAI,
 	SDirectionalLight,
 	SPointLight,

@@ -1,7 +1,7 @@
 #include "NodeAI.h"
 
 #include "CUDA/Map.cuh"
-#include "TerrainGenerator.h"
+#include "AgentSpawner.h"
 
 namespace spark {
 

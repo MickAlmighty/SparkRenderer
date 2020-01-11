@@ -1,4 +1,4 @@
-#include "TerrainGenerator.h"
+#include "AgentSpawner.h"
 
 #include "ActorAI.h"
 #include "CUDA/DeviceMemory.h"
@@ -11,34 +11,34 @@
 
 namespace spark {
 
-	SerializableType TerrainGenerator::getSerializableType()
+	SerializableType AgentSpawner::getSerializableType()
 	{
-		return SerializableType::STerrainGenerator;
+		return SerializableType::SAgentSpawner;
 	}
 
-	Json::Value TerrainGenerator::serialize()
+	Json::Value AgentSpawner::serialize()
 	{
 		Json::Value root;
 		root["name"] = name;
 		return root;
 	}
 
-	void TerrainGenerator::deserialize(Json::Value& root)
+	void AgentSpawner::deserialize(Json::Value& root)
 	{
-		name = root.get("name", "TerrainGenerator").asString();
+		name = root.get("name", "AgentSpawner").asString();
 	}
 
-	void TerrainGenerator::update()
-	{
-
-	}
-
-	void TerrainGenerator::fixedUpdate()
+	void AgentSpawner::update()
 	{
 
 	}
 
-	void TerrainGenerator::drawGUI()
+	void AgentSpawner::fixedUpdate()
+	{
+
+	}
+
+	void AgentSpawner::drawGUI()
 	{
 		ImGui::Text("Agents Count: "); ImGui::SameLine(); ImGui::Text(std::to_string(agentCounter).c_str());
 
@@ -179,10 +179,10 @@ namespace spark {
 			agentCounter += 65535;
 		}
 
-		removeComponentGUI<TerrainGenerator>();
+		removeComponentGUI<AgentSpawner>();
 	}
 
-	TerrainGenerator::TerrainGenerator(std::string&& newName) : Component(newName)
+	AgentSpawner::AgentSpawner(std::string&& newName) : Component(newName)
 	{
 
 	}

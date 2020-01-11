@@ -9,7 +9,6 @@
 
 namespace spark {
 
-	class TerrainGenerator;
 	class NodeAI;
 
 	class ActorAI : public Component

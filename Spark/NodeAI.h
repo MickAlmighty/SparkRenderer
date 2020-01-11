@@ -7,7 +7,7 @@
 
 #include <glm/vec2.hpp>
 
-#include "TerrainGenerator.h"
+#include "AgentSpawner.h"
 
 namespace spark {
 	namespace cuda {

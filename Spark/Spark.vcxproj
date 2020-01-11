@@ -213,7 +213,7 @@
     <ClCompile Include="SpotLight.cpp" />
     <ClCompile Include="stb_image.cpp" />
     <ClCompile Include="Structs.cpp" />
-    <ClCompile Include="TerrainGenerator.cpp" />
+    <ClCompile Include="AgentSpawner.cpp" />
     <ClCompile Include="Timer.cpp" />
     <ClCompile Include="WorldTransform.cpp" />
   </ItemGroup>
@@ -265,7 +265,7 @@
     <ClInclude Include="Spark.h" />
     <ClInclude Include="SpotLight.h" />
     <ClInclude Include="Structs.h" />
-    <ClInclude Include="TerrainGenerator.h" />
+    <ClInclude Include="AgentSpawner.h" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="WorldTransform.h" />
   </ItemGroup>

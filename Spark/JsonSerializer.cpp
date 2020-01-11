@@ -17,7 +17,7 @@
 #include "ModelMesh.h"
 #include "PointLight.h"
 #include "SpotLight.h"
-#include "TerrainGenerator.h"
+#include "AgentSpawner.h"
 
 namespace spark {
 
@@ -131,8 +131,8 @@ std::shared_ptr<ISerializable> JsonSerializer::deserialize(Json::Value& root)
 	case SerializableType::SMeshPlane:
 		deserialized = make<MeshPlane>();
 		break;
-	case SerializableType::STerrainGenerator:
-		deserialized = make<TerrainGenerator>();
+	case SerializableType::SAgentSpawner:
+		deserialized = make<AgentSpawner>();
 		break;
 	case SerializableType::SActorAI:
 		deserialized = make<ActorAI>();

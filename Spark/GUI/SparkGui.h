@@ -10,7 +10,7 @@
 #include "ModelMesh.h"
 #include "PointLight.h"
 #include "SpotLight.h"
-#include "TerrainGenerator.h"
+#include "AgentSpawner.h"
 #include <optional>
 
 namespace spark {
@@ -108,7 +108,7 @@ namespace spark {
 	const static std::map<std::string, std::function<std::shared_ptr<Component>()>> componentCreation{
 		{"ModelMesh", [] { return std::make_shared<ModelMesh>(); }},
 		{"MeshPlane", [] { return std::make_shared<MeshPlane>(); }},
-		{"TerrainGenerator", [] { return std::make_shared<TerrainGenerator>(); }},
+		{"AgentSpawner", [] { return std::make_shared<AgentSpawner>(); }},
 		{"ActorAI", [] { return std::make_shared<ActorAI>(); }},
 		{"DirectionalLight", [] {return std::make_shared<DirectionalLight>(); }},
 		{"PointLight", [] {return std::make_shared<PointLight>(); }},

@@ -331,3 +331,4 @@ ASALocalRun/
 Spark/imgui.ini
 !res/*
 *.ini
+Spark/profilingCapture.json
