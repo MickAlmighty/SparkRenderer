@@ -35,7 +35,7 @@ namespace spark {
 		const glm::mat4 model = getGameObject()->transform.world.getMatrix();
 		if (instanced)
 		{
-			SparkRenderer::getInstance()->renderInstancedQueue[ShaderType::DEFAULT_INSTANCED_SHADER].push_back(shared_from_base<ModelMesh>());
+			SparkRenderer::getInstance()->pushMeshIntoInstancedQueue(this);
 		}
 		else
 		{

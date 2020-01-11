@@ -1,6 +1,9 @@
 #ifndef SPARK_RENDERER_H
 #define SPARK_RENDERER_H
 
+#include <thread>
+#include <queue>
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
@@ -8,6 +11,8 @@
 #include "ModelMesh.h"
 #include "Structs.h"
 #include "Shader.h"
+#include <mutex>
+#include <atomic>
 
 namespace spark {
 
@@ -15,7 +20,7 @@ class SparkRenderer
 {
 public:
 	std::map<ShaderType, std::list<std::function<void(std::shared_ptr<Shader>&)>>> renderQueue;
-	std::map<ShaderType, std::vector<std::shared_ptr<ModelMesh>>> renderInstancedQueue;
+	std::deque<ModelMesh*> renderInstancedQueue;
 	
 	SparkRenderer(const SparkRenderer&) = delete;
 	SparkRenderer(const SparkRenderer&&) = delete;
@@ -24,10 +29,11 @@ public:
 
 	void setup();
 	void renderPass();
-	void cleanup() const;
+	void cleanup();
 
 	static SparkRenderer* getInstance();
 	void addMeshDataToBuffer(const std::vector<glm::vec3>& vertices, const std::vector<GLuint>& indices);
+	void pushMeshIntoInstancedQueue(ModelMesh* modelMesh);
 
 private:
 	ScreenQuad screenQuad{};
@@ -61,6 +67,16 @@ private:
 	MultiDrawIndirectBuffer bufer{};
 	MultiDrawInstancedIndirectBuffer instancedIndirectBuffer{};
 
+	std::mutex instancedQueueMutex;
+	std::thread sortingMeshes;
+	bool rendering = true;
+	std::atomic<bool> renderPassStarted;
+	std::atomic<bool> sortingDone;
+	std::condition_variable cv; 
+	std::mutex cv_m;
+	std::map<Mesh, unsigned int> instancedMeshes{};
+	std::vector<glm::mat4> models;
+
 	~SparkRenderer() = default;
 	SparkRenderer() = default;
 
@@ -76,6 +92,8 @@ private:
 	void createFrameBuffersAndTextures();
 	void createFramebuffer(GLuint& framebuffer, const std::vector<GLuint>&& colorTextures, GLuint renderbuffer = 0);
 	void deleteFrameBuffersAndTextures() const;
+
+	ModelMesh* popMeshFromInstancedQueue();
 };
 }
 #endif

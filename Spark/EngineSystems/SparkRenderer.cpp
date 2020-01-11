@@ -69,11 +69,63 @@ namespace spark {
 		instancedShader->bindSSBO("Models", instancedSSBO.ID);
 
 		createFrameBuffersAndTextures();
+
+		sortingMeshes = std::thread([this]()
+		{
+			int counter = 0;
+			while(rendering)
+			{
+				while (!renderInstancedQueue.empty())
+				{
+					auto modelMeshPtr = this->popMeshFromInstancedQueue();
+
+					for (const auto& mesh : modelMeshPtr->meshes)
+					{
+						if (instancedMeshes.find(mesh) != instancedMeshes.end())
+						{
+							instancedMeshes[mesh] += 1;
+						}
+						else
+						{
+							instancedMeshes.insert(std::make_pair(mesh, 1));
+						}
+						models.push_back(modelMeshPtr->getGameObject()->transform.world.getMatrix());
+					}
+					
+					++counter;
+					
+					if (this->renderPassStarted && !renderInstancedQueue.empty())
+					{
+						//printf("sorting!\n");
+						sortingDone = false;
+						cv.notify_all();
+					}
+				}
+
+				if (this->renderPassStarted && renderInstancedQueue.empty())
+				{
+					//printf("Sorting done! Sorted %d modelMeshes.\n", counter);
+					counter = 0;
+					sortingDone = true;
+					cv.notify_all();
+
+					std::unique_lock<std::mutex> lk(cv_m);
+					cv.wait(lk, [this]
+					{
+						//printf("Waiting for end of render pass\n");
+						return !renderPassStarted.load();
+					});
+					models.clear();
+					instancedMeshes.clear();
+				}
+			}
+		});
 	}
 
 	void SparkRenderer::renderPass()
 	{
 		PROFILE_FUNCTION();
+		renderPassStarted = true;
 		resizeWindowIfNecessary();
 
 		const auto camera = SceneManager::getInstance()->getCurrentScene()->getCamera();
@@ -89,44 +141,37 @@ namespace spark {
 		
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_BACK);
-
-		std::shared_ptr<Shader> shader = mainShader.lock();
-		shader->use();
-		shader->setMat4("view", view);
-		shader->setMat4("projection", projection);
-		for (auto& drawMesh : renderQueue[ShaderType::DEFAULT_SHADER])
 		{
-			drawMesh(shader);
+			PROFILE_SCOPE("Normal rendering");
+			std::shared_ptr<Shader> shader = mainShader.lock();
+			shader->use();
+			shader->setMat4("view", view);
+			shader->setMat4("projection", projection);
+			for (auto& drawMesh : renderQueue[ShaderType::DEFAULT_SHADER])
+			{
+				drawMesh(shader);
+			}
+			renderQueue[ShaderType::DEFAULT_SHADER].clear();
+			POP_DEBUG_GROUP();
 		}
-		renderQueue[ShaderType::DEFAULT_SHADER].clear();
-		POP_DEBUG_GROUP();
 
-		if (!renderInstancedQueue[ShaderType::DEFAULT_INSTANCED_SHADER].empty())
+		{
+			PROFILE_SCOPE("Waiting for sorted meshes");
+			std::unique_lock<std::mutex> lk(cv_m);
+			cv.wait(lk, [this]
+			{
+				//printf("waiting on sorting done\n");
+				return sortingDone.load();
+			});
+		}
+		if (!models.empty())
 		{
 			PROFILE_SCOPE("Instanced rendering");
 			const std::shared_ptr<Shader> instancedShader = defaultInstancedShader.lock();
 			instancedShader->use();
 			instancedShader->setMat4("view", view);
 			instancedShader->setMat4("projection", projection);
-
-			std::map<Mesh, unsigned int> instancedMeshes{};
-			std::vector<glm::mat4> models;
-			models.reserve(renderInstancedQueue[ShaderType::DEFAULT_INSTANCED_SHADER].size());
-			for (auto& modelMeshPtr : renderInstancedQueue[ShaderType::DEFAULT_INSTANCED_SHADER])
-			{
-				for (const auto& mesh : modelMeshPtr->meshes)
-				{
-					if (instancedMeshes.find(mesh) != instancedMeshes.end())
-					{
-						instancedMeshes[mesh] += 1;
-					}
-					else
-					{
-						instancedMeshes.insert(std::make_pair(mesh, 1));
-					}
-					models.push_back(modelMeshPtr->getGameObject()->transform.world.getMatrix());
-				}
-			}
+			
 			instancedSSBO.update(models);
 			for (const auto& [mesh, instances] : instancedMeshes)
 			{
@@ -135,7 +180,6 @@ namespace spark {
 				instancedIndirectBuffer.drawInstances(mesh, instances);
 				instancedIndirectBuffer.cleanup();
 			}
-			renderInstancedQueue[ShaderType::DEFAULT_INSTANCED_SHADER].clear();
 		}
 		glDisable(GL_CULL_FACE);
 		renderLights();
@@ -175,6 +219,8 @@ namespace spark {
 
 		PROFILE_SCOPE("Swap Buffers");
 		glfwSwapBuffers(Spark::window);
+		renderPassStarted = false;
+		cv.notify_all();
 	}
 
 	void SparkRenderer::resizeWindowIfNecessary()
@@ -527,6 +573,12 @@ namespace spark {
 		bufer.addMesh(vertices, indices);
 	}
 
+	void SparkRenderer::pushMeshIntoInstancedQueue(ModelMesh* modelMesh)
+	{
+		std::lock_guard<std::mutex> m(instancedQueueMutex);
+		renderInstancedQueue.push_back(modelMesh);
+	}
+
 	void SparkRenderer::createTexture(GLuint& texture, GLuint width, GLuint height, GLenum internalFormat, GLenum format,
 		GLenum pixelFormat, GLenum textureWrapping, GLenum textureSampling)
 	{
@@ -540,9 +592,11 @@ namespace spark {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, textureWrapping);
 	}
 
-	void SparkRenderer::cleanup() const
+	void SparkRenderer::cleanup()
 	{
 		deleteFrameBuffersAndTextures();
+		rendering = false;
+		sortingMeshes.join();
 	}
 
 	void SparkRenderer::deleteFrameBuffersAndTextures() const
@@ -555,6 +609,15 @@ namespace spark {
 
 		GLuint frameBuffers[6] = { mainFramebuffer, lightFrameBuffer, postprocessingFramebuffer, motionBlurFramebuffer, cubemapFramebuffer, brightPassFramebuffer };
 		glDeleteFramebuffers(6, frameBuffers);
+	}
+
+	ModelMesh* SparkRenderer::popMeshFromInstancedQueue()
+	{
+		std::lock_guard<std::mutex> m(instancedQueueMutex);
+		
+		const auto modelMesh = renderInstancedQueue.front();
+		renderInstancedQueue.pop_front();
+		return modelMesh;
 	}
 
 }
