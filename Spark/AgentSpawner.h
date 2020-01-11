@@ -4,6 +4,8 @@
 #include "Component.h"
 
 namespace spark {
+	class ModelMesh;
+
 	class AgentSpawner : public Component
 	{
 	public:
@@ -19,6 +21,10 @@ namespace spark {
 
 	private:
 		std::size_t agentCounter{ 0 };
+		std::vector<std::weak_ptr<ModelMesh>> meshes;
+
+		void spawnAgents(int numberOfAgents);
+		void setInstancedRenderingForAgents(bool mode) const;
 	};
 
 }
