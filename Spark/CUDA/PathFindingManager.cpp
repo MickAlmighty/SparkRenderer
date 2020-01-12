@@ -291,8 +291,8 @@ namespace spark {
 	{
 		std::deque<glm::ivec2> path;
 		std::set<NodeAI> openedNodes;
-		std::vector<NodeAI> closedNodes2;
-		closedNodes2.reserve(map.width * map.height);
+		std::vector<NodeAI> closedNodes;
+		closedNodes.reserve(map.width * map.height);
 
 		std::vector<std::vector<bool>> closedNodesTable(map.width);
 		for (auto& cols : closedNodesTable)
@@ -314,7 +314,7 @@ namespace spark {
 			const auto closedNode = *openedNodes.begin();
 			openedNodes.erase(openedNodes.begin());
 
-			closedNodes2.push_back(closedNode);
+			closedNodes.push_back(closedNode);
 
 			closedNodesTable[closedNode.position.x][closedNode.position.y] = true;
 
@@ -324,11 +324,11 @@ namespace spark {
 				if (closedNodesTable[neighbor.position.x][neighbor.position.y])
 					continue;
 
-				neighbor.parentIdx = static_cast<int32_t>(closedNodes2.size() - 1);
+				neighbor.parentIdx = static_cast<int32_t>(closedNodes.size() - 1);
 
 				if (neighbor.position == endPoint)
 				{
-					closedNodes2.push_back(neighbor);
+					closedNodes.push_back(neighbor);
 					pathFound = true;
 					break;
 				}
@@ -340,19 +340,23 @@ namespace spark {
 
 		if (pathFound)
 		{
-			NodeAI& pathNode = closedNodes2[closedNodes2.size() - 1];
+			NodeAI& pathNode = closedNodes[closedNodes.size() - 1];
 
-			while (pathNode.parentIdx != -1)
+			while (true)
 			{
 				path.push_front({ static_cast<float>(pathNode.position.x), static_cast<float>(pathNode.position.y) });
-				pathNode = closedNodes2[pathNode.parentIdx];
+				pathNode = closedNodes[pathNode.parentIdx];
+				
+				if (pathNode.parentIdx == -1)
+				{
+					path.push_front({ static_cast<float>(pathNode.position.x), static_cast<float>(pathNode.position.y) });
+					break;
+				}
 			}
 		}
 
 		//printf("CPU: Nodes processed %d, nodesToProcess %d, pathSize %d\n", 
 			//static_cast<int>(closedNodes.size()) - 1, static_cast<int>(openedNodes.size()), static_cast<int>(path.size()));
-		openedNodes.clear();
-		closedNodes2.clear();
 		return path;
 	}
 
