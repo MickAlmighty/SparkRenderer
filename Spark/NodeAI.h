@@ -17,10 +17,10 @@ namespace spark {
 	class NodeAI
 	{
 	public:
-		const glm::ivec2 position;
+		glm::ivec2 position;
 		float depth = 0.0f;
 		float functionF{ 0 };
-		NodeAI* parentAddress = nullptr;
+		std::int32_t parentIdx{ -1 };
 
 		NodeAI(const glm::ivec2 pos, const float depth_);
 		NodeAI();
@@ -39,7 +39,6 @@ namespace spark {
 		float measureDistanceTo(glm::ivec2 point) const;
 		void calculateHeuristic(const cuda::Map& map, glm::ivec2 endPoint);
 		std::vector<NodeAI> getNeighbors(const cuda::Map& map) const;
-		void getPath(std::deque<glm::ivec2>& path) const;
 
 	private:
 		inline void tryToCreateNeighbor(std::vector<NodeAI>& container, glm::ivec2&& pos,

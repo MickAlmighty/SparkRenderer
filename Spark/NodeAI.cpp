@@ -56,13 +56,6 @@ namespace spark {
 		return neighbors;
 	}
 
-	void NodeAI::getPath(std::deque<glm::ivec2>& path) const
-	{
-		path.push_front({ static_cast<float>(position.x), static_cast<float>(position.y) });
-		if (parentAddress)
-			parentAddress->getPath(path);
-	}
-
 	void NodeAI::tryToCreateNeighbor(std::vector<NodeAI>& container, glm::ivec2&& pos, const cuda::Map& map,
 		const float depth) const
 	{
@@ -70,18 +63,7 @@ namespace spark {
 		{
 			if (map.getTerrainValue(pos.x, pos.y) != 1.0f)
 			{
-				if (parentAddress)
-				{
-					if (parentAddress->position == pos)
-					{
-						return;
-					}
-					container.emplace_back(pos, this->depth + depth);
-				}
-				else
-				{
-					container.emplace_back(pos, this->depth + depth);
-				}
+				container.emplace_back(pos, this->depth + depth);
 			}
 		}
 	}

@@ -291,7 +291,8 @@ namespace spark {
 	{
 		std::deque<glm::ivec2> path;
 		std::set<NodeAI> openedNodes;
-		std::list<NodeAI> closedNodes;
+		std::vector<NodeAI> closedNodes2;
+		closedNodes2.reserve(map.width * map.height);
 
 		std::vector<std::vector<bool>> closedNodesTable(map.width);
 		for (auto& cols : closedNodesTable)
@@ -300,9 +301,9 @@ namespace spark {
 		}
 
 		openedNodes.emplace(NodeAI(startPoint, 0.0f));
-		NodeAI* finishNode = nullptr;
-
-		while (!finishNode)
+		
+		bool pathFound = false;
+		while (!pathFound)
 		{
 			if (openedNodes.empty())
 			{
@@ -310,28 +311,25 @@ namespace spark {
 				break;
 			}
 
-			//const auto closedNode = popFrom(openedNodes);
 			const auto closedNode = *openedNodes.begin();
 			openedNodes.erase(openedNodes.begin());
 
-			closedNodes.push_back(closedNode);
+			closedNodes2.push_back(closedNode);
 
 			closedNodesTable[closedNode.position.x][closedNode.position.y] = true;
 
 			auto neighbors = closedNode.getNeighbors(map);
 			for (NodeAI& neighbor : neighbors)
 			{
-				/*if (isNodeClosed(closedNodes, neighbor))
-					continue;*/
 				if (closedNodesTable[neighbor.position.x][neighbor.position.y])
 					continue;
 
-				neighbor.parentAddress = &(*std::prev(closedNodes.end()));
+				neighbor.parentIdx = static_cast<int32_t>(closedNodes2.size() - 1);
 
 				if (neighbor.position == endPoint)
 				{
-					closedNodes.push_back(neighbor);
-					finishNode = &(*std::prev(closedNodes.end()));
+					closedNodes2.push_back(neighbor);
+					pathFound = true;
 					break;
 				}
 
@@ -339,15 +337,22 @@ namespace spark {
 				insertOrSwapNode(openedNodes, neighbor);
 			}
 		}
-		if (finishNode)
+
+		if (pathFound)
 		{
-			finishNode->getPath(path);
+			NodeAI& pathNode = closedNodes2[closedNodes2.size() - 1];
+
+			while (pathNode.parentIdx != -1)
+			{
+				path.push_front({ static_cast<float>(pathNode.position.x), static_cast<float>(pathNode.position.y) });
+				pathNode = closedNodes2[pathNode.parentIdx];
+			}
 		}
 
 		//printf("CPU: Nodes processed %d, nodesToProcess %d, pathSize %d\n", 
 			//static_cast<int>(closedNodes.size()) - 1, static_cast<int>(openedNodes.size()), static_cast<int>(path.size()));
 		openedNodes.clear();
-		closedNodes.clear();
+		closedNodes2.clear();
 		return path;
 	}
 
