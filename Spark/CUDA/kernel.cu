@@ -2,10 +2,10 @@
 
 #include <device_launch_parameters.h>
 #include <nvfunctional>
-#include <thrust/unique.h>
-#include <thrust/remove.h>
-#include <thrust/find.h>
-#include <thrust/execution_policy.h>
+//#include <thrust/unique.h>
+//#include <thrust/remove.h>
+//#include <thrust/find.h>
+//#include <thrust/execution_policy.h>
 
 #include "BinaryHeap.cuh"
 #include "DeviceMemory.h"
@@ -30,7 +30,7 @@ namespace spark {
 			}
 			if (mode == PathFindingMode::DEVICE_IMPL_V2)
 			{
-				int sharedMemorySize = maxThreadsPerBlock * 8 * sizeof(Node);
+				int sharedMemorySize = maxThreadsPerBlock * sizeof(Node);
 				findPathV3 << <blocks, threads, sharedMemorySize >> > (path, agentPaths, kernelMemory, maxThreadsPerBlock);
 			}
 			gpuErrchk(cudaGetLastError());
@@ -233,7 +233,7 @@ namespace spark {
 				return;
 			}
 
-			Node* neighbors = reinterpret_cast<Node*>(sharedMemory) + threadIdx.x * 8; // 8 is the neighbor array size
+			Node* neighbors = reinterpret_cast<Node*>(sharedMemory) + threadIdx.x; // 8 is the neighbor array size
 
 			const auto agentPathMemorySize = mapSize * 2;
 			const auto agentPathWarpMemorySize = agentPathMemorySize * maxThreadsPerBlock;
@@ -249,9 +249,9 @@ namespace spark {
 			Node* closedNodes = reinterpret_cast<Node*>(threadMemoryBegin);
 			MemoryManager manager = MemoryManager(closedNodes);
 
-			uint32_t* closedNodesIndices = reinterpret_cast<uint32_t*>(closedNodes + mapSize);
+			int32_t* closedNodesIndices = reinterpret_cast<int32_t*>(closedNodes + mapSize);
 			// it is more than needed now but it need to be equal to map width * map height
-			memset(closedNodesIndices, 65'535, mapSize * sizeof(uint32_t));
+			memset(closedNodesIndices, -1, mapSize * sizeof(int32_t));
 			BinaryHeap<uint16_t> heap(reinterpret_cast<uint16_t*>(agentPath),
 				[&closedNodes] (const uint16_t& lhs, const uint16_t& rhs)
 			{
@@ -287,42 +287,371 @@ namespace spark {
 				}
 
 				auto theBestNode = closedNodes[heap.pop_front()];
-				theBestNode.getNeighbors(map, neighbors);
+				//theBestNode.getNeighbors(map, neighbors);
 
-#pragma unroll
-				for (int i = 0; i < 8; ++i)
+//#pragma unroll
+//				for (int i = 0; i < 8; ++i)
+//				{
+//					if (neighbors[i].valid == 0)
+//					{
+//						continue;
+//					}
+//
+//					const int nodeIdx = map->getTerrainNodeIndex(neighbors[i].pos[0], neighbors[i].pos[1]);
+//					const int parentIndex = map->getTerrainNodeIndex(theBestNode.pos[0], theBestNode.pos[1]);
+//					const int neighborIdxToClosedNodes = closedNodesIndices[nodeIdx];
+//					const int parentIdxToClosedNodes = closedNodesIndices[parentIndex];
+//					if (neighborIdxToClosedNodes != -1)
+//					{
+//						if (neighbors[i].distanceFromBeginning < closedNodes[neighborIdxToClosedNodes].distanceFromBeginning)
+//						{
+//							closedNodes[neighborIdxToClosedNodes].parentIdx = parentIdxToClosedNodes;
+//							closedNodes[neighborIdxToClosedNodes].distanceFromBeginning = neighbors[i].distanceFromBeginning;
+//
+//							neighbors[i].calculateHeuristic(map, endPoint);
+//							heap.insert(neighborIdxToClosedNodes);
+//						}
+//						continue;
+//					}
+//
+//					neighbors[i].parentIdx = parentIdxToClosedNodes;
+//					neighbors[i].calculateHeuristic(map, endPoint);
+//					const auto closedNode = manager.allocate<Node>(neighbors[i]);
+//
+//					closedNodesIndices[nodeIdx] = closedNode - closedNodes; // info that node is closed
+//					heap.insert(closedNode - closedNodes);
+//
+//					if (neighbors[i].pos[0] == endPoint[0] &&
+//						neighbors[i].pos[1] == endPoint[1])
+//					{
+//						finishNode = closedNode;
+//						break;
+//					}
+//				}
+
+
+				for (int i = 0; i < 1; ++i)
 				{
-					if (neighbors[i].valid == 0)
+					theBestNode.tryToCreateNeighbor(neighbors, { theBestNode.pos[0] - 1, theBestNode.pos[1] }, map, 1);
+
+					if (neighbors[0].valid == 0)
 					{
 						continue;
 					}
 
-					const int nodeIdx = map->getTerrainNodeIndex(neighbors[i].pos[0], neighbors[i].pos[1]);
+					const int nodeIdx = map->getTerrainNodeIndex(neighbors[0].pos[0], neighbors[0].pos[1]);
 					const int parentIndex = map->getTerrainNodeIndex(theBestNode.pos[0], theBestNode.pos[1]);
 					const int neighborIdxToClosedNodes = closedNodesIndices[nodeIdx];
 					const int parentIdxToClosedNodes = closedNodesIndices[parentIndex];
 					if (neighborIdxToClosedNodes != -1)
 					{
-						if (neighbors[i].distanceFromBeginning < closedNodes[neighborIdxToClosedNodes].distanceFromBeginning)
+						if (neighbors[0].distanceFromBeginning < closedNodes[neighborIdxToClosedNodes].distanceFromBeginning)
 						{
 							closedNodes[neighborIdxToClosedNodes].parentIdx = parentIdxToClosedNodes;
-							closedNodes[neighborIdxToClosedNodes].distanceFromBeginning = neighbors[i].distanceFromBeginning;
+							closedNodes[neighborIdxToClosedNodes].distanceFromBeginning = neighbors[0].distanceFromBeginning;
 
-							neighbors[i].calculateHeuristic(map, endPoint);
+							neighbors[0].calculateHeuristic(map, endPoint);
 							heap.insert(neighborIdxToClosedNodes);
 						}
 						continue;
 					}
 
-					neighbors[i].parentIdx = parentIdxToClosedNodes;
-					neighbors[i].calculateHeuristic(map, endPoint);
-					const auto closedNode = manager.allocate<Node>(neighbors[i]);
+					neighbors[0].parentIdx = parentIdxToClosedNodes;
+					neighbors[0].calculateHeuristic(map, endPoint);
+					const auto closedNode = manager.allocate<Node>(neighbors[0]);
 
 					closedNodesIndices[nodeIdx] = closedNode - closedNodes; // info that node is closed
 					heap.insert(closedNode - closedNodes);
 
-					if (neighbors[i].pos[0] == endPoint[0] &&
-						neighbors[i].pos[1] == endPoint[1])
+					if (neighbors[0].pos[0] == endPoint[0] &&
+						neighbors[0].pos[1] == endPoint[1])
+					{
+						finishNode = closedNode;
+						break;
+					}
+				}
+
+				for (int i = 0; i < 1; ++i)
+				{
+					theBestNode.tryToCreateNeighbor(neighbors, { theBestNode.pos[0] + 1, theBestNode.pos[1] }, map, 1);
+
+					if (neighbors[0].valid == 0)
+					{
+						continue;
+					}
+
+					const int nodeIdx = map->getTerrainNodeIndex(neighbors[0].pos[0], neighbors[0].pos[1]);
+					const int parentIndex = map->getTerrainNodeIndex(theBestNode.pos[0], theBestNode.pos[1]);
+					const int neighborIdxToClosedNodes = closedNodesIndices[nodeIdx];
+					const int parentIdxToClosedNodes = closedNodesIndices[parentIndex];
+					if (neighborIdxToClosedNodes != -1)
+					{
+						if (neighbors[0].distanceFromBeginning < closedNodes[neighborIdxToClosedNodes].distanceFromBeginning)
+						{
+							closedNodes[neighborIdxToClosedNodes].parentIdx = parentIdxToClosedNodes;
+							closedNodes[neighborIdxToClosedNodes].distanceFromBeginning = neighbors[0].distanceFromBeginning;
+
+							neighbors[0].calculateHeuristic(map, endPoint);
+							heap.insert(neighborIdxToClosedNodes);
+						}
+						continue;
+					}
+
+					neighbors[0].parentIdx = parentIdxToClosedNodes;
+					neighbors[0].calculateHeuristic(map, endPoint);
+					const auto closedNode = manager.allocate<Node>(neighbors[0]);
+
+					closedNodesIndices[nodeIdx] = closedNode - closedNodes; // info that node is closed
+					heap.insert(closedNode - closedNodes);
+
+					if (neighbors[0].pos[0] == endPoint[0] &&
+						neighbors[0].pos[1] == endPoint[1])
+					{
+						finishNode = closedNode;
+						break;
+					}
+				}
+
+				for (int i = 0; i < 1; ++i)
+				{
+					theBestNode.tryToCreateNeighbor(neighbors, { theBestNode.pos[0], theBestNode.pos[1] - 1 }, map, 1);
+
+					if (neighbors[0].valid == 0)
+					{
+						continue;
+					}
+
+					const int nodeIdx = map->getTerrainNodeIndex(neighbors[0].pos[0], neighbors[0].pos[1]);
+					const int parentIndex = map->getTerrainNodeIndex(theBestNode.pos[0], theBestNode.pos[1]);
+					const int neighborIdxToClosedNodes = closedNodesIndices[nodeIdx];
+					const int parentIdxToClosedNodes = closedNodesIndices[parentIndex];
+					if (neighborIdxToClosedNodes != -1)
+					{
+						if (neighbors[0].distanceFromBeginning < closedNodes[neighborIdxToClosedNodes].distanceFromBeginning)
+						{
+							closedNodes[neighborIdxToClosedNodes].parentIdx = parentIdxToClosedNodes;
+							closedNodes[neighborIdxToClosedNodes].distanceFromBeginning = neighbors[0].distanceFromBeginning;
+
+							neighbors[0].calculateHeuristic(map, endPoint);
+							heap.insert(neighborIdxToClosedNodes);
+						}
+						continue;
+					}
+
+					neighbors[0].parentIdx = parentIdxToClosedNodes;
+					neighbors[0].calculateHeuristic(map, endPoint);
+					const auto closedNode = manager.allocate<Node>(neighbors[0]);
+
+					closedNodesIndices[nodeIdx] = closedNode - closedNodes; // info that node is closed
+					heap.insert(closedNode - closedNodes);
+
+					if (neighbors[0].pos[0] == endPoint[0] &&
+						neighbors[0].pos[1] == endPoint[1])
+					{
+						finishNode = closedNode;
+						break;
+					}
+				}
+
+				for (int i = 0; i < 1; ++i)
+				{
+					theBestNode.tryToCreateNeighbor(neighbors, { theBestNode.pos[0], theBestNode.pos[1] + 1 }, map, 1);
+
+					if (neighbors[0].valid == 0)
+					{
+						continue;
+					}
+
+					const int nodeIdx = map->getTerrainNodeIndex(neighbors[0].pos[0], neighbors[0].pos[1]);
+					const int parentIndex = map->getTerrainNodeIndex(theBestNode.pos[0], theBestNode.pos[1]);
+					const int neighborIdxToClosedNodes = closedNodesIndices[nodeIdx];
+					const int parentIdxToClosedNodes = closedNodesIndices[parentIndex];
+					if (neighborIdxToClosedNodes != -1)
+					{
+						if (neighbors[0].distanceFromBeginning < closedNodes[neighborIdxToClosedNodes].distanceFromBeginning)
+						{
+							closedNodes[neighborIdxToClosedNodes].parentIdx = parentIdxToClosedNodes;
+							closedNodes[neighborIdxToClosedNodes].distanceFromBeginning = neighbors[0].distanceFromBeginning;
+
+							neighbors[0].calculateHeuristic(map, endPoint);
+							heap.insert(neighborIdxToClosedNodes);
+						}
+						continue;
+					}
+
+					neighbors[0].parentIdx = parentIdxToClosedNodes;
+					neighbors[0].calculateHeuristic(map, endPoint);
+					const auto closedNode = manager.allocate<Node>(neighbors[0]);
+
+					closedNodesIndices[nodeIdx] = closedNode - closedNodes; // info that node is closed
+					heap.insert(closedNode - closedNodes);
+
+					if (neighbors[0].pos[0] == endPoint[0] &&
+						neighbors[0].pos[1] == endPoint[1])
+					{
+						finishNode = closedNode;
+						break;
+					}
+				}
+
+				for (int i = 0; i < 1; ++i)
+				{
+					theBestNode.tryToCreateNeighbor(neighbors, { theBestNode.pos[0] - 1, theBestNode.pos[1] - 1 }, map, 1.41f);
+
+					if (neighbors[0].valid == 0)
+					{
+						continue;
+					}
+
+					const int nodeIdx = map->getTerrainNodeIndex(neighbors[0].pos[0], neighbors[0].pos[1]);
+					const int parentIndex = map->getTerrainNodeIndex(theBestNode.pos[0], theBestNode.pos[1]);
+					const int neighborIdxToClosedNodes = closedNodesIndices[nodeIdx];
+					const int parentIdxToClosedNodes = closedNodesIndices[parentIndex];
+					if (neighborIdxToClosedNodes != -1)
+					{
+						if (neighbors[0].distanceFromBeginning < closedNodes[neighborIdxToClosedNodes].distanceFromBeginning)
+						{
+							closedNodes[neighborIdxToClosedNodes].parentIdx = parentIdxToClosedNodes;
+							closedNodes[neighborIdxToClosedNodes].distanceFromBeginning = neighbors[0].distanceFromBeginning;
+
+							neighbors[0].calculateHeuristic(map, endPoint);
+							heap.insert(neighborIdxToClosedNodes);
+						}
+						continue;
+					}
+
+					neighbors[0].parentIdx = parentIdxToClosedNodes;
+					neighbors[0].calculateHeuristic(map, endPoint);
+					const auto closedNode = manager.allocate<Node>(neighbors[0]);
+
+					closedNodesIndices[nodeIdx] = closedNode - closedNodes; // info that node is closed
+					heap.insert(closedNode - closedNodes);
+
+					if (neighbors[0].pos[0] == endPoint[0] &&
+						neighbors[0].pos[1] == endPoint[1])
+					{
+						finishNode = closedNode;
+						break;
+					}
+				}
+
+				for (int i = 0; i < 1; ++i)
+				{
+					theBestNode.tryToCreateNeighbor(neighbors, { theBestNode.pos[0] + 1, theBestNode.pos[1] - 1 }, map, 1.41f);
+
+					if (neighbors[0].valid == 0)
+					{
+						continue;
+					}
+
+					const int nodeIdx = map->getTerrainNodeIndex(neighbors[0].pos[0], neighbors[0].pos[1]);
+					const int parentIndex = map->getTerrainNodeIndex(theBestNode.pos[0], theBestNode.pos[1]);
+					const int neighborIdxToClosedNodes = closedNodesIndices[nodeIdx];
+					const int parentIdxToClosedNodes = closedNodesIndices[parentIndex];
+					if (neighborIdxToClosedNodes != -1)
+					{
+						if (neighbors[0].distanceFromBeginning < closedNodes[neighborIdxToClosedNodes].distanceFromBeginning)
+						{
+							closedNodes[neighborIdxToClosedNodes].parentIdx = parentIdxToClosedNodes;
+							closedNodes[neighborIdxToClosedNodes].distanceFromBeginning = neighbors[0].distanceFromBeginning;
+
+							neighbors[0].calculateHeuristic(map, endPoint);
+							heap.insert(neighborIdxToClosedNodes);
+						}
+						continue;
+					}
+
+					neighbors[0].parentIdx = parentIdxToClosedNodes;
+					neighbors[0].calculateHeuristic(map, endPoint);
+					const auto closedNode = manager.allocate<Node>(neighbors[0]);
+
+					closedNodesIndices[nodeIdx] = closedNode - closedNodes; // info that node is closed
+					heap.insert(closedNode - closedNodes);
+
+					if (neighbors[0].pos[0] == endPoint[0] &&
+						neighbors[0].pos[1] == endPoint[1])
+					{
+						finishNode = closedNode;
+						break;
+					}
+				}
+
+				for (int i = 0; i < 1; ++i)
+				{
+					theBestNode.tryToCreateNeighbor(neighbors, { theBestNode.pos[0] + 1, theBestNode.pos[1] + 1 }, map, 1.41f);
+
+					if (neighbors[0].valid == 0)
+					{
+						continue;
+					}
+
+					const int nodeIdx = map->getTerrainNodeIndex(neighbors[0].pos[0], neighbors[0].pos[1]);
+					const int parentIndex = map->getTerrainNodeIndex(theBestNode.pos[0], theBestNode.pos[1]);
+					const int neighborIdxToClosedNodes = closedNodesIndices[nodeIdx];
+					const int parentIdxToClosedNodes = closedNodesIndices[parentIndex];
+					if (neighborIdxToClosedNodes != -1)
+					{
+						if (neighbors[0].distanceFromBeginning < closedNodes[neighborIdxToClosedNodes].distanceFromBeginning)
+						{
+							closedNodes[neighborIdxToClosedNodes].parentIdx = parentIdxToClosedNodes;
+							closedNodes[neighborIdxToClosedNodes].distanceFromBeginning = neighbors[0].distanceFromBeginning;
+
+							neighbors[0].calculateHeuristic(map, endPoint);
+							heap.insert(neighborIdxToClosedNodes);
+						}
+						continue;
+					}
+
+					neighbors[0].parentIdx = parentIdxToClosedNodes;
+					neighbors[0].calculateHeuristic(map, endPoint);
+					const auto closedNode = manager.allocate<Node>(neighbors[0]);
+
+					closedNodesIndices[nodeIdx] = closedNode - closedNodes; // info that node is closed
+					heap.insert(closedNode - closedNodes);
+
+					if (neighbors[0].pos[0] == endPoint[0] &&
+						neighbors[0].pos[1] == endPoint[1])
+					{
+						finishNode = closedNode;
+						break;
+					}
+				}
+
+				for (int i = 0; i < 1; ++i)
+				{
+					theBestNode.tryToCreateNeighbor(neighbors, { theBestNode.pos[0] - 1, theBestNode.pos[1] + 1 }, map, 1.41f);
+
+					if (neighbors[0].valid == 0)
+					{
+						continue;
+					}
+
+					const int nodeIdx = map->getTerrainNodeIndex(neighbors[0].pos[0], neighbors[0].pos[1]);
+					const int parentIndex = map->getTerrainNodeIndex(theBestNode.pos[0], theBestNode.pos[1]);
+					const int neighborIdxToClosedNodes = closedNodesIndices[nodeIdx];
+					const int parentIdxToClosedNodes = closedNodesIndices[parentIndex];
+					if (neighborIdxToClosedNodes != -1)
+					{
+						if (neighbors[0].distanceFromBeginning < closedNodes[neighborIdxToClosedNodes].distanceFromBeginning)
+						{
+							closedNodes[neighborIdxToClosedNodes].parentIdx = parentIdxToClosedNodes;
+							closedNodes[neighborIdxToClosedNodes].distanceFromBeginning = neighbors[0].distanceFromBeginning;
+
+							neighbors[0].calculateHeuristic(map, endPoint);
+							heap.insert(neighborIdxToClosedNodes);
+						}
+						continue;
+					}
+
+					neighbors[0].parentIdx = parentIdxToClosedNodes;
+					neighbors[0].calculateHeuristic(map, endPoint);
+					const auto closedNode = manager.allocate<Node>(neighbors[0]);
+
+					closedNodesIndices[nodeIdx] = closedNode - closedNodes; // info that node is closed
+					heap.insert(closedNode - closedNodes);
+
+					if (neighbors[0].pos[0] == endPoint[0] &&
+						neighbors[0].pos[1] == endPoint[1])
 					{
 						finishNode = closedNode;
 						break;

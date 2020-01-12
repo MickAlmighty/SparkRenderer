@@ -166,6 +166,7 @@
       <InterleaveSourceInPTX>false</InterleaveSourceInPTX>
       <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
       <Optimization>O3</Optimization>
+      <MaxRegCount>32</MaxRegCount>
     </CudaCompile>
     <CudaLink />
     <CudaLink>
