@@ -77,6 +77,10 @@ private:
 	std::map<Mesh, unsigned int> instancedMeshes{};
 	std::vector<glm::mat4> models;
 
+	int frameCounter{ 0 };
+	double normalRenderingTimeSum{ 0 };
+	double instancedRenderingTimeSum{ 0 };
+
 	~SparkRenderer() = default;
 	SparkRenderer() = default;
 

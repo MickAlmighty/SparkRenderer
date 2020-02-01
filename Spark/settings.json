@@ -1,8 +1,9 @@
 {
+	"a_star_mode" : 0,
 	"height" : 720,
+	"mapPath" : "M0.png",
 	"pathToModels" : "..\\res\\models",
 	"pathToResources" : "..\\res",
 	"vsync" : false,
-	"width" : 1280,
-	"mapPath" : "map.png"
+	"width" : 1280
 }

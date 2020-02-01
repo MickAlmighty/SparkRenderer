@@ -55,9 +55,9 @@ namespace spark {
 			spawnAgents(10);
 		}
 
-		if (ImGui::Button("Add 100 actors"))
+		if (ImGui::Button("Add 64 actors"))
 		{
-			spawnAgents(100);
+			spawnAgents(64);
 		}
 
 		if (ImGui::Button("Add 1024 actors"))
@@ -65,9 +65,9 @@ namespace spark {
 			spawnAgents(1024);
 		}
 
-		if (ImGui::Button("Add 16384 actors"))
+		if (ImGui::Button("Add 20736 actors"))
 		{
-			spawnAgents(16384);
+			spawnAgents(20736);
 		}
 
 		if (ImGui::Button("Add 65535 actors"))

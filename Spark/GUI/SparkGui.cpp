@@ -103,6 +103,7 @@ namespace spark {
 			variables.pathToModels = Spark::pathToModelMeshes;
 			variables.vsync = Spark::vsync;
 			variables.mapPath = PathFindingManager::getInstance()->mapPath;
+			variables.a_star_mode = static_cast<int>(PathFindingManager::getInstance()->mode);
 			JsonSerializer::writeToFile("settings.json", variables.serialize());
 		}
 		ImGui::End();

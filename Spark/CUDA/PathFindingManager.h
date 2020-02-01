@@ -23,6 +23,7 @@ namespace spark {
 	public:
 		cuda::Map map;
 		std::string mapPath;
+		PathFindingMode mode = PathFindingMode::DEVICE_IMPL;
 
 		PathFindingManager(const PathFindingManager& p) = delete;
 		PathFindingManager(const PathFindingManager&& p) = delete;
@@ -38,7 +39,9 @@ namespace spark {
 		__host__ void drawGui();
 	private:
 		std::vector<std::weak_ptr<ActorAI>> agents;
-		PathFindingMode mode = PathFindingMode::DEVICE_IMPL_V2;
+		std::deque<float> numberOfPaths;
+		float numberOfPathsFoundPerSecond {0};
+		double timePassed{0};
 
 		__host__ PathFindingManager() = default;
 		__host__ ~PathFindingManager() = default;

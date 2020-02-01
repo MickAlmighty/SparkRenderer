@@ -34,7 +34,7 @@ namespace spark {
 	{
 		HOST_IMPL = 0,
 		DEVICE_IMPL,
-		DEVICE_IMPL_V2
+		IMPL_BOTH
 	};
 }
 #endif

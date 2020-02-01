@@ -43,6 +43,7 @@ namespace spark {
 		std::filesystem::path pathToModels;
 		std::filesystem::path pathToResources;
 		std::string mapPath;
+		int a_star_mode;
 
 		Json::Value serialize() const
 		{
@@ -53,6 +54,7 @@ namespace spark {
 			root["pathToResources"] = pathToResources.string();
 			root["vsync"] = vsync;
 			root["mapPath"] = mapPath;
+			root["a_star_mode"] = a_star_mode;
 			return root;
 		}
 
@@ -64,6 +66,7 @@ namespace spark {
 			pathToResources = root["pathToResources"].asString();
 			vsync = root.get("vsync", false).asBool();
 			mapPath = root["mapPath"].asString();
+			a_star_mode = root.get("a_star_mode", 2).asInt();
 		}
 	};
 

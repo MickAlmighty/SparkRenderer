@@ -15,12 +15,10 @@ namespace spark {
 
 		__global__ void checkMapValues(Map* mapDev);
 		__global__ void createMap(float* nodes, int width, int height);
-		__global__ void findPathV1(int* path, unsigned int* agentPaths, void* kernelMemory);
-		__global__ void findPathV2(int* path, unsigned int* agentPaths, void* kernelMemory);
-		__global__ void findPathV3(int* path, unsigned int* agentPaths, void* kernelMemory, const int maxThreadsPerBlock);
+		__global__ void findPath(int* path, unsigned int* agentPaths, void* kernelMemory, const int maxThreadsPerBlock, bool showPathInfo = false);
 		__host__ void runKernel(int blocks, int threads, int* path, unsigned int* agentPaths, void* kernelMemory, const Map& mapHost, PathFindingMode mode, const int maxThreadsPerBlock);
 		__host__ void initMap(float* nodes, int width, int height);
-		inline __device__ void constructPath(unsigned int* path, Node* const finishNode, Node* closedNodes);
+		inline __device__ void constructPath(unsigned int* path, Node* const finishNode, Node* closedNodes, bool showPathInfo);
 	}
 }
 

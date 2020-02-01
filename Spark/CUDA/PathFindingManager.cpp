@@ -9,6 +9,7 @@
 #include "Node.cuh"
 #include "NodeAI.h"
 #include <stb_image.h>
+#include "Clock.h"
 
 namespace spark {
 
@@ -31,19 +32,41 @@ namespace spark {
 	void PathFindingManager::findPaths()
 	{
 		PROFILE_FUNCTION();
+		
+
+		if (timePassed < 1.0f)
+		{
+			numberOfPathsFoundPerSecond += static_cast<float>(agents.size());
+			timePassed += Clock::getDeltaTime();
+		}
+		else
+		{
+			timePassed = 0.0f; 
+			if (numberOfPaths.size() > 30)
+			{
+				numberOfPaths.pop_front();
+			}
+			numberOfPaths.push_back(numberOfPathsFoundPerSecond);
+			numberOfPathsFoundPerSecond = static_cast<float>(agents.size());
+		}
+
 		if (agents.empty())
 			return;
-
-		const double startTime = glfwGetTime();
 
 		if (mode == PathFindingMode::HOST_IMPL)
 		{
 			findPathsCPU();
 		}
 
-		if (mode == PathFindingMode::DEVICE_IMPL || mode == PathFindingMode::DEVICE_IMPL_V2)
+		if (mode == PathFindingMode::DEVICE_IMPL)
 		{
 			//const auto future = std::async(std::launch::async, [this] { findPathsCPU(); });
+			findPathsCUDA();
+		}
+
+		if (mode == PathFindingMode::IMPL_BOTH)
+		{
+			findPathsCPU();
 			findPathsCUDA();
 		}
 
@@ -54,6 +77,7 @@ namespace spark {
 
 	void PathFindingManager::loadMap(const std::string& mapPath)
 	{
+		this->mapPath = mapPath;
 		int texWidth, texHeight, nrChannels;
 		float* pixels = stbi_loadf(mapPath.c_str(), &texWidth, &texHeight, &nrChannels, 0);
 
@@ -98,22 +122,50 @@ namespace spark {
 		{
 			if (ImGui::Begin("Properties", &propertiesWindowOpened, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize))
 			{
-				static int implMode = static_cast<int>(mode);
+				static auto implMode = static_cast<int>(mode);
 				const auto r1 = ImGui::RadioButton("Host_impl", &implMode, static_cast<int>(PathFindingMode::HOST_IMPL)); ImGui::SameLine();
 				const auto r2 = ImGui::RadioButton("Device_impl", &implMode, static_cast<int>(PathFindingMode::DEVICE_IMPL)); ImGui::SameLine();
-				const auto r3 = ImGui::RadioButton("Device_impl_V2", &implMode, static_cast<int>(PathFindingMode::DEVICE_IMPL_V2));
+				const auto r3 = ImGui::RadioButton("Impl_both", &implMode, static_cast<int>(PathFindingMode::IMPL_BOTH));
 
 				if (r1 || r2 || r3)
 				{
 					mode = static_cast<PathFindingMode>(implMode);
 				}
 
-				static const char* items[3] = { "map.png", "map2.png", "map3.png" };
+				static const char* items[6] = { "M0.png", "M1.png", "M2.png", "M3.png", "M4.png", "M5.png" };
 				static int current_item = 0;
 				if (ImGui::Combo("Map", &current_item, items, IM_ARRAYSIZE(items)))
 				{
 					loadMap(items[current_item]);
 				}
+
+				static std::vector<float> paths(30);
+				/*int index = 0;
+				float maxValue = 0;
+				for(auto& pathsToFindInFrame : numberOfPaths)
+				{
+					if (maxValue < pathsToFindInFrame)
+					{
+						maxValue = pathsToFindInFrame;
+					}
+					paths[index] = pathsToFindInFrame;
+					++index;
+				}*/
+
+				int index = paths.size() - 1;
+				float maxValue = 0;
+				
+				for (int i = numberOfPaths.size() - 1; i > 0; --i )
+				{
+					if (maxValue < numberOfPaths[i])
+					{
+						maxValue = numberOfPaths[i];
+					}
+					paths[index] = numberOfPaths[i];
+					--index;
+				}
+
+				ImGui::PlotHistogram("Histogram", paths.data(), static_cast<int>(paths.size()), 0, NULL, 0.0f, maxValue, ImVec2(300, 150));
 				ImGui::End();
 			}
 		}
@@ -133,17 +185,7 @@ namespace spark {
 	void PathFindingManager::findPathsCUDA() const
 	{
 		PROFILE_FUNCTION();
-		std::uint16_t maxThreadsPerBlock = 32;
-		auto threadMemoryMultiplier = 1;
-		if (mode == PathFindingMode::DEVICE_IMPL)
-		{ 
-			threadMemoryMultiplier = 16;
-		}
-		if (mode == PathFindingMode::DEVICE_IMPL_V2)
-		{
-			threadMemoryMultiplier = 1;
-			maxThreadsPerBlock = 256;
-		}
+		std::uint16_t maxThreadsPerBlock = 256;
 			
 		const auto blockCount = calculateNumberOfBlocks(maxThreadsPerBlock);
 		const auto threadsPerBlock = calculateNumberOfThreadsPerBlock(blockCount);
@@ -185,7 +227,7 @@ namespace spark {
 		const auto pathsStartsEndsSizeInBytes = pathsStartsEnds.size() * sizeof(path);
 		const auto agentPathsSizeInBytes = map.width * map.height * sizeof(glm::ivec2) * blockCount * maxThreadsPerBlock;
 		
-		const auto kernelMemoryInBytes = (sizeof(cuda::Node) + sizeof(uint32_t)) * map.width * map.height * maxThreadsPerBlock * blockCount * threadMemoryMultiplier;
+		const auto kernelMemoryInBytes = (sizeof(cuda::Node) + sizeof(uint32_t)) * map.width * map.height * maxThreadsPerBlock * blockCount;
 		const auto overallBufferSizeInBytes = pathsStartsEndsSizeInBytes + agentPathsSizeInBytes + kernelMemoryInBytes;
 		const auto devMem = cuda::DeviceMemory<std::uint8_t>::AllocateBytes(overallBufferSizeInBytes);
 		gpuErrchk(cudaGetLastError());
@@ -307,7 +349,7 @@ namespace spark {
 		{
 			if (openedNodes.empty())
 			{
-				printf("Path hasn't been found\n");
+				//printf("Path hasn't been found\n");
 				break;
 			}
 
@@ -355,9 +397,14 @@ namespace spark {
 			}
 		}
 
-		//printf("CPU: Nodes processed %d, nodesToProcess %d, pathSize %d\n", 
-			//static_cast<int>(closedNodes.size()) - 1, static_cast<int>(openedNodes.size()), static_cast<int>(path.size()));
-		return path;
+		if (mode == PathFindingMode::IMPL_BOTH)
+		{
+			printf("CPU: Nodes processed %d, nodesToProcess %d, pathSize %d\n", 
+				static_cast<int>(closedNodes.size()) - 1, static_cast<int>(openedNodes.size()), static_cast<int>(path.size()));
+			return {};
+		}
+		else
+			return path;
 	}
 
 	void PathFindingManager::insertOrSwapNode(std::set<NodeAI>& openedNodes, const NodeAI& node) const

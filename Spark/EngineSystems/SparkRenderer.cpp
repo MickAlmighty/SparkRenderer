@@ -126,6 +126,7 @@ namespace spark {
 	{
 		PROFILE_FUNCTION();
 		renderPassStarted = true;
+		++frameCounter;
 		resizeWindowIfNecessary();
 
 		const auto camera = SceneManager::getInstance()->getCurrentScene()->getCamera();
@@ -142,7 +143,8 @@ namespace spark {
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_BACK);
 		{
-			PROFILE_SCOPE("Normal rendering");
+			Timer t1("Normal rendering");
+			const double timeStart = glfwGetTime();
 			std::shared_ptr<Shader> shader = mainShader.lock();
 			shader->use();
 			shader->setMat4("view", view);
@@ -153,6 +155,8 @@ namespace spark {
 			}
 			renderQueue[ShaderType::DEFAULT_SHADER].clear();
 			POP_DEBUG_GROUP();
+			normalRenderingTimeSum += glfwGetTime() - timeStart;
+			t1.stop();
 		}
 
 		{
@@ -167,6 +171,7 @@ namespace spark {
 		if (!models.empty())
 		{
 			PROFILE_SCOPE("Instanced rendering");
+			const double timeStart = glfwGetTime();
 			const std::shared_ptr<Shader> instancedShader = defaultInstancedShader.lock();
 			instancedShader->use();
 			instancedShader->setMat4("view", view);
@@ -180,7 +185,21 @@ namespace spark {
 				instancedIndirectBuffer.drawInstances(mesh, instances);
 				instancedIndirectBuffer.cleanup();
 			}
+			instancedRenderingTimeSum += glfwGetTime() - timeStart;
 		}
+		static bool measureDone = false;
+		if(static_cast<int>(glfwGetTime()) % 15 == 0 && !measureDone)
+		{
+			//std::cout << "15s avg normal rendering time = " << (normalRenderingTimeSum / static_cast<float>(frameCounter)) * 1000 << " ms" << std::endl;
+			//std::cout << "15s avg instanced rendering time = " << (instancedRenderingTimeSum / static_cast<float>(frameCounter)) * 1000 << " ms" << std::endl;
+			normalRenderingTimeSum = 0;
+			instancedRenderingTimeSum = 0;
+			frameCounter = 0;
+			measureDone = true;
+		}
+		if (static_cast<int>(glfwGetTime()) % 15 != 0)
+			measureDone = false;
+
 		glDisable(GL_CULL_FACE);
 		renderLights();
 		renderCubemap();
@@ -239,11 +258,10 @@ namespace spark {
 
 	void SparkRenderer::renderLights() const
 	{
-		PROFILE_FUNCTION();
-
 		PUSH_DEBUG_GROUP(PBR_LIGHT);
 
 		glBindFramebuffer(GL_FRAMEBUFFER, lightFrameBuffer);
+		PROFILE_FUNCTION();
 		glClearColor(0, 0, 0, 1);
 		glClear(GL_COLOR_BUFFER_BIT);
 

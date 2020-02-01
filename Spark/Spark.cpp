@@ -30,6 +30,7 @@ namespace spark {
 		ResourceManager::getInstance()->loadResources();
 		SceneManager::getInstance()->setup();
 		PathFindingManager::getInstance()->loadMap(variables.mapPath);
+		PathFindingManager::getInstance()->mode = static_cast<PathFindingMode>(variables.a_star_mode);
 		SparkRenderer::getInstance()->setup();
 	}
 
