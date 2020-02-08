@@ -129,7 +129,8 @@ TEST(SerializationTest, PointersInterchangeable)
 
     ASSERT_TRUE(wrappedVar.get_type() == rawVar.get_type());
 
-    ASSERT_EQ(static_cast<void*>(raw), rawVar.get_value<void*>(), wrappedVar.get_value<void*>());
+    ASSERT_EQ(static_cast<void*>(raw), rawVar.get_value<void*>());
+    ASSERT_EQ(rawVar.get_value<void*>(), wrappedVar.get_value<void*>());
 }
 
 TEST(SerializationTest, PointersSerializedProperly)
@@ -209,7 +210,7 @@ TEST(SerializationTest, StructsSerializedProperly)
     {
         target = serializer->loadJson<SerializationStruct2>(root);
     }
-    catch(std::exception& e)
+    catch(std::exception&)
     {
         ASSERT_FALSE("Unable to deserialize struct!");
     }
@@ -232,7 +233,7 @@ TEST(SerializationTest, ComponentPointersConvertible)
     {
         comp2 = serializer->loadJsonShared<spark::Component>(root);
     }
-    catch(std::exception& e)
+    catch(std::exception&)
     {
         ASSERT_FALSE("Unable to deserialize camera as component!");
     }
@@ -253,7 +254,7 @@ TEST(SerializationTest, GameObjectWithComponentSerializedProperly)
     {
         obj2 = serializer->loadJsonShared<spark::GameObject>(root);
     }
-    catch(std::exception& e)
+    catch(std::exception&)
     {
         ASSERT_FALSE("Unable to deserialize gameobject!");
     }
