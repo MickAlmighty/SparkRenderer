@@ -1,5 +1,3 @@
-#include <iostream>
-
 #include "JsonSerializer.h"
 #include "Spark.h"
 #include "Structs.h"
@@ -9,7 +7,7 @@ int main() {
     spark::InitializationVariables variables;
     try {
         variables = spark::JsonSerializer::getInstance()->load<spark::InitializationVariables>("settings.json");
-    } catch (std::exception& e) {
+    } catch (std::exception&) {
         variables.width = 1280;
         variables.height = 720;
         variables.pathToResources = R"(..\..\..\res)";

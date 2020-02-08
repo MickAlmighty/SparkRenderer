@@ -26,9 +26,11 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
+    <IntDir>$(SolutionDir)$(Configuration)\$(ProjectName)\Intermediate\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
+    <IntDir>$(SolutionDir)$(Configuration)\$(ProjectName)\Intermediate\</IntDir>
   </PropertyGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -73,7 +75,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <AdditionalLibraryDirectories>$(SolutionDir)thirdparty\lib\CommonLib;$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalOptions>"$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.lib" "$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.a" "$(SolutionDir)thirdparty\lib\CommonLib\*.lib" "$(SolutionDir)thirdparty\lib\CommonLib\*.a" /VERBOSE:UNUSEDLIBS "$(TargetDir)..\Spark\Spark.lib"</AdditionalOptions>
+      <AdditionalOptions>"$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.lib" "$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.a" "$(SolutionDir)thirdparty\lib\CommonLib\*.lib" "$(SolutionDir)thirdparty\lib\CommonLib\*.a" /VERBOSE:UNUSEDLIBS</AdditionalOptions>
     </Link>
     <PostBuildEvent>
       <Command>xcopy "$(SolutionDir)thirdparty\lib\CommonLib\*.dll" "$(TargetDir)" /D /Y
@@ -100,7 +102,7 @@ xcopy "$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.pdb" "$(TargetDir)
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <AdditionalLibraryDirectories>$(SolutionDir)thirdparty\lib\CommonLib;$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalOptions>"$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.lib" "$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.a" "$(SolutionDir)thirdparty\lib\CommonLib\*.lib" "$(SolutionDir)thirdparty\lib\CommonLib\*.a" /VERBOSE:UNUSEDLIBS "$(TargetDir)..\Spark\Spark.lib"</AdditionalOptions>
+      <AdditionalOptions>"$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.lib" "$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.a" "$(SolutionDir)thirdparty\lib\CommonLib\*.lib" "$(SolutionDir)thirdparty\lib\CommonLib\*.a" /VERBOSE:UNUSEDLIBS</AdditionalOptions>
     </Link>
     <PostBuildEvent>
       <Command>xcopy "$(SolutionDir)thirdparty\lib\CommonLib\*.dll" "$(TargetDir)" /D /Y
