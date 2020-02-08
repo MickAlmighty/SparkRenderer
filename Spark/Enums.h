@@ -19,10 +19,10 @@ enum class ShaderType : unsigned char
 
 enum class TextureTarget : unsigned char
 {
-	DIFFUSE_TARGET = 0,
-	NORMAL_TARGET = 1,
-	ROUGHNESS_TARGET = 2,
-	METALNESS_TARGET = 3
+	DIFFUSE_TARGET = 1,
+	NORMAL_TARGET = 2,
+	ROUGHNESS_TARGET = 3,
+	METALNESS_TARGET = 4
 };
 
 }

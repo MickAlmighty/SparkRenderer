@@ -98,10 +98,17 @@ namespace spark {
 		glfwGetWindowSize(Spark::window, &width, &height);
 		if (Spark::WIDTH != width || Spark::HEIGHT != height)
 		{
-			Spark::WIDTH = width;
-			Spark::HEIGHT = height;
-			deleteFrameBuffersAndTextures();
-			createFrameBuffersAndTextures();
+            if(width == 0 || height == 0)
+            {
+
+            }
+            else
+            {
+                Spark::WIDTH = width;
+                Spark::HEIGHT = height;
+                deleteFrameBuffersAndTextures();
+                createFrameBuffersAndTextures();
+            }
 		}
 		glViewport(0, 0, Spark::WIDTH, Spark::HEIGHT);
 	}
