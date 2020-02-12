@@ -152,10 +152,10 @@ namespace spark {
 					++index;
 				}*/
 
-				int index = paths.size() - 1;
+				int index = static_cast<int>(paths.size()) - 1;
 				float maxValue = 0;
 				
-				for (int i = numberOfPaths.size() - 1; i > 0; --i )
+				for (int i = static_cast<int>(numberOfPaths.size()) - 1; i > 0; --i )
 				{
 					if (maxValue < numberOfPaths[i])
 					{

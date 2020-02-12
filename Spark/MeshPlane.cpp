@@ -104,6 +104,7 @@ Json::Value MeshPlane::serialize()
 	{
 		root[std::to_string(static_cast<int>(tex_it.first))] = tex_it.second.path;
 	}
+	root["active"] = getActive();
 	return root;
 }
 
@@ -131,6 +132,8 @@ void MeshPlane::deserialize(Json::Value& root)
 	{
 		textures[TextureTarget::METALNESS_TARGET] = ResourceManager::getInstance()->findTexture(static_cast<const std::string>(metalnessTexName));
 	}
+
+	setActive(root.get("active", true).asBool());
 }
 
 void MeshPlane::update()
