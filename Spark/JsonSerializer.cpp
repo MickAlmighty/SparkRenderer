@@ -1119,13 +1119,28 @@ rttr::variant JsonSerializer::deserialize(const Json::Value& root)
                 SPARK_TRACE("Reading prop with name '{}'...", prop.get_name().cbegin());
                 const Json::Value& obj{content[prop.get_name().cbegin()]};
                 bool ok = true;
+                unsigned int code{0};
                 rttr::variant propVar{readPropertyFromJson(obj, propType, prop.get_value(wrapped), ok)};
+                SPARK_TRACE("Acquired variant of type '{}'. Setting value...", propVar.get_name().cbegin());
                 if(ok && !prop.set_value(wrapped, propVar))
                 {
-                    SPARK_WARN("Unable to set value for property '{}' of type '{}' with value of type '{}'!", prop.get_name().cbegin(),
-                               propType.get_name().cbegin(), propVar.get_type().get_name().cbegin());
-                    // TODO: insert nullptr values here!
-                    // throw std::exception("Unable to set value for property!");
+                    SPARK_TRACE("Failed! Attempting to acquire converted variant...");
+                    rttr::variant convVar{tryConvertVar(propVar, prop.get_type(), ok)};
+                    // converted values still don't apply for nullpointers, need to work it out somehow
+                    if(ok)
+                    {
+                        SPARK_TRACE("Acquired converted variant of type '{}'. Setting value...");
+                    }
+                    if(ok && !prop.set_value(wrapped, convVar))
+                    {
+                        SPARK_WARN("Unable to set value for property '{}' of type '{}' with value of type '{}'!", prop.get_name().cbegin(),
+                                   propType.get_name().cbegin(), convVar.get_type().get_name().cbegin());
+                    }
+                    else
+                    {
+                        SPARK_WARN("Unable to set value for property '{}' of type '{}' with value of type '{}'!", prop.get_name().cbegin(),
+                                   propType.get_name().cbegin(), propVar.get_type().get_name().cbegin());
+                    }
                 }
             }
             else

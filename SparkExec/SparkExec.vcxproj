@@ -78,6 +78,10 @@ xcopy "$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.dll" "$(TargetDir)
 if not exist "$(TargetDir)settings.json" (xcopy "$(ProjectDir)settings.json" "$(TargetDir)" /D /Y)
 if not exist "$(TargetDir)scene.json" (xcopy "$(ProjectDir)scene.json" "$(TargetDir)" /D /Y)</Command>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
