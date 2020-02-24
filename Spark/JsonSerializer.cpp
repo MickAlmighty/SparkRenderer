@@ -624,7 +624,7 @@ rttr::variant JsonSerializer::readPropertyFromJson(const Json::Value& root, cons
                 if(view.is_dynamic())
                 {
                     SPARK_TRACE("Container is dynamic");
-                    for(int i = 0; i < root.size(); ++i)
+                    for(uint32_t i = 0; i < static_cast<uint32_t>(root.size()); ++i)
                     {
                         bool ok;
                         rttr::variant val{readPropertyFromJson(root[i], view.get_value_type(), rttr::variant(), ok)};
@@ -646,7 +646,7 @@ rttr::variant JsonSerializer::readPropertyFromJson(const Json::Value& root, cons
                     {
                         SPARK_WARN("Sequential container size mismatch! Read {}, expected {}.", root.size(), view.get_size());
                     }
-                    for(int i = 0; i < std::min(static_cast<unsigned int>(view.get_size()), root.size()); ++i)
+                    for(uint32_t i = 0; i < std::min(static_cast<unsigned int>(view.get_size()), root.size()); ++i)
                     {
                         bool ok;
                         rttr::variant currVal{view.get_value(i).extract_wrapped_value()};
@@ -682,7 +682,7 @@ rttr::variant JsonSerializer::readPropertyFromJson(const Json::Value& root, cons
                 if(view.is_key_only_type())
                 {
                     SPARK_TRACE("Container is a key only type");
-                    for(int i = 0; i < root.size(); ++i)
+                    for(uint32_t i = 0; i < static_cast<uint32_t>(root.size()); ++i)
                     {
                         SPARK_TRACE("Reading prop[{}]...", i);
                         if(root[i].size() != 1)
@@ -708,7 +708,7 @@ rttr::variant JsonSerializer::readPropertyFromJson(const Json::Value& root, cons
                 else
                 {
                     SPARK_TRACE("Container is a key-value type");
-                    for(int i = 0; i < root.size(); ++i)
+                    for(uint32_t i = 0; i < static_cast<uint32_t>(root.size()); ++i)
                     {
                         SPARK_TRACE("Reading prop[{}]...", i);
                         if(root[i].size() != 2)
@@ -755,7 +755,7 @@ rttr::variant JsonSerializer::readPropertyFromJson(const Json::Value& root, cons
                     {
                         if(root[i].isDouble())
                         {
-                            vec[i] = root[i].asDouble();
+                            vec[i] = static_cast<float>(root[i].asDouble());
                         }
                         else
                         {
@@ -782,7 +782,7 @@ rttr::variant JsonSerializer::readPropertyFromJson(const Json::Value& root, cons
                     {
                         if(root[i].isDouble())
                         {
-                            vec[i] = root[i].asDouble();
+                            vec[i] = static_cast<float>(root[i].asDouble());
                         }
                         else
                         {
@@ -809,7 +809,7 @@ rttr::variant JsonSerializer::readPropertyFromJson(const Json::Value& root, cons
                     {
                         if(root[i].isDouble())
                         {
-                            vec[i] = root[i].asDouble();
+                            vec[i] = static_cast<float>(root[i].asDouble());
                         }
                         else
                         {
@@ -921,7 +921,7 @@ rttr::variant JsonSerializer::readPropertyFromJson(const Json::Value& root, cons
                             {
                                 if(root[i][j].isDouble())
                                 {
-                                    mat[i][j] = root[i][j].asDouble();
+                                    mat[i][j] = static_cast<float>(root[i][j].asDouble());
                                 }
                                 else
                                 {
@@ -962,7 +962,7 @@ rttr::variant JsonSerializer::readPropertyFromJson(const Json::Value& root, cons
                             {
                                 if(root[i][j].isDouble())
                                 {
-                                    mat[i][j] = root[i][j].asDouble();
+                                    mat[i][j] = static_cast<float>(root[i][j].asDouble());
                                 }
                                 else
                                 {
@@ -1003,7 +1003,7 @@ rttr::variant JsonSerializer::readPropertyFromJson(const Json::Value& root, cons
                             {
                                 if(root[i][j].isDouble())
                                 {
-                                    mat[i][j] = root[i][j].asDouble();
+                                    mat[i][j] = static_cast<float>(root[i][j].asDouble());
                                 }
                                 else
                                 {

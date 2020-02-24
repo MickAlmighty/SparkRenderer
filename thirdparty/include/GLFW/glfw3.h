@@ -99,14 +99,21 @@ extern "C" {
 /* It is customary to use APIENTRY for OpenGL function pointer declarations on
  * all platforms.  Additionally, the Windows OpenGL header needs APIENTRY.
  */
-#ifndef APIENTRY
- #ifdef _WIN32
-  #define APIENTRY __stdcall
- #else
-  #define APIENTRY
- #endif
- #define GLFW_APIENTRY_DEFINED
-#endif /* APIENTRY */
+#ifdef _WIN32
+    #ifndef APIENTRY
+        #define APIENTRY
+    #elif
+        #define GLFW_APIENTRY_DEFINED
+    #endif
+#endif
+//#ifndef APIENTRY
+// #ifdef _WIN32
+//  #define APIENTRY __stdcall
+// #else
+//  #define APIENTRY
+// #endif
+// #define GLFW_APIENTRY_DEFINED
+//#endif /* APIENTRY */
 
 /* Some Windows OpenGL headers need this.
  */
@@ -5635,3 +5642,6 @@ GLFWAPI VkResult glfwCreateWindowSurface(VkInstance instance, GLFWwindow* window
 
 #endif /* _glfw3_h_ */
 
+#ifdef APIENTRY
+#undef APIENTRY
+#endif

@@ -31,7 +31,6 @@
 #define __gl_h_
 #endif
 
-
 #if defined(_WIN32) && !defined(APIENTRY) && !defined(__CYGWIN__) && !defined(__SCITECH_SNAP__)
 #define APIENTRY __stdcall
 #endif
@@ -3695,4 +3694,8 @@ GLAPI int GLAD_GL_KHR_texture_compression_astc_ldr;
 }
 #endif
 
+#endif
+
+#if defined(APIENTRY)
+#undef APIENTRY
 #endif
