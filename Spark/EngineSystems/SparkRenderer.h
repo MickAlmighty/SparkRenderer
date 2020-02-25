@@ -24,6 +24,7 @@ public:
 	void cleanup() const;
 
 	static SparkRenderer* getInstance();
+    void updateBufferBindings() const;
 
 private:
 	ScreenQuad screenQuad{};

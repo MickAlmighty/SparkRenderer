@@ -10,6 +10,18 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
+layout (binding = 2) uniform TmpBlock
+{
+	vec2 tmp;
+	vec2 pos;
+} block;
+
+layout (binding = 1) uniform TmpBlock2
+{
+	vec2 tmp;
+	vec2 pos;
+} block2;
+
 out vec2 tex_coords;
 out mat3 TBN_matrix;
 

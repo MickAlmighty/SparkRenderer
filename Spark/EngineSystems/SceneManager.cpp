@@ -61,6 +61,7 @@ bool SceneManager::setCurrentScene(const std::string& sceneName)
 	if (scene_it != std::end(scenes))
 	{
 		current_scene = *scene_it;
+        SparkRenderer::getInstance()->updateBufferBindings();
 		return true;
 	}
 	return false;

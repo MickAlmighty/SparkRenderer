@@ -172,7 +172,7 @@ RTTR_REGISTRATION{
     rttr::registration::class_<spark::SpotLight>("SpotLight")
     .constructor()(rttr::policy::ctor::as_std_shared_ptr)
     //.property("dirty", &spark::SpotLight::dirty) //FIXME: shouldn't it always be dirty when loaded? maybe not
-    .property("addedToLightManager", &spark::SpotLight::addedToLightManager)
+    //.property("addedToLightManager", &spark::SpotLight::addedToLightManager)
     .property("color", &spark::SpotLight::color)
     .property("colorStrength", &spark::SpotLight::colorStrength)
     .property("direction", &spark::SpotLight::direction)

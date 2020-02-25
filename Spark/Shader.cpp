@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <numeric>
 #include <sstream>
 
 #include <glm/gtc/type_ptr.hpp>
@@ -47,6 +48,8 @@ Shader::Shader(const std::string& vertexShaderPath, const std::string& fragmentS
     linkProgram(shaderIds);
 
     acquireUniformNamesAndTypes();
+    acquireUniformBlocks();
+    acquireBuffers();
 }
 
 Shader::Shader(const std::string& shaderPath)
@@ -63,6 +66,8 @@ Shader::Shader(const std::string& shaderPath)
     linkProgram(shaderIds);
 
     acquireUniformNamesAndTypes();
+    acquireUniformBlocks();
+    acquireBuffers();
 }
 
 void Shader::linkProgram(const std::vector<GLuint>& ids)
@@ -93,41 +98,31 @@ void Shader::linkProgram(const std::vector<GLuint>& ids)
 
 void Shader::acquireUniformNamesAndTypes()
 {
-    int32_t numberOfUniforms = -1;
-    glGetProgramiv(ID, GL_ACTIVE_UNIFORMS, &numberOfUniforms);
+    int32_t numberOfUniforms{-1};
+    glGetProgramInterfaceiv(ID, GL_UNIFORM, GL_ACTIVE_RESOURCES, &numberOfUniforms);
     if(numberOfUniforms < 1)
         return;
 
-    std::vector<GLuint> uniformIndices(numberOfUniforms);
-    std::vector<GLint> uniformNamesLength(numberOfUniforms);
-    std::vector<GLenum> uniformTypes(numberOfUniforms);
-
-    for(int32_t uniformIndex = 0; uniformIndex < numberOfUniforms; ++uniformIndex)
-    {
-        uniformIndices[uniformIndex] = uniformIndex;
-    }
-
-    glGetActiveUniformsiv(ID, static_cast<GLsizei>(uniformIndices.size()), uniformIndices.data(), GL_UNIFORM_NAME_LENGTH, uniformNamesLength.data());
-
-    glGetActiveUniformsiv(ID, static_cast<GLsizei>(uniformIndices.size()), uniformIndices.data(), GL_UNIFORM_TYPE,
-                          reinterpret_cast<GLint*>(uniformTypes.data()));
+    GLenum properties[4] = {GL_BLOCK_INDEX, GL_TYPE, GL_NAME_LENGTH, GL_LOCATION};
 
     for(int i = 0; i < numberOfUniforms; ++i)
     {
+        GLint values[4];
+        glGetProgramResourceiv(ID, GL_UNIFORM, i, 4, properties, 4, nullptr, values);
+
+        // Skip any uniforms that are in a block.
+        if(values[0] != -1)
+            continue;
+
         std::string uniformName;
-        uniformName.resize(uniformNamesLength[i]);
+        uniformName.resize(values[2]);
         GLsizei size = 0;
 
-        glGetActiveUniformName(ID, uniformIndices[i], static_cast<GLsizei>(uniformName.size()), &size, uniformName.data());
+        glGetActiveUniformName(ID, i, static_cast<GLsizei>(uniformName.size()), &size, uniformName.data());
         uniformName = uniformName.substr(0, uniformName.size() - 1);
 
-        uniforms.insert({uniformName, getUniformType(uniformTypes[i]), getUniformLocation(uniformName)});
+        uniforms.insert({uniformName, getUniformType(values[1]), values[3]});
     }
-}
-
-GLint Shader::getUniformLocation(const std::string& uniformName) const
-{
-    return glGetUniformLocation(ID, uniformName.c_str());
 }
 
 std::string Shader::getUniformType(GLenum type)
@@ -162,8 +157,75 @@ std::string Shader::getUniformType(GLenum type)
             return "sampler2D_array";
         case GL_SAMPLER_CUBE:
             return "samplerCube";
-        default: return "";
+        default:
+            return "";
     }
+}
+
+void Shader::acquireUniformBlocks()
+{
+    GLint numberOfUniformBlocks{-1};
+    glGetProgramInterfaceiv(ID, GL_UNIFORM_BLOCK, GL_ACTIVE_RESOURCES, &numberOfUniformBlocks);
+
+    for(int index = 0; index < numberOfUniformBlocks; ++index)
+    {
+        std::string uniformBlockName;
+        uniformBlockName.resize(100);
+        GLsizei size = 0;
+        glGetProgramResourceName(ID, GL_UNIFORM_BLOCK, index, static_cast<GLsizei>(uniformBlockName.size()), &size, uniformBlockName.data());
+        uniformBlockName = uniformBlockName.substr(0, size);
+
+        const GLint uniformBlockIndex = glGetProgramResourceIndex(ID, GL_UNIFORM_BLOCK, uniformBlockName.c_str());
+
+        uniformBlocks.insert({uniformBlockName, uniformBlockIndex});
+    }
+}
+
+void Shader::acquireBuffers()
+{
+    GLint numberOfShaderBuffers{-1};
+    glGetProgramInterfaceiv(ID, GL_SHADER_STORAGE_BLOCK, GL_ACTIVE_RESOURCES, &numberOfShaderBuffers);
+
+    for(int index = 0; index < numberOfShaderBuffers; ++index)
+    {
+        std::string shaderStorageBufferName;
+        shaderStorageBufferName.resize(100);
+        GLsizei size = 0;
+        glGetProgramResourceName(ID, GL_SHADER_STORAGE_BLOCK, index, static_cast<GLsizei>(shaderStorageBufferName.size()), &size,
+                                 shaderStorageBufferName.data());
+        shaderStorageBufferName = shaderStorageBufferName.substr(0, size);
+
+        const GLint uniformBlockIndex = glGetProgramResourceIndex(ID, GL_SHADER_STORAGE_BLOCK, shaderStorageBufferName.c_str());
+
+        storageBuffers.insert({shaderStorageBufferName, uniformBlockIndex});
+    }
+}
+
+std::optional<ShaderStorageBuffer> Shader::getShaderBuffer(const std::string& storageBufferName) const
+{
+    const auto storageBufferIt = std::find_if(storageBuffers.begin(), storageBuffers.end(), 
+        [&storageBufferName] (const ShaderStorageBuffer& buffer) { return buffer.name == storageBufferName;
+    });
+
+    if(storageBufferIt != storageBuffers.end())
+    {
+        return *storageBufferIt;
+    }
+
+    return std::nullopt;
+}
+
+std::optional<UniformBlock> Shader::getUniformBlock(const std::string& uniformBlockName) const
+{
+    const auto uniformBlockIt = std::find_if(uniformBlocks.begin(), uniformBlocks.end(),
+        [&uniformBlockName](const UniformBlock& buffer) { return buffer.name == uniformBlockName; });
+
+    if(uniformBlockIt != uniformBlocks.end())
+    {
+        return *uniformBlockIt;
+    }
+
+    return std::nullopt;
 }
 
 Shader::~Shader()
@@ -245,13 +307,9 @@ void Shader::use() const
     glUseProgram(ID);
 }
 
-GLuint Shader::getLocation(const std::string& name) const
+GLuint Shader::getUniformLocation(const std::string& name) const
 {
-    const auto uniform_it =
-        std::find_if(std::begin(uniforms), std::end(uniforms), [&name](const Uniform& uniform)
-    {
-        return uniform.name == name;
-    });
+    const auto uniform_it = std::find_if(std::begin(uniforms), std::end(uniforms), [&name](const Uniform& uniform) { return uniform.name == name; });
 
     if(uniform_it != std::end(uniforms))
     {
@@ -260,64 +318,53 @@ GLuint Shader::getLocation(const std::string& name) const
     return 0;
 }
 
-GLuint Shader::getBufferBinding(const std::string& name) const
-{
-    const auto bufferBindingIt = bufferBindings.find(name);
-    if(bufferBindingIt != std::end(bufferBindings))
-    {
-        return bufferBindingIt->second;
-    }
-
-    if(bufferBindings.empty())
-    {
-        bufferBindings[name] = 0;
-        return bufferBindings[name];
-    }
-    else
-    {
-        auto end = bufferBindings.end();
-        auto lastIt = std::prev(end);
-        bufferBindings[name] = lastIt->second + 1;
-        return bufferBindings[name];
-    }
-}
-
 void Shader::setBool(const std::string& name, bool value) const
 {
-    glUniform1i(getLocation(name), value);
+    glUniform1i(getUniformLocation(name), value);
 }
 
 void Shader::setInt(const std::string& name, int value) const
 {
-    glUniform1i(getLocation(name), value);
+    glUniform1i(getUniformLocation(name), value);
 }
 
 void Shader::setFloat(const std::string& name, float value) const
 {
-    glUniform1f(getLocation(name), value);
+    glUniform1f(getUniformLocation(name), value);
 }
 
 void Shader::setVec2(const std::string& name, glm::vec2 value) const
 {
-    glUniform2fv(getLocation(name), 1, glm::value_ptr(value));
+    glUniform2fv(getUniformLocation(name), 1, glm::value_ptr(value));
 }
 
 void Shader::setVec3(const std::string& name, glm::vec3 value) const
 {
-    glUniform3fv(getLocation(name), 1, glm::value_ptr(value));
+    glUniform3fv(getUniformLocation(name), 1, glm::value_ptr(value));
 }
 
 void Shader::setMat4(const std::string& name, glm::mat4 value) const
 {
-    glUniformMatrix4fv(getLocation(name), 1, GL_FALSE, glm::value_ptr(value));
+    glUniformMatrix4fv(getUniformLocation(name), 1, GL_FALSE, glm::value_ptr(value));
 }
 
-void Shader::bindSSBO(const std::string& name, GLuint ssbo) const
+void Shader::bindSSBO(const std::string& name, const SSBO& ssbo) const
 {
-    const GLuint block_index = glGetProgramResourceIndex(ID, GL_SHADER_STORAGE_BLOCK, name.c_str());
-    const GLuint binding = getBufferBinding(name);
-    glShaderStorageBlockBinding(ID, block_index, binding);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, binding, ssbo);
+    const auto shaderBuffer = getShaderBuffer(name);
+    if(shaderBuffer.has_value())
+    {
+        glShaderStorageBlockBinding(ID, shaderBuffer->blockIndex, ssbo.binding);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ssbo.binding, ssbo.ID);
+    }
 }
 
+void Shader::bindUniformBuffer(const std::string& name, const UniformBuffer& uniformBuffer) const
+{
+    const auto uniformBlock = getShaderBuffer(name);
+    if(uniformBlock.has_value())
+    {
+        glUniformBlockBinding(ID, uniformBlock->blockIndex, uniformBuffer.binding);
+        glBindBufferBase(GL_UNIFORM_BUFFER, uniformBuffer.binding, uniformBuffer.ID);
+    }
+}
 }  // namespace spark

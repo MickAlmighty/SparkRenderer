@@ -36,7 +36,16 @@ namespace spark {
 		return  spark_renderer;
 	}
 
-	void SparkRenderer::setup()
+    void SparkRenderer::updateBufferBindings() const
+    {
+        const std::shared_ptr<Shader> lShader = lightShader.lock();
+        lShader->use();
+        lShader->bindSSBO("DirLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->dirLightSSBO);
+        lShader->bindSSBO("PointLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->pointLightSSBO);
+        lShader->bindSSBO("SpotLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->spotLightSSBO);
+    }
+
+    void SparkRenderer::setup()
 	{
 		initMembers();
 	}
@@ -50,6 +59,7 @@ namespace spark {
 		lightShader = ResourceManager::getInstance()->getShader(ShaderType::LIGHT_SHADER);
 		motionBlurShader = ResourceManager::getInstance()->getShader(ShaderType::MOTION_BLUR_SHADER);
 		cubemapShader = ResourceManager::getInstance()->getShader(ShaderType::CUBEMAP_SHADER);
+        updateBufferBindings();
 		createFrameBuffersAndTextures();
 	}
 
@@ -152,9 +162,6 @@ namespace spark {
 		glBindFramebuffer(GL_FRAMEBUFFER, lightFrameBuffer);
 		const std::shared_ptr<Shader> lShader = lightShader.lock();
 		lShader->use();
-		lShader->bindSSBO("DirLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->dirLightSSBO);
-		lShader->bindSSBO("PointLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->pointLightSSBO);
-		lShader->bindSSBO("SpotLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->spotLightSSBO);
 		lShader->setVec3("camPos", camera->getPosition());
 		if (cubemap)
 		{

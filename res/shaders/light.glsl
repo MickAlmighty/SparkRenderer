@@ -27,6 +27,7 @@ layout(binding = 5) uniform samplerCube irradianceMap;
 layout(binding = 6) uniform samplerCube prefilterMap;
 layout(binding = 7) uniform sampler2D brdfLUT;
 
+uniform vec3 camPos;
 
 struct DirLight {
 	vec3 direction;
@@ -64,8 +65,6 @@ layout(std430) buffer SpotLightData
 {
 	SpotLight spotLights[];
 } spotLightData;
-
-uniform vec3 camPos;
 
 float normalDistributionGGX(vec3 N, vec3 H, float roughness);
 vec3 fresnelSchlick(vec3 V, vec3 H, vec3 F0);
