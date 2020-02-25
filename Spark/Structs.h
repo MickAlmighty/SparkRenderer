@@ -23,8 +23,10 @@ namespace spark {
 
 	struct Uniform final
 	{
-		std::string type;
-		std::string name;
+        std::string name{};
+        std::string type{};
+        GLint location{0};
+
 		bool operator!=(const Uniform& rhs) const
 		{
 			return this->name != rhs.name || this->type != rhs.type;

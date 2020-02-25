@@ -7,6 +7,7 @@
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <list>
+#include <set>
 #include <vector>
 
 namespace spark {
@@ -17,17 +18,9 @@ class Shader
 public:
 	std::string name;
 
-	static GLenum shaderTypeFromString(const std::string& type);
-
 	Shader(const std::string& vertexShaderPath, const std::string& fragmentShaderPath);
 	Shader(const std::string& shaderPath);
 	~Shader();
-	std::string loadShader(const std::string& shaderPath);
-	std::map<GLenum, std::string> preProcess(const std::string& shaderPath);
-	std::vector<GLuint> compileShaders(std::map<GLenum, std::string> shaders) const;
-	std::list<Uniform> gatherUniforms(std::stringstream&& stream) const;
-	void linkProgram(const std::vector<GLuint>& ids);
-	void queryUniformLocations(const std::list<Uniform>& uniforms);
 
 	void use() const;
 
@@ -42,8 +35,17 @@ public:
 	void bindSSBO(const std::string& name, GLuint ssbo) const;
 private:
 	GLuint ID {0};
-	std::map<Uniform, GLuint> uniformLocations;
-	mutable std::map<std::string, GLuint> bufferBindings;
+	std::set<Uniform> uniforms{};
+	mutable std::map<std::string, GLuint> bufferBindings{};
+
+	inline static GLenum shaderTypeFromString(const std::string& type);
+	inline std::string loadShader(const std::string& shaderPath);
+	inline std::map<GLenum, std::string> preProcess(const std::string& shaderPath);
+    inline std::vector<GLuint> compileShaders(const std::map<GLenum, std::string>& shaders) const;
+    inline void linkProgram(const std::vector<GLuint>& ids);
+    inline void acquireUniformNamesAndTypes();
+    inline GLint getUniformLocation(const std::string& uniformName) const;
+    inline static std::string getUniformType(GLenum type);
 };
 
 }
