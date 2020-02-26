@@ -23,11 +23,38 @@ namespace spark {
 		return glm::lookAt(Position, cameraTarget, WORLD_UP);
 	}
 
-	glm::mat4 Camera::getProjectionMatrix() const {
-		return glm::perspectiveFov(glm::radians(fov), 1.0f * Spark::WIDTH, 1.0f * Spark::HEIGHT, zNear, zFar);
-	}
+    glm::mat4 Camera::getProjection() const
+    {
+        return glm::perspectiveFov(glm::radians(fov), Spark::WIDTH * 1.0f, Spark::HEIGHT * 1.0f, zNear, zFar);
+    }
 
-	glm::vec3 Camera::getPosition() const { return Position; }
+    glm::mat4 Camera::getProjectionReversedZInfiniteFarPlane() const
+    {
+        const float aspectWbyH = (float)Spark::WIDTH / (1.0f * Spark::HEIGHT);
+        const float f = 1.0f / tan(glm::radians(fov) / 2.0f);
+
+        return glm::mat4(
+			f / aspectWbyH, 0.0f, 0.0f, 0.0f, 
+			0.0f, f, 0.0f, 0.0f, 
+			0.0f, 0.0f, 0.0f, -1.0f, 
+			0.0f, 0.0f, zNear, 0.0f);
+    }
+
+    glm::mat4 Camera::getProjectionReversedZ() const
+    {
+        const float rad = glm::radians(fov);
+        const float h = glm::cos(0.5f * rad) / glm::sin(0.5f * rad);
+        const float w = h * (float)Spark::HEIGHT / (float)Spark::WIDTH;
+        glm::mat<4, 4, float, glm::defaultp> p(static_cast<float>(0));
+        p[0][0] = w;
+        p[1][1] = h;
+        p[2][2] = zNear / (zFar - zNear);
+        p[2][3] = -1;
+        p[3][2] = -(zFar * zNear) / (zNear - zFar);
+        return p;
+    }
+
+    glm::vec3 Camera::getPosition() const { return Position; }
 
 	void Camera::setProjectionMatrix(float fov, float nearPlane, float farPlane) {
 		this->fov = fov;
@@ -53,7 +80,9 @@ namespace spark {
 	float Camera::getFov() const { return fov; }
 	float Camera::getNearPlane() const { return zNear; }
 	float Camera::getFarPlane() const { return zFar; }
-	CameraMode Camera::getCameraMode() const { return cameraMode; }
+    bool Camera::isDirty() const { return dirty; }
+    void Camera::cleanDirty() { dirty = false; }
+    CameraMode Camera::getCameraMode() const { return cameraMode; }
 	void Camera::setYaw(float yaw) { Yaw = yaw; }
 	void Camera::setPitch(float pitch) { Pitch = pitch; }
 	void Camera::setRotation(float yaw, float pitch) { Yaw = yaw; Pitch = pitch; }
@@ -89,9 +118,11 @@ namespace spark {
 		if (HID::isKeyPressed(GLFW_KEY_E))
 			finalDirection += WORLD_UP;
 
-		if (finalDirection != glm::vec3(0)) {
+		if (finalDirection != glm::vec3(0)) 
+		{
 			finalDirection = glm::normalize(finalDirection);
 			Position += finalDirection * velocity;
+            dirty = true;
 		}
 	}
 
@@ -118,6 +149,7 @@ namespace spark {
 		if (finalDirection != glm::vec3(0)) {
 			finalDirection = glm::normalize(finalDirection);
 			Position += finalDirection * velocity;
+            dirty = true;
 		}
 	}
 
@@ -131,6 +163,11 @@ namespace spark {
 			return;
 		xoffset *= MouseSensitivity;
 		yoffset *= MouseSensitivity;
+
+		if(xoffset != 0.0f || yoffset != 0)
+        {
+            dirty = true;
+        }
 
 		Yaw += xoffset;
 		Pitch += yoffset;

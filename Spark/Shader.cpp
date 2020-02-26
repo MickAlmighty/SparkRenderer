@@ -307,7 +307,7 @@ void Shader::use() const
     glUseProgram(ID);
 }
 
-GLuint Shader::getUniformLocation(const std::string& name) const
+GLint Shader::getUniformLocation(const std::string& name) const
 {
     const auto uniform_it = std::find_if(std::begin(uniforms), std::end(uniforms), [&name](const Uniform& uniform) { return uniform.name == name; });
 
@@ -315,36 +315,54 @@ GLuint Shader::getUniformLocation(const std::string& name) const
     {
         return static_cast<GLuint>(uniform_it->location);
     }
-    return 0;
+    return -1;
 }
 
 void Shader::setBool(const std::string& name, bool value) const
 {
+    const GLint location = getUniformLocation(name);
+    if(location < 0)
+        return;
     glUniform1i(getUniformLocation(name), value);
 }
 
 void Shader::setInt(const std::string& name, int value) const
 {
+    const GLint location = getUniformLocation(name);
+    if(location < 0)
+        return;
     glUniform1i(getUniformLocation(name), value);
 }
 
 void Shader::setFloat(const std::string& name, float value) const
 {
+    const GLint location = getUniformLocation(name);
+    if(location < 0)
+        return;
     glUniform1f(getUniformLocation(name), value);
 }
 
 void Shader::setVec2(const std::string& name, glm::vec2 value) const
 {
-    glUniform2fv(getUniformLocation(name), 1, glm::value_ptr(value));
+    const GLint location = getUniformLocation(name);
+    if(location < 0)
+        return;
+    glUniform2fv(location, 1, glm::value_ptr(value));
 }
 
 void Shader::setVec3(const std::string& name, glm::vec3 value) const
 {
+    const GLint location = getUniformLocation(name);
+    if(location < 0)
+        return;
     glUniform3fv(getUniformLocation(name), 1, glm::value_ptr(value));
 }
 
 void Shader::setMat4(const std::string& name, glm::mat4 value) const
 {
+    const GLint location = getUniformLocation(name);
+    if(location < 0)
+        return;
     glUniformMatrix4fv(getUniformLocation(name), 1, GL_FALSE, glm::value_ptr(value));
 }
 
@@ -360,7 +378,7 @@ void Shader::bindSSBO(const std::string& name, const SSBO& ssbo) const
 
 void Shader::bindUniformBuffer(const std::string& name, const UniformBuffer& uniformBuffer) const
 {
-    const auto uniformBlock = getShaderBuffer(name);
+    const auto uniformBlock = getUniformBlock(name);
     if(uniformBlock.has_value())
     {
         glUniformBlockBinding(ID, uniformBlock->blockIndex, uniformBuffer.binding);

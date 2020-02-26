@@ -16,6 +16,7 @@ void main()
 layout (location = 0) out vec4 FragColor;
 
 layout (binding = 0) uniform sampler2D inputTexture;
+layout (binding = 1) uniform sampler2D inputTexture2;
 uniform vec2 inversedScreenSize;
 
 const float fxaaSpanMax = 8.0f;
@@ -96,10 +97,12 @@ vec3 reinhardTonemapping(vec3 color)
 
 void main()
 {
-    //vec3 color = pow(texture(inputTexture, tex_coords).xyz, vec3(2.2f));
-    vec3 color = texture(inputTexture, tex_coords).xyz;
+	//vec3 color = pow(texture(inputTexture, tex_coords).xyz, vec3(2.2f));
+	vec3 color = texture(inputTexture, tex_coords).xyz;
+	color += texture(inputTexture2, tex_coords).xyz;
+	color *= 0.5f;
 	color = FXAA(color);
-	vec3 resultColor = uncharted2Tonemap(color);
-	//vec3 resultColor = reinhardTonemapping(color);
-    FragColor = vec4(resultColor, 1);
+	//vec3 resultColor = uncharted2Tonemap(color);
+	vec3 resultColor = reinhardTonemapping(color);
+	FragColor = vec4(resultColor, 1);
 }

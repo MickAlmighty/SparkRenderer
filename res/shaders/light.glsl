@@ -18,16 +18,21 @@ layout(location = 0) out vec4 FragColor;
 in vec2 texCoords;
 #define M_PI 3.14159265359 
 
-layout(binding = 0) uniform sampler2D positionTexture;
+layout(binding = 0) uniform sampler2D depthTexture;
 layout(binding = 1) uniform sampler2D diffuseTexture;
 layout(binding = 2) uniform sampler2D normalTexture;
-layout(binding = 3) uniform sampler2D roughnessTexture;
-layout(binding = 4) uniform sampler2D metalnessTexture;
-layout(binding = 5) uniform samplerCube irradianceMap;
-layout(binding = 6) uniform samplerCube prefilterMap;
-layout(binding = 7) uniform sampler2D brdfLUT;
+layout(binding = 3) uniform samplerCube irradianceMap;
+layout(binding = 4) uniform samplerCube prefilterMap;
+layout(binding = 5) uniform sampler2D brdfLUT;
 
-uniform vec3 camPos;
+layout (std140) uniform Camera
+{
+	vec4 pos;
+	mat4 view;
+	mat4 projection;
+	mat4 invertedView;
+	mat4 invertedProjection;
+} camera;
 
 struct DirLight {
 	vec3 direction;
@@ -85,27 +90,46 @@ vec3 directionalLightAddition(vec3 V, vec3 N, Material m);
 vec3 pointLightAddition(vec3 V, vec3 N, vec3 Pos, Material m);
 vec3 spotLightAddition(vec3 V, vec3 N, vec3 Pos, Material m);
 
+vec3 worldPosFromDepth(float depth) {
+    float z = depth;
+
+    vec4 clipSpacePosition = vec4(texCoords * 2.0 - 1.0, z, 1.0);
+    vec4 viewSpacePosition = camera.invertedProjection * clipSpacePosition;
+
+    // Perspective division
+    viewSpacePosition /= viewSpacePosition.w;
+
+    vec4 worldSpacePosition = camera.invertedView * viewSpacePosition;
+
+    return worldSpacePosition.xyz /= worldSpacePosition.w;
+}
+
 void main()
 {
-	vec3 pos = texture(positionTexture, texCoords).xyz;
-	if (pos == vec3(0))
+	//vec3 pos = texture(positionTexture, texCoords).xyz;
+	float depthValue = texture(depthTexture, texCoords).x;
+	if (depthValue == 0.0f)
 	{
 		discard;
 	}
+	vec3 pos = worldPosFromDepth(depthValue);
 
-
+	vec4 colorAndRoughness = texture(diffuseTexture, texCoords);
+	vec4 normalAndMetalness = texture(normalTexture, texCoords);
+	// FragColor = vec4(pos, 1.0f);
+	// return;
 	Material material = {
-		pow(texture(diffuseTexture, texCoords).xyz, vec3(2.2)),
-		texture(roughnessTexture, texCoords).x,
-		texture(metalnessTexture, texCoords).x,
+		pow(colorAndRoughness.xyz, vec3(2.2)),
+		colorAndRoughness.w,
+		normalAndMetalness.w,
 		vec3(0)
 	};
 
 	vec3 F0 = vec3(0.04);
 	material.F0 = mix(F0, material.albedo, material.metalness);
 
-	vec3 N = texture(normalTexture, texCoords).xyz;
-	vec3 V = normalize(camPos - pos);
+	vec3 N = normalAndMetalness.xyz;
+	vec3 V = normalize(camera.pos.xyz - pos);
 
 	vec3 L0 = directionalLightAddition(V, N, material);
 	L0 += pointLightAddition(V, N, pos, material);
@@ -113,7 +137,6 @@ void main()
 
 	//IBL	
 	vec3 ambient = vec3(0.0);
-
 	{
 		float NdotV = max(dot(N, V), 0.0);
 		vec3 kS = fresnelSchlickRoughness(NdotV, material.F0, material.roughness);

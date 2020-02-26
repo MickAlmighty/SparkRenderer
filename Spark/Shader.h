@@ -51,7 +51,7 @@ public:
     inline std::vector<GLuint> compileShaders(const std::map<GLenum, std::string>& shaders) const;
     inline void linkProgram(const std::vector<GLuint>& ids);
     inline void acquireUniformNamesAndTypes();
-    inline GLuint getUniformLocation(const std::string& name) const;
+    inline GLint getUniformLocation(const std::string& name) const;
     inline static std::string getUniformType(GLenum type);
     inline void acquireUniformBlocks();
     inline void acquireBuffers();

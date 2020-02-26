@@ -183,6 +183,10 @@ std::vector<std::string> ResourceManager::getPathsToModels() const
 			shaders.emplace(ShaderType::IRRADIANCE_SHADER, std::make_shared<Shader>(shaderDir.string() + "irradiance.glsl"));
 			shaders.emplace(ShaderType::PREFILTER_SHADER, std::make_shared<Shader>(shaderDir.string() + "prefilter.glsl"));
 			shaders.emplace(ShaderType::BRDF_SHADER, std::make_shared<Shader>(shaderDir.string() + "brdf.glsl"));
+            shaders.emplace(ShaderType::BRIGHT_PASS_SHADER, std::make_shared<Shader>(shaderDir.string() + "brightPass.glsl"));
+            shaders.emplace(ShaderType::DOWNSCALE_SHADER, std::make_shared<Shader>(shaderDir.string() + "downScale.glsl"));
+            shaders.emplace(ShaderType::GAUSSIAN_BLUR_SHADER, std::make_shared<Shader>(shaderDir.string() + "gaussianBlur.glsl"));
+            shaders.emplace(ShaderType::LIGHT_SHAFTS_SHADER, std::make_shared<Shader>(shaderDir.string() + "lightShafts.glsl"));
 		}
 		
 		{

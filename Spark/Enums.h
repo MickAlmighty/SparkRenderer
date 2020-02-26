@@ -14,7 +14,11 @@ enum class ShaderType : unsigned char
 	CUBEMAP_SHADER = 6,
 	IRRADIANCE_SHADER = 7,
 	PREFILTER_SHADER = 8,
-	BRDF_SHADER = 9
+	BRDF_SHADER = 9,
+    BRIGHT_PASS_SHADER = 10,
+    DOWNSCALE_SHADER = 11,
+    GAUSSIAN_BLUR_SHADER = 12,
+    LIGHT_SHAFTS_SHADER = 13
 };
 
 enum class TextureTarget : unsigned char

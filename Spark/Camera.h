@@ -30,7 +30,9 @@ public:
 	Camera(float posX, float posY, float posZ, float yaw, float pitch);
 
 	glm::mat4 getViewMatrix() const;
-	glm::mat4 getProjectionMatrix() const;
+	glm::mat4 getProjection() const;
+    glm::mat4 getProjectionReversedZInfiniteFarPlane() const;
+    glm::mat4 getProjectionReversedZ() const;
 	glm::vec3 getPosition() const;
 	void setProjectionMatrix(float fov, float nearPlane, float farPlane);
 	void setCameraTarget(glm::vec3 target);
@@ -46,6 +48,8 @@ public:
 	float getFov() const;
 	float getNearPlane() const;
 	float getFarPlane() const;
+    bool isDirty() const;
+    void cleanDirty();
 	CameraMode getCameraMode() const;
 	void setYaw(float yaw);
 	void setPitch(float pitch);
@@ -74,6 +78,7 @@ private:
 	float MovementSpeed{ SPEED };
 	float MouseSensitivity{ SENSITIVITY };
 	float Zoom{ ZOOM };
+    bool dirty = true;
 
 	CameraMode cameraMode = CameraMode::FirstPerson;
 	//perspective

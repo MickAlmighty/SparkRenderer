@@ -23,6 +23,10 @@ class LightManager
     public:
     SSBO dirLightSSBO{}, pointLightSSBO{}, spotLightSSBO{};
 
+    std::vector<std::weak_ptr<DirectionalLight>> directionalLights;
+    std::vector<std::weak_ptr<PointLight>> pointLights;
+    std::vector<std::weak_ptr<SpotLight>> spotLights;
+
     void addDirectionalLight(const std::shared_ptr<DirectionalLight>& directionalLight);
     void addPointLight(const std::shared_ptr<PointLight>& pointLight);
     void addSpotLight(const std::shared_ptr<SpotLight>& spotLight);
@@ -36,9 +40,6 @@ class LightManager
     LightManager&& operator=(const LightManager&& lightManager) = delete;
 
     private:
-    std::vector<std::weak_ptr<DirectionalLight>> directionalLights;
-    std::vector<std::weak_ptr<PointLight>> pointLights;
-    std::vector<std::weak_ptr<SpotLight>> spotLights;
     bool updateBuffer = false;
 
     template<typename T>

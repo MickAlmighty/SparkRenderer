@@ -21,8 +21,8 @@ int main() {
         spark::Spark::clean();
     } catch (std::exception& e) {
         SPARK_ERROR("{}", e.what());
+        getchar();
         return 1;
     }
-    getchar();
     return 0;
 }

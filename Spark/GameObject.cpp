@@ -190,7 +190,7 @@ std::string GameObject::getName() const {
 	ImGuiIO& io = ImGui::GetIO();
 	auto camera = getScene()->getCamera();
 	ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
-	ImGuizmo::Manipulate(glm::value_ptr(camera->getViewMatrix()), glm::value_ptr(camera->getProjectionMatrix()), mCurrentGizmoOperation, mCurrentGizmoMode, &worldMatrix[0][0]);
+	ImGuizmo::Manipulate(glm::value_ptr(camera->getViewMatrix()), glm::value_ptr(camera->getProjection()), mCurrentGizmoOperation, mCurrentGizmoMode, &worldMatrix[0][0]);
 
 	glm::mat4 localMatrix = glm::inverse(getParent()->transform.world.getMatrix()) * worldMatrix; //getting new localTransform by multiplying by inverse of parent world transform
 
