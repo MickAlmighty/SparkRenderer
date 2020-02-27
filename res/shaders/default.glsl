@@ -18,7 +18,7 @@ layout (std140) uniform Camera
 } camera;
 
 out vec2 tex_coords;
-out mat3 TBN_matrix;
+out mat3 viewTBN_matrix;
 
 void main()
 {
@@ -30,8 +30,8 @@ void main()
 	//T = normalize(T - dot(T, N) * N);
 	//vec3 B = cross(N, T);
 	vec3 B = normalize(normalMatrix * bitangent);
-	mat3 TBN = mat3(T, B, N);
-	TBN_matrix = TBN;
+	mat3 viewTBN = mat3(camera.view) * mat3(T, B, N);
+	viewTBN_matrix = viewTBN;
    
 	tex_coords = texture_coords;
 
@@ -41,7 +41,7 @@ void main()
 #type fragment
 #version 450
 layout (location = 0) out vec4 FragColor;
-layout (location = 1) out vec4 Normal;
+layout (location = 1) out vec3 Normal;
 
 layout (binding = 1) uniform sampler2D diffuseTexture;
 layout (binding = 2) uniform sampler2D normalTexture;
@@ -49,7 +49,24 @@ layout (binding = 3) uniform sampler2D roughnessTexture;
 layout (binding = 4) uniform sampler2D metalnessTexture;
 
 in vec2 tex_coords;
-in mat3 TBN_matrix;
+in mat3 viewTBN_matrix;
+
+vec2 encode(vec3 n)
+{
+	float p = sqrt(n.z*8+8);
+    return vec2(n.xy/p + 0.5);
+}
+
+vec3 decode(vec2 enc)
+{
+	vec2 fenc = enc*4-2;
+    float f = dot(fenc,fenc);
+    float g = sqrt(1-f/4);
+    vec3 n;
+    n.xy = fenc*g;
+    n.z = 1-f/2;
+    return n;
+}
 
 void main()
 {
@@ -57,7 +74,15 @@ void main()
 
 	vec3 normalFromTexture = texture(normalTexture, tex_coords).xyz;
 	normalFromTexture = normalize(normalFromTexture * 2.0 - 1.0);
-	Normal.xyz = normalize(TBN_matrix * normalFromTexture);
+
+	vec3 viewNormal = normalize(viewTBN_matrix * normalFromTexture);
+
+	vec2 encoded = encode(viewNormal);
+	//vec3 decoded = decode(encoded);
+	
+	//vec3 worldPosNormal = (camera.invertedView * vec4(decoded, 0.0f)).xyz;
+	Normal.xy = encoded;
+	Normal.z = texture(metalnessTexture, tex_coords).x;
+	//Normal.xyz = normalize(TBN_matrix * normalFromTexture);
 	FragColor.w = texture(roughnessTexture, tex_coords).x;
-	Normal.w = texture(metalnessTexture, tex_coords).x;
 }

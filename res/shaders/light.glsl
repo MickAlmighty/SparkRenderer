@@ -104,6 +104,17 @@ vec3 worldPosFromDepth(float depth) {
     return worldSpacePosition.xyz /= worldSpacePosition.w;
 }
 
+vec3 decode(vec2 enc)
+{
+	vec2 fenc = enc*4-2;
+    float f = dot(fenc,fenc);
+    float g = sqrt(1-f/4);
+    vec3 n;
+    n.xy = fenc*g;
+    n.z = 1-f/2;
+    return n;
+}
+
 void main()
 {
 	//vec3 pos = texture(positionTexture, texCoords).xyz;
@@ -115,20 +126,22 @@ void main()
 	vec3 pos = worldPosFromDepth(depthValue);
 
 	vec4 colorAndRoughness = texture(diffuseTexture, texCoords);
-	vec4 normalAndMetalness = texture(normalTexture, texCoords);
-	// FragColor = vec4(pos, 1.0f);
-	// return;
+	vec3 normalAndMetalness = texture(normalTexture, texCoords).xyz;
+	vec3 decoded = decode(normalAndMetalness.xy);
+	
+	vec3 worldPosNormal = (camera.invertedView * vec4(decoded, 0.0f)).xyz;
+	
 	Material material = {
 		pow(colorAndRoughness.xyz, vec3(2.2)),
 		colorAndRoughness.w,
-		normalAndMetalness.w,
+		normalAndMetalness.z,
 		vec3(0)
 	};
 
 	vec3 F0 = vec3(0.04);
 	material.F0 = mix(F0, material.albedo, material.metalness);
 
-	vec3 N = normalAndMetalness.xyz;
+	vec3 N = worldPosNormal;
 	vec3 V = normalize(camera.pos.xyz - pos);
 
 	vec3 L0 = directionalLightAddition(V, N, material);
