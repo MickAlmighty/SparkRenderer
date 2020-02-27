@@ -1,4 +1,5 @@
 #include "JsonSerializer.h"
+#include "Component.h"
 
 #include <json/reader.h>
 #include <json/writer.h>
@@ -6,20 +7,6 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <regex>
-
-#include "ActorAI.h"
-#include "Camera.h"
-#include "DirectionalLight.h"
-#include "GameObject.h"
-#include "ISerializable.h"
-#include "Logging.h"
-#include "Mesh.h"
-#include "MeshPlane.h"
-#include "ModelMesh.h"
-#include "PointLight.h"
-#include "SpotLight.h"
-#include "TerrainGenerator.h"
 
 namespace spark
 {
@@ -176,16 +163,59 @@ rttr::variant JsonSerializer::loadVariant(const std::filesystem::path& filePath)
 rttr::variant JsonSerializer::tryConvertVar(rttr::variant& variant, const rttr::type& type, bool& conversionOk)
 {
     conversionOk = true;
+    SPARK_TRACE("Converting variant of type '{}' to type '{}'...", variant.get_type().get_name().cbegin(), type.get_name().cbegin());
     if(type == variant.get_type())
     {
+        SPARK_TRACE("Already the same type. Returning...");
         return variant;
+    }
+    if(variant.get_type() == rttr::type::get<nullptr_t>())
+    {
+        if(isWrappedPtr(type))
+        {
+            SPARK_TRACE("Using custom wrapped null pointer conversion...");
+            if(type == rttr::type::get<std::shared_ptr<Component>>())
+            {
+                return std::shared_ptr<Component>();
+            }
+            rttr::type wrapped{type.get_wrapped_type()};
+            if(wrapped.is_derived_from(rttr::type::get<Component*>()))
+            {
+                SPARK_TRACE("Instantiating derived pointer type...");
+                rttr::variant inst{wrapped.get_raw_type().create()};
+                if(inst.is_valid())
+                {
+                    SPARK_TRACE("Instantiated! Converting...");
+                    rttr::method convMethod{wrapped.get_method("getComponentNullPtr")};
+                    if(convMethod.is_valid() && convMethod.get_return_type() == type)
+                    {
+                        return convMethod.invoke(inst.extract_wrapped_value());
+                    }
+                    else
+                    {
+                        SPARK_WARN("Conversion method unavailable!");
+                    }
+                }
+                else
+                {
+                    SPARK_WARN("Instantiation failed!");
+                }
+            }
+        }
+        else
+        {
+            SPARK_TRACE("Returning null pointer for unwrapped pointer type...");
+            return variant;  // still nullptr for raw pointers
+        }
     }
     if(isWrappedPtr(variant.get_type()) && !isWrappedPtr(type))
     {
+        SPARK_TRACE("Using unwrapped pointer...");
         return variant.extract_wrapped_value();
     }
     if(isWrappedPtr(variant.get_type()) && isWrappedPtr(type))
     {
+        SPARK_TRACE("Using custom wrapped pointer conversion...");
         // this is a temporary solution (or so I hope).
         // basically using a custom converter to upcast shared pointers of classes deriving from Component
         // recreates the shared pointers from raw pointers. Guess it's a RTTR-related problem.
@@ -199,11 +229,17 @@ rttr::variant JsonSerializer::tryConvertVar(rttr::variant& variant, const rttr::
                 return convMethod.invoke(wrappedVal);
             }
         }
+        else
+        {
+            SPARK_WARN("Custom wrapped pointer conversion unavailable for given type.");
+        }
     }
     if(variant.can_convert(type))
     {
+        SPARK_TRACE("Using custom converter...");
         return variant.convert(type);
     }
+    SPARK_WARN("Failed to convert variant of type '{}' to type '{}'.", variant.get_type().get_name().cbegin(), type.get_name().cbegin());
     conversionOk = false;
     return nullptr;
 }
@@ -1121,26 +1157,32 @@ rttr::variant JsonSerializer::deserialize(const Json::Value& root)
                 bool ok = true;
                 unsigned int code{0};
                 rttr::variant propVar{readPropertyFromJson(obj, propType, prop.get_value(wrapped), ok)};
-                SPARK_TRACE("Acquired variant of type '{}'. Setting value...", propVar.get_name().cbegin());
-                if(ok && !prop.set_value(wrapped, propVar))
+                if(ok)
                 {
-                    SPARK_TRACE("Failed! Attempting to acquire converted variant...");
-                    rttr::variant convVar{tryConvertVar(propVar, prop.get_type(), ok)};
-                    // converted values still don't apply for nullpointers, need to work it out somehow
-                    if(ok)
+                    SPARK_TRACE("Acquired variant of type '{}'. Setting value...", propVar.get_type().get_name().cbegin());
+                    if(!prop.set_value(wrapped, propVar))
                     {
-                        SPARK_TRACE("Acquired converted variant of type '{}'. Setting value...");
+                        SPARK_TRACE("Failed! Attempting to acquire converted variant...");
+                        rttr::variant convVar{tryConvertVar(propVar, prop.get_type(), ok)};
+                        if(ok)
+                        {
+                            SPARK_TRACE("Acquired converted variant of type '{}'. Setting value...", convVar.get_type().get_name().cbegin());
+                        }
+                        if(ok && !prop.set_value(wrapped, convVar))
+                        {
+                            SPARK_WARN("Unable to set value for property '{}' of type '{}' with converted value of type '{}'!", prop.get_name().cbegin(),
+                                       propType.get_name().cbegin(), convVar.get_type().get_name().cbegin());
+                        }
+                        else
+                        {
+                            SPARK_WARN("Unable to set value for property '{}' of type '{}' with value of type '{}'!", prop.get_name().cbegin(),
+                                       propType.get_name().cbegin(), propVar.get_type().get_name().cbegin());
+                        }
                     }
-                    if(ok && !prop.set_value(wrapped, convVar))
-                    {
-                        SPARK_WARN("Unable to set value for property '{}' of type '{}' with value of type '{}'!", prop.get_name().cbegin(),
-                                   propType.get_name().cbegin(), convVar.get_type().get_name().cbegin());
-                    }
-                    else
-                    {
-                        SPARK_WARN("Unable to set value for property '{}' of type '{}' with value of type '{}'!", prop.get_name().cbegin(),
-                                   propType.get_name().cbegin(), propVar.get_type().get_name().cbegin());
-                    }
+                }
+                else
+                {
+                    SPARK_ERROR("Failed to read the property! Ignoring the value.");
                 }
             }
             else

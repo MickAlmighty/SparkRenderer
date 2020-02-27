@@ -53,6 +53,31 @@ class SerializationClass2
     RTTR_ENABLE();
 };
 
+class SerializationComponent1 : public spark::Component
+{
+    public:
+    SerializationComponent1() = default;
+    void update() override{};
+    void fixedUpdate() override{};
+    void drawGUI() override{};
+    RTTR_ENABLE_NULL_COMPONENT(SerializationComponent1);
+    RTTR_ENABLE(Component);
+};
+
+class SerializationComponent2 : public spark::Component
+{
+    public:
+    SerializationComponent2() = default;
+    void update() override{};
+    void fixedUpdate() override{};
+    void drawGUI() override{};
+    std::shared_ptr<SerializationComponent1> shared{std::make_shared<SerializationComponent1>()};
+    SerializationComponent1* raw{shared.get()};
+    std::shared_ptr<Component> sharedComp{shared};
+    Component* rawComp{sharedComp.get()};
+    RTTR_ENABLE(Component);
+};
+
 struct SerializationStruct1
 {
     glm::mat3 mat;
@@ -99,6 +124,17 @@ RTTR_REGISTRATION
         .property("raw", &SerializationClass2::raw)
         .property("ptrVector", &SerializationClass2::ptrVector)
         .property("intMap", &SerializationClass2::intMap);
+
+    rttr::registration::class_<SerializationComponent1>("SerializationComponent1")
+        .constructor()(rttr::policy::ctor::as_std_shared_ptr)
+        RTTR_REGISTER_NULL_COMPONENT(SerializationComponent1);
+
+    rttr::registration::class_<SerializationComponent2>("SerializationComponent2")
+        .constructor()(rttr::policy::ctor::as_std_shared_ptr)
+        .property("shared", &SerializationComponent2::shared)
+        .property("raw", &SerializationComponent2::raw)
+        .property("sharedComp", &SerializationComponent2::sharedComp)
+        .property("rawComp", &SerializationComponent2::rawComp);
 
     rttr::registration::class_<SerializationStruct1>("SerializationStruct1")
         .constructor()(rttr::policy::ctor::as_object)
@@ -238,7 +274,8 @@ TEST(SerializationTest, ComponentPointersConvertible)
         ASSERT_FALSE("Unable to deserialize camera as component!");
     }
     ASSERT_NE(nullptr, comp2);
-    ASSERT_EQ(rttr::instance(rttr::variant(cam).extract_wrapped_value()).get_derived_type(), rttr::instance(rttr::variant(comp2).extract_wrapped_value()).get_derived_type());
+    ASSERT_EQ(rttr::instance(rttr::variant(cam).extract_wrapped_value()).get_derived_type(),
+              rttr::instance(rttr::variant(comp2).extract_wrapped_value()).get_derived_type());
 }
 
 TEST(SerializationTest, GameObjectWithComponentSerializedProperly)
@@ -261,4 +298,37 @@ TEST(SerializationTest, GameObjectWithComponentSerializedProperly)
     ASSERT_EQ(obj->getName(), obj2->getName());
     ASSERT_NE(nullptr, obj->getComponent<spark::Camera>());
     ASSERT_NE(nullptr, obj2->getComponent<spark::Camera>());
+}
+
+TEST(SerializationTest, ComponentNullSmartPointersInjectedProperly)
+{
+    std::shared_ptr<SerializationComponent2> source{std::make_shared<SerializationComponent2>()}, target{};
+    ASSERT_NE(nullptr, source->shared.get());
+    ASSERT_NE(nullptr, source->raw);
+    ASSERT_NE(nullptr, source->sharedComp.get());
+    ASSERT_NE(nullptr, source->rawComp);
+    source->shared.reset();
+    source->raw = nullptr;
+    source->sharedComp.reset();
+    source->rawComp = nullptr;
+    ASSERT_EQ(nullptr, source->shared.get());
+    ASSERT_EQ(nullptr, source->raw);
+    ASSERT_EQ(nullptr, source->sharedComp.get());
+    ASSERT_EQ(nullptr, source->rawComp);
+    Json::Value root;
+    spark::JsonSerializer* serializer{spark::JsonSerializer::getInstance()};
+    ASSERT_TRUE(serializer->save(source, root));
+    spark::JsonSerializer::writeToFile("test4.json", root);
+    try
+    {
+        target = serializer->loadJsonShared<SerializationComponent2>(root);
+    }
+    catch(std::exception&)
+    {
+        ASSERT_FALSE("Unable to deserialize component!");
+    }
+    ASSERT_EQ(nullptr, target->shared.get());
+    ASSERT_EQ(nullptr, target->raw);
+    ASSERT_EQ(nullptr, target->sharedComp.get());
+    ASSERT_EQ(nullptr, target->rawComp);
 }
