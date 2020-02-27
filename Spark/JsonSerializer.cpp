@@ -1160,38 +1160,17 @@ rttr::variant JsonSerializer::deserialize(const Json::Value& root)
                 if(ok)
                 {
                     SPARK_TRACE("Acquired variant of type '{}'. Setting value...", propVar.get_type().get_name().cbegin());
-                    // if(propVar.get_type() == rttr::type::get<nullptr_t>() && isWrappedPtr(propType))
-                    //{
-                    //    SPARK_TRACE("Constructing smart pointer from nullptr...");
-                    //    rttr::variant smartNullVar{propType.create({nullptr})};
-                    //    if(smartNullVar.is_valid())
-                    //    {
-                    //        SPARK_TRACE("Conversion succeeded. Setting value...");
-                    //        if(!prop.set_value(wrapped, smartNullVar))
-                    //        {
-                    //            SPARK_WARN("Unable to set value for property '{}' of type '{}' with null value of type '{}'!",
-                    //                       prop.get_name().cbegin(), propType.get_name().cbegin(), smartNullVar.get_type().get_name().cbegin());
-                    //        }
-                    //    }
-                    //    else
-                    //    {
-                    //        SPARK_TRACE("Failed to construct smart pointer from nullptr! Attempting to use getComponentNullPtr method...");
-                    //        //todo
-                    //    }
-                    //}
-                    // else
                     if(!prop.set_value(wrapped, propVar))
                     {
                         SPARK_TRACE("Failed! Attempting to acquire converted variant...");
                         rttr::variant convVar{tryConvertVar(propVar, prop.get_type(), ok)};
-                        // converted values still don't apply for nullpointers, need to work it out somehow
                         if(ok)
                         {
                             SPARK_TRACE("Acquired converted variant of type '{}'. Setting value...", convVar.get_type().get_name().cbegin());
                         }
                         if(ok && !prop.set_value(wrapped, convVar))
                         {
-                            SPARK_WARN("Unable to set value for property '{}' of type '{}' with value of type '{}'!", prop.get_name().cbegin(),
+                            SPARK_WARN("Unable to set value for property '{}' of type '{}' with converted value of type '{}'!", prop.get_name().cbegin(),
                                        propType.get_name().cbegin(), convVar.get_type().get_name().cbegin());
                         }
                         else
