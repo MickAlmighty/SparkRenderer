@@ -16,7 +16,9 @@
 /// Defines active logging level of Spark
 /// //todo: might want to make it changeable
 ///
+#ifndef SPARK_ACTIVE_LEVEL
 #define SPARK_ACTIVE_LEVEL SPARK_LEVEL_DEBUG
+#endif
 
 #define SPARK_LOGGER_CALL(logger, level, ...) logger->log(spdlog::source_loc{__FILE__, __LINE__, SPDLOG_FUNCTION}, level, __VA_ARGS__)
 
