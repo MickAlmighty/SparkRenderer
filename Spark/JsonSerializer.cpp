@@ -1170,8 +1170,8 @@ rttr::variant JsonSerializer::deserialize(const Json::Value& root)
                         }
                         if(ok && !prop.set_value(wrapped, convVar))
                         {
-                            SPARK_WARN("Unable to set value for property '{}' of type '{}' with converted value of type '{}'!", prop.get_name().cbegin(),
-                                       propType.get_name().cbegin(), convVar.get_type().get_name().cbegin());
+                            SPARK_WARN("Unable to set value for property '{}' of type '{}' with converted value of type '{}'!",
+                                       prop.get_name().cbegin(), propType.get_name().cbegin(), convVar.get_type().get_name().cbegin());
                         }
                         else
                         {

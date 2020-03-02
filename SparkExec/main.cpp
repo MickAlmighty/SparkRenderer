@@ -3,11 +3,15 @@
 #include "Structs.h"
 #include "Logging.h"
 
-int main() {
+int main()
+{
     spark::InitializationVariables variables;
-    try {
+    try
+    {
         variables = spark::JsonSerializer::getInstance()->load<spark::InitializationVariables>("settings.json");
-    } catch (std::exception&) {
+    }
+    catch(std::exception&)
+    {
         variables.width = 1280;
         variables.height = 720;
         variables.pathToResources = R"(..\..\..\res)";
@@ -15,11 +19,14 @@ int main() {
         spark::JsonSerializer::getInstance()->save(variables, "settings.json");
     }
 
-    try {
+    try
+    {
         spark::Spark::setup(variables);
         spark::Spark::run();
         spark::Spark::clean();
-    } catch (std::exception& e) {
+    }
+    catch(std::exception& e)
+    {
         SPARK_ERROR("{}", e.what());
         getchar();
         return 1;

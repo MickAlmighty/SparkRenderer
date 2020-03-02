@@ -312,7 +312,6 @@ struct SSBO
     }
 };
 
-
 struct UniformBuffer
 {
     static inline std::set<uint32_t> bindings{};

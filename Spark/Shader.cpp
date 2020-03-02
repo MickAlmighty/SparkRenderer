@@ -203,9 +203,8 @@ void Shader::acquireBuffers()
 
 std::optional<ShaderStorageBuffer> Shader::getShaderBuffer(const std::string& storageBufferName) const
 {
-    const auto storageBufferIt = std::find_if(storageBuffers.begin(), storageBuffers.end(), 
-        [&storageBufferName] (const ShaderStorageBuffer& buffer) { return buffer.name == storageBufferName;
-    });
+    const auto storageBufferIt = std::find_if(storageBuffers.begin(), storageBuffers.end(),
+                                              [&storageBufferName](const ShaderStorageBuffer& buffer) { return buffer.name == storageBufferName; });
 
     if(storageBufferIt != storageBuffers.end())
     {
@@ -218,7 +217,7 @@ std::optional<ShaderStorageBuffer> Shader::getShaderBuffer(const std::string& st
 std::optional<UniformBlock> Shader::getUniformBlock(const std::string& uniformBlockName) const
 {
     const auto uniformBlockIt = std::find_if(uniformBlocks.begin(), uniformBlocks.end(),
-        [&uniformBlockName](const UniformBlock& buffer) { return buffer.name == uniformBlockName; });
+                                             [&uniformBlockName](const UniformBlock& buffer) { return buffer.name == uniformBlockName; });
 
     if(uniformBlockIt != uniformBlocks.end())
     {

@@ -8,50 +8,50 @@
 
 #include <deque>
 
-namespace spark {
-	
+namespace spark
+{
 class TerrainGenerator;
 
 class ActorAI final : public Component
 {
-public:
-	ActorAI();
-	~ActorAI() = default;
+    public:
+    ActorAI();
+    ~ActorAI() = default;
     ActorAI(const ActorAI&) = delete;
     ActorAI(const ActorAI&&) = delete;
     ActorAI& operator=(const ActorAI&) = delete;
     ActorAI& operator=(const ActorAI&&) = delete;
 
-	void update() override;
-	void fixedUpdate() override;
-	void drawGUI() override;
+    void update() override;
+    void fixedUpdate() override;
+    void drawGUI() override;
 
-private:
-	double timer = 0.0f;
-	float movementSpeed = 1.0f;
-	bool isTraveling = false;
-	glm::ivec2 startPos{};
-	glm::ivec2 endPos{};
-	std::multimap<float, std::shared_ptr<NodeAI>> nodesToProcess;
-	std::multimap<float, NodeAI> nodesToProcessStack;
-	
-	std::list<std::shared_ptr<NodeAI>> processedNodes;
-	std::list<NodeAI> processedNodesStack;
+    private:
+    double timer = 0.0f;
+    float movementSpeed = 1.0f;
+    bool isTraveling = false;
+    glm::ivec2 startPos{};
+    glm::ivec2 endPos{};
+    std::multimap<float, std::shared_ptr<NodeAI>> nodesToProcess;
+    std::multimap<float, NodeAI> nodesToProcessStack;
 
-	std::deque<std::pair<bool, glm::ivec2>> path;
-	std::weak_ptr<TerrainGenerator> terrainGenerator;
+    std::list<std::shared_ptr<NodeAI>> processedNodes;
+    std::list<NodeAI> processedNodesStack;
 
-	void findPath();
-	std::shared_ptr<NodeAI> getTheNearestNodeFromOpen();
-	bool isNodeClosed(const std::shared_ptr<NodeAI>& node);
-	void walkToEndOfThePath();
+    std::deque<std::pair<bool, glm::ivec2>> path;
+    std::weak_ptr<TerrainGenerator> terrainGenerator;
 
-	void findPathStack();
-	NodeAI getTheNearestNodeFromOpenStack();
-	bool isNodeClosedStack(const NodeAI& node);
+    void findPath();
+    std::shared_ptr<NodeAI> getTheNearestNodeFromOpen();
+    bool isNodeClosed(const std::shared_ptr<NodeAI>& node);
+    void walkToEndOfThePath();
 
-	void validateActorPosition(glm::vec3& position) const;
-	void setStartPosition(glm::vec3& startPosition);
+    void findPathStack();
+    NodeAI getTheNearestNodeFromOpenStack();
+    bool isNodeClosedStack(const NodeAI& node);
+
+    void validateActorPosition(glm::vec3& position) const;
+    void setStartPosition(glm::vec3& startPosition);
 };
-}
+}  // namespace spark
 #endif
