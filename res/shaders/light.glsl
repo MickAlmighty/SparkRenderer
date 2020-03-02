@@ -24,6 +24,7 @@ layout(binding = 2) uniform sampler2D normalTexture;
 layout(binding = 3) uniform samplerCube irradianceMap;
 layout(binding = 4) uniform samplerCube prefilterMap;
 layout(binding = 5) uniform sampler2D brdfLUT;
+layout(binding = 6) uniform sampler2D ssaoTexture;
 
 layout (std140) uniform Camera
 {
@@ -91,17 +92,10 @@ vec3 pointLightAddition(vec3 V, vec3 N, vec3 Pos, Material m);
 vec3 spotLightAddition(vec3 V, vec3 N, vec3 Pos, Material m);
 
 vec3 worldPosFromDepth(float depth) {
-    float z = depth;
-
-    vec4 clipSpacePosition = vec4(texCoords * 2.0 - 1.0, z, 1.0);
+    vec4 clipSpacePosition = vec4(texCoords * 2.0 - 1.0, depth, 1.0);
     vec4 viewSpacePosition = camera.invertedProjection * clipSpacePosition;
-
-    // Perspective division
-    viewSpacePosition /= viewSpacePosition.w;
-
     vec4 worldSpacePosition = camera.invertedView * viewSpacePosition;
-
-    return worldSpacePosition.xyz /= worldSpacePosition.w;
+    return worldSpacePosition.xyz /= worldSpacePosition.w; //perspective division
 }
 
 vec3 decode(vec2 enc)
@@ -168,8 +162,8 @@ void main()
 		
 		ambient = (kD * diffuse + specular);
 	}
-	
-	FragColor = vec4(L0 + ambient, 1);
+	float ssao = texture(ssaoTexture, texCoords).x;
+	FragColor = vec4(L0 + ambient, 1) * ssao;
 }
 
 vec3 directionalLightAddition(vec3 V, vec3 N, Material m)

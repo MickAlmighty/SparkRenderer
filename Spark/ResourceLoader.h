@@ -34,6 +34,7 @@ public:
 	static std::map<std::string, std::vector<Mesh>> loadModels(std::filesystem::path& modelDirectory);
 	static std::vector<Texture> loadTextures(std::filesystem::path& resDirectory);
 	static std::optional<std::shared_ptr<PbrCubemapTexture>> loadHdrTexture(const std::string& path);
+    static std::optional<Texture> loadTexture(const std::string& path);
 	
 	ResourceLoader(const ResourceLoader&) = delete;
     ResourceLoader(const ResourceLoader&&) = delete;
@@ -50,7 +51,6 @@ private:
 	static Mesh loadMesh(aiMesh* assimpMesh, const std::filesystem::path& modelPath);
 	static std::map<TextureTarget, Texture> findTextures(const std::filesystem::path& modelDirectory);
 	static std::pair<std::string, gli::texture> loadTextureFromFile(const std::string& path);
-	static std::optional<Texture> loadTexture(const std::string& path);
 	static std::optional<Texture> loadTexture(const std::string& path, const gli::texture& texture);
 };
 

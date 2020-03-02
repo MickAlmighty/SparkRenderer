@@ -23,6 +23,7 @@ namespace spark {
 			drawMainMenuGui();
 			SceneManager::getInstance()->drawGui();
 			ResourceManager::getInstance()->drawGui();
+            SparkRenderer::getInstance()->drawGui();
 			ImGui::EndMainMenuBar();
 		}
 	}

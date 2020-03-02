@@ -187,6 +187,7 @@ std::vector<std::string> ResourceManager::getPathsToModels() const
             shaders.emplace(ShaderType::DOWNSCALE_SHADER, std::make_shared<Shader>(shaderDir.string() + "downScale.glsl"));
             shaders.emplace(ShaderType::GAUSSIAN_BLUR_SHADER, std::make_shared<Shader>(shaderDir.string() + "gaussianBlur.glsl"));
             shaders.emplace(ShaderType::LIGHT_SHAFTS_SHADER, std::make_shared<Shader>(shaderDir.string() + "lightShafts.glsl"));
+            shaders.emplace(ShaderType::SSAO_SHADER, std::make_shared<Shader>(shaderDir.string() + "ssao.glsl"));
 		}
 		
 		{

@@ -18,7 +18,8 @@ enum class ShaderType : unsigned char
     BRIGHT_PASS_SHADER = 10,
     DOWNSCALE_SHADER = 11,
     GAUSSIAN_BLUR_SHADER = 12,
-    LIGHT_SHAFTS_SHADER = 13
+    LIGHT_SHAFTS_SHADER = 13,
+	SSAO_SHADER = 14
 };
 
 enum class TextureTarget : unsigned char

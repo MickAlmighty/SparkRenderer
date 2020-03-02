@@ -41,19 +41,7 @@ void main()
         //horizontal blur
         color += texture(image, texCoords + offsets[i] * inverseScreenSize * direction) * weights[i];
         color += texture(image, texCoords - offsets[i] * inverseScreenSize * direction) * weights[i];
-
-        //vertical blur
-        //color += texture(image, texCoords + offsets[i] * inverseScreenSize * vec2(0.0, -1.0)) * weights[i];
-        //color += texture(image, texCoords + offsets[i] * inverseScreenSize * vec2(0.0, 1)) * weights[i];
     }
-
-	// color += texture(image, texCoords + vec2(-3.0) * inverseScreenSize) * (1.0 / 64.0);
-	// color += texture(image, texCoords + vec2(-2.0) * inverseScreenSize) * (6.0 / 64.0);
-	// color += texture(image, texCoords + vec2(-1.0) * inverseScreenSize) * (15.0 / 64.0);
-	// color += texture(image, texCoords + vec2(0.0) * inverseScreenSize)  * (20.0 / 64.0);
-	// color += texture(image, texCoords + vec2(1.0) * inverseScreenSize)  * (15.0 / 64.0);
-	// color += texture(image, texCoords + vec2(2.0) * inverseScreenSize) * (6.0 / 64.0);
-	// color += texture(image, texCoords + vec2(3.0) * inverseScreenSize)  * (1.0 / 64.0);
 
 	//color.a = 1.0f;
     FragColor = color;
