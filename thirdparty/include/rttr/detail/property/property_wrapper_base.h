@@ -40,6 +40,7 @@ namespace rttr
 
 class instance;
 class argument;
+class visitor;
 
 namespace detail
 {
@@ -76,6 +77,12 @@ class RTTR_API property_wrapper_base
         virtual bool set_value(instance& object, argument& arg) const;
 
         virtual variant get_value(instance& object) const;
+
+        virtual void visit(visitor& visitor, property prop) const RTTR_NOEXCEPT;
+
+        virtual int get_value_offset() const;
+
+        virtual void* get_object_pointer(instance& object) const;
 
     protected:
         void init() RTTR_NOEXCEPT;

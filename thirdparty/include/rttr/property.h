@@ -44,6 +44,7 @@ class enumeration;
 class instance;
 class argument;
 class property;
+class visitor;
 
 namespace detail
 {
@@ -254,14 +255,38 @@ class RTTR_API property
          */
         bool operator!=(const property& other) const RTTR_NOEXCEPT;
 
+        /*!
+         * Returns byte offset from the object pointer to the class field or -1 if not possible.
+         *
+         * \return Byte offset of the class field or -1 if not possible.
+         */
+        int get_value_offset() const;
+
+        /*!
+         * Returns void* pointer under given instance or nullptr if not possible.
+         *
+         * \return void* pointer under given instance or nullptr if not possible.
+         */
+        void* get_object_pointer(instance& object) const;
+
+        /*!
+         * Returns void* pointer of the class field under given instance or nullptr if not possible.
+         *
+         * \return void* pointer of the class field under given instance or nullptr if not possible.
+         */
+        void* get_value_pointer(instance& object) const;
+
     private:
         //! Constructs a property from a property_wrapper_base.
         property(const detail::property_wrapper_base* wrapper) RTTR_NOEXCEPT;
+
+        void visit(visitor& visitor) const RTTR_NOEXCEPT;
 
         template<typename T>
         friend T detail::create_item(const detail::class_item_to_wrapper_t<T>* wrapper);
         template<typename T>
         friend T detail::create_invalid_item();
+        friend class visitor;
 
     private:
         const detail::property_wrapper_base* m_wrapper;
