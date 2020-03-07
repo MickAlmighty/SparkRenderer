@@ -70,6 +70,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)thirdparty\include;$(SolutionDir)\Spark;$(MSBuildThisFileDirectory)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ConformanceMode>false</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -96,6 +97,7 @@ xcopy "$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.pdb" "$(TargetDir)
       <AdditionalIncludeDirectories>$(SolutionDir)thirdparty\include;$(SolutionDir)\Spark;$(MSBuildThisFileDirectory)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ConformanceMode>false</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

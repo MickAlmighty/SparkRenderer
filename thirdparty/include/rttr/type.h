@@ -561,6 +561,13 @@ class RTTR_API type
         bool is_base_of() const RTTR_NOEXCEPT;
 
         /*!
+         * \brief Returns true if this type is a shared_ptr, otherwise false.
+         *
+         * \return Returns true if this type is a shared_ptr, otherwise false.
+         */
+        bool is_shared_ptr() const RTTR_NOEXCEPT;
+
+        /*!
          * \brief Returns a range of all base classes of this type.
          *
          * \remark Make sure that the complete class hierarchy has the macro RTTR_ENABLE
