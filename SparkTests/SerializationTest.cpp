@@ -60,7 +60,6 @@ class SerializationComponent1 : public spark::Component
     void update() override{};
     void fixedUpdate() override{};
     void drawGUI() override{};
-    RTTR_ENABLE_NULL_COMPONENT(SerializationComponent1);
     RTTR_ENABLE(Component);
 };
 
@@ -124,7 +123,7 @@ RTTR_REGISTRATION
         .property("intMap", &SerializationClass2::intMap);
 
     rttr::registration::class_<SerializationComponent1>("SerializationComponent1")
-        .constructor()(rttr::policy::ctor::as_std_shared_ptr) RTTR_REGISTER_NULL_COMPONENT(SerializationComponent1);
+        .constructor()(rttr::policy::ctor::as_std_shared_ptr);
 
     rttr::registration::class_<SerializationComponent2>("SerializationComponent2")
         .constructor()(rttr::policy::ctor::as_std_shared_ptr)

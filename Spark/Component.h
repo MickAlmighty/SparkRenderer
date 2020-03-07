@@ -8,14 +8,6 @@
 #include <rttr/registration>
 #include <GUI/ImGui/imgui.h>
 
-#define RTTR_ENABLE_NULL_COMPONENT(ComponentName)        \
-    std::shared_ptr<ComponentName> getComponentNullPtr() \
-    {                                                    \
-        return {};                                       \
-    }
-
-#define RTTR_REGISTER_NULL_COMPONENT(ComponentName) .method("getComponentNullPtr", &ComponentName::getComponentNullPtr)
-
 namespace spark
 {
 class GameObject;

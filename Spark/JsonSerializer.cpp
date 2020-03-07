@@ -169,44 +169,16 @@ rttr::variant JsonSerializer::tryConvertVar(rttr::variant& variant, const rttr::
         SPARK_TRACE("Already the same type. Returning...");
         return variant;
     }
-    if(variant.get_type() == rttr::type::get<nullptr_t>())
+    if(variant.can_convert(type))
     {
-        if(isWrappedPtr(type))
+        SPARK_TRACE("Using custom converter...");
+        rttr::variant newVar = variant;
+        bool convOk = newVar.convert(type);
+        if(convOk)
         {
-            SPARK_TRACE("Using custom wrapped null pointer conversion...");
-            if(type == rttr::type::get<std::shared_ptr<Component>>())
-            {
-                return std::shared_ptr<Component>();
-            }
-            rttr::type wrapped{type.get_wrapped_type()};
-            if(wrapped.is_derived_from(rttr::type::get<Component*>()))
-            {
-                SPARK_TRACE("Instantiating derived pointer type...");
-                rttr::variant inst{wrapped.get_raw_type().create()};
-                if(inst.is_valid())
-                {
-                    SPARK_TRACE("Instantiated! Converting...");
-                    rttr::method convMethod{wrapped.get_method("getComponentNullPtr")};
-                    if(convMethod.is_valid() && convMethod.get_return_type() == type)
-                    {
-                        return convMethod.invoke(inst.extract_wrapped_value());
-                    }
-                    else
-                    {
-                        SPARK_WARN("Conversion method unavailable!");
-                    }
-                }
-                else
-                {
-                    SPARK_WARN("Instantiation failed!");
-                }
-            }
+            return newVar;
         }
-        else
-        {
-            SPARK_TRACE("Returning null pointer for unwrapped pointer type...");
-            return variant;  // still nullptr for raw pointers
-        }
+        SPARK_WARN("Failed to use custom converter!");
     }
     if(isWrappedPtr(variant.get_type()) && !isWrappedPtr(type))
     {
@@ -233,11 +205,6 @@ rttr::variant JsonSerializer::tryConvertVar(rttr::variant& variant, const rttr::
         {
             SPARK_WARN("Custom wrapped pointer conversion unavailable for given type.");
         }
-    }
-    if(variant.can_convert(type))
-    {
-        SPARK_TRACE("Using custom converter...");
-        return variant.convert(type);
     }
     SPARK_WARN("Failed to convert variant of type '{}' to type '{}'.", variant.get_type().get_name().cbegin(), type.get_name().cbegin());
     conversionOk = false;
@@ -513,10 +480,6 @@ rttr::variant JsonSerializer::readPropertyFromJson(const Json::Value& root, cons
     {
         SPARK_TRACE("Value is a pointer");
         rttr::variant sparkPtr = deserialize(root);
-        if(getPtr(sparkPtr) == nullptr)
-        {
-            return nullptr;
-        }
         // todo: i'd really love to see outcome library arrive here as well xd
         bool conversionOk;
         rttr::variant result{tryConvertVar(sparkPtr, type, conversionOk)};
