@@ -196,6 +196,7 @@
     <ClInclude Include="PointLight.h" />
     <ClInclude Include="ResourceLoader.h" />
     <ClInclude Include="Scene.h" />
+    <ClInclude Include="SerializerUtil.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="Spark.h" />
     <ClInclude Include="SpotLight.h" />

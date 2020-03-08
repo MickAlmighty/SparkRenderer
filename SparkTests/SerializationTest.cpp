@@ -4,6 +4,7 @@
 #include "GameObject.h"
 #include "JsonSerializer.h"
 #include "MeshPlane.h"
+#include "SerializerUtil.h"
 
 enum class SerializationEnum1
 {
@@ -50,6 +51,16 @@ class SerializationClass2
     SerializationClass1* raw{nullptr};
     std::vector<std::shared_ptr<SerializationClass1>> ptrVector{};
     std::map<int, int> intMap{};
+    RTTR_ENABLE();
+};
+
+class SerializationClass3
+{
+    public:
+    SerializationClass3() = default;
+    int unspecifiedInt{};
+    int serializableInt{};
+    int unserializableInt{};
     RTTR_ENABLE();
 };
 
@@ -122,8 +133,15 @@ RTTR_REGISTRATION
         .property("ptrVector", &SerializationClass2::ptrVector)
         .property("intMap", &SerializationClass2::intMap);
 
-    rttr::registration::class_<SerializationComponent1>("SerializationComponent1")
-        .constructor()(rttr::policy::ctor::as_std_shared_ptr);
+    rttr::registration::class_<SerializationClass3>("SerializationClass3")
+        .constructor()(rttr::policy::ctor::as_std_shared_ptr)
+        .property("unspecifiedInt", &SerializationClass3::unspecifiedInt)
+        .property("serializableInt", &SerializationClass3::serializableInt)
+            (rttr::detail::metadata(SerializerMeta::Serializable, true))
+        .property("unserializableInt", &SerializationClass3::unserializableInt)
+            (rttr::detail::metadata(SerializerMeta::Serializable, false));
+
+    rttr::registration::class_<SerializationComponent1>("SerializationComponent1").constructor()(rttr::policy::ctor::as_std_shared_ptr);
 
     rttr::registration::class_<SerializationComponent2>("SerializationComponent2")
         .constructor()(rttr::policy::ctor::as_std_shared_ptr)
@@ -317,4 +335,27 @@ TEST(SerializationTest, ComponentNullSmartPointersInjectedProperly)
     }
     ASSERT_EQ(nullptr, target->shared.get());
     ASSERT_EQ(nullptr, target->sharedComp.get());
+}
+
+TEST(SerializationTest, SerializableMetadataUsedProperly)
+{
+    std::shared_ptr<SerializationClass3> source{std::make_shared<SerializationClass3>()}, target{};
+    source->unspecifiedInt = 123;
+    source->serializableInt = 234;
+    source->unserializableInt = 345;
+    Json::Value root;
+    spark::JsonSerializer* serializer{spark::JsonSerializer::getInstance()};
+    ASSERT_TRUE(serializer->save(source, root));
+    spark::JsonSerializer::writeToFile("test4.json", root);
+    try
+    {
+        target = serializer->loadJsonShared<SerializationClass3>(root);
+    }
+    catch(std::exception&)
+    {
+        ASSERT_FALSE("Unable to deserialize component!");
+    }
+    ASSERT_EQ(source->unspecifiedInt, target->unspecifiedInt);
+    ASSERT_EQ(source->serializableInt, target->serializableInt);
+    ASSERT_NE(source->unserializableInt, target->unserializableInt);
 }

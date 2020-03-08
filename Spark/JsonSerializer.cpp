@@ -7,6 +7,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include "SerializerUtil.h"
 
 namespace spark
 {
@@ -451,9 +452,17 @@ void JsonSerializer::serialize(const rttr::variant& var, Json::Value& root)
             Json::Value& content = root[CONTENT_NAME];
             for(rttr::property prop : derivedType.get_properties())
             {
-                Json::Value& obj{content[std::string(prop.get_name())]};
-                SPARK_TRACE("Writing property with name '{}'...", prop.get_name().cbegin());
-                writePropertyToJson(obj, prop.get_type(), prop.get_value(wrapped));
+                const rttr::variant serializableMeta{prop.get_metadata(SerializerMeta::Serializable)};
+                if(!(serializableMeta.is_valid() && serializableMeta.can_convert<bool>() && !serializableMeta.get_value<bool>()))
+                {
+                    Json::Value& obj{content[std::string(prop.get_name())]};
+                    SPARK_TRACE("Writing property with name '{}'...", prop.get_name().cbegin());
+                    writePropertyToJson(obj, prop.get_type(), prop.get_value(wrapped));
+                }
+                else
+                {
+                    SPARK_TRACE("Skipping unserializable property with name '{}'", prop.get_name().cbegin());
+                }
             }
         }
     }
@@ -1112,46 +1121,54 @@ rttr::variant JsonSerializer::deserialize(const Json::Value& root)
         rttr::variant wrapped{isWrappedPtr(type) ? var.extract_wrapped_value() : var};
         for(rttr::property prop : wrapped.get_type().get_properties())
         {
-            const rttr::type propType{prop.get_type()};
-            if(content.isMember(prop.get_name().cbegin()))
+            const rttr::variant serializableMeta{prop.get_metadata(SerializerMeta::Serializable)};
+            if(!(serializableMeta.is_valid() && serializableMeta.can_convert<bool>() && !serializableMeta.get_value<bool>()))
             {
-                SPARK_TRACE("Reading prop with name '{}'...", prop.get_name().cbegin());
-                const Json::Value& obj{content[prop.get_name().cbegin()]};
-                bool ok = true;
-                unsigned int code{0};
-                rttr::variant propVar{readPropertyFromJson(obj, propType, prop.get_value(wrapped), ok)};
-                if(ok)
+                const rttr::type propType{prop.get_type()};
+                if(content.isMember(prop.get_name().cbegin()))
                 {
-                    SPARK_TRACE("Acquired variant of type '{}'. Setting value...", propVar.get_type().get_name().cbegin());
-                    if(!prop.set_value(wrapped, propVar))
+                    SPARK_TRACE("Reading prop with name '{}'...", prop.get_name().cbegin());
+                    const Json::Value& obj{content[prop.get_name().cbegin()]};
+                    bool ok = true;
+                    unsigned int code{0};
+                    rttr::variant propVar{readPropertyFromJson(obj, propType, prop.get_value(wrapped), ok)};
+                    if(ok)
                     {
-                        SPARK_TRACE("Failed! Attempting to acquire converted variant...");
-                        rttr::variant convVar{tryConvertVar(propVar, prop.get_type(), ok)};
-                        if(ok)
+                        SPARK_TRACE("Acquired variant of type '{}'. Setting value...", propVar.get_type().get_name().cbegin());
+                        if(!prop.set_value(wrapped, propVar))
                         {
-                            SPARK_TRACE("Acquired converted variant of type '{}'. Setting value...", convVar.get_type().get_name().cbegin());
+                            SPARK_TRACE("Failed! Attempting to acquire converted variant...");
+                            rttr::variant convVar{tryConvertVar(propVar, prop.get_type(), ok)};
+                            if(ok)
+                            {
+                                SPARK_TRACE("Acquired converted variant of type '{}'. Setting value...", convVar.get_type().get_name().cbegin());
+                            }
+                            if(ok && !prop.set_value(wrapped, convVar))
+                            {
+                                SPARK_WARN("Unable to set value for property '{}' of type '{}' with converted value of type '{}'!",
+                                           prop.get_name().cbegin(), propType.get_name().cbegin(), convVar.get_type().get_name().cbegin());
+                            }
+                            else
+                            {
+                                SPARK_WARN("Unable to set value for property '{}' of type '{}' with value of type '{}'!", prop.get_name().cbegin(),
+                                           propType.get_name().cbegin(), propVar.get_type().get_name().cbegin());
+                            }
                         }
-                        if(ok && !prop.set_value(wrapped, convVar))
-                        {
-                            SPARK_WARN("Unable to set value for property '{}' of type '{}' with converted value of type '{}'!",
-                                       prop.get_name().cbegin(), propType.get_name().cbegin(), convVar.get_type().get_name().cbegin());
-                        }
-                        else
-                        {
-                            SPARK_WARN("Unable to set value for property '{}' of type '{}' with value of type '{}'!", prop.get_name().cbegin(),
-                                       propType.get_name().cbegin(), propVar.get_type().get_name().cbegin());
-                        }
+                    }
+                    else
+                    {
+                        SPARK_ERROR("Failed to read the property! Ignoring the value.");
                     }
                 }
                 else
                 {
-                    SPARK_ERROR("Failed to read the property! Ignoring the value.");
+                    SPARK_WARN("Property '{}' of type '{}' (ID: {}) does not exist in json entry!", prop.get_name().cbegin(),
+                               wrapped.get_type().get_name().cbegin(), id);
                 }
             }
             else
             {
-                SPARK_WARN("Property '{}' of type '{}' (ID: {}) does not exist in json entry!", prop.get_name().cbegin(),
-                           wrapped.get_type().get_name().cbegin(), id);
+                SPARK_TRACE("Skipping unserializable property with name '{}'", prop.get_name().cbegin());
             }
         }
         return var;
