@@ -137,9 +137,9 @@ RTTR_REGISTRATION
         .constructor()(rttr::policy::ctor::as_std_shared_ptr)
         .property("unspecifiedInt", &SerializationClass3::unspecifiedInt)
         .property("serializableInt", &SerializationClass3::serializableInt)
-            (rttr::detail::metadata(SerializerMeta::Serializable, true))
+            (rttr::detail::metadata(spark::SerializerMeta::Serializable, true))
         .property("unserializableInt", &SerializationClass3::unserializableInt)
-            (rttr::detail::metadata(SerializerMeta::Serializable, false));
+            (rttr::detail::metadata(spark::SerializerMeta::Serializable, false));
 
     rttr::registration::class_<SerializationComponent1>("SerializationComponent1").constructor()(rttr::policy::ctor::as_std_shared_ptr);
 
