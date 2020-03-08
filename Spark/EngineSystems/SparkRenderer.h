@@ -31,6 +31,9 @@ class SparkRenderer
     void drawGui();
 
     private:
+    SparkRenderer() = default;
+    ~SparkRenderer() = default;
+
     ScreenQuad screenQuad{};
     std::unique_ptr<DepthOfFieldPass> dofPass;
     std::unique_ptr<BlurPass> ssaoBlurPass;
@@ -71,9 +74,6 @@ class SparkRenderer
     float nearEnd = 4.0f;
     float farStart = 20.0f;
     float farEnd = 100.0f;
-
-    ~SparkRenderer() = default;
-    SparkRenderer() = default;
 
     void resizeWindowIfNecessary();
     void fillGBuffer();

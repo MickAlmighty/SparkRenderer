@@ -13,14 +13,12 @@ namespace spark
 class SceneManager final
 {
     public:
-    ~SceneManager() = default;
-    SceneManager() = default;
     SceneManager(SceneManager&) = delete;
     SceneManager(SceneManager&&) = delete;
     SceneManager& operator=(const SceneManager&) = delete;
     SceneManager& operator=(SceneManager&&) = delete;
 
-    static std::shared_ptr<SceneManager> getInstance();
+    static SceneManager* getInstance();
 
     void setup();
     void update() const;
@@ -32,6 +30,8 @@ class SceneManager final
     void drawGui();
 
     private:
+    SceneManager() = default;
+    ~SceneManager() = default;
     std::list<std::shared_ptr<Scene>> scenes;
     std::shared_ptr<Scene> current_scene{Factory::createScene("MainScene")};
 };
