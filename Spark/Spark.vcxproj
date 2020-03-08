@@ -71,13 +71,12 @@
       <AdditionalOptions>"$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.lib" "$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.a" "$(SolutionDir)thirdparty\lib\CommonLib\*.lib" "$(SolutionDir)thirdparty\lib\CommonLib\*.a" /VERBOSE:UNUSEDLIBS %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy "$(SolutionDir)thirdparty\lib\CommonLib\*.dll" "$(TargetDir)" /D /Y
-xcopy "$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.dll" "$(TargetDir)" /D /Y
-xcopy "$(SolutionDir)thirdparty\lib\CommonLib\*.pdb" "$(TargetDir)" /D /Y
-xcopy "$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.pdb" "$(TargetDir)" /D /Y</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
     <PostBuildEvent>
-      <Message>Copying library files to output directory...</Message>
+      <Message>
+      </Message>
     </PostBuildEvent>
     <PreLinkEvent>
       <Command>
@@ -109,11 +108,12 @@ xcopy "$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.pdb" "$(TargetDir)
       <AdditionalOptions>"$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.lib" "$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.a" "$(SolutionDir)thirdparty\lib\CommonLib\*.lib" "$(SolutionDir)thirdparty\lib\CommonLib\*.a" /VERBOSE:UNUSEDLIBS %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy "$(SolutionDir)thirdparty\lib\CommonLib\*.dll" "$(TargetDir)" /D /Y
-xcopy "$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.dll" "$(TargetDir)" /D /Y</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
     <PostBuildEvent>
-      <Message>Copying library files to output directory...</Message>
+      <Message>
+      </Message>
     </PostBuildEvent>
     <PreLinkEvent>
       <Command>
@@ -202,6 +202,7 @@ xcopy "$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.dll" "$(TargetDir)
     <ClInclude Include="PointLight.h" />
     <ClInclude Include="ResourceLoader.h" />
     <ClInclude Include="Scene.h" />
+    <ClInclude Include="SerializerUtil.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="Spark.h" />
     <ClInclude Include="SpotLight.h" />

@@ -7,6 +7,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include "SerializerUtil.h"
 
 namespace spark
 {
@@ -169,44 +170,16 @@ rttr::variant JsonSerializer::tryConvertVar(rttr::variant& variant, const rttr::
         SPARK_TRACE("Already the same type. Returning...");
         return variant;
     }
-    if(variant.get_type() == rttr::type::get<nullptr_t>())
+    if(variant.can_convert(type))
     {
-        if(isWrappedPtr(type))
+        SPARK_TRACE("Using custom converter...");
+        rttr::variant newVar = variant;
+        bool convOk = newVar.convert(type);
+        if(convOk)
         {
-            SPARK_TRACE("Using custom wrapped null pointer conversion...");
-            if(type == rttr::type::get<std::shared_ptr<Component>>())
-            {
-                return std::shared_ptr<Component>();
-            }
-            rttr::type wrapped{type.get_wrapped_type()};
-            if(wrapped.is_derived_from(rttr::type::get<Component*>()))
-            {
-                SPARK_TRACE("Instantiating derived pointer type...");
-                rttr::variant inst{wrapped.get_raw_type().create()};
-                if(inst.is_valid())
-                {
-                    SPARK_TRACE("Instantiated! Converting...");
-                    rttr::method convMethod{wrapped.get_method("getComponentNullPtr")};
-                    if(convMethod.is_valid() && convMethod.get_return_type() == type)
-                    {
-                        return convMethod.invoke(inst.extract_wrapped_value());
-                    }
-                    else
-                    {
-                        SPARK_WARN("Conversion method unavailable!");
-                    }
-                }
-                else
-                {
-                    SPARK_WARN("Instantiation failed!");
-                }
-            }
+            return newVar;
         }
-        else
-        {
-            SPARK_TRACE("Returning null pointer for unwrapped pointer type...");
-            return variant;  // still nullptr for raw pointers
-        }
+        SPARK_WARN("Failed to use custom converter!");
     }
     if(isWrappedPtr(variant.get_type()) && !isWrappedPtr(type))
     {
@@ -233,11 +206,6 @@ rttr::variant JsonSerializer::tryConvertVar(rttr::variant& variant, const rttr::
         {
             SPARK_WARN("Custom wrapped pointer conversion unavailable for given type.");
         }
-    }
-    if(variant.can_convert(type))
-    {
-        SPARK_TRACE("Using custom converter...");
-        return variant.convert(type);
     }
     SPARK_WARN("Failed to convert variant of type '{}' to type '{}'.", variant.get_type().get_name().cbegin(), type.get_name().cbegin());
     conversionOk = false;
@@ -484,9 +452,17 @@ void JsonSerializer::serialize(const rttr::variant& var, Json::Value& root)
             Json::Value& content = root[CONTENT_NAME];
             for(rttr::property prop : derivedType.get_properties())
             {
-                Json::Value& obj{content[std::string(prop.get_name())]};
-                SPARK_TRACE("Writing property with name '{}'...", prop.get_name().cbegin());
-                writePropertyToJson(obj, prop.get_type(), prop.get_value(wrapped));
+                const rttr::variant serializableMeta{prop.get_metadata(SerializerMeta::Serializable)};
+                if(!(serializableMeta.is_valid() && serializableMeta.can_convert<bool>() && !serializableMeta.get_value<bool>()))
+                {
+                    Json::Value& obj{content[std::string(prop.get_name())]};
+                    SPARK_TRACE("Writing property with name '{}'...", prop.get_name().cbegin());
+                    writePropertyToJson(obj, prop.get_type(), prop.get_value(wrapped));
+                }
+                else
+                {
+                    SPARK_TRACE("Skipping unserializable property with name '{}'", prop.get_name().cbegin());
+                }
             }
         }
     }
@@ -513,10 +489,6 @@ rttr::variant JsonSerializer::readPropertyFromJson(const Json::Value& root, cons
     {
         SPARK_TRACE("Value is a pointer");
         rttr::variant sparkPtr = deserialize(root);
-        if(getPtr(sparkPtr) == nullptr)
-        {
-            return nullptr;
-        }
         // todo: i'd really love to see outcome library arrive here as well xd
         bool conversionOk;
         rttr::variant result{tryConvertVar(sparkPtr, type, conversionOk)};
@@ -1149,46 +1121,54 @@ rttr::variant JsonSerializer::deserialize(const Json::Value& root)
         rttr::variant wrapped{isWrappedPtr(type) ? var.extract_wrapped_value() : var};
         for(rttr::property prop : wrapped.get_type().get_properties())
         {
-            const rttr::type propType{prop.get_type()};
-            if(content.isMember(prop.get_name().cbegin()))
+            const rttr::variant serializableMeta{prop.get_metadata(SerializerMeta::Serializable)};
+            if(!(serializableMeta.is_valid() && serializableMeta.can_convert<bool>() && !serializableMeta.get_value<bool>()))
             {
-                SPARK_TRACE("Reading prop with name '{}'...", prop.get_name().cbegin());
-                const Json::Value& obj{content[prop.get_name().cbegin()]};
-                bool ok = true;
-                unsigned int code{0};
-                rttr::variant propVar{readPropertyFromJson(obj, propType, prop.get_value(wrapped), ok)};
-                if(ok)
+                const rttr::type propType{prop.get_type()};
+                if(content.isMember(prop.get_name().cbegin()))
                 {
-                    SPARK_TRACE("Acquired variant of type '{}'. Setting value...", propVar.get_type().get_name().cbegin());
-                    if(!prop.set_value(wrapped, propVar))
+                    SPARK_TRACE("Reading prop with name '{}'...", prop.get_name().cbegin());
+                    const Json::Value& obj{content[prop.get_name().cbegin()]};
+                    bool ok = true;
+                    unsigned int code{0};
+                    rttr::variant propVar{readPropertyFromJson(obj, propType, prop.get_value(wrapped), ok)};
+                    if(ok)
                     {
-                        SPARK_TRACE("Failed! Attempting to acquire converted variant...");
-                        rttr::variant convVar{tryConvertVar(propVar, prop.get_type(), ok)};
-                        if(ok)
+                        SPARK_TRACE("Acquired variant of type '{}'. Setting value...", propVar.get_type().get_name().cbegin());
+                        if(!prop.set_value(wrapped, propVar))
                         {
-                            SPARK_TRACE("Acquired converted variant of type '{}'. Setting value...", convVar.get_type().get_name().cbegin());
+                            SPARK_TRACE("Failed! Attempting to acquire converted variant...");
+                            rttr::variant convVar{tryConvertVar(propVar, prop.get_type(), ok)};
+                            if(ok)
+                            {
+                                SPARK_TRACE("Acquired converted variant of type '{}'. Setting value...", convVar.get_type().get_name().cbegin());
+                            }
+                            if(ok && !prop.set_value(wrapped, convVar))
+                            {
+                                SPARK_WARN("Unable to set value for property '{}' of type '{}' with converted value of type '{}'!",
+                                           prop.get_name().cbegin(), propType.get_name().cbegin(), convVar.get_type().get_name().cbegin());
+                            }
+                            else
+                            {
+                                SPARK_WARN("Unable to set value for property '{}' of type '{}' with value of type '{}'!", prop.get_name().cbegin(),
+                                           propType.get_name().cbegin(), propVar.get_type().get_name().cbegin());
+                            }
                         }
-                        if(ok && !prop.set_value(wrapped, convVar))
-                        {
-                            SPARK_WARN("Unable to set value for property '{}' of type '{}' with converted value of type '{}'!",
-                                       prop.get_name().cbegin(), propType.get_name().cbegin(), convVar.get_type().get_name().cbegin());
-                        }
-                        else
-                        {
-                            SPARK_WARN("Unable to set value for property '{}' of type '{}' with value of type '{}'!", prop.get_name().cbegin(),
-                                       propType.get_name().cbegin(), propVar.get_type().get_name().cbegin());
-                        }
+                    }
+                    else
+                    {
+                        SPARK_ERROR("Failed to read the property! Ignoring the value.");
                     }
                 }
                 else
                 {
-                    SPARK_ERROR("Failed to read the property! Ignoring the value.");
+                    SPARK_WARN("Property '{}' of type '{}' (ID: {}) does not exist in json entry!", prop.get_name().cbegin(),
+                               wrapped.get_type().get_name().cbegin(), id);
                 }
             }
             else
             {
-                SPARK_WARN("Property '{}' of type '{}' (ID: {}) does not exist in json entry!", prop.get_name().cbegin(),
-                           wrapped.get_type().get_name().cbegin(), id);
+                SPARK_TRACE("Skipping unserializable property with name '{}'", prop.get_name().cbegin());
             }
         }
         return var;

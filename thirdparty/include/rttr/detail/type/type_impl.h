@@ -292,9 +292,11 @@ RTTR_INLINE type create_type(type_data* data) RTTR_NOEXCEPT
 /////////////////////////////////////////////////////////////////////////////////
 template<typename T>
 using is_complete_type = std::integral_constant<bool, !std::is_function<T>::value && !std::is_same<T, void>::value>;
+template<typename T>
+using is_instantiatable_type = std::integral_constant<bool, std::is_default_constructible<T>::value && std::is_copy_constructible<T>::value && !std::is_array<T>::value>;
 
 template<typename T>
-RTTR_LOCAL RTTR_INLINE enable_if_t<is_complete_type<T>::value, type>
+RTTR_LOCAL RTTR_INLINE enable_if_t<is_complete_type<T>::value && is_instantiatable_type<T>::value, type>
 create_or_get_type() RTTR_NOEXCEPT
 {
     // when you get an error here, then the type was not completely defined
@@ -302,13 +304,59 @@ create_or_get_type() RTTR_NOEXCEPT
     using type_must_be_complete = char[ sizeof(T) ? 1: -1 ];
     (void) sizeof(type_must_be_complete);
     static const type val = create_type(get_registration_manager().add_item(make_type_data<T>()));
+    static bool init = true;
+    if(init)
+    {
+        init = false;
+        if(val.is_shared_ptr())
+        {
+            type::register_converter_func([](nullptr_t, bool& ok)
+            {
+                ok = true;
+                return T();
+            });
+        }
+    }
+    return val;
+}
+
+template<typename T>
+RTTR_LOCAL RTTR_INLINE enable_if_t<is_complete_type<T>::value && !is_instantiatable_type<T>::value, type>
+create_or_get_type() RTTR_NOEXCEPT
+{
+    // when you get an error here, then the type was not completely defined
+    // (a forward declaration is not enough because base_classes will not be found)
+    using type_must_be_complete = char[sizeof(T) ? 1 : -1];
+    (void)sizeof(type_must_be_complete);
+    static const type val = create_type(get_registration_manager().add_item(make_type_data<T>()));
     return val;
 }
 
 /////////////////////////////////////////////////////////////////////////////////
 
 template<typename T>
-RTTR_LOCAL RTTR_INLINE enable_if_t<!is_complete_type<T>::value, type>
+RTTR_LOCAL RTTR_INLINE enable_if_t<!is_complete_type<T>::value && is_instantiatable_type<T>::value, type>
+create_or_get_type() RTTR_NOEXCEPT
+{
+    static const type val = create_type(get_registration_manager().add_item(make_type_data<T>()));
+    static bool init = true;
+    if (init)
+    {
+        init = false;
+        if (val.is_shared_ptr())
+        {
+            type::register_converter_func([](nullptr_t, bool& ok)
+            {
+                ok = true;
+                return T();
+            });
+        }
+    }
+    return val;
+}
+
+template<typename T>
+RTTR_LOCAL RTTR_INLINE enable_if_t<!is_complete_type<T>::value && !is_instantiatable_type<T>::value, type>
 create_or_get_type() RTTR_NOEXCEPT
 {
     static const type val = create_type(get_registration_manager().add_item(make_type_data<T>()));

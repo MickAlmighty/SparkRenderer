@@ -72,9 +72,11 @@
       <AdditionalLibraryDirectories>$(SolutionDir)thirdparty\lib\CommonLib;$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Message>Copying library files to output directory...</Message>
+      <Message>Copying library files to target directory...</Message>
       <Command>xcopy "$(SolutionDir)thirdparty\lib\CommonLib\*.dll" "$(TargetDir)" /D /Y
+xcopy "$(SolutionDir)thirdparty\lib\CommonLib\*.pdb" "$(TargetDir)" /D /Y
 xcopy "$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.dll" "$(TargetDir)" /D /Y
+xcopy "$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.pdb" "$(TargetDir)" /D /Y
 if not exist "$(TargetDir)settings.json" (xcopy "$(ProjectDir)settings.json" "$(TargetDir)" /D /Y)
 if not exist "$(TargetDir)scene.json" (xcopy "$(ProjectDir)scene.json" "$(TargetDir)" /D /Y)</Command>
     </PostBuildEvent>
@@ -99,9 +101,11 @@ if not exist "$(TargetDir)scene.json" (xcopy "$(ProjectDir)scene.json" "$(Target
       <AdditionalLibraryDirectories>$(SolutionDir)thirdparty\lib\CommonLib;$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Message>Copying library files to output directory...</Message>
+      <Message>Copying library files to target directory...</Message>
       <Command>xcopy "$(SolutionDir)thirdparty\lib\CommonLib\*.dll" "$(TargetDir)" /D /Y
+xcopy "$(SolutionDir)thirdparty\lib\CommonLib\*.pdb" "$(TargetDir)" /D /Y
 xcopy "$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.dll" "$(TargetDir)" /D /Y
+xcopy "$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.pdb" "$(TargetDir)" /D /Y
 if not exist "$(TargetDir)settings.json" (xcopy "$(ProjectDir)settings.json" "$(TargetDir)" /D /Y)
 if not exist "$(TargetDir)scene.json" (xcopy "$(ProjectDir)scene.json" "$(TargetDir)" /D /Y)</Command>
     </PostBuildEvent>
@@ -110,17 +114,17 @@ if not exist "$(TargetDir)scene.json" (xcopy "$(ProjectDir)scene.json" "$(Target
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Spark\Spark.vcxproj">
-      <Project>{d3a53a28-e28e-43f8-9929-e1389589344d}</Project>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="imgui.ini" />
     <None Include="scene.json" />
     <None Include="settings.json" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="map.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Spark\Spark.vcxproj">
+      <Project>{d3a53a28-e28e-43f8-9929-e1389589344d}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
