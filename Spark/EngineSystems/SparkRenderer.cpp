@@ -487,9 +487,11 @@ void SparkRenderer::createFrameBuffersAndTextures()
 
     utils::createTexture(colorTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
     utils::createTexture(normalsTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
-    utils::createTexture(depthTexture, Spark::WIDTH, Spark::HEIGHT, GL_DEPTH_COMPONENT16, GL_DEPTH_COMPONENT, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
+    utils::createTexture(depthTexture, Spark::WIDTH, Spark::HEIGHT, GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
 
     utils::createTexture(lightColorTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::createTexture(lightDiffuseTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::createTexture(lightSpecularTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
     utils::createTexture(toneMappingTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
     utils::createTexture(motionBlurTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
     utils::createTexture(lightShaftTexture, Spark::WIDTH / 2, Spark::HEIGHT / 2, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
@@ -498,7 +500,7 @@ void SparkRenderer::createFrameBuffersAndTextures()
 
     utils::createFramebuffer(mainFramebuffer, {colorTexture, normalsTexture});
     utils::bindDepthTexture(mainFramebuffer, depthTexture);
-    utils::createFramebuffer(lightFrameBuffer, {lightColorTexture});
+    utils::createFramebuffer(lightFrameBuffer, {lightColorTexture, lightDiffuseTexture, lightSpecularTexture});
     utils::bindDepthTexture(lightFrameBuffer, depthTexture);
     utils::createFramebuffer(toneMappingFramebuffer, {toneMappingTexture});
     utils::createFramebuffer(motionBlurFramebuffer, {motionBlurTexture});
@@ -518,8 +520,8 @@ void SparkRenderer::cleanup()
 
 void SparkRenderer::deleteFrameBuffersAndTextures() const
 {
-    GLuint textures[7] = {colorTexture, normalsTexture, lightColorTexture, toneMappingTexture, motionBlurTexture, depthTexture, ssaoTexture};
-    glDeleteTextures(7, textures);
+    GLuint textures[9] = {colorTexture, normalsTexture, lightColorTexture, lightDiffuseTexture, lightSpecularTexture, toneMappingTexture, motionBlurTexture, depthTexture, ssaoTexture};
+    glDeleteTextures(9, textures);
 
     GLuint frameBuffers[5] = {mainFramebuffer, lightFrameBuffer, toneMappingFramebuffer, motionBlurFramebuffer, ssaoFramebuffer};
 

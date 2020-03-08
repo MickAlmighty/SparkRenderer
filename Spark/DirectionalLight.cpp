@@ -5,6 +5,7 @@
 #include "EngineSystems/SceneManager.h"
 #include "GameObject.h"
 #include "JsonSerializer.h"
+#include "SerializerUtil.h"
 #include "Structs.h"
 
 namespace spark
@@ -72,6 +73,13 @@ void DirectionalLight::update()
         SceneManager::getInstance()->getCurrentScene()->lightManager->addDirectionalLight(shared_from_base<DirectionalLight>());
         addedToLightManager = true;
     }
+
+    glm::vec3 lightDirection = getGameObject()->transform.local.getMatrix() * glm::vec4(dirLightFront, 0.0f);
+    lightDirection = glm::normalize(lightDirection);
+    if(lightDirection != direction)
+    {
+        setDirection(lightDirection);
+    }
 }
 
 void DirectionalLight::fixedUpdate() {}
@@ -115,5 +123,7 @@ RTTR_REGISTRATION
         //.property("addedToLightManager", &spark::DirectionalLight::addedToLightManager)
         .property("color", &spark::DirectionalLight::color)
         .property("colorStrength", &spark::DirectionalLight::colorStrength)
+        .property("dirLightFront", &spark::DirectionalLight::dirLightFront)
+        (rttr::detail::metadata(SerializerMeta::Serializable, false))
         .property("direction", &spark::DirectionalLight::direction);
 }

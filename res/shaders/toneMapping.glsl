@@ -13,7 +13,7 @@ void main()
 
 #type fragment
 #version 450
-layout (location = 0) out vec4 FragColor;
+layout (location = 0) out vec3 FragColor;
 
 layout (binding = 0) uniform sampler2D inputTexture;
 uniform vec2 inversedScreenSize;
@@ -58,8 +58,25 @@ vec3 ACESFilm(vec3 x)
     float c = 2.43f;
     float d = 0.59f;
     float e = 0.14f;
-	vec3 color = clamp((x * (a * x + b)) / (x * (c * x + d) + e), 0.0f, 1.0f);
-	return pow(color, vec3(1 / 2.2f));
+	return  clamp((x * (a * x + b)) / (x * (c * x + d) + e), 0.0f, 1.0f);
+}
+
+vec3 approximationLinearToSRGB(vec3 linearColor)
+{
+    return pow(linearColor, vec3(1.0f / 2.2f));
+}
+
+vec3 accurateLinearToSRGB(vec3 linearColor)
+{
+	// https://seblagarde.files.wordpress.com/2015/07/course_notes_moving_frostbite_to_pbr_v32.pdf
+	// page 88
+    vec3 sRGBLo = linearColor * 12.92f;
+    vec3 sRGBHi = (pow(abs(linearColor), vec3(1.0f / 2.4)) * 1.055f) - 0.055f;
+    vec3 sRGB;
+    sRGB.x = (linearColor.x <= 0.0031308f) ? sRGBLo.x : sRGBHi.x;
+    sRGB.y = (linearColor.y <= 0.0031308f) ? sRGBLo.y : sRGBHi.y;
+    sRGB.z = (linearColor.z <= 0.0031308f) ? sRGBLo.z : sRGBHi.z;
+    return sRGB;
 }
 
 void main()
@@ -67,6 +84,6 @@ void main()
 	vec3 color = texture(inputTexture, tex_coords).xyz; //for unchartedTonemapping
 	//vec3 resultColor = uncharted2Tonemap(color);
 	//vec3 resultColor = reinhardTonemapping(color);
-	vec3 resultColor = ACESFilm(color);
-	FragColor = vec4(resultColor, 1);
+    vec3 resultColor = approximationLinearToSRGB(ACESFilm(color));
+	FragColor = resultColor;
 }

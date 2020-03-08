@@ -51,33 +51,42 @@ layout (binding = 4) uniform sampler2D metalnessTexture;
 in vec2 tex_coords;
 in mat3 viewTBN_matrix;
 
-vec2 encode(vec3 n)
+vec2 encodeViewSpaceNormal(vec3 n)
 {
+	//Lambert Azimuthal Equal-Area projection
+	//http://aras-p.info/texts/CompactNormalStorage.html
 	float p = sqrt(n.z*8+8);
     return vec2(n.xy/p + 0.5);
 }
 
-// vec3 decode(vec2 enc)
-// {
-// 	vec2 fenc = enc*4-2;
-//     float f = dot(fenc,fenc);
-//     float g = sqrt(1-f/4);
-//     vec3 n;
-//     n.xy = fenc*g;
-//     n.z = 1-f/2;
-//     return n;
-// }
+vec3 approximationSRgbToLinear (vec3 sRGBColor )
+{
+	return pow ( sRGBColor, vec3(2.2));
+}
+
+vec3 accurateSRGBToLinear(vec3 sRGBColor)
+{
+	// https://seblagarde.files.wordpress.com/2015/07/course_notes_moving_frostbite_to_pbr_v32.pdf
+	// page 88
+    vec3 linearRGBLo = sRGBColor / 12.92f;
+    vec3 linearRGBHi = pow((sRGBColor + 0.055f) / 1.055f, vec3(2.4f));
+    vec3 linearRGB;
+    linearRGB.x = (sRGBColor.x <= 0.04045f) ? linearRGBLo.x : linearRGBHi.x;
+    linearRGB.y = (sRGBColor.y <= 0.04045f) ? linearRGBLo.y : linearRGBHi.y;
+    linearRGB.z = (sRGBColor.z <= 0.04045f) ? linearRGBLo.z : linearRGBHi.z;
+    return linearRGB;
+}
 
 void main()
 {
-    FragColor.xyz = texture(diffuseTexture, tex_coords).xyz;
+    FragColor.xyz = accurateSRGBToLinear(texture(diffuseTexture, tex_coords).xyz);
 
 	vec3 normalFromTexture = texture(normalTexture, tex_coords).xyz;
 	normalFromTexture = normalize(normalFromTexture * 2.0 - 1.0);
 
 	vec3 viewNormal = normalize(viewTBN_matrix * normalFromTexture);
 
-	vec2 encodedNormal = encode(viewNormal);
+	vec2 encodedNormal = encodeViewSpaceNormal(viewNormal);
 	Normal.xy = encodedNormal;
 	Normal.z = texture(metalnessTexture, tex_coords).x;
 	//Normal.xyz = normalize(TBN_matrix * normalFromTexture);

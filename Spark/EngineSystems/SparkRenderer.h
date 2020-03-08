@@ -36,7 +36,7 @@ class SparkRenderer
     std::unique_ptr<BlurPass> ssaoBlurPass;
 
     GLuint mainFramebuffer{}, colorTexture{}, normalsTexture{}, depthTexture{};
-    GLuint lightFrameBuffer{}, lightColorTexture{};
+    GLuint lightFrameBuffer{}, lightColorTexture{}, lightDiffuseTexture{}, lightSpecularTexture{};
     GLuint toneMappingFramebuffer{}, toneMappingTexture{};
     GLuint motionBlurFramebuffer{}, motionBlurTexture{};
     GLuint lightShaftFramebuffer{}, lightShaftTexture{};

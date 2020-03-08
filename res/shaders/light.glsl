@@ -77,7 +77,9 @@ vec3 fresnelSchlick(vec3 V, vec3 H, vec3 F0);
 vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness);
 float geometrySchlickGGX(float cosTheta, float k);
 float geometrySmith(float NdotL, float NdotV, float roughness);
+float computeSpecOcclusion(float NdotV, float AO, float roughness);
 float calculateAttenuation(vec3 lightPos, vec3 Pos);
+float calculateAttenuation(vec3 lightPos, vec3 pos, float lightRadius);
 
 struct Material
 {
@@ -98,8 +100,10 @@ vec3 worldPosFromDepth(float depth) {
     return worldSpacePosition.xyz /= worldSpacePosition.w; //perspective division
 }
 
-vec3 decode(vec2 enc)
+vec3 decodeViewSpaceNormal(vec2 enc)
 {
+	//Lambert Azimuthal Equal-Area projection
+	//http://aras-p.info/texts/CompactNormalStorage.html
 	vec2 fenc = enc*4-2;
     float f = dot(fenc,fenc);
     float g = sqrt(1-f/4);
@@ -121,19 +125,22 @@ void main()
 
 	vec4 colorAndRoughness = texture(diffuseTexture, texCoords);
 	vec3 normalAndMetalness = texture(normalTexture, texCoords).xyz;
-	vec3 decoded = decode(normalAndMetalness.xy);
+    float ssao = texture(ssaoTexture, texCoords).x;
+
+	vec3 decoded = decodeViewSpaceNormal(normalAndMetalness.xy);
 	
 	vec3 worldPosNormal = (camera.invertedView * vec4(decoded, 0.0f)).xyz;
 	
 	Material material = {
-		pow(colorAndRoughness.xyz, vec3(2.2)),
+		colorAndRoughness.xyz, //albedo in linear space
 		colorAndRoughness.w,
 		normalAndMetalness.z,
 		vec3(0)
 	};
 
-	vec3 F0 = vec3(0.04);
-	material.F0 = mix(F0, material.albedo, material.metalness);
+	//vec3 F0 = vec3(0.04);
+	vec3 F0 = vec3(0.16) * pow(material.roughness, 2); //frostbite3 fresnel reflectance https://seblagarde.files.wordpress.com/2015/07/course_notes_moving_frostbite_to_pbr_v32.pdf page 14
+    material.F0 = mix(F0, material.albedo, material.metalness);
 
 	vec3 N = worldPosNormal;
 	vec3 V = normalize(camera.pos.xyz - pos);
@@ -156,14 +163,18 @@ void main()
 		vec3 F = fresnelSchlickRoughness(NdotV, material.F0, material.roughness);
 		const float MAX_REFLECTION_LOD = 4.0;
 
-		vec3 prefilteredColor = textureLod(prefilterMap, R, material.roughness * MAX_REFLECTION_LOD).rgb;    
+		//float mipMapLevel = material.roughness * MAX_REFLECTION_LOD; //base
+		float mipMapLevel = sqrt(material.roughness * MAX_REFLECTION_LOD); //frostbite 3
+		vec3 prefilteredColor = textureLod(prefilterMap, R, mipMapLevel).rgb;    
 		vec2 brdf = texture(brdfLUT, vec2(NdotV, material.roughness)).rg;
-		vec3 specular = prefilteredColor * (F * brdf.x + brdf.y);
+		
+		float specOcclusion = computeSpecOcclusion(NdotV, ssao, material.roughness);
+		vec3 specular = prefilteredColor * (F * brdf.x + brdf.y) * specOcclusion;
 		
 		ambient = (kD * diffuse + specular);
 	}
-	float ssao = texture(ssaoTexture, texCoords).x;
-	vec4 color = vec4(L0 + ambient, 1) * ssao;
+    
+	vec4 color = vec4(L0 + ambient, 1);// * ssao;
 	
 	bvec4 valid = isnan(color);
 	if ( valid.x || valid.y || valid.z || valid.w )
@@ -195,6 +206,7 @@ vec3 directionalLightAddition(vec3 V, vec3 N, Material m)
 		vec3 diffuseColor = kD * m.albedo / M_PI;
 
 		vec3 specularColor = (F * D * G) / max(4 * NdotV * NdotL, 0.00001);
+		
 		L0 += (diffuseColor + specularColor) * dirLightData.dirLights[i].color * NdotL;
 	}
 	return L0;
@@ -297,9 +309,25 @@ float geometrySmith(float NdotL, float NdotV, float roughness)
 	return geometrySchlickGGX(NdotL, k) * geometrySchlickGGX(NdotV, k);
 }
 
+float computeSpecOcclusion(float NdotV, float AO, float roughness)
+{
+    //https://seblagarde.files.wordpress.com/2015/07/course_notes_moving_frostbite_to_pbr_v32.pdf
+    //page 77
+	return clamp(pow(NdotV + AO, exp2(-16.0f * roughness - 1.0f)) - 1.0f + AO, 0.0f, 1.0f);
+}
+
 float calculateAttenuation(vec3 lightPos, vec3 Pos)
 {
 	float distance    = length(lightPos - Pos);
     float attenuation = 1.0 / (distance * distance);
+    return attenuation; 
+}
+
+float calculateAttenuation(vec3 lightPos, vec3 pos, float lightRadius)
+{
+    //https://seblagarde.files.wordpress.com/2015/07/course_notes_moving_frostbite_to_pbr_v32.pdf
+    //page 31
+	float distance    = length(lightPos - pos);
+    float attenuation = max((1.0 / (distance * distance) * (1 - distance / lightRadius)), 0.0000001f);
     return attenuation; 
 }
