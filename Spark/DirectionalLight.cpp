@@ -5,7 +5,7 @@
 #include "EngineSystems/SceneManager.h"
 #include "GameObject.h"
 #include "JsonSerializer.h"
-#include "SerializerUtil.h"
+#include "ReflectionUtils.h"
 #include "Structs.h"
 
 namespace spark
@@ -124,6 +124,6 @@ RTTR_REGISTRATION
         .property("color", &spark::DirectionalLight::color)
         .property("colorStrength", &spark::DirectionalLight::colorStrength)
         .property("dirLightFront", &spark::DirectionalLight::dirLightFront)
-        (rttr::detail::metadata(SerializerMeta::Serializable, false))
+        (rttr::detail::metadata(spark::SerializerMeta::Serializable, false))
         .property("direction", &spark::DirectionalLight::direction);
 }

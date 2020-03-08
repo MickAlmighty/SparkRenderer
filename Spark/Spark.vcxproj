@@ -200,6 +200,7 @@
     <ClInclude Include="ModelMesh.h" />
     <ClInclude Include="NodeAI.h" />
     <ClInclude Include="PointLight.h" />
+    <ClInclude Include="ReflectionUtils.h" />
     <ClInclude Include="ResourceLoader.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="Shader.h" />
