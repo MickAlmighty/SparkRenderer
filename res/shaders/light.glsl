@@ -163,6 +163,15 @@ void main()
 		ambient = (kD * diffuse + specular);
 	}
 	float ssao = texture(ssaoTexture, texCoords).x;
+	vec4 color = vec4(L0 + ambient, 1) * ssao;
+	
+	bvec4 valid = isnan(color);
+	if ( valid.x || valid.y || valid.z || valid.w )
+	{
+		FragColor = vec4(0.5f);
+		return;
+	}
+
 	FragColor = vec4(L0 + ambient, 1) * ssao;
 }
 

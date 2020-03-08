@@ -16,33 +16,47 @@ layout (location = 0) out vec4 FragColor;
 
 in vec2 texCoords;
 
-uniform sampler2D image;
+layout (binding = 0) uniform sampler2D image;
+uniform bool horizontal = true;
 uniform vec2 inverseScreenSize;
-uniform vec2 direction;
 
-const float weights[4] = { 
-    0.00598,
-    0.060626,
-    0.241843,
-    0.383103 };
-const vec2 offsets[3] = {
-    vec2(3.0),
-    vec2(2.0),
-    vec2(1.0)
+const float weights[4] = {
+	0.383103,
+	0.241843,
+	0.060626,
+	0.00598 + 0.000229
+	// last weight = 0.000229 merged into previous
+};
+
+const float weights5x5[3] = {
+	0.38774f,
+	0.24477f,
+	0.06136f
 };
 
 void main() 
 {
-	vec4 color = vec4(0.0);
+	// vec2 texSize = textureSize(image, 0);
+	// vec2 texStep = 1.0f / texSize;
+	vec2 texStep = inverseScreenSize;
+	
+    vec2 direction = vec2(0.0f);
+	if (horizontal == true)
+	{
+		direction.x = 1.0f * texStep.x;
+	}
+	else
+	{
+		direction.y = 1.0f  * texStep.y;
+	}
 
-    color += texture(image, texCoords) * weights[3];
-    for(int i = 0; i < 3; ++i)
+    //vec4 color = vec4(0.0);
+    vec4 color = texture(image, texCoords) * weights[0];
+    for(int i = 1; i < 4; ++i)
     {
-        //horizontal blur
-        color += texture(image, texCoords + offsets[i] * inverseScreenSize * direction) * weights[i];
-        color += texture(image, texCoords - offsets[i] * inverseScreenSize * direction) * weights[i];
+        color += texture(image, texCoords + direction * float(i)) * weights[i];
+        color += texture(image, texCoords - direction * float(i)) * weights[i];
     }
 
-	//color.a = 1.0f;
     FragColor = color;
 }

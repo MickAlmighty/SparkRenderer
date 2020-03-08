@@ -168,7 +168,7 @@ void ResourceManager::loadResources()
         Timer timer2("ResourceManager::loadResources -> shaders");
         shaders.emplace(ShaderType::DEFAULT_SHADER, std::make_shared<Shader>(shaderDir.string() + "default.glsl"));
         shaders.emplace(ShaderType::SCREEN_SHADER, std::make_shared<Shader>(shaderDir.string() + "screen.glsl"));
-        shaders.emplace(ShaderType::POSTPROCESSING_SHADER, std::make_shared<Shader>(shaderDir.string() + "postprocessing.glsl"));
+        shaders.emplace(ShaderType::TONE_MAPPING_SHADER, std::make_shared<Shader>(shaderDir.string() + "toneMapping.glsl"));
         shaders.emplace(ShaderType::LIGHT_SHADER, std::make_shared<Shader>(shaderDir.string() + "light.glsl"));
         shaders.emplace(ShaderType::MOTION_BLUR_SHADER, std::make_shared<Shader>(shaderDir.string() + "motionBlur.glsl"));
         shaders.emplace(ShaderType::EQUIRECTANGULAR_TO_CUBEMAP_SHADER,
@@ -182,6 +182,10 @@ void ResourceManager::loadResources()
         shaders.emplace(ShaderType::GAUSSIAN_BLUR_SHADER, std::make_shared<Shader>(shaderDir.string() + "gaussianBlur.glsl"));
         shaders.emplace(ShaderType::LIGHT_SHAFTS_SHADER, std::make_shared<Shader>(shaderDir.string() + "lightShafts.glsl"));
         shaders.emplace(ShaderType::SSAO_SHADER, std::make_shared<Shader>(shaderDir.string() + "ssao.glsl"));
+        shaders.emplace(ShaderType::COC_SHADER, std::make_shared<Shader>(shaderDir.string() + "circleOfConfusion.glsl"));
+        shaders.emplace(ShaderType::BOKEH_DETECTION_SHADER, std::make_shared<Shader>(shaderDir.string() + "bokehDetection.glsl"));
+        shaders.emplace(ShaderType::BLEND_DOF_SHADER, std::make_shared<Shader>(shaderDir.string() + "blendDof.glsl"));
+        shaders.emplace(ShaderType::FXAA_SHADER, std::make_shared<Shader>(shaderDir.string() + "fxaa.glsl"));
     }
 
     {

@@ -5,7 +5,7 @@ RTTR_REGISTRATION
 {
     rttr::registration::enumeration<spark::ShaderType>("ShaderType")(
         rttr::value("DEFAULT_SHADER", spark::ShaderType::DEFAULT_SHADER), rttr::value("LIGHT_SHADER", spark::ShaderType::LIGHT_SHADER),
-        rttr::value("POSTPROCESSING_SHADER", spark::ShaderType::POSTPROCESSING_SHADER),
+        rttr::value("POSTPROCESSING_SHADER", spark::ShaderType::TONE_MAPPING_SHADER),
         rttr::value("SCREEN_SHADER", spark::ShaderType::SCREEN_SHADER), rttr::value("MOTION_BLUR_SHADER", spark::ShaderType::MOTION_BLUR_SHADER),
         rttr::value("EQUIRECTANGULAR_TO_CUBEMAP_SHADER", spark::ShaderType::EQUIRECTANGULAR_TO_CUBEMAP_SHADER),
         rttr::value("CUBEMAP_SHADER", spark::ShaderType::CUBEMAP_SHADER), rttr::value("IRRADIANCE_SHADER", spark::ShaderType::IRRADIANCE_SHADER),

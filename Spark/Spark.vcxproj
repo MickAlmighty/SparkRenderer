@@ -122,9 +122,12 @@ xcopy "$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.dll" "$(TargetDir)
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ActorAI.cpp" />
+    <ClCompile Include="BlurPass.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Clock.cpp" />
+    <ClCompile Include="CommonUtils.cpp" />
     <ClCompile Include="Component.cpp" />
+    <ClCompile Include="DepthOfFieldPass.cpp" />
     <ClCompile Include="DirectionalLight.cpp" />
     <ClCompile Include="EngineSystems\ResourceManager.cpp" />
     <ClCompile Include="EngineSystems\SceneManager.cpp" />
@@ -164,9 +167,12 @@ xcopy "$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.dll" "$(TargetDir)
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ActorAI.h" />
+    <ClInclude Include="BlurPass.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Clock.h" />
+    <ClInclude Include="CommonUtils.h" />
     <ClInclude Include="Component.h" />
+    <ClInclude Include="DepthOfFieldPass.h" />
     <ClInclude Include="DirectionalLight.h" />
     <ClInclude Include="EngineSystems\ResourceManager.h" />
     <ClInclude Include="EngineSystems\SceneManager.h" />

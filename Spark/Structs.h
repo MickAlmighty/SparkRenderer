@@ -255,11 +255,11 @@ struct SSBO
     SSBO& operator=(const SSBO& ssbo) = default;
     ~SSBO() = default;
 
-    void genBuffer()
+    void genBuffer(size_t sizeInBytes = 0)
     {
         glGenBuffers(1, &ID);
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, ID);
-        glBufferData(GL_SHADER_STORAGE_BUFFER, 0, nullptr, GL_DYNAMIC_DRAW);
+        glBufferData(GL_SHADER_STORAGE_BUFFER, sizeInBytes, nullptr, GL_DYNAMIC_DRAW);
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
         getBinding();
     }
@@ -401,6 +401,14 @@ struct SpotLightData final
     glm::vec3 color;  // strength baked into color
     float outerCutOff;
     glm::vec3 direction;
+};
+
+struct DrawArraysIndirectCommand final
+{
+    GLuint count;
+    GLuint instanceCount;
+    GLuint first;
+    GLuint baseInstance;
 };
 
 }  // namespace spark
