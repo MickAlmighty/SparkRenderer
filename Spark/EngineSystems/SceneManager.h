@@ -14,7 +14,6 @@ class SceneManager final
 {
     public:
     ~SceneManager() = default;
-    SceneManager() = default;
     SceneManager(SceneManager&) = delete;
     SceneManager(SceneManager&&) = delete;
     SceneManager& operator=(const SceneManager&) = delete;
@@ -32,6 +31,7 @@ class SceneManager final
     void drawGui();
 
     private:
+    SceneManager() = default;
     std::list<std::shared_ptr<Scene>> scenes;
     std::shared_ptr<Scene> current_scene{Factory::createScene("MainScene")};
 };

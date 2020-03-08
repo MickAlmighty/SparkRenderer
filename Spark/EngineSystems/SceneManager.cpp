@@ -16,7 +16,7 @@ std::shared_ptr<SceneManager> SceneManager::getInstance()
     static std::shared_ptr<SceneManager> scene_manager = nullptr;
     if(scene_manager == nullptr)
     {
-        scene_manager = std::make_shared<SceneManager>();
+        scene_manager = std::shared_ptr<SceneManager>(new SceneManager());
     }
     return scene_manager;
 }
