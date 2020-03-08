@@ -4,6 +4,6 @@ namespace spark
 {
 enum class SerializerMeta
 {
-    Serializable
+    Serializable  // bool
 };
 }
