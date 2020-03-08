@@ -11,8 +11,8 @@ namespace spark
 {
 ResourceManager* ResourceManager::getInstance()
 {
-    static auto resource_manager = new ResourceManager();
-    return resource_manager;
+    static ResourceManager resourceManager{};
+    return &resourceManager;
 }
 
 void ResourceManager::addTexture(Texture tex)

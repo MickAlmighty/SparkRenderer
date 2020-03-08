@@ -28,12 +28,8 @@ namespace spark
 {
 SparkRenderer* SparkRenderer::getInstance()
 {
-    static SparkRenderer* spark_renderer = nullptr;
-    if(spark_renderer == nullptr)
-    {
-        spark_renderer = new SparkRenderer();
-    }
-    return spark_renderer;
+    static SparkRenderer sparkRenderer{};
+    return &sparkRenderer;
 }
 
 void SparkRenderer::updateBufferBindings() const
