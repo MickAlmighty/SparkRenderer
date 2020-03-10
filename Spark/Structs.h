@@ -117,6 +117,34 @@ struct Vertex final
     glm::vec3 bitangent;
 };
 
+struct VertexShaderAttribute final
+{
+    unsigned int location{0};
+    unsigned int components{1};  // 1 - 4
+    unsigned int stride{};       // in bytes
+    std::vector<uint8_t> bytes{};
+
+    bool operator<(const VertexShaderAttribute& attribute) const
+    {
+        return location < attribute.location;
+    }
+
+    template <typename T>
+    static VertexShaderAttribute createVertexShaderAttributeInfo(unsigned int location, unsigned int components, std::vector<T> vertexAttributeData)
+    {
+        unsigned int elemSize = sizeof(T);
+
+        VertexShaderAttribute attribute;
+        attribute.location = location;
+        attribute.components = components;
+        attribute.stride = elemSize;
+        attribute.bytes.resize(elemSize * vertexAttributeData.size());
+        std::memcpy(attribute.bytes.data(), vertexAttributeData.data(), vertexAttributeData.size() * elemSize);
+
+        return attribute;
+    }
+};
+
 struct QuadVertex final
 {
     glm::vec3 pos;

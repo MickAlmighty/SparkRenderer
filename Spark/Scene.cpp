@@ -69,24 +69,28 @@ void Scene::drawGUI()
 
     ImGui::SetNextWindowPos({io.DisplaySize.x - 5, 25}, ImGuiCond_Always, {1, 0});
     ImGui::SetNextWindowSizeConstraints(ImVec2(350, 20), ImVec2(350, io.DisplaySize.y - 50));
-    if(ImGui::Begin("GameObject", &opened, {0, 0}, -1,
-                    ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_AlwaysHorizontalScrollbar | ImGuiWindowFlags_NoCollapse))
+
+    if (getGameObjectToPreview() != nullptr)
     {
-        auto gameObject_ptr = getGameObjectToPreview();
-        if(gameObject_ptr != nullptr)
+        if (ImGui::Begin("GameObject", &opened, { 0, 0 }, -1,
+            ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_AlwaysHorizontalScrollbar | ImGuiWindowFlags_NoCollapse))
         {
-            camera->setCameraTarget(gameObject_ptr->transform.world.getPosition());
-            if(ImGui::Button("Close Preview"))
+            auto gameObject_ptr = getGameObjectToPreview();
+            if (gameObject_ptr != nullptr)
             {
-                setGameObjectToPreview(nullptr);
+                camera->setCameraTarget(gameObject_ptr->transform.world.getPosition());
+                if (ImGui::Button("Close Preview"))
+                {
+                    setGameObjectToPreview(nullptr);
+                }
+                else
+                {
+                    gameObject_ptr->drawGUI();
+                }
             }
-            else
-            {
-                gameObject_ptr->drawGUI();
-            }
+            ImGui::End();
         }
     }
-    ImGui::End();
 }
 
 void Scene::drawSceneGraph()
@@ -166,7 +170,7 @@ void Scene::drawTreeNode(std::shared_ptr<GameObject> node, bool isRootNode)
         ImGui::EndPopup();
     }
 
-    if(ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0) && !isRootNode)
+    if(ImGui::IsItemHovered() && ImGui::IsMouseClicked(0) && !isRootNode)
     {
         setGameObjectToPreview(node);
         SPARK_DEBUG("GameObject {} clicked!", node->name);
