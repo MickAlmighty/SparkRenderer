@@ -18,7 +18,7 @@ class ResourceManager
     void addTexture(Texture tex);
     void addCubemapTexturePath(const std::string& path);
     Texture findTexture(const std::string&& path) const;
-    std::vector<Mesh> findModelMeshes(const std::string& path) const;
+    std::vector<std::shared_ptr<Mesh>> findModelMeshes(const std::string& path) const;
     GLuint getTextureId(const std::string& path) const;
     std::vector<std::string> getPathsToModels() const;
     std::shared_ptr<Shader> getShader(const ShaderType& type) const;
@@ -32,7 +32,7 @@ class ResourceManager
 
     private:
     std::vector<Texture> textures;
-    std::map<std::string, std::vector<Mesh>> models;
+    std::map<std::string, std::vector<std::shared_ptr<Mesh>>> models;
     std::map<ShaderType, std::shared_ptr<Shader>> shaders;
     std::vector<std::string> cubemapTexturePaths;
 

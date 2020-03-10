@@ -157,6 +157,7 @@
     <ClCompile Include="ResourceLoader.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="Shader.cpp" />
+    <ClCompile Include="ShapeCreator.cpp" />
     <ClCompile Include="Spark.cpp" />
     <ClCompile Include="SpotLight.cpp" />
     <ClCompile Include="stb_image.cpp" />
@@ -204,6 +205,7 @@
     <ClInclude Include="ResourceLoader.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="Shader.h" />
+    <ClInclude Include="ShapeCreator.h" />
     <ClInclude Include="Spark.h" />
     <ClInclude Include="SpotLight.h" />
     <ClInclude Include="Structs.h" />

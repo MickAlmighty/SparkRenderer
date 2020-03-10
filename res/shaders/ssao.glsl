@@ -109,5 +109,5 @@ void main()
         occlusion += (sampleViewPos.z >= sampleP.z + bias ? 1.0f : 0.0f) * rangeCheck;           
     }
     occlusion = 1.0f - (occlusion / kernelSize);
-    AmbientOcclusion.x = pow(occlusion, power);
+    AmbientOcclusion.x = clamp(pow(occlusion, power), 0.0f, 1.0f);
 }

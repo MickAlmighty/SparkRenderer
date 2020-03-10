@@ -42,7 +42,7 @@ Texture ResourceManager::findTexture(const std::string&& path) const
     return {};
 }
 
-std::vector<Mesh> ResourceManager::findModelMeshes(const std::string& path) const
+std::vector<std::shared_ptr<Mesh>> ResourceManager::findModelMeshes(const std::string& path) const
 {
     const auto& it = models.find(path);
     if(it != models.end())
@@ -186,6 +186,7 @@ void ResourceManager::loadResources()
         shaders.emplace(ShaderType::BOKEH_DETECTION_SHADER, std::make_shared<Shader>(shaderDir.string() + "bokehDetection.glsl"));
         shaders.emplace(ShaderType::BLEND_DOF_SHADER, std::make_shared<Shader>(shaderDir.string() + "blendDof.glsl"));
         shaders.emplace(ShaderType::FXAA_SHADER, std::make_shared<Shader>(shaderDir.string() + "fxaa.glsl"));
+        shaders.emplace(ShaderType::SOLID_COLOR_SHADER, std::make_shared<Shader>(shaderDir.string() + "solidColor.glsl"));
     }
 
     {
@@ -209,9 +210,9 @@ void ResourceManager::cleanup()
     for(auto& model_it : models)
     {
         // std::vector<Mesh> meshes = model_it.second;
-        for(Mesh& mesh : model_it.second)
+        for(const auto& mesh : model_it.second)
         {
-            mesh.cleanup();
+            mesh->cleanup();
         }
     }
     models.clear();

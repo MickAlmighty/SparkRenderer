@@ -23,7 +23,8 @@ enum class ShaderType : unsigned char
     COC_SHADER = 15,
     BOKEH_DETECTION_SHADER = 16,
     BLEND_DOF_SHADER = 17,
-    FXAA_SHADER = 18
+    FXAA_SHADER = 18,
+    SOLID_COLOR_SHADER = 19
 };
 
 enum class TextureTarget : unsigned char

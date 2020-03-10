@@ -78,7 +78,7 @@ void Scene::drawGUI()
             camera->setCameraTarget(gameObject_ptr->transform.world.getPosition());
             if(ImGui::Button("Close Preview"))
             {
-                gameObjectToPreview.reset();
+                setGameObjectToPreview(nullptr);
             }
             else
             {

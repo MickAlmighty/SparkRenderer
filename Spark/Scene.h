@@ -36,6 +36,7 @@ class Scene final : public std::enable_shared_from_this<Scene>
     std::shared_ptr<LightManager> lightManager;  // FIXME: switch back to unique_ptr
     void setCubemapPath(const std::string path);
     std::string getCubemapPath() const;
+    std::shared_ptr<GameObject> getGameObjectToPreview() const;
 
     private:
     friend class SceneManager;
@@ -44,7 +45,6 @@ class Scene final : public std::enable_shared_from_this<Scene>
     Scene() = default;
     explicit Scene(std::string&& sceneName);
     void drawTreeNode(std::shared_ptr<GameObject> node, bool isRootNode);
-    std::shared_ptr<GameObject> getGameObjectToPreview() const;
     void setGameObjectToPreview(const std::shared_ptr<GameObject> node);
     std::shared_ptr<PbrCubemapTexture> cubemap;
     std::string name{"New Scene"};

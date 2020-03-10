@@ -45,7 +45,7 @@ class SparkRenderer
     GLuint lightShaftFramebuffer{}, lightShaftTexture{};
     GLuint fxaaFramebuffer{}, fxaaTexture{};
 
-    GLuint ssaoFramebuffer{}, ssaoTexture{}, randomNormalsTexture{};
+    GLuint ssaoFramebuffer{}, ssaoTexture{}, randomNormalsTexture{}, ssaoDisabledTexture{};
 
     GLuint textureHandle{};  // temporary, its only a handle to other texture -> dont delete it
 
@@ -59,6 +59,7 @@ class SparkRenderer
     std::weak_ptr<Shader> circleOfConfusionShader;
     std::weak_ptr<Shader> bokehDetectionShader;
     std::weak_ptr<Shader> blendDofShader;
+    std::weak_ptr<Shader> solidColorShader;
     Cube cube = Cube();
     UniformBuffer cameraUBO{};
     UniformBuffer sampleUniformBuffer{};
@@ -75,13 +76,21 @@ class SparkRenderer
     float farStart = 20.0f;
     float farEnd = 100.0f;
 
+    bool lightShaftsEnable = false;
+    int samples = 100;
+    float exposure = 0.0034f;
+    float decay = 0.995f;
+    float density = 0.75f;
+    float weight = 6.65f;
+
     void resizeWindowIfNecessary();
     void fillGBuffer();
-    void ssaoComputing() const;
+    void ssaoComputing();
     void renderLights();
     void renderCubemap() const;
-    void depthOfField();
     void lightShafts();
+    void helperShapes();
+    void depthOfField();
     void fxaa();
     void motionBlur();
     void toneMapping();
@@ -89,6 +98,9 @@ class SparkRenderer
     void initMembers();
     void createFrameBuffersAndTextures();
     void deleteFrameBuffersAndTextures() const;
+
+    static void enableWireframeMode();
+    static void disableWireframeMode();
 };
 }  // namespace spark
 #endif

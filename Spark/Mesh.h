@@ -10,22 +10,23 @@
 namespace spark
 {
 class Shader;
-class Mesh
+class Mesh : public std::enable_shared_from_this<Mesh>
 {
     public:
     ShaderType shaderType = ShaderType::DEFAULT_SHADER;
-    std::vector<Vertex> vertices;
+    std::map<VertexShaderAttribute, GLuint> attributesAndVbos;
+    unsigned int verticesCount{0};
     std::vector<unsigned int> indices;
     std::map<TextureTarget, Texture> textures;
 
-    Mesh(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices, std::map<TextureTarget, Texture>& meshTextures,
-         std::string&& newName_ = "Mesh");
+    Mesh(std::vector<VertexShaderAttribute>& verticesAttributes, std::vector<unsigned int>& indices, std::map<TextureTarget, Texture>& meshTextures,
+         std::string&& newName_ = "Mesh", ShaderType shaderType = ShaderType::DEFAULT_SHADER);
     ~Mesh() = default;
 
-    void setup();
+    void setup(std::vector<VertexShaderAttribute>& verticesAttributes);
     void addToRenderQueue(glm::mat4 model);
     void draw(std::shared_ptr<Shader>& shader, glm::mat4 model);
-    void cleanup() const;
+    void cleanup();
 
     private:
     GLuint vao{};

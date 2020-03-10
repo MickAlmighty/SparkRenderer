@@ -37,24 +37,15 @@ void main()
     texCoordStep *= (1.0 / float(samples)) * density;
 
 	float distanceToScreenCenter = clamp(1.0f - length(vec2(0.5f) - lightScreenPos) * 2.5f, 0.0f, 1.0f);
-	//FragColor = vec4(distanceToScreenCenter);
-	//return;
+
     float illuminationDecay = 1.0f;
 
     for(int i = 0; i < samples; ++i)
 	{
 		// Step sample location along ray.
 		textureCoords -= texCoordStep;
-		vec4 colorSample = vec4(0.0f);
- 		// float lightRadius = length(textureCoords - lightScreenPos);
-		// if (lightRadius < 0.1f)
-		// {
-		// 	colorSample = vec4(0.3f) * vec4(lightColor, 1.0f);
-		// }
-		// else
-		// {
-			colorSample = vec4(1) * vec4(lightColor, 1.0f);
-		//}
+ 		
+		vec4 colorSample =  vec4(lightColor, 1.0f);
 
 		float depth = texture(depthTexture, clamp(textureCoords, 0.0f, 1.0f)).x;
 		if (depth != 0.0f)
@@ -72,9 +63,5 @@ void main()
 		illuminationDecay *= decay;
 	}
 
-	//if (texture(depthTexture, texCoords).x != 0.0f)
-    	FragColor = outColor * exposure * distanceToScreenCenter;
-	//else 
-	//	FragColor = outColor * exposure * 0.1f;
-    //FragColor = vec4(textureCoords.x, textureCoords.y, illuminationDecay, 0.0f);
+    FragColor = outColor * exposure * distanceToScreenCenter;
 }

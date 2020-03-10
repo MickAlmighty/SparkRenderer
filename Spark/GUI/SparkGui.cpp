@@ -139,9 +139,9 @@ std::shared_ptr<Component> SparkGui::addComponent()
     return component;
 }
 
-std::pair<std::string, std::vector<Mesh>> SparkGui::getMeshes()
+std::pair<std::string, std::vector<std::shared_ptr<Mesh>>> SparkGui::getMeshes()
 {
-    std::pair<std::string, std::vector<Mesh>> meshes;
+    std::pair<std::string, std::vector<std::shared_ptr<Mesh>>> meshes;
     if(ImGui::Button("Add Model Meshes"))
     {
         ImGui::OpenPopup("Models");

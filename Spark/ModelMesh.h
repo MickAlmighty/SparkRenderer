@@ -11,13 +11,13 @@ class Mesh;
 class ModelMesh final : public Component
 {
     public:
-    ModelMesh(std::vector<Mesh>& meshes, std::string&& modelName = "ModelMesh");
+    ModelMesh(std::vector<std::shared_ptr<Mesh>>& meshes, std::string&& modelName = "ModelMesh");
     ModelMesh(const ModelMesh&) = delete;
     ModelMesh(const ModelMesh&&) = delete;
     ModelMesh& operator=(const ModelMesh&) = delete;
     ModelMesh& operator=(const ModelMesh&&) = delete;
 
-    void setModel(std::pair<std::string, std::vector<Mesh>> model);
+    void setModel(std::pair<std::string, std::vector<std::shared_ptr<Mesh>>> model);
     void update() override;
     void fixedUpdate() override;
     void drawGUI() override;
@@ -27,7 +27,7 @@ class ModelMesh final : public Component
 
     private:
     std::string modelPath;
-    std::vector<Mesh> meshes{};
+    std::vector<std::shared_ptr<Mesh>> meshes{};
     RTTR_REGISTRATION_FRIEND;
     RTTR_ENABLE(Component);
 };

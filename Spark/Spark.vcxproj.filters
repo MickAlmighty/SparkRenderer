@@ -156,6 +156,9 @@
     <ClCompile Include="DepthOfFieldPass.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ShapeCreator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Spark.h">
@@ -288,6 +291,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ReflectionUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ShapeCreator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

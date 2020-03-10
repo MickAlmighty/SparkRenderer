@@ -20,9 +20,9 @@ namespace spark
 {
 using Path = std::filesystem::path;
 
-std::map<std::string, std::vector<Mesh>> ResourceLoader::loadModels(std::filesystem::path& modelDirectory)
+std::map<std::string, std::vector<std::shared_ptr<Mesh>>> ResourceLoader::loadModels(std::filesystem::path& modelDirectory)
 {
-    std::map<std::string, std::vector<Mesh>> models;
+    std::map<std::string, std::vector<std::shared_ptr<Mesh>>> models;
     for(auto& path_it : std::filesystem::recursive_directory_iterator(modelDirectory))
     {
         if(checkExtension(path_it.path().extension().string(), ModelMeshExtensions))
@@ -34,7 +34,7 @@ std::map<std::string, std::vector<Mesh>> ResourceLoader::loadModels(std::filesys
     return models;
 }
 
-std::vector<Mesh> ResourceLoader::loadModel(const Path& path)
+std::vector<std::shared_ptr<Mesh>> ResourceLoader::loadModel(const Path& path)
 {
     Timer timer("ResourceLoader::loadModel( " + path.string() + " )");
 
@@ -52,14 +52,14 @@ std::vector<Mesh> ResourceLoader::loadModel(const Path& path)
         }
     }
 
-    std::vector<Mesh> meshes = loadMeshes(scene, path);
+    std::vector<std::shared_ptr<Mesh>> meshes = loadMeshes(scene, path);
 
     return meshes;
 }
 
-std::vector<Mesh> ResourceLoader::loadMeshes(const aiScene* scene, const std::filesystem::path& modelPath)
+std::vector<std::shared_ptr<Mesh>> ResourceLoader::loadMeshes(const aiScene* scene, const std::filesystem::path& modelPath)
 {
-    std::vector<Mesh> meshes;
+    std::vector<std::shared_ptr<Mesh>> meshes;
     for(unsigned int i = 0; i < scene->mNumMeshes; i++)
     {
         meshes.push_back(loadMesh(scene->mMeshes[i], modelPath));
@@ -111,44 +111,46 @@ std::map<TextureTarget, Texture> ResourceLoader::findTextures(const std::filesys
     return textures;
 }
 
-Mesh ResourceLoader::loadMesh(aiMesh* assimpMesh, const std::filesystem::path& modelPath)
+std::shared_ptr<Mesh> ResourceLoader::loadMesh(aiMesh* assimpMesh, const std::filesystem::path& modelPath)
 {
-    std::vector<Vertex> vertices(assimpMesh->mNumVertices);
+    std::vector<glm::vec3> positions{assimpMesh->mNumVertices};
+    std::vector<glm::vec3> normals{assimpMesh->mNumVertices};
+    std::vector<glm::vec2> textureCoords{assimpMesh->mNumVertices};
+    std::vector<glm::vec3> tangent{assimpMesh->mNumVertices};
+    std::vector<glm::vec3> biTangent{assimpMesh->mNumVertices};
+
 
     for(unsigned int i = 0; i < assimpMesh->mNumVertices; i++)
     {
-        Vertex v{};
-
-        v.pos.x = assimpMesh->mVertices[i].x;
-        v.pos.y = assimpMesh->mVertices[i].y;
-        v.pos.z = assimpMesh->mVertices[i].z;
+        positions[i].x = assimpMesh->mVertices[i].x;
+        positions[i].y = assimpMesh->mVertices[i].y;
+        positions[i].z = assimpMesh->mVertices[i].z;
 
         if(assimpMesh->HasNormals())
         {
-            v.normal.x = assimpMesh->mNormals[i].x;
-            v.normal.y = assimpMesh->mNormals[i].y;
-            v.normal.z = assimpMesh->mNormals[i].z;
+            normals[i].x = assimpMesh->mNormals[i].x;
+            normals[i].y = assimpMesh->mNormals[i].y;
+            normals[i].z = assimpMesh->mNormals[i].z;
         }
 
         if(assimpMesh->HasTextureCoords(0))
         {
-            v.texCoords.x = assimpMesh->mTextureCoords[0][i].x;
-            v.texCoords.y = assimpMesh->mTextureCoords[0][i].y;
+            textureCoords[i].x = assimpMesh->mTextureCoords[0][i].x;
+            textureCoords[i].y = assimpMesh->mTextureCoords[0][i].y;
         }
         else
-            v.texCoords = glm::vec2(0.0f, 0.0f);
+            textureCoords[i] = glm::vec2(0.0f, 0.0f);
 
         if(assimpMesh->HasTangentsAndBitangents())
         {
-            v.tangent.x = assimpMesh->mTangents->x;
-            v.tangent.y = assimpMesh->mTangents->y;
-            v.tangent.z = assimpMesh->mTangents->z;
+            tangent[i].x = assimpMesh->mTangents->x;
+            tangent[i].y = assimpMesh->mTangents->y;
+            tangent[i].z = assimpMesh->mTangents->z;
 
-            v.bitangent.x = assimpMesh->mBitangents->x;
-            v.bitangent.y = assimpMesh->mBitangents->y;
-            v.bitangent.z = assimpMesh->mBitangents->z;
+            biTangent[i].x = assimpMesh->mBitangents->x;
+            biTangent[i].y = assimpMesh->mBitangents->y;
+            biTangent[i].z = assimpMesh->mBitangents->z;
         }
-        vertices[i] = v;
     }
 
     std::vector<unsigned int> indices;
@@ -161,7 +163,16 @@ Mesh ResourceLoader::loadMesh(aiMesh* assimpMesh, const std::filesystem::path& m
 
     std::map<TextureTarget, Texture> textures = findTextures(modelPath.parent_path());
 
-    return Mesh(vertices, indices, textures);
+    std::vector<VertexShaderAttribute> attributes;  //(5);
+    attributes.reserve(5);
+
+    attributes.push_back(VertexShaderAttribute::createVertexShaderAttributeInfo(0, 3, positions));
+    attributes.push_back(VertexShaderAttribute::createVertexShaderAttributeInfo(1, 3, normals));
+    attributes.push_back(VertexShaderAttribute::createVertexShaderAttributeInfo(2, 2, textureCoords));
+    attributes.push_back(VertexShaderAttribute::createVertexShaderAttributeInfo(3, 3, tangent));
+    attributes.push_back(VertexShaderAttribute::createVertexShaderAttributeInfo(4, 3, biTangent));
+
+    return std::make_shared<Mesh>(attributes, indices, textures);
 }
 
 std::vector<Texture> ResourceLoader::loadTextures(std::filesystem::path& resDirectory)

@@ -5,6 +5,8 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+
 
 #define PUSH_DEBUG_GROUP(x)                                                                                       \
     {                                                                                                             \
@@ -20,9 +22,14 @@ namespace utils
 {
     void createTexture(GLuint& texture, GLuint width, GLuint height, GLenum internalFormat, GLenum format, GLenum pixelFormat, GLenum textureWrapping,
                        GLenum textureSampling, bool mipMaps = false);
-
     void bindDepthTexture(GLuint& framebuffer, GLuint depthTexture);
     void createFramebuffer(GLuint& framebuffer, const std::vector<GLuint>&& colorTextures, GLuint renderbuffer = 0);
+
+    template<typename T>
+    void uploadDataToTexture2D(GLuint texture, GLuint mipMapLevel, GLuint width, GLuint height, GLenum format, GLenum type, const std::vector<T>& buffer)
+    {
+        glTextureSubImage2D(texture, mipMapLevel, 0, 0, width, height, format, type, buffer.data());
+    }
 }  // namespace utils
 }  // namespace spark
 

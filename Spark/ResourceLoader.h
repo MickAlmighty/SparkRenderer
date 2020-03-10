@@ -30,7 +30,8 @@ const std::vector<std::string> textureExtensions = {
 class ResourceLoader final
 {
     public:
-    static std::map<std::string, std::vector<Mesh>> loadModels(std::filesystem::path& modelDirectory);
+    static std::map<std::string, std::vector<std::shared_ptr<Mesh>>> loadModels(std::filesystem::path& modelDirectory);
+    static std::vector<std::shared_ptr<Mesh>> loadModel(const std::filesystem::path& path);
     static std::vector<Texture> loadTextures(std::filesystem::path& resDirectory);
     static std::optional<std::shared_ptr<PbrCubemapTexture>> loadHdrTexture(const std::string& path);
     static std::optional<Texture> loadTexture(const std::string& path);
@@ -44,10 +45,9 @@ class ResourceLoader final
     ResourceLoader() = default;
     ~ResourceLoader() = default;
 
-    static std::vector<Mesh> loadModel(const std::filesystem::path& path);
     static bool checkExtension(std::string&& extension, const std::vector<std::string>& extensions);
-    static std::vector<Mesh> loadMeshes(const aiScene* scene, const std::filesystem::path& modelPath);
-    static Mesh loadMesh(aiMesh* assimpMesh, const std::filesystem::path& modelPath);
+    static std::vector<std::shared_ptr<Mesh>> loadMeshes(const aiScene* scene, const std::filesystem::path& modelPath);
+    static std::shared_ptr<Mesh> loadMesh(aiMesh* assimpMesh, const std::filesystem::path& modelPath);
     static std::map<TextureTarget, Texture> findTextures(const std::filesystem::path& modelDirectory);
     static std::pair<std::string, gli::texture> loadTextureFromFile(const std::string& path);
     static std::optional<Texture> loadTexture(const std::string& path, const gli::texture& texture);

@@ -48,7 +48,7 @@ vec3 uncharted2Tonemap(vec3 inColor)
 
 vec3 reinhardTonemapping(vec3 color)
 {
-	return pow(color / (color + vec3(1)), vec3(1 / 2.2f));
+	return color / (color + vec3(1));
 }
 
 vec3 ACESFilm(vec3 x)

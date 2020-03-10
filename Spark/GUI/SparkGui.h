@@ -24,7 +24,7 @@ class SparkGui
     ~SparkGui() = default;
 
     static std::shared_ptr<Component> addComponent();
-    static std::pair<std::string, std::vector<Mesh>> getMeshes();
+    static std::pair<std::string, std::vector<std::shared_ptr<Mesh>>> getMeshes();
     static Texture getTexture();
     static std::shared_ptr<PbrCubemapTexture> getCubemapTexture();
     static std::shared_ptr<Shader> getShader();

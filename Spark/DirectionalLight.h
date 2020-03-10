@@ -38,7 +38,7 @@ class DirectionalLight final : public Component
     // This might and should be changed to a common abstract base class
     bool dirty = true;
     bool addedToLightManager = false;
-    glm::vec3 dirLightFront = {0.0f, -1.0f, 0.0f};
+    glm::vec3 dirLightFront{0.0f, -1.0f, 0.0f};
     glm::vec3 direction{0.0f, -1.0f, 0.0f};
     glm::vec3 color{1};
     float colorStrength{1};

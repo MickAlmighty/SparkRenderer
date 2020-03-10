@@ -12,12 +12,12 @@
 
 namespace spark
 {
-ModelMesh::ModelMesh(std::vector<Mesh>& meshes, std::string&& modelName) : Component(std::move(modelName))
+ModelMesh::ModelMesh(std::vector<std::shared_ptr<Mesh>>& meshes, std::string&& modelName) : Component(std::move(modelName))
 {
     this->meshes = meshes;
 }
 
-void ModelMesh::setModel(std::pair<std::string, std::vector<Mesh>> model)
+void ModelMesh::setModel(std::pair<std::string, std::vector<std::shared_ptr<Mesh>>> model)
 {
     modelPath = model.first;
     meshes = model.second;
@@ -26,9 +26,9 @@ void ModelMesh::setModel(std::pair<std::string, std::vector<Mesh>> model)
 void ModelMesh::update()
 {
     glm::mat4 model = getGameObject()->transform.world.getMatrix();
-    for(Mesh& mesh : meshes)
+    for(const auto& mesh : meshes)
     {
-        mesh.addToRenderQueue(model);
+        mesh->addToRenderQueue(model);
     }
 }
 
@@ -36,20 +36,20 @@ void ModelMesh::fixedUpdate() {}
 
 void ModelMesh::drawGUI()
 {
-    for(Mesh& mesh : meshes)
+    for(const auto& mesh : meshes)
     {
         ImGui::Text("Vertices:");
         ImGui::SameLine();
-        ImGui::Text(std::to_string(mesh.vertices.size()).c_str());
+        ImGui::Text(std::to_string(mesh->verticesCount).c_str());
         ImGui::Text("Indices:");
         ImGui::SameLine();
-        ImGui::Text(std::to_string(mesh.indices.size()).c_str());
+        ImGui::Text(std::to_string(mesh->indices.size()).c_str());
         ImGui::Text("Textures:");
         ImGui::SameLine();
-        ImGui::Text(std::to_string(mesh.textures.size()).c_str());
+        ImGui::Text(std::to_string(mesh->textures.size()).c_str());
         ImGui::Text("Shader enum:");
         ImGui::SameLine();
-        ImGui::Text(std::to_string(static_cast<int>(mesh.shaderType)).c_str());
+        ImGui::Text(std::to_string(static_cast<int>(mesh->shaderType)).c_str());
         SparkGui::getShader();
     }
 
@@ -69,7 +69,7 @@ std::string ModelMesh::getModelPath() const
 
 void ModelMesh::setModelPath(const std::string modelPath)
 {
-    const std::pair<std::string, std::vector<Mesh>> model{modelPath, ResourceManager::getInstance()->findModelMeshes(modelPath)};
+    const std::pair<std::string, std::vector<std::shared_ptr<Mesh>>> model{modelPath, ResourceManager::getInstance()->findModelMeshes(modelPath)};
     setModel(model);
 }
 
