@@ -16,7 +16,8 @@ void main()
 layout (location = 0) out vec3 FragColor;
 
 layout (binding = 0) uniform sampler2D inputTexture;
-uniform vec2 inversedScreenSize;
+layout (binding = 1) uniform sampler2D averageLuminance;
+uniform vec2 invertedScreenSize;
 
 in vec2 tex_coords;
 
@@ -82,8 +83,10 @@ vec3 accurateLinearToSRGB(vec3 linearColor)
 void main()
 {
 	vec3 color = texture(inputTexture, tex_coords).xyz; //for unchartedTonemapping
-	//vec3 resultColor = uncharted2Tonemap(color);
-	//vec3 resultColor = reinhardTonemapping(color);
-    vec3 resultColor = approximationLinearToSRGB(ACESFilm(color));
+	float avgLuminance = texture(averageLuminance, tex_coords).x;
+
+	color /= avgLuminance;
+	vec3 resultColor = approximationLinearToSRGB(ACESFilm(color));
+	//resultColor = approximationLinearToSRGB(resultColor);
 	FragColor = resultColor;
 }

@@ -44,6 +44,7 @@ class SparkRenderer
     GLuint motionBlurFramebuffer{}, motionBlurTexture{};
     GLuint lightShaftFramebuffer{}, lightShaftTexture{};
     GLuint fxaaFramebuffer{}, fxaaTexture{};
+    GLuint averageLuminance{};
 
     GLuint ssaoFramebuffer{}, ssaoTexture{}, randomNormalsTexture{}, ssaoDisabledTexture{};
 
@@ -63,6 +64,7 @@ class SparkRenderer
     Cube cube = Cube();
     UniformBuffer cameraUBO{};
     UniformBuffer sampleUniformBuffer{};
+    SSBO luminanceHistogram{};
 
     bool ssaoEnable = true;
     int kernelSize = 24;
@@ -83,6 +85,12 @@ class SparkRenderer
     float density = 0.75f;
     float weight = 6.65f;
 
+    // tone mapping
+    float minLogLuminance = -0.5f;
+    float oneOverLogLuminanceRange = 1.0f / 12.0f;
+    float logLuminanceRange = 12.0f;
+    float tau = 1.1f;
+
     void resizeWindowIfNecessary();
     void fillGBuffer();
     void ssaoComputing();
@@ -94,6 +102,7 @@ class SparkRenderer
     void fxaa();
     void motionBlur();
     void toneMapping();
+    void calculateAverageLuminance();
     void renderToScreen() const;
     void initMembers();
     void createFrameBuffersAndTextures();

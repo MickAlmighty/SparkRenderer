@@ -66,6 +66,16 @@ void SparkRenderer::drawGui()
             ImGui::DragFloat("Weight", &weight, 0.01f, 0.0f, 1.0f);
             ImGui::EndMenu();
         }
+
+        const std::string menuName4 = "Tone Mapping";
+        if (ImGui::BeginMenu(menuName4.c_str()))
+        {
+            ImGui::DragFloat("minLogLuminance", &minLogLuminance, 0.01f);
+            ImGui::DragFloat("logLuminanceRange", &logLuminanceRange, 0.01f);
+            ImGui::DragFloat("tau", &tau, 0.01f, 0.0f);
+            ImGui::EndMenu();
+        }
+
         ImGui::EndMenu();
     }
 }
@@ -117,6 +127,9 @@ void SparkRenderer::setup()
 
     utils::createTexture(ssaoDisabledTexture, 1, 1, GL_RED, GL_RED, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_NEAREST);
     utils::uploadDataToTexture2D(ssaoDisabledTexture, 0, 1, 1, GL_RED, GL_UNSIGNED_BYTE, std::vector<unsigned char>{255});
+    utils::createTexture(averageLuminance, 1, 1, GL_R16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
+
+    luminanceHistogram.genBuffer(256 * sizeof(uint32_t));
 
     initMembers();
 }
@@ -159,6 +172,11 @@ void SparkRenderer::updateBufferBindings() const
     ssaoShader.lock()->bindUniformBuffer("Samples", sampleUniformBuffer);
     circleOfConfusionShader.lock()->bindUniformBuffer("Camera", cameraUBO);
     solidColorShader.lock()->bindUniformBuffer("Camera", cameraUBO);
+
+    const auto luminanceHistogramComputeShader = ResourceManager::getInstance()->getShader(ShaderType::LUMINANCE_HISTOGRAM_COMPUTE_SHADER);
+    luminanceHistogramComputeShader->bindSSBO("LuminanceHistogram", luminanceHistogram);
+    const auto averageLuminanceComputeShader = ResourceManager::getInstance()->getShader(ShaderType::AVERAGE_LUMINANCE_COMPUTE_SHADER);
+    averageLuminanceComputeShader->bindSSBO("LuminanceHistogram", luminanceHistogram);
 }
 
 void SparkRenderer::renderPass()
@@ -253,7 +271,6 @@ void SparkRenderer::ssaoComputing()
     if(!ssaoEnable)
     {
         textureHandle = ssaoDisabledTexture;
-        POP_DEBUG_GROUP();
         return;
     }
 
@@ -490,6 +507,8 @@ void SparkRenderer::toneMapping()
 {
     PUSH_DEBUG_GROUP(TONE_MAPPING);
 
+    calculateAverageLuminance();
+
     glBindFramebuffer(GL_FRAMEBUFFER, toneMappingFramebuffer);
     glDisable(GL_DEPTH_TEST);
 
@@ -497,11 +516,46 @@ void SparkRenderer::toneMapping()
     toneMappingShader.lock()->setVec2("inversedScreenSize", {1.0f / Spark::WIDTH, 1.0f / Spark::HEIGHT});
 
     glBindTextureUnit(0, textureHandle);
+    glBindTextureUnit(1, averageLuminance);
     screenQuad.draw();
     glBindTextures(0, 2, nullptr);
 
     textureHandle = toneMappingTexture;
     POP_DEBUG_GROUP();
+}
+
+void SparkRenderer::calculateAverageLuminance()
+{
+    oneOverLogLuminanceRange = 1.0f / logLuminanceRange;
+
+    //this buffer is attached to both shaders in method SparkRenderer::updateBufferBindings()
+    luminanceHistogram.update(std::vector<uint32_t>(256)); // resetting histogram buffer
+
+//first compute dispatch
+    const auto luminanceHistogramComputeShader = ResourceManager::getInstance()->getShader(ShaderType::LUMINANCE_HISTOGRAM_COMPUTE_SHADER);
+    luminanceHistogramComputeShader->use();
+
+    luminanceHistogramComputeShader->setIVec2("inputTextureSize", glm::ivec2(Spark::WIDTH, Spark::HEIGHT));
+    luminanceHistogramComputeShader->setFloat("minLogLuminance", minLogLuminance);
+    luminanceHistogramComputeShader->setFloat("oneOverLogLuminanceRange", oneOverLogLuminanceRange);
+
+    glBindImageTexture(0, lightColorTexture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA16F);
+    luminanceHistogramComputeShader->dispatchCompute(Spark::WIDTH / 16, Spark::HEIGHT / 16, 1); //localWorkGroups has dimensions of x = 16, y = 16
+    glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+
+//second compute dispatch
+    const auto averageLuminanceComputeShader = ResourceManager::getInstance()->getShader(ShaderType::AVERAGE_LUMINANCE_COMPUTE_SHADER);
+    averageLuminanceComputeShader->use();
+
+    averageLuminanceComputeShader->setUInt("pixelCount", Spark::WIDTH * Spark::HEIGHT);
+    averageLuminanceComputeShader->setFloat("minLogLuminance", minLogLuminance);
+    averageLuminanceComputeShader->setFloat("logLuminanceRange", logLuminanceRange);
+    averageLuminanceComputeShader->setFloat("deltaTime", static_cast<float>(Clock::getDeltaTime()));
+    averageLuminanceComputeShader->setFloat("tau", tau);
+
+    glBindImageTexture(0, averageLuminance, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R16F);
+    averageLuminanceComputeShader->dispatchCompute(1, 1, 1);  //localWorkGroups has dimensions of x = 16, y = 16
+    glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 }
 
 void SparkRenderer::renderToScreen() const
@@ -527,7 +581,7 @@ void SparkRenderer::createFrameBuffersAndTextures()
     utils::createTexture(normalsTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
     utils::createTexture(depthTexture, Spark::WIDTH, Spark::HEIGHT, GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
 
-    utils::createTexture(lightColorTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::createTexture(lightColorTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
     utils::createTexture(lightDiffuseTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
     utils::createTexture(lightSpecularTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
     utils::createTexture(toneMappingTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
@@ -555,6 +609,7 @@ void SparkRenderer::cleanup()
     deleteFrameBuffersAndTextures();
     glDeleteTextures(1, &randomNormalsTexture);
     glDeleteTextures(1, &ssaoDisabledTexture);
+    glDeleteTextures(1, &averageLuminance);
 }
 
 void SparkRenderer::deleteFrameBuffersAndTextures() const

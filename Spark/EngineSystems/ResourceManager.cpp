@@ -187,6 +187,8 @@ void ResourceManager::loadResources()
         shaders.emplace(ShaderType::BLEND_DOF_SHADER, std::make_shared<Shader>(shaderDir.string() + "blendDof.glsl"));
         shaders.emplace(ShaderType::FXAA_SHADER, std::make_shared<Shader>(shaderDir.string() + "fxaa.glsl"));
         shaders.emplace(ShaderType::SOLID_COLOR_SHADER, std::make_shared<Shader>(shaderDir.string() + "solidColor.glsl"));
+        shaders.emplace(ShaderType::LUMINANCE_HISTOGRAM_COMPUTE_SHADER, std::make_shared<Shader>(shaderDir.string() + "luminanceHistogramCompute.glsl"));
+        shaders.emplace(ShaderType::AVERAGE_LUMINANCE_COMPUTE_SHADER, std::make_shared<Shader>(shaderDir.string() + "averageLuminanceCompute.glsl"));
     }
 
     {

@@ -29,11 +29,14 @@ class Shader
     ~Shader();
 
     void use() const;
+    void dispatchCompute(GLuint x, GLuint y, GLuint z) const;
 
     void setBool(const std::string& name, bool value) const;
     void setInt(const std::string& name, int value) const;
+    void setUInt(const std::string& name, unsigned int value) const;
     void setFloat(const std::string& name, float value) const;
     void setVec2(const std::string& name, glm::vec2 value) const;
+    void setIVec2(const std::string& name, glm::ivec2 value) const;
     void setVec3(const std::string& name, glm::vec3 value) const;
     void setMat4(const std::string& name, glm::mat4 value) const;
     void bindSSBO(const std::string& name, const SSBO& ssbo) const;
@@ -45,10 +48,10 @@ class Shader
     std::set<UniformBlock> uniformBlocks{};
     std::set<ShaderStorageBuffer> storageBuffers{};
 
+    static inline std::string loadShader(const std::string& shaderPath);
+    static inline std::map<GLenum, std::string> preProcess(const std::string& shaderPath);
     inline static GLenum shaderTypeFromString(const std::string& type);
-    inline std::string loadShader(const std::string& shaderPath);
-    inline std::map<GLenum, std::string> preProcess(const std::string& shaderPath);
-    inline std::vector<GLuint> compileShaders(const std::map<GLenum, std::string>& shaders) const;
+    static inline std::vector<GLuint> compileShaders(const std::map<GLenum, std::string>& shaders);
     inline void linkProgram(const std::vector<GLuint>& ids);
     inline void acquireUniformNamesAndTypes();
     inline GLint getUniformLocation(const std::string& name) const;
