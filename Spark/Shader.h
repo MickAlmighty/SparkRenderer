@@ -2,31 +2,32 @@
 #define SHADER_H
 
 #include <map>
+#include <optional>
+#include <set>
 #include <string>
+#include <vector>
 
 #include <glad/glad.h>
 #include <glm/glm.hpp>
-#include <list>
-#include <optional>
-#include <set>
-#include <vector>
 
-namespace spark
+#include "GPUResource.h"
+#include "Resource.h"
+#include "Structs.h"
+
+namespace spark::resources
 {
-struct Uniform;
-struct UniformBlock;
-struct ShaderStorageBuffer;
-struct SSBO;
-struct UniformBuffer;
 
-class Shader
+class Shader : public resourceManagement::Resource, public resourceManagement::GPUResource
 {
     public:
-    std::string name;
-
-    Shader(const std::string& vertexShaderPath, const std::string& fragmentShaderPath);
-    Shader(const std::string& shaderPath);
+    Shader(const resourceManagement::ResourceIdentifier& identifier);
     ~Shader();
+
+    bool isResourceReady() override;
+    bool gpuLoad() override;
+    bool gpuUnload() override;
+    bool load() override;
+    bool unload() override;
 
     void use() const;
     void dispatchCompute(GLuint x, GLuint y, GLuint z) const;
@@ -44,6 +45,8 @@ class Shader
 
     private:
     GLuint ID{0};
+    std::map<GLenum, std::string> shaderSources{};
+
     std::set<Uniform> uniforms{};
     std::set<UniformBlock> uniformBlocks{};
     std::set<ShaderStorageBuffer> storageBuffers{};

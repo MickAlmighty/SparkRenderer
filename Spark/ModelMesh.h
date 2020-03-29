@@ -8,26 +8,31 @@
 namespace spark
 {
 class Mesh;
+
+namespace resources
+{
+    class Model;
+}
+
 class ModelMesh final : public Component
 {
     public:
-    ModelMesh(std::vector<std::shared_ptr<Mesh>>& meshes, std::string&& modelName = "ModelMesh");
+    ModelMesh();
     ModelMesh(const ModelMesh&) = delete;
     ModelMesh(const ModelMesh&&) = delete;
     ModelMesh& operator=(const ModelMesh&) = delete;
     ModelMesh& operator=(const ModelMesh&&) = delete;
 
-    void setModel(std::pair<std::string, std::vector<std::shared_ptr<Mesh>>> model);
+    void setModel(const std::shared_ptr<resources::Model>& model_);
     void update() override;
     void fixedUpdate() override;
     void drawGUI() override;
     std::string getModelPath() const;
     void setModelPath(const std::string modelPath);
-    ModelMesh();
 
     private:
     std::string modelPath;
-    std::vector<std::shared_ptr<Mesh>> meshes{};
+    std::shared_ptr<resources::Model> model{nullptr};
     RTTR_REGISTRATION_FRIEND;
     RTTR_ENABLE(Component);
 };

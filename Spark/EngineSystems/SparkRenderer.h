@@ -17,7 +17,7 @@ class DepthOfFieldPass;
 class SparkRenderer
 {
     public:
-    std::map<ShaderType, std::list<std::function<void(std::shared_ptr<Shader>&)>>> renderQueue;
+    std::map<ShaderType, std::list<std::function<void(std::shared_ptr<resources::Shader>&)>>> renderQueue;
 
     SparkRenderer(const SparkRenderer&) = delete;
     SparkRenderer operator=(const SparkRenderer&) = delete;
@@ -50,17 +50,22 @@ class SparkRenderer
 
     GLuint textureHandle{};  // temporary, its only a handle to other texture -> dont delete it
 
-    std::weak_ptr<Shader> mainShader;
-    std::weak_ptr<Shader> screenShader;
-    std::weak_ptr<Shader> toneMappingShader;
-    std::weak_ptr<Shader> lightShader;
-    std::weak_ptr<Shader> motionBlurShader;
-    std::weak_ptr<Shader> cubemapShader;
-    std::weak_ptr<Shader> ssaoShader;
-    std::weak_ptr<Shader> circleOfConfusionShader;
-    std::weak_ptr<Shader> bokehDetectionShader;
-    std::weak_ptr<Shader> blendDofShader;
-    std::weak_ptr<Shader> solidColorShader;
+    std::shared_ptr<resources::Shader> mainShader{ nullptr };
+    std::shared_ptr<resources::Shader> screenShader{ nullptr };
+    std::shared_ptr<resources::Shader> toneMappingShader{ nullptr };
+    std::shared_ptr<resources::Shader> lightShader{ nullptr };
+    std::shared_ptr<resources::Shader> motionBlurShader{ nullptr };
+    std::shared_ptr<resources::Shader> cubemapShader{ nullptr };
+    std::shared_ptr<resources::Shader> ssaoShader{ nullptr };
+    std::shared_ptr<resources::Shader> circleOfConfusionShader{ nullptr };
+    std::shared_ptr<resources::Shader> bokehDetectionShader{ nullptr };
+    std::shared_ptr<resources::Shader> blendDofShader{ nullptr };
+    std::shared_ptr<resources::Shader> solidColorShader{ nullptr };
+    std::shared_ptr<resources::Shader> lightShaftsShader{ nullptr };
+    std::shared_ptr<resources::Shader> luminanceHistogramComputeShader{ nullptr };
+    std::shared_ptr<resources::Shader> averageLuminanceComputeShader{ nullptr };
+    std::shared_ptr<resources::Shader> fxaaShader{ nullptr };
+
     Cube cube = Cube();
     UniformBuffer cameraUBO{};
     UniformBuffer sampleUniformBuffer{};

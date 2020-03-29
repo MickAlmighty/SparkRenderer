@@ -3,8 +3,9 @@
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_transform.hpp>
 
-#include "EngineSystems/ResourceManager.h"
+#include "ResourceLibrary.h"
 #include "Shader.h"
+#include "Spark.h"
 
 namespace spark
 {
@@ -17,7 +18,7 @@ Texture::Texture(GLuint id, const std::string& path)
 void Texture::setPath(const std::string path)
 {
     this->path = path;
-    this->ID = ResourceManager::getInstance()->getTextureId(path);
+    //this->ID = ResourceManager::getInstance()->getTextureId(path);
 }
 
 std::string Texture::getPath() const
@@ -32,6 +33,10 @@ const std::string PbrCubemapTexture::getPath()
 
 PbrCubemapTexture::PbrCubemapTexture(GLuint hdrTexture, const std::string& path, unsigned size) : path(path)
 {
+    equirectangularToCubemapShader = Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("equirectangularToCubemap.glsl");
+    irradianceShader = Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("irradiance.glsl");
+    prefilterShader = Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("prefilter.glsl");
+    brdfShader = Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("brdf.glsl");
     setup(hdrTexture, size);
 }
 
@@ -58,16 +63,15 @@ void PbrCubemapTexture::setup(GLuint hdrTexture, unsigned size)
     glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
     const GLuint envCubemap = generateCubemap(size, false);
 
-    const auto shader = ResourceManager::getInstance()->getShader(ShaderType::EQUIRECTANGULAR_TO_CUBEMAP_SHADER);
-    shader->use();
-    shader->setMat4("projection", captureProjection);
+    equirectangularToCubemapShader->use();
+    equirectangularToCubemapShader->setMat4("projection", captureProjection);
     glBindTextureUnit(0, hdrTexture);
 
     glViewport(0, 0, cubemapSize, cubemapSize);
 
     for(unsigned int i = 0; i < 6; ++i)
     {
-        shader->setMat4("view", captureViews[i]);
+        equirectangularToCubemapShader->setMat4("view", captureViews[i]);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, envCubemap, 0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -83,7 +87,6 @@ void PbrCubemapTexture::setup(GLuint hdrTexture, unsigned size)
 
     glViewport(0, 0, 32, 32);
 
-    const auto irradianceShader = ResourceManager::getInstance()->getShader(ShaderType::IRRADIANCE_SHADER);
     irradianceShader->use();
     glBindTextureUnit(0, envCubemap);
     irradianceShader->setMat4("projection", captureProjection);
@@ -101,7 +104,6 @@ void PbrCubemapTexture::setup(GLuint hdrTexture, unsigned size)
     const unsigned int prefilterMapSize = 128;
     const GLuint prefilterMap = generateCubemap(128, true);
 
-    const auto prefilterShader = ResourceManager::getInstance()->getShader(ShaderType::PREFILTER_SHADER);
     prefilterShader->use();
     glBindTextureUnit(0, envCubemap);
     prefilterShader->setMat4("projection", captureProjection);
@@ -141,7 +143,7 @@ void PbrCubemapTexture::setup(GLuint hdrTexture, unsigned size)
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, brdfLUTTexture, 0);
 
     glViewport(0, 0, cubemapSize, cubemapSize);
-    const auto brdfShader = ResourceManager::getInstance()->getShader(ShaderType::BRDF_SHADER);
+
     brdfShader->use();
     ScreenQuad screenQuad;
     screenQuad.setup();

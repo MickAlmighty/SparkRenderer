@@ -5,28 +5,38 @@
 #include <map>
 
 #include "Enums.h"
+#include "GPUResource.h"
 #include "Structs.h"
 
 namespace spark
 {
-class Shader;
-class Mesh : public std::enable_shared_from_this<Mesh>
+namespace resources
+{
+    class Shader;
+    class Texture;
+}
+
+class Mesh : public std::enable_shared_from_this<Mesh>, public resourceManagement::GPUResource
 {
     public:
     ShaderType shaderType = ShaderType::DEFAULT_SHADER;
-    std::map<VertexShaderAttribute, GLuint> attributesAndVbos;
+    std::vector<std::pair<VertexShaderAttribute, GLuint>> attributesAndVbos;
     unsigned int verticesCount{0};
     std::vector<unsigned int> indices;
-    std::map<TextureTarget, Texture> textures;
+    std::map<TextureTarget, std::shared_ptr<resources::Texture>> textures;
 
-    Mesh(std::vector<VertexShaderAttribute>& verticesAttributes, std::vector<unsigned int>& indices, std::map<TextureTarget, Texture>& meshTextures,
+    Mesh(std::vector<VertexShaderAttribute>& verticesAttributes, std::vector<unsigned int>& indices, std::map<TextureTarget, std::shared_ptr<resources::Texture>>& meshTextures,
+         std::string&& newName_ = "Mesh", ShaderType shaderType = ShaderType::DEFAULT_SHADER);
+    Mesh(std::vector<VertexShaderAttribute>& verticesAttributes, std::vector<unsigned int>& indices,
          std::string&& newName_ = "Mesh", ShaderType shaderType = ShaderType::DEFAULT_SHADER);
     ~Mesh() = default;
 
-    void setup(std::vector<VertexShaderAttribute>& verticesAttributes);
     void addToRenderQueue(glm::mat4 model);
-    void draw(std::shared_ptr<Shader>& shader, glm::mat4 model);
+    void draw(std::shared_ptr<resources::Shader>& shader, glm::mat4 model);
     void cleanup();
+
+    bool gpuLoad() override;
+    bool gpuUnload() override;
 
     private:
     GLuint vao{};

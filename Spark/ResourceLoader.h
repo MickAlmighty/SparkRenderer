@@ -35,6 +35,7 @@ class ResourceLoader final
     static std::vector<Texture> loadTextures(std::filesystem::path& resDirectory);
     static std::optional<std::shared_ptr<PbrCubemapTexture>> loadHdrTexture(const std::string& path);
     static std::optional<Texture> loadTexture(const std::string& path);
+    static const aiScene* importScene(const std::filesystem::path& filePath);
 
     ResourceLoader(const ResourceLoader&) = delete;
     ResourceLoader(const ResourceLoader&&) = delete;

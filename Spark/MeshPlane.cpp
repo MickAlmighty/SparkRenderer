@@ -4,6 +4,7 @@
 #include "EngineSystems/SparkRenderer.h"
 #include "GameObject.h"
 #include "GUI/SparkGui.h"
+#include "Shader.h"
 
 namespace spark
 {
@@ -56,11 +57,11 @@ MeshPlane::~MeshPlane()
 void MeshPlane::addToRenderQueue() const
 {
     glm::mat4 model = getGameObject()->transform.world.getMatrix();
-    auto f = [this, model](std::shared_ptr<Shader>& shader) { draw(shader, model); };
+    auto f = [this, model](std::shared_ptr<resources::Shader>& shader) { draw(shader, model); };
     SparkRenderer::getInstance()->renderQueue[shaderType].push_back(f);
 }
 
-void MeshPlane::draw(std::shared_ptr<Shader>& shader, glm::mat4 model) const
+void MeshPlane::draw(std::shared_ptr<resources::Shader>& shader, glm::mat4 model) const
 {
     shader->setMat4("model", model);
 
@@ -100,7 +101,7 @@ void MeshPlane::drawGUI()
     ImGui::Text("Textures:");
     ImGui::SameLine();
     ImGui::Text(std::to_string(textures.size()).c_str());
-    ImGui::Text("Shader enum:");
+    ImGui::Text("resources::Shader enum:");
     ImGui::SameLine();
     ImGui::Text(std::to_string(static_cast<int>(shaderType)).c_str());
     ImGui::Separator();

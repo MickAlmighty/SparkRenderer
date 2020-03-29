@@ -136,6 +136,7 @@
     <ClCompile Include="Factory.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="glad.c" />
+    <ClCompile Include="GPUResource.cpp" />
     <ClCompile Include="GUI\ImGuizmo.cpp" />
     <ClCompile Include="GUI\ImGui\imgui.cpp" />
     <ClCompile Include="GUI\ImGui\imgui_demo.cpp" />
@@ -151,9 +152,14 @@
     <ClCompile Include="Logging.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="MeshPlane.cpp" />
+    <ClCompile Include="Model.cpp" />
     <ClCompile Include="ModelMesh.cpp" />
     <ClCompile Include="NodeAI.cpp" />
     <ClCompile Include="PointLight.cpp" />
+    <ClCompile Include="Resource.cpp" />
+    <ClCompile Include="ResourceFactory.cpp" />
+    <ClCompile Include="ResourceIdentifier.cpp" />
+    <ClCompile Include="ResourceLibrary.cpp" />
     <ClCompile Include="ResourceLoader.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="Shader.cpp" />
@@ -163,6 +169,7 @@
     <ClCompile Include="stb_image.cpp" />
     <ClCompile Include="Structs.cpp" />
     <ClCompile Include="TerrainGenerator.cpp" />
+    <ClCompile Include="Texture.cpp" />
     <ClCompile Include="Timer.cpp" />
     <ClCompile Include="WorldTransform.cpp" />
   </ItemGroup>
@@ -181,6 +188,7 @@
     <ClInclude Include="Enums.h" />
     <ClInclude Include="Factory.h" />
     <ClInclude Include="GameObject.h" />
+    <ClInclude Include="GPUResource.h" />
     <ClInclude Include="GUI\ImGuizmo.h" />
     <ClInclude Include="GUI\ImGui\imconfig.h" />
     <ClInclude Include="GUI\ImGui\imgui.h" />
@@ -198,10 +206,15 @@
     <ClInclude Include="Logging.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="MeshPlane.h" />
+    <ClInclude Include="Model.h" />
     <ClInclude Include="ModelMesh.h" />
     <ClInclude Include="NodeAI.h" />
     <ClInclude Include="PointLight.h" />
     <ClInclude Include="ReflectionUtils.h" />
+    <ClInclude Include="Resource.h" />
+    <ClInclude Include="ResourceFactory.h" />
+    <ClInclude Include="ResourceIdentifier.h" />
+    <ClInclude Include="ResourceLibrary.h" />
     <ClInclude Include="ResourceLoader.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="Shader.h" />
@@ -210,6 +223,7 @@
     <ClInclude Include="SpotLight.h" />
     <ClInclude Include="Structs.h" />
     <ClInclude Include="TerrainGenerator.h" />
+    <ClInclude Include="Texture.h" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="WorldTransform.h" />
   </ItemGroup>

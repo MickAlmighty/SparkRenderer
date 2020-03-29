@@ -8,7 +8,6 @@
 #include <gli/gli.hpp>
 #include <stb_image/stb_image.h>
 
-#include "EngineSystems/ResourceManager.h"
 #include "Mesh.h"
 #include "Shader.h"
 #include "Spark.h"
@@ -38,23 +37,27 @@ std::vector<std::shared_ptr<Mesh>> ResourceLoader::loadModel(const Path& path)
 {
     Timer timer("ResourceLoader::loadModel( " + path.string() + " )");
 
-    Assimp::Importer importer;
-    const aiScene* scene = nullptr;
-    {
-        Timer timer2("	Loading mesh from file and mesh postprocessing");
-
-        scene = importer.ReadFile(path.string(), aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
-
-        if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
-        {
-            SPARK_ERROR("{}", importer.GetErrorString());
-            throw std::exception(importer.GetErrorString());
-        }
-    }
+    const auto scene = importScene(path);
 
     std::vector<std::shared_ptr<Mesh>> meshes = loadMeshes(scene, path);
 
     return meshes;
+}
+
+const aiScene* ResourceLoader::importScene(const std::filesystem::path& filePath)
+{
+    Assimp::Importer importer;
+    const aiScene* scene = nullptr;
+
+    scene = importer.ReadFile(filePath.string(), aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
+
+    if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
+    {
+        SPARK_ERROR("{}", importer.GetErrorString());
+        throw std::exception(importer.GetErrorString());
+    }
+
+    return scene;
 }
 
 std::vector<std::shared_ptr<Mesh>> ResourceLoader::loadMeshes(const aiScene* scene, const std::filesystem::path& modelPath)
@@ -81,30 +84,30 @@ std::map<TextureTarget, Texture> ResourceLoader::findTextures(const std::filesys
         size_t size = texture_path.path().string().find("_Diffuse");
         if(size != std::string::npos)
         {
-            Texture tex = ResourceManager::getInstance()->findTexture(texture_path.path().string());
-            textures.emplace(TextureTarget::DIFFUSE_TARGET, tex);
+            /*Texture tex = ResourceManager::getInstance()->findTexture(texture_path.path().string());
+            textures.emplace(TextureTarget::DIFFUSE_TARGET, tex);*/
             continue;
         }
 
         size = texture_path.path().string().find("_Normal");
         if(size != std::string::npos)
         {
-            Texture tex = ResourceManager::getInstance()->findTexture(texture_path.path().string());
-            textures.emplace(TextureTarget::NORMAL_TARGET, tex);
+            /*Texture tex = ResourceManager::getInstance()->findTexture(texture_path.path().string());
+            textures.emplace(TextureTarget::NORMAL_TARGET, tex);*/
         }
 
         size = texture_path.path().string().find("_Roughness");
         if(size != std::string::npos)
         {
-            Texture tex = ResourceManager::getInstance()->findTexture(texture_path.path().string());
-            textures.emplace(TextureTarget::ROUGHNESS_TARGET, tex);
+            /*Texture tex = ResourceManager::getInstance()->findTexture(texture_path.path().string());
+            textures.emplace(TextureTarget::ROUGHNESS_TARGET, tex);*/
         }
 
         size = texture_path.path().string().find("_Metalness");
         if(size != std::string::npos)
         {
-            Texture tex = ResourceManager::getInstance()->findTexture(texture_path.path().string());
-            textures.emplace(TextureTarget::METALNESS_TARGET, tex);
+            /*Texture tex = ResourceManager::getInstance()->findTexture(texture_path.path().string());
+            textures.emplace(TextureTarget::METALNESS_TARGET, tex);*/
         }
     }
 
@@ -154,14 +157,14 @@ std::shared_ptr<Mesh> ResourceLoader::loadMesh(aiMesh* assimpMesh, const std::fi
     }
 
     std::vector<unsigned int> indices;
-    for(unsigned int i = 0; i < assimpMesh->mNumFaces; i++)
+    for(unsigned int i = 0; i < assimpMesh->mNumFaces; ++i)
     {
-        aiFace face = assimpMesh->mFaces[i];
-        for(unsigned int j = 0; j < face.mNumIndices; j++)
+        const aiFace& face = assimpMesh->mFaces[i];
+        for(unsigned int j = 0; j < face.mNumIndices; ++j)
             indices.push_back(face.mIndices[j]);
     }
 
-    std::map<TextureTarget, Texture> textures = findTextures(modelPath.parent_path());
+    //std::map<TextureTarget, Texture> textures = findTextures(modelPath.parent_path());
 
     std::vector<VertexShaderAttribute> attributes;  //(5);
     attributes.reserve(5);
@@ -172,7 +175,7 @@ std::shared_ptr<Mesh> ResourceLoader::loadMesh(aiMesh* assimpMesh, const std::fi
     attributes.push_back(VertexShaderAttribute::createVertexShaderAttributeInfo(3, 3, tangent));
     attributes.push_back(VertexShaderAttribute::createVertexShaderAttributeInfo(4, 3, biTangent));
 
-    return std::make_shared<Mesh>(attributes, indices, textures);
+    return std::make_shared<Mesh>(attributes, indices);
 }
 
 std::vector<Texture> ResourceLoader::loadTextures(std::filesystem::path& resDirectory)
@@ -189,7 +192,7 @@ std::vector<Texture> ResourceLoader::loadTextures(std::filesystem::path& resDire
 
         if(checkExtension(path_it.path().extension().string(), {".hdr"}))
         {
-            ResourceManager::getInstance()->addCubemapTexturePath(path_it.path().string());
+            //ResourceManager::getInstance()->addCubemapTexturePath(path_it.path().string());
         }
     }
 

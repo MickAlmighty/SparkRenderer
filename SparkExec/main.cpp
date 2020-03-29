@@ -21,7 +21,8 @@ int main()
 
     try
     {
-        spark::Spark::setup(variables);
+        spark::Spark::setInitVariables(variables);
+        spark::Spark::setup();
         spark::Spark::run();
         spark::Spark::clean();
     }

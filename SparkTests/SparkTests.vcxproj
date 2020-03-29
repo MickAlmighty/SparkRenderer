@@ -37,6 +37,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ReflectionTest.cpp" />
+    <ClCompile Include="ResourceFactoryTest.cpp" />
+    <ClCompile Include="ResourceIdentifierTest.cpp" />
+    <ClCompile Include="ResourceLibraryTest.cpp" />
     <ClCompile Include="SerializationTest.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

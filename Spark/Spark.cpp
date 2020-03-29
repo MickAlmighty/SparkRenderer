@@ -8,23 +8,29 @@
 
 #include "Clock.h"
 #include "EngineSystems/SparkRenderer.h"
-#include "EngineSystems/ResourceManager.h"
 #include "EngineSystems/SceneManager.h"
 #include "HID.h"
 #include "JsonSerializer.h"
 #include "Logging.h"
+#include "ResourceLibrary.h"
 
 namespace spark
 {
-void Spark::setup(const InitializationVariables& variables)
+spark::resourceManagement::ResourceLibrary Spark::resourceLibrary = resourceManagement::ResourceLibrary();
+
+void Spark::setInitVariables(const InitializationVariables& variables)
 {
     WIDTH = variables.width;
     HEIGHT = variables.height;
     pathToModelMeshes = variables.pathToModels;
     pathToResources = variables.pathToResources;
+}
 
+void Spark::setup()
+{
     initOpenGL();
-    ResourceManager::getInstance()->loadResources();
+    resourceLibrary.setup();
+    resourceLibrary.createResources(pathToResources);
     SceneManager::getInstance()->setup();
 
     SparkRenderer::getInstance()->setup();
@@ -46,7 +52,7 @@ void Spark::initOpenGL()
     // glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
-    window = glfwCreateWindow(Spark::WIDTH, Spark::HEIGHT, "Spark", NULL, NULL);
+    window = glfwCreateWindow(static_cast<int>(Spark::WIDTH), static_cast<int>(Spark::HEIGHT), "Spark", nullptr, nullptr);
     if(!window)
     {
         SPARK_CRITICAL("Window creation failed");
@@ -55,7 +61,7 @@ void Spark::initOpenGL()
 
     glfwMakeContextCurrent(window);
 
-    if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    if(!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress)))
     {
         SPARK_CRITICAL("Failed to initialize OpenGL loader!");
         throw std::exception("Failed to initialize OpenGL loader!");
@@ -97,6 +103,7 @@ void Spark::run()
     {
         Clock::tick();
         glfwPollEvents();
+        resourceLibrary.processGpuResources();
         SceneManager::getInstance()->update();
         sparkGui.drawGui();
         SparkRenderer::getInstance()->renderPass();
@@ -114,7 +121,7 @@ void Spark::clean()
 {
     SparkRenderer::getInstance()->cleanup();
     SceneManager::getInstance()->cleanup();
-    ResourceManager::getInstance()->cleanup();
+    resourceLibrary.cleanup();
     destroyOpenGLContext();
 }
 
@@ -125,6 +132,11 @@ void Spark::destroyOpenGLContext()
     ImGui::DestroyContext();
     glfwDestroyWindow(window);
     glfwTerminate();
+}
+
+spark::resourceManagement::ResourceLibrary* Spark::getResourceLibrary()
+{
+    return &resourceLibrary;
 }
 
 void APIENTRY glDebugOutput(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam)

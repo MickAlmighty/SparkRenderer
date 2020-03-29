@@ -86,7 +86,7 @@ PointLight::PointLight() : Component("PointLight")
     const auto attribute = VertexShaderAttribute::createVertexShaderAttributeInfo(0, 3, ShapeCreator::createSphere(1.0f, 10));
     sphere = std::make_shared<Mesh>(std::vector<VertexShaderAttribute>{attribute}, 
         std::vector<unsigned int>{}, 
-        std::map<TextureTarget, Texture>{}, 
+        std::map<TextureTarget, std::shared_ptr<resources::Texture>>{}, 
         "Mesh", 
         ShaderType::SOLID_COLOR_SHADER);
 }

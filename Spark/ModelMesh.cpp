@@ -4,31 +4,29 @@
 
 #include <GUI/ImGui/imgui.h>
 
-#include "EngineSystems/ResourceManager.h"
 #include "GameObject.h"
 #include "GUI/SparkGui.h"
-#include "Mesh.h"
 #include "Logging.h"
+#include "Mesh.h"
+#include "Model.h"
+#include "ResourceLibrary.h"
 
 namespace spark
 {
-ModelMesh::ModelMesh(std::vector<std::shared_ptr<Mesh>>& meshes, std::string&& modelName) : Component(std::move(modelName))
-{
-    this->meshes = meshes;
-}
+ModelMesh::ModelMesh() : Component("ModelMesh") {}
 
-void ModelMesh::setModel(std::pair<std::string, std::vector<std::shared_ptr<Mesh>>> model)
+void ModelMesh::setModel(const std::shared_ptr<resources::Model>& model_)
 {
-    modelPath = model.first;
-    meshes = model.second;
+    modelPath = model_->id.getFullPath().string();
+    model = model_;
 }
 
 void ModelMesh::update()
 {
-    glm::mat4 model = getGameObject()->transform.world.getMatrix();
-    for(const auto& mesh : meshes)
+    const glm::mat4 worldMatrix = getGameObject()->transform.world.getMatrix();
+    for(const auto& mesh : model->getMeshes())
     {
-        mesh->addToRenderQueue(model);
+        mesh->addToRenderQueue(worldMatrix);
     }
 }
 
@@ -36,7 +34,7 @@ void ModelMesh::fixedUpdate() {}
 
 void ModelMesh::drawGUI()
 {
-    for(const auto& mesh : meshes)
+    for(const auto& mesh : model->getMeshes())
     {
         ImGui::Text("Vertices:");
         ImGui::SameLine();
@@ -47,16 +45,18 @@ void ModelMesh::drawGUI()
         ImGui::Text("Textures:");
         ImGui::SameLine();
         ImGui::Text(std::to_string(mesh->textures.size()).c_str());
-        ImGui::Text("Shader enum:");
+        ImGui::Text("resources::Shader enum:");
         ImGui::SameLine();
         ImGui::Text(std::to_string(static_cast<int>(mesh->shaderType)).c_str());
         SparkGui::getShader();
+        SparkGui::getTexture();
     }
 
-    if(meshes.empty())
+    if(model->getMeshes().empty())
     {
-        const auto model = SparkGui::getMeshes();
-        setModel(model);
+        //#todo implement acquiring model from SparkGui
+        // const auto model = SparkGui::getMeshes();
+        // setModel(model);
     }
 
     removeComponentGUI<ModelMesh>();
@@ -69,11 +69,8 @@ std::string ModelMesh::getModelPath() const
 
 void ModelMesh::setModelPath(const std::string modelPath)
 {
-    const std::pair<std::string, std::vector<std::shared_ptr<Mesh>>> model{modelPath, ResourceManager::getInstance()->findModelMeshes(modelPath)};
-    setModel(model);
+    setModel(Spark::getResourceLibrary()->getResourceByPathWithOptLoad<resources::Model>(modelPath));
 }
-
-ModelMesh::ModelMesh() : Component("ModelMesh") {}
 }  // namespace spark
 
 RTTR_REGISTRATION

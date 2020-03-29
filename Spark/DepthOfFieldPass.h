@@ -4,6 +4,8 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+
+#include "Shader.h"
 #include "Structs.h"
 
 namespace spark
@@ -31,6 +33,9 @@ class DepthOfFieldPass
 
     float nearStart{1}, nearEnd{4};
     float farStart{20}, farEnd{100};
+
+    std::shared_ptr<resources::Shader> cocShader{nullptr};
+    std::shared_ptr<resources::Shader> blendShader{nullptr};
 
     /*GLuint indirectBufferID{}, bokehCountTexID{}, bokehCounterID{};
     SSBO bokehPositionBuffer, bokehColorBuffer;

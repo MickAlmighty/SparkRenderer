@@ -15,6 +15,11 @@
 
 namespace spark
 {
+
+namespace resources
+{
+    class Texture;
+}
 class SparkGui
 {
     public:
@@ -25,9 +30,9 @@ class SparkGui
 
     static std::shared_ptr<Component> addComponent();
     static std::pair<std::string, std::vector<std::shared_ptr<Mesh>>> getMeshes();
-    static Texture getTexture();
+    static std::shared_ptr<resources::Texture> getTexture();
     static std::shared_ptr<PbrCubemapTexture> getCubemapTexture();
-    static std::shared_ptr<Shader> getShader();
+    static std::shared_ptr<resources::Shader> getShader();
 
     template<typename T>
     static std::optional<T> getDraggedObject(std::string&& payloadName)

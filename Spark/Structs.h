@@ -1,16 +1,16 @@
 #ifndef STRUCTS_H
 #define STRUCTS_H
 
-#include "LocalTransform.h"
-#include "WorldTransform.h"
+#include <vector>
+#include <filesystem>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <rttr/registration>
 
-#include <vector>
-#include <filesystem>
+#include "LocalTransform.h"
+#include "WorldTransform.h"
 
 namespace spark
 {
@@ -19,6 +19,11 @@ struct Transform final
     LocalTransform local;
     WorldTransform world;
     RTTR_ENABLE();
+};
+
+namespace resources
+{
+    class Shader;
 };
 
 struct Uniform final
@@ -96,6 +101,11 @@ struct PbrCubemapTexture final
     GLuint irradianceCubemap{};
     GLuint prefilteredCubemap{};
     GLuint brdfLUTTexture{};
+
+    std::shared_ptr<resources::Shader> equirectangularToCubemapShader{ nullptr };
+    std::shared_ptr<resources::Shader> irradianceShader{ nullptr };
+    std::shared_ptr<resources::Shader> prefilterShader{ nullptr };
+    std::shared_ptr<resources::Shader> brdfShader{ nullptr };
     const std::string getPath();
 
     PbrCubemapTexture(GLuint hdrTexture, const std::string& path, unsigned int size = 1024);
@@ -270,34 +280,78 @@ struct Cube final
     }
 };
 
-struct SSBO
+template <GLenum BUFFER_TYPE>
+struct Buffer
 {
     static inline std::set<uint32_t> bindings{};
     static inline std::set<uint32_t> freedBindings{};
 
-    GLuint ID{0};
-    GLint binding{-1};
+    GLuint ID{ 0 };
+    GLint binding{ -1 };
+    GLsizei size{0};
 
-    SSBO() = default;
-    SSBO(const SSBO& ssbo) = default;
-    SSBO& operator=(const SSBO& ssbo) = default;
-    ~SSBO() = default;
+    Buffer() = default;
+    Buffer(const Buffer& buffer) = default;
+    Buffer& operator=(const Buffer& buffer) = default;
+    ~Buffer() = default;
 
     void genBuffer(size_t sizeInBytes = 0)
     {
+        size = static_cast<GLsizei>(sizeInBytes);
         glGenBuffers(1, &ID);
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, ID);
-        glBufferData(GL_SHADER_STORAGE_BUFFER, sizeInBytes, nullptr, GL_DYNAMIC_DRAW);
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+        glBindBuffer(BUFFER_TYPE, ID);
+        glBufferData(BUFFER_TYPE, size, nullptr, GL_DYNAMIC_DRAW);
+        glBindBuffer(BUFFER_TYPE, 0);
         getBinding();
     }
 
-    template<typename T>
-    void update(const std::vector<T>& buffer) const
+    void bind() const
     {
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, ID);
-        glBufferData(GL_SHADER_STORAGE_BUFFER, buffer.size() * sizeof(T), buffer.data(), GL_DYNAMIC_DRAW);
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+        glBindBuffer(BUFFER_TYPE, ID);
+    }
+
+    void unbind() const
+    {
+        glBindBuffer(BUFFER_TYPE, 0);
+    }
+
+    template<typename T>
+    void updateData(const std::vector<T>& buffer)
+    {
+        const size_t vectorSize = buffer.size() * sizeof(T);
+        if (vectorSize < size || vectorSize > size)
+        {
+            //SPARK_WARN("Trying to update SSBO with a vector with too large size! SSBO size: {}, vector size: {}. Buffer will be resized and update will be processed!", size, vectorSize);
+            size = static_cast<GLsizei>(vectorSize);
+            glNamedBufferData(ID, vectorSize, buffer.data(), GL_DYNAMIC_DRAW);
+        }
+        else
+        {
+            glNamedBufferSubData(ID, 0, vectorSize, buffer.data());
+        }
+    }
+
+    template<typename T>
+    void updateSubData(size_t offsetFromBeginning, const std::vector<T>& buffer)
+    {
+        const size_t vectorSize = buffer.size() * sizeof(T);
+        const GLintptr offset = static_cast<GLintptr>(offsetFromBeginning);
+
+        if (offset > size)
+        {
+            return;
+        }
+        if (offset + vectorSize > size)
+        {
+            return;
+        }
+
+        glNamedBufferSubData(ID, offset, vectorSize, buffer.data());
+    }
+
+    void clearBuffer() const
+    {
+        glClearNamedBufferData(ID, GL_R32F, GL_RED, GL_FLOAT, nullptr);
     }
 
     void cleanup()
@@ -307,16 +361,16 @@ struct SSBO
         freeBinding();
     }
 
-    private:
+private:
     void getBinding()
     {
-        if(!freedBindings.empty())
+        if (!freedBindings.empty())
         {
             binding = *freedBindings.begin();
             freedBindings.erase(freedBindings.begin());
             return;
         }
-        if(bindings.empty())
+        if (bindings.empty())
         {
             bindings.insert(0);
             binding = 0;
@@ -331,7 +385,7 @@ struct SSBO
     void freeBinding()
     {
         const auto it = bindings.find(binding);
-        if(it != bindings.end())
+        if (it != bindings.end())
         {
             freedBindings.insert(*it);
             bindings.erase(it);
@@ -339,76 +393,10 @@ struct SSBO
         }
     }
 };
-
-struct UniformBuffer
-{
-    static inline std::set<uint32_t> bindings{};
-    static inline std::set<uint32_t> freedBindings{};
-
-    GLuint ID{0};
-    GLint binding{-1};
-
-    UniformBuffer() = default;
-    UniformBuffer(const UniformBuffer& uniformBuffer) = default;
-    UniformBuffer& operator=(const UniformBuffer& uniformBuffer) = default;
-    ~UniformBuffer() = default;
-
-    void genBuffer()
-    {
-        glGenBuffers(1, &ID);
-        glBindBuffer(GL_UNIFORM_BUFFER, ID);
-        glBufferData(GL_UNIFORM_BUFFER, 0, nullptr, GL_DYNAMIC_DRAW);
-        glBindBuffer(GL_UNIFORM_BUFFER, 0);
-        getBinding();
-    }
-
-    template<typename T>
-    void update(const std::vector<T>& buffer) const
-    {
-        glBindBuffer(GL_UNIFORM_BUFFER, ID);
-        glBufferData(GL_UNIFORM_BUFFER, buffer.size() * sizeof(T), buffer.data(), GL_DYNAMIC_DRAW);
-        glBindBuffer(GL_UNIFORM_BUFFER, 0);
-    }
-
-    void cleanup()
-    {
-        glDeleteBuffers(1, &ID);
-        ID = 0;
-        freeBinding();
-    }
-
-    private:
-    void getBinding()
-    {
-        if(!freedBindings.empty())
-        {
-            binding = *freedBindings.begin();
-            freedBindings.erase(freedBindings.begin());
-            return;
-        }
-        if(bindings.empty())
-        {
-            bindings.insert(0);
-            binding = 0;
-        }
-        else
-        {
-            binding = *std::prev(bindings.end()) + 1;
-            bindings.insert(binding);
-        }
-    };
-
-    void freeBinding()
-    {
-        const auto it = bindings.find(binding);
-        if(it != bindings.end())
-        {
-            freedBindings.insert(*it);
-            bindings.erase(it);
-            binding = -1;
-        }
-    }
-};
+using SSBO = Buffer<GL_SHADER_STORAGE_BUFFER>;
+using UniformBuffer = Buffer<GL_UNIFORM_BUFFER>;
+using ElementArrayBuffer = Buffer<GL_ELEMENT_ARRAY_BUFFER>;
+using VertexBuffer = Buffer<GL_ARRAY_BUFFER>;
 
 struct DirectionalLightData final
 {

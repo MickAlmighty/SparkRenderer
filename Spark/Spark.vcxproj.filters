@@ -25,15 +25,18 @@
     <Filter Include="GUI\ImGui">
       <UniqueIdentifier>{a3837f58-b301-4553-902b-f579ba1f1047}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ResourceManagement">
+      <UniqueIdentifier>{b06f9f91-fff9-4681-aa03-e149c208df95}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ResourceManagement\Resources">
+      <UniqueIdentifier>{adf89da3-d4be-4cd5-abcf-839cb5154ee3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Spark.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="glad.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Shader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Mesh.cpp">
@@ -159,15 +162,36 @@
     <ClCompile Include="ShapeCreator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ResourceIdentifier.cpp">
+      <Filter>ResourceManagement</Filter>
+    </ClCompile>
+    <ClCompile Include="Resource.cpp">
+      <Filter>ResourceManagement</Filter>
+    </ClCompile>
+    <ClCompile Include="ResourceFactory.cpp">
+      <Filter>ResourceManagement</Filter>
+    </ClCompile>
+    <ClCompile Include="Model.cpp">
+      <Filter>ResourceManagement\Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="GPUResource.cpp">
+      <Filter>ResourceManagement</Filter>
+    </ClCompile>
+    <ClCompile Include="ResourceLibrary.cpp">
+      <Filter>ResourceManagement</Filter>
+    </ClCompile>
+    <ClCompile Include="Texture.cpp">
+      <Filter>ResourceManagement\Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="Shader.cpp">
+      <Filter>ResourceManagement\Resources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Spark.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Structs.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Shader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Mesh.h">
@@ -295,6 +319,30 @@
     </ClInclude>
     <ClInclude Include="ShapeCreator.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ResourceIdentifier.h">
+      <Filter>ResourceManagement</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>ResourceManagement</Filter>
+    </ClInclude>
+    <ClInclude Include="ResourceFactory.h">
+      <Filter>ResourceManagement</Filter>
+    </ClInclude>
+    <ClInclude Include="Model.h">
+      <Filter>ResourceManagement\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="GPUResource.h">
+      <Filter>ResourceManagement</Filter>
+    </ClInclude>
+    <ClInclude Include="ResourceLibrary.h">
+      <Filter>ResourceManagement</Filter>
+    </ClInclude>
+    <ClInclude Include="Texture.h">
+      <Filter>ResourceManagement\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="Shader.h">
+      <Filter>ResourceManagement\Resources</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

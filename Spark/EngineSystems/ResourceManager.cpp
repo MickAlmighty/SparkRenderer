@@ -7,7 +7,7 @@
 #include "Timer.h"
 #include "Logging.h"
 
-namespace spark
+namespace spark::deprecated
 {
 ResourceManager* ResourceManager::getInstance()
 {
@@ -74,7 +74,7 @@ std::vector<std::string> ResourceManager::getPathsToModels() const
     return paths;
 }
 
-std::shared_ptr<Shader> ResourceManager::getShader(const ShaderType& type) const
+std::shared_ptr<resources::Shader> ResourceManager::getShader(const ShaderType& type) const
 {
     const auto& it = shaders.find(type);
     if(it != shaders.end())
@@ -85,10 +85,10 @@ std::shared_ptr<Shader> ResourceManager::getShader(const ShaderType& type) const
     throw std::exception("Cannot find shader! Probably shader was not loaded!");
 }
 
-std::shared_ptr<Shader> ResourceManager::getShader(const std::string& name) const
+std::shared_ptr<resources::Shader> ResourceManager::getShader(const std::string& name) const
 {
     const auto it = std::find_if(std::begin(shaders), std::end(shaders),
-                                 [&name](const std::pair<ShaderType, std::shared_ptr<Shader>>& pair) { return pair.second->name == name; });
+                                 [&name](const std::pair<ShaderType, std::shared_ptr<resources::Shader>>& pair) { return pair.second->getName() == name; });
     if(it != std::end(shaders))
     {
         return it->second;
@@ -103,7 +103,7 @@ std::vector<std::string> ResourceManager::getShaderNames() const
     shaderNames.reserve(shaders.size());
     for(const auto& [shaderEnum, shader_ptr] : shaders)
     {
-        shaderNames.push_back(shader_ptr->name);
+        shaderNames.push_back(shader_ptr->getName());
     }
     return shaderNames;
 }
@@ -166,29 +166,29 @@ void ResourceManager::loadResources()
     shaderDir.append("shaders\\");
     {
         Timer timer2("ResourceManager::loadResources -> shaders");
-        shaders.emplace(ShaderType::DEFAULT_SHADER, std::make_shared<Shader>(shaderDir.string() + "default.glsl"));
-        shaders.emplace(ShaderType::SCREEN_SHADER, std::make_shared<Shader>(shaderDir.string() + "screen.glsl"));
-        shaders.emplace(ShaderType::TONE_MAPPING_SHADER, std::make_shared<Shader>(shaderDir.string() + "toneMapping.glsl"));
-        shaders.emplace(ShaderType::LIGHT_SHADER, std::make_shared<Shader>(shaderDir.string() + "light.glsl"));
-        shaders.emplace(ShaderType::MOTION_BLUR_SHADER, std::make_shared<Shader>(shaderDir.string() + "motionBlur.glsl"));
+        shaders.emplace(ShaderType::DEFAULT_SHADER, std::make_shared<resources::Shader>(shaderDir / "default.glsl"));
+        shaders.emplace(ShaderType::SCREEN_SHADER, std::make_shared<resources::Shader>(shaderDir / "screen.glsl"));
+        shaders.emplace(ShaderType::TONE_MAPPING_SHADER, std::make_shared<resources::Shader>(shaderDir / "toneMapping.glsl"));
+        shaders.emplace(ShaderType::LIGHT_SHADER, std::make_shared<resources::Shader>(shaderDir / "light.glsl"));
+        shaders.emplace(ShaderType::MOTION_BLUR_SHADER, std::make_shared<resources::Shader>(shaderDir / "motionBlur.glsl"));
         shaders.emplace(ShaderType::EQUIRECTANGULAR_TO_CUBEMAP_SHADER,
-                        std::make_shared<Shader>(shaderDir.string() + "equirectangularToCubemap.glsl"));
-        shaders.emplace(ShaderType::CUBEMAP_SHADER, std::make_shared<Shader>(shaderDir.string() + "cubemap.glsl"));
-        shaders.emplace(ShaderType::IRRADIANCE_SHADER, std::make_shared<Shader>(shaderDir.string() + "irradiance.glsl"));
-        shaders.emplace(ShaderType::PREFILTER_SHADER, std::make_shared<Shader>(shaderDir.string() + "prefilter.glsl"));
-        shaders.emplace(ShaderType::BRDF_SHADER, std::make_shared<Shader>(shaderDir.string() + "brdf.glsl"));
-        shaders.emplace(ShaderType::BRIGHT_PASS_SHADER, std::make_shared<Shader>(shaderDir.string() + "brightPass.glsl"));
-        shaders.emplace(ShaderType::DOWNSCALE_SHADER, std::make_shared<Shader>(shaderDir.string() + "downScale.glsl"));
-        shaders.emplace(ShaderType::GAUSSIAN_BLUR_SHADER, std::make_shared<Shader>(shaderDir.string() + "gaussianBlur.glsl"));
-        shaders.emplace(ShaderType::LIGHT_SHAFTS_SHADER, std::make_shared<Shader>(shaderDir.string() + "lightShafts.glsl"));
-        shaders.emplace(ShaderType::SSAO_SHADER, std::make_shared<Shader>(shaderDir.string() + "ssao.glsl"));
-        shaders.emplace(ShaderType::COC_SHADER, std::make_shared<Shader>(shaderDir.string() + "circleOfConfusion.glsl"));
-        shaders.emplace(ShaderType::BOKEH_DETECTION_SHADER, std::make_shared<Shader>(shaderDir.string() + "bokehDetection.glsl"));
-        shaders.emplace(ShaderType::BLEND_DOF_SHADER, std::make_shared<Shader>(shaderDir.string() + "blendDof.glsl"));
-        shaders.emplace(ShaderType::FXAA_SHADER, std::make_shared<Shader>(shaderDir.string() + "fxaa.glsl"));
-        shaders.emplace(ShaderType::SOLID_COLOR_SHADER, std::make_shared<Shader>(shaderDir.string() + "solidColor.glsl"));
-        shaders.emplace(ShaderType::LUMINANCE_HISTOGRAM_COMPUTE_SHADER, std::make_shared<Shader>(shaderDir.string() + "luminanceHistogramCompute.glsl"));
-        shaders.emplace(ShaderType::AVERAGE_LUMINANCE_COMPUTE_SHADER, std::make_shared<Shader>(shaderDir.string() + "averageLuminanceCompute.glsl"));
+                        std::make_shared<resources::Shader>(shaderDir / "equirectangularToCubemap.glsl"));
+        shaders.emplace(ShaderType::CUBEMAP_SHADER, std::make_shared<resources::Shader>(shaderDir / "cubemap.glsl"));
+        shaders.emplace(ShaderType::IRRADIANCE_SHADER, std::make_shared<resources::Shader>(shaderDir / "irradiance.glsl"));
+        shaders.emplace(ShaderType::PREFILTER_SHADER, std::make_shared<resources::Shader>(shaderDir / "prefilter.glsl"));
+        shaders.emplace(ShaderType::BRDF_SHADER, std::make_shared<resources::Shader>(shaderDir / "brdf.glsl"));
+        shaders.emplace(ShaderType::BRIGHT_PASS_SHADER, std::make_shared<resources::Shader>(shaderDir / "brightPass.glsl"));
+        shaders.emplace(ShaderType::DOWNSCALE_SHADER, std::make_shared<resources::Shader>(shaderDir / "downScale.glsl"));
+        shaders.emplace(ShaderType::GAUSSIAN_BLUR_SHADER, std::make_shared<resources::Shader>(shaderDir / "gaussianBlur.glsl"));
+        shaders.emplace(ShaderType::LIGHT_SHAFTS_SHADER, std::make_shared<resources::Shader>(shaderDir / "lightShafts.glsl"));
+        shaders.emplace(ShaderType::SSAO_SHADER, std::make_shared<resources::Shader>(shaderDir / "ssao.glsl"));
+        shaders.emplace(ShaderType::COC_SHADER, std::make_shared<resources::Shader>(shaderDir / "circleOfConfusion.glsl"));
+        shaders.emplace(ShaderType::BOKEH_DETECTION_SHADER, std::make_shared<resources::Shader>(shaderDir / "bokehDetection.glsl"));
+        shaders.emplace(ShaderType::BLEND_DOF_SHADER, std::make_shared<resources::Shader>(shaderDir / "blendDof.glsl"));
+        shaders.emplace(ShaderType::FXAA_SHADER, std::make_shared<resources::Shader>(shaderDir / "fxaa.glsl"));
+        shaders.emplace(ShaderType::SOLID_COLOR_SHADER, std::make_shared<resources::Shader>(shaderDir / "solidColor.glsl"));
+        shaders.emplace(ShaderType::LUMINANCE_HISTOGRAM_COMPUTE_SHADER, std::make_shared<resources::Shader>(shaderDir / "luminanceHistogramCompute.glsl"));
+        shaders.emplace(ShaderType::AVERAGE_LUMINANCE_COMPUTE_SHADER, std::make_shared<resources::Shader>(shaderDir / "averageLuminanceCompute.glsl"));
     }
 
     {

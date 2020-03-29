@@ -9,7 +9,11 @@
 
 namespace spark
 {
-class Shader;
+namespace resources
+{
+    class Shader;
+}
+
 class MeshPlane final : public Component
 {
     public:
@@ -23,7 +27,7 @@ class MeshPlane final : public Component
 
     void setup();
     void addToRenderQueue() const;
-    void draw(std::shared_ptr<Shader>& shader, glm::mat4 model) const;
+    void draw(std::shared_ptr<resources::Shader>& shader, glm::mat4 model) const;
     void setTexture(TextureTarget target, Texture tex);
     void update() override;
     void fixedUpdate() override;

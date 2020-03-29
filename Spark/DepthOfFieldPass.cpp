@@ -3,7 +3,9 @@
 #include "BlurPass.h"
 #include "CommonUtils.h"
 #include "EngineSystems/ResourceManager.h"
+#include "ResourceLibrary.h"
 #include "Shader.h"
+#include "Spark.h"
 
 namespace spark
 {
@@ -53,6 +55,8 @@ void DepthOfFieldPass::setUniforms(float nearStart, float nearEnd, float farStar
 DepthOfFieldPass::DepthOfFieldPass(unsigned width_, unsigned height_) : width(width_), height(height_)
 {
     screenQuad.setup();
+    cocShader = Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("circleOfConfusion.glsl");
+    blendShader = Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("blendDof.glsl");
     blurPass = std::make_unique<BlurPass>(width / 2, height / 2);
     createGlObjects();
 
@@ -112,12 +116,11 @@ void DepthOfFieldPass::calculateCircleOfConfusion(GLuint depthTexture) const
     glClearColor(0, 0, 0, 1);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    const auto s = ResourceManager::getInstance()->getShader(ShaderType::COC_SHADER);
-    s->use();
-    s->setFloat("zNear", nearStart);
-    s->setFloat("zNearEnd", nearEnd);
-    s->setFloat("zFarStart", farStart);
-    s->setFloat("zFar", farEnd);
+    cocShader->use();
+    cocShader->setFloat("zNear", nearStart);
+    cocShader->setFloat("zNearEnd", nearEnd);
+    cocShader->setFloat("zFarStart", farStart);
+    cocShader->setFloat("zFar", farEnd);
     glBindTextureUnit(0, depthTexture);
     screenQuad.draw();
     glBindTextureUnit(0, 0);
@@ -159,7 +162,7 @@ void DepthOfFieldPass::blendDepthOfField(GLuint lightPassTexture) const
     glBindFramebuffer(GL_FRAMEBUFFER, blendDofFramebuffer);
     glClearColor(0, 0, 0, 0);
     glClear(GL_COLOR_BUFFER_BIT);
-    const auto blendShader = ResourceManager::getInstance()->getShader(ShaderType::BLEND_DOF_SHADER);
+
     blendShader->use();
 
     GLuint textures[3] = {cocTexture, lightPassTexture, blurPass->getBlurredTexture()};

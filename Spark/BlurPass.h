@@ -4,6 +4,8 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+
+#include "Shader.h"
 #include "Structs.h"
 
 namespace spark
@@ -30,6 +32,8 @@ class BlurPass
     GLuint hFramebuffer{}, hTexture{};
     GLuint vFramebuffer{}, vTexture{};
     ScreenQuad screenQuad{};
+
+    std::shared_ptr<resources::Shader> gaussianBlurShader{ nullptr };
 
     void createGlObjects();
     void deleteGlObjects();

@@ -3,8 +3,7 @@
 #include <memory>
 
 #include "CommonUtils.h"
-#include "EngineSystems/ResourceManager.h"
-#include "Shader.h"
+#include "ResourceLibrary.h"
 #include "Spark.h"
 
 namespace spark
@@ -17,7 +16,6 @@ void BlurPass::blurTexture(GLuint texture) const
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    const auto gaussianBlurShader = ResourceManager::getInstance()->getShader(ShaderType::GAUSSIAN_BLUR_SHADER);
     gaussianBlurShader->use();
     gaussianBlurShader->setVec2("inverseScreenSize", {1.0f / static_cast<float>(width), 1.0f / static_cast<float>(height)});
     gaussianBlurShader->setBool("horizontal", false);
@@ -58,6 +56,7 @@ void BlurPass::recreateWithNewSize(unsigned width, unsigned height)
 
 BlurPass::BlurPass(unsigned width_, unsigned height_) : width(width_), height(height_)
 {
+    gaussianBlurShader = Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("gaussianBlur.glsl");
     screenQuad.setup();
     createGlObjects();
 }

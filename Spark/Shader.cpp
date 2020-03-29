@@ -7,56 +7,70 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
-#include "Structs.h"
 #include "Logging.h"
 
-namespace spark
+namespace spark::resources
 {
-Shader::Shader(const std::string& vertexShaderPath, const std::string& fragmentShaderPath)
-{
-    const auto beginNameIndex = vertexShaderPath.find_last_of('\\') + 1;
-    const auto endNameIndex = vertexShaderPath.find_last_of('.');
-    const std::string shaderName = vertexShaderPath.substr(beginNameIndex, endNameIndex - beginNameIndex);
-    name = shaderName;
 
-    const std::string vertexCode = loadShader(vertexShaderPath);
-    const std::string fragmentCode = loadShader(fragmentShaderPath);
-
-    std::map<GLenum, std::string> shaders;
-    shaders.emplace(GL_VERTEX_SHADER, vertexCode);
-    shaders.emplace(GL_FRAGMENT_SHADER, fragmentCode);
-
-    const auto shaderIds = compileShaders(shaders);
-    linkProgram(shaderIds);
-
-    acquireUniformNamesAndTypes();
-    acquireUniformBlocks();
-    acquireBuffers();
-}
-
-Shader::Shader(const std::string& shaderPath)
-{
-    const std::string shaderSource = loadShader(shaderPath);
-    const auto shaders = preProcess(shaderSource);
-
-    const auto beginNameIndex = shaderPath.find_last_of('\\') + 1;
-    const auto endNameIndex = shaderPath.size();
-    const std::string shaderName = shaderPath.substr(beginNameIndex, endNameIndex - beginNameIndex);
-    name = shaderName;
-
-    const auto shaderIds = compileShaders(shaders);
-    linkProgram(shaderIds);
-
-    acquireUniformNamesAndTypes();
-    acquireUniformBlocks();
-    acquireBuffers();
-}
+Shader::Shader(const resourceManagement::ResourceIdentifier& identifier)
+    : Resource(identifier) {}
 
 Shader::~Shader()
 {
-    glDeleteProgram(ID);
-    SPARK_TRACE("Shader deleted!");
+    //SPARK_INFO("Shader deleted!");
 }
+
+bool Shader::isResourceReady()
+{
+    return isLoadedIntoDeviceMemory() && isLoadedIntoRAM();
+}
+
+bool Shader::gpuLoad()
+{
+    //SPARK_INFO("Shader::gpuLoad() {}", id.getFullPath().string());
+    const auto shaderIds = compileShaders(shaderSources);
+    linkProgram(shaderIds);
+
+    acquireUniformNamesAndTypes();
+    acquireUniformBlocks();
+    acquireBuffers();
+
+    setLoadedIntoDeviceMemory(true);
+    return true;
+}
+
+bool Shader::gpuUnload()
+{
+    //SPARK_INFO("Shader::gpuUnload() {}", id.getFullPath().string());
+    glDeleteProgram(ID);
+    ID = 0;
+
+    setLoadedIntoDeviceMemory(false);
+    return true;
+}
+
+bool Shader::load()
+{
+    //SPARK_INFO("Shader::load() {}", id.getFullPath().string());
+    const auto shaderSource = loadShader(id.getFullPath().string());
+    shaderSources = preProcess(shaderSource);
+    
+    setLoadedIntoRam(true);
+    return true;
+}
+
+bool Shader::unload()
+{
+    //SPARK_INFO("Shader::unload() {}", id.getFullPath().string());
+    shaderSources.clear();
+    uniforms.clear();
+    uniformBlocks.clear();
+    storageBuffers.clear();
+
+    setLoadedIntoRam(false);
+    return true;
+}
+
 
 std::string Shader::loadShader(const std::string& shaderPath)
 {
@@ -409,4 +423,4 @@ void Shader::bindUniformBuffer(const std::string& name, const UniformBuffer& uni
         glBindBufferBase(GL_UNIFORM_BUFFER, uniformBuffer.binding, uniformBuffer.ID);
     }
 }
-}  // namespace spark
+}

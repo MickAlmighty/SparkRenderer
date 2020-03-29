@@ -5,72 +5,50 @@
 #include "EngineSystems/SparkRenderer.h"
 #include "Shader.h"
 #include "Logging.h"
+#include "Texture.h"
+#include "Timer.h"
 
 namespace spark
 {
-Mesh::Mesh(std::vector<VertexShaderAttribute>& verticesAttributes, std::vector<unsigned>& indices, std::map<TextureTarget, Texture>& meshTextures,
+Mesh::Mesh(std::vector<VertexShaderAttribute>& verticesAttributes, std::vector<unsigned>& indices, std::map<TextureTarget, std::shared_ptr<resources::Texture>>& meshTextures,
            std::string&& newName_, ShaderType shaderType)
 {
     this->indices = std::move(indices);
     this->textures = std::move(meshTextures);
     this->shaderType = shaderType;
 
-    setup(verticesAttributes);
+    for(auto& verticesAttribute : verticesAttributes)
+    {
+        attributesAndVbos.emplace_back(verticesAttribute, 0);
+    }
+    //Mesh::gpuLoad();
 }
 
-void Mesh::setup(std::vector<VertexShaderAttribute>& verticesAttributes)
+    Mesh::Mesh(std::vector<VertexShaderAttribute>& verticesAttributes, std::vector<unsigned>& indices, std::string&& newName_, ShaderType shaderType)
 {
-    glCreateVertexArrays(1, &vao);
-    glBindVertexArray(vao);
+    this->indices = std::move(indices);
+    this->shaderType = shaderType;
 
-    std::vector<GLuint> bufferIDs;
-    bufferIDs.resize(verticesAttributes.size());
-
-    if(!verticesAttributes.empty())
+    for(auto& verticesAttribute : verticesAttributes)
     {
-        glCreateBuffers(static_cast<GLsizei>(verticesAttributes.size()), bufferIDs.data());
-        verticesCount = static_cast<unsigned int>(verticesAttributes[0].bytes.size()) / verticesAttributes[0].stride;
+        attributesAndVbos.emplace_back(verticesAttribute, 0);
     }
-
-    unsigned int bufferIndex = 0;
-    for(const auto& attribute : verticesAttributes)
-    {
-        glBindBuffer(GL_ARRAY_BUFFER, bufferIDs[bufferIndex]);
-        glBufferData(GL_ARRAY_BUFFER, attribute.bytes.size(), reinterpret_cast<const void*>(attribute.bytes.data()), GL_DYNAMIC_DRAW);
-
-        glEnableVertexAttribArray(attribute.location);
-        glVertexAttribPointer(attribute.location, attribute.components, GL_FLOAT, GL_FALSE, attribute.stride, reinterpret_cast<const void*>(0));
-
-        attributesAndVbos.insert({attribute, bufferIDs[bufferIndex]});
-
-        ++bufferIndex;
-    }
-
-    if(!indices.empty())
-    {
-        glCreateBuffers(1, &ebo);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), reinterpret_cast<const void*>(indices.data()), GL_DYNAMIC_DRAW);
-    }
-
-    glBindVertexArray(0);
 }
 
 void Mesh::addToRenderQueue(glm::mat4 model)
 {
     const auto thisPtr = shared_from_this();
-    auto f = [thisPtr, model](std::shared_ptr<Shader>& shader) { thisPtr->draw(shader, model); };
+    auto f = [thisPtr, model](std::shared_ptr<resources::Shader>& shader) { thisPtr->draw(shader, model); };
     SparkRenderer::getInstance()->renderQueue[shaderType].push_back(f);
 }
 
-void Mesh::draw(std::shared_ptr<Shader>& shader, glm::mat4 model)
+void Mesh::draw(std::shared_ptr<resources::Shader>& shader, glm::mat4 model)
 {
     shader->setMat4("model", model);
 
-    for(auto& texture_it : textures)
+    for(const auto& [textureTarget, texture] : textures)
     {
-        glBindTextureUnit(static_cast<GLuint>(texture_it.first), texture_it.second.ID);
+        glBindTextureUnit(static_cast<GLuint>(textureTarget), texture->getID());
     }
 
     glBindVertexArray(vao);
@@ -92,17 +70,63 @@ void Mesh::draw(std::shared_ptr<Shader>& shader, glm::mat4 model)
 
 void Mesh::cleanup()
 {
+    gpuUnload();
+    SPARK_TRACE("Mesh deleted!");
+}
+
+bool Mesh::gpuLoad()
+{
+    glCreateVertexArrays(1, &vao);
+    glBindVertexArray(vao);
+
+    std::vector<GLuint> bufferIDs;
+    bufferIDs.resize(attributesAndVbos.size());
+
+    if (!attributesAndVbos.empty())
+    {
+        glCreateBuffers(static_cast<GLsizei>(attributesAndVbos.size()), bufferIDs.data());
+        verticesCount = static_cast<unsigned int>(attributesAndVbos[0].first.bytes.size()) / attributesAndVbos[0].first.stride;
+    }
+
+    unsigned int bufferIndex = 0;
+    for (auto& [attribute, vboId] : attributesAndVbos)
+    {
+        glBindBuffer(GL_ARRAY_BUFFER, bufferIDs[bufferIndex]);
+        glBufferData(GL_ARRAY_BUFFER, attribute.bytes.size(), reinterpret_cast<const void*>(attribute.bytes.data()), GL_DYNAMIC_DRAW);
+
+        glEnableVertexAttribArray(attribute.location);
+        glVertexAttribPointer(attribute.location, attribute.components, GL_FLOAT, GL_FALSE, attribute.stride, reinterpret_cast<const void*>(0));
+
+        vboId = bufferIDs[bufferIndex];
+
+        ++bufferIndex;
+    }
+
+    if (!indices.empty())
+    {
+        glCreateBuffers(1, &ebo);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), reinterpret_cast<const void*>(indices.data()), GL_DYNAMIC_DRAW);
+    }
+
+    glBindVertexArray(0);
+
+    return true;
+}
+
+bool Mesh::gpuUnload()
+{
     glDeleteBuffers(1, &vbo);
     glDeleteBuffers(1, &ebo);
     glDeleteVertexArrays(1, &vao);
 
-    for(auto& [attribute, vbo] : attributesAndVbos)
+    for (auto& [attribute, vbo] : attributesAndVbos)
     {
         glDeleteBuffers(1, &vbo);
+        vbo = 0;
     }
 
-    attributesAndVbos.clear();
-    SPARK_TRACE("Mesh deleted!");
+    return true;
 }
-
 }  // namespace spark

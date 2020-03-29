@@ -43,11 +43,11 @@ class LightManager
     bool updateBuffer = false;
 
     template<typename T>
-    void updateBufferIfNecessary(const std::vector<T>& bufferLightData, const SSBO& ssbo)
+    void updateBufferIfNecessary(const std::vector<T>& bufferLightData, SSBO& ssbo)
     {
         if(updateBuffer)
         {
-            ssbo.update(bufferLightData);
+            ssbo.updateData(bufferLightData);
             updateBuffer = false;
         }
     }
