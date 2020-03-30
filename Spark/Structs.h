@@ -78,6 +78,7 @@ struct InitializationVariables final
     unsigned int height;
     std::string pathToModels;
     std::string pathToResources;
+    bool vsync;
     RTTR_ENABLE();
 };
 

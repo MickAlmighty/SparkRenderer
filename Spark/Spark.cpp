@@ -24,6 +24,7 @@ void Spark::setInitVariables(const InitializationVariables& variables)
     HEIGHT = variables.height;
     pathToModelMeshes = variables.pathToModels;
     pathToResources = variables.pathToResources;
+    vsync = variables.vsync;
 }
 
 void Spark::setup()
@@ -70,6 +71,7 @@ void Spark::initOpenGL()
     glfwSetKeyCallback(window, HID::key_callback);
     glfwSetCursorPosCallback(window, HID::cursor_position_callback);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    setVsync(vsync);
 
 #ifdef DEBUG
     glEnable(GL_DEBUG_OUTPUT);
@@ -93,8 +95,6 @@ void Spark::initOpenGL()
     const char* glsl_version = "#version 450";
     ImGui_ImplOpenGL3_Init(glsl_version);
     ImGui_ImplOpenGL3_NewFrame();
-
-    glfwSwapInterval(0);
 }
 
 void Spark::run()
@@ -115,6 +115,15 @@ void Spark::run()
 void Spark::resizeWindow(GLuint width, GLuint height)
 {
     glfwSetWindowSize(window, width, height);
+}
+
+void Spark::setVsync(bool state)
+{
+    vsync = state;
+    if (vsync)
+        glfwSwapInterval(1);
+    else
+        glfwSwapInterval(0);
 }
 
 void Spark::clean()

@@ -46,10 +46,14 @@ void Mesh::draw(std::shared_ptr<resources::Shader>& shader, glm::mat4 model)
 {
     shader->setMat4("model", model);
 
+    GLuint texturesToBind[4];
+
     for(const auto& [textureTarget, texture] : textures)
     {
-        glBindTextureUnit(static_cast<GLuint>(textureTarget), texture->getID());
+        texturesToBind[static_cast<GLuint>(textureTarget) - 1] = texture->getID();
     }
+
+    glBindTextures(1, 4, texturesToBind);
 
     glBindVertexArray(vao);
 
@@ -65,7 +69,7 @@ void Mesh::draw(std::shared_ptr<resources::Shader>& shader, glm::mat4 model)
     glBindVertexArray(0);
 
     if(!textures.empty())
-        glBindTextures(static_cast<GLuint>(TextureTarget::DIFFUSE_TARGET), static_cast<GLsizei>(textures.size()), nullptr);
+        glBindTextures(static_cast<GLuint>(TextureTarget::DIFFUSE_TARGET), 4, nullptr);
 }
 
 void Mesh::cleanup()

@@ -198,7 +198,8 @@ RTTR_REGISTRATION
         .property("width", &spark::InitializationVariables::width)
         .property("height", &spark::InitializationVariables::height)
         .property("pathToModels", &spark::InitializationVariables::pathToModels)
-        .property("pathToResources", &spark::InitializationVariables::pathToResources);
+        .property("pathToResources", &spark::InitializationVariables::pathToResources)
+        .property("vsync", &spark::InitializationVariables::vsync);
 
     rttr::registration::class_<spark::Transform>("Transform")
         .constructor()(rttr::policy::ctor::as_object)

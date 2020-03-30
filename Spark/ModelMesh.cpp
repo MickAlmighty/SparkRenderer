@@ -24,9 +24,13 @@ void ModelMesh::setModel(const std::shared_ptr<resources::Model>& model_)
 void ModelMesh::update()
 {
     const glm::mat4 worldMatrix = getGameObject()->transform.world.getMatrix();
-    for(const auto& mesh : model->getMeshes())
+
+    if(model != nullptr)
     {
-        mesh->addToRenderQueue(worldMatrix);
+        for(const auto& mesh : model->getMeshes())
+        {
+            mesh->addToRenderQueue(worldMatrix);
+        }
     }
 }
 
@@ -34,7 +38,14 @@ void ModelMesh::fixedUpdate() {}
 
 void ModelMesh::drawGUI()
 {
-    for(const auto& mesh : model->getMeshes())
+    std::vector<std::shared_ptr<Mesh>> meshes{};
+
+    if(model != nullptr)
+    {
+        meshes = model->getMeshes();
+    }
+
+    for(const auto& mesh : meshes)
     {
         ImGui::Text("Vertices:");
         ImGui::SameLine();
@@ -52,11 +63,22 @@ void ModelMesh::drawGUI()
         SparkGui::getTexture();
     }
 
-    if(model->getMeshes().empty())
+    if(model != nullptr)
     {
-        //#todo implement acquiring model from SparkGui
-        // const auto model = SparkGui::getMeshes();
-        // setModel(model);
+        if(model->getMeshes().empty())
+        {
+            const auto model = SparkGui::getModel();
+            setModel(model);
+        }
+    }
+
+    if(model == nullptr)
+    {
+        const auto model_ = SparkGui::getModel();
+        if (model_ != nullptr)
+        {
+            setModel(model_);
+        }
     }
 
     removeComponentGUI<ModelMesh>();

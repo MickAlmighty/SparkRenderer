@@ -4,6 +4,7 @@
 #include "ImGuizmo.h"
 #include "ImGui/imgui_impl_glfw.h"
 #include "JsonSerializer.h"
+#include "Model.h"
 #include "ResourceLibrary.h"
 #include "ResourceLoader.h"
 #include "Spark.h"
@@ -65,6 +66,13 @@ void SparkGui::drawSparkSettings(bool* p_open)
     ImGui::Text("Path to resources:");
     ImGui::SameLine();
     ImGui::Text(Spark::pathToResources.string().c_str());
+    bool vsync = Spark::vsync;
+    ImGui::Checkbox("V-Sync", &vsync);
+
+    if (vsync != Spark::vsync)
+    {
+        Spark::setVsync(vsync);
+    }
 
     static const char* items[4] = {"1280x720", "1600x900", "1920x1080", "1920x1055"};
     static int current_item = checkCurrentItem(items);
@@ -140,23 +148,22 @@ std::shared_ptr<Component> SparkGui::addComponent()
     return component;
 }
 
-std::pair<std::string, std::vector<std::shared_ptr<Mesh>>> SparkGui::getMeshes()
+std::shared_ptr<resources::Model> SparkGui::getModel()
 {
-    std::pair<std::string, std::vector<std::shared_ptr<Mesh>>> meshes;
-    if(ImGui::Button("Add Model Meshes"))
+    std::shared_ptr<resources::Model> model{nullptr};
+    if(ImGui::Button("Add Model"))
     {
         ImGui::OpenPopup("Models");
     }
 
     if(ImGui::BeginPopupModal("Models", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
     {
-        /*std::vector<std::string> pathsToModels = ResourceManager::getInstance()->getPathsToModels();
-        for(const std::string& path : pathsToModels)
+         const auto modelIds = Spark::getResourceLibrary()->getResourceIdentifiers<resources::Model>();
+        for(const auto& id : modelIds)
         {
-            if(ImGui::Button(path.c_str()))
+            if(ImGui::Button(id.getFullPath().string().c_str()))
             {
-                meshes.first = path;
-                meshes.second = ResourceManager::getInstance()->findModelMeshes(path);
+                model = Spark::getResourceLibrary()->getResourceByPathWithOptLoad<resources::Model>(id.getFullPath().string());
                 ImGui::CloseCurrentPopup();
             }
         }
@@ -164,9 +171,10 @@ std::pair<std::string, std::vector<std::shared_ptr<Mesh>>> SparkGui::getMeshes()
         {
             ImGui::CloseCurrentPopup();
         }
-        ImGui::EndPopup();*/
+        ImGui::EndPopup();
     }
-    return meshes;
+
+    return model;
 }
 
 std::shared_ptr<resources::Texture> SparkGui::getTexture()
@@ -252,7 +260,8 @@ std::shared_ptr<resources::Shader> SparkGui::getShader()
 
     if(ImGui::BeginPopupModal("Shaders", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
     {
-        /*for(const auto& shaderName : ResourceManager::getInstance()->getShaderNames())
+        /*
+        for(const auto& shaderName : ResourceManager::getInstance()->getShaderNames())
         {
             if(ImGui::Button(shaderName.c_str()))
             {
@@ -260,11 +269,12 @@ std::shared_ptr<resources::Shader> SparkGui::getShader()
                 ImGui::CloseCurrentPopup();
             }
         }
+        */
         if(ImGui::Button("Close"))
         {
             ImGui::CloseCurrentPopup();
         }
-        ImGui::EndPopup();*/
+        ImGui::EndPopup();
     }
     return ptr;
 }

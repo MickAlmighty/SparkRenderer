@@ -15,11 +15,12 @@
 
 namespace spark
 {
-
 namespace resources
 {
     class Texture;
-}
+    class Model;
+};  // namespace resources
+
 class SparkGui
 {
     public:
@@ -29,7 +30,7 @@ class SparkGui
     ~SparkGui() = default;
 
     static std::shared_ptr<Component> addComponent();
-    static std::pair<std::string, std::vector<std::shared_ptr<Mesh>>> getMeshes();
+    static std::shared_ptr<resources::Model> SparkGui::getModel();
     static std::shared_ptr<resources::Texture> getTexture();
     static std::shared_ptr<PbrCubemapTexture> getCubemapTexture();
     static std::shared_ptr<resources::Shader> getShader();

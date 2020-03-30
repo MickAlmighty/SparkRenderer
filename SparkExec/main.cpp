@@ -16,6 +16,7 @@ int main()
         variables.height = 720;
         variables.pathToResources = R"(..\..\..\res)";
         variables.pathToModels = R"(..\..\..\res\models)";
+        variables.vsync = true;
         spark::JsonSerializer::getInstance()->save(variables, "settings.json");
     }
 

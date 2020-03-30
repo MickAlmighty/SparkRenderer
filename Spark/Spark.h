@@ -20,6 +20,7 @@ class Spark
     inline static unsigned int HEIGHT{720};
     inline static std::filesystem::path pathToModelMeshes;
     inline static std::filesystem::path pathToResources;
+    inline static bool vsync = true;
     inline static GLFWwindow* window = nullptr;
     inline static bool runProgram = true;
     inline static float maxAnisotropicFiltering = 1.0f;
@@ -28,6 +29,7 @@ class Spark
     static void setup();
     static void run();
     static void resizeWindow(GLuint width, GLuint height);
+    static void setVsync(bool state);
     static void clean();
 
     static void initOpenGL();
