@@ -70,7 +70,7 @@ void Spark::initOpenGL()
 
     glfwSetKeyCallback(window, HID::key_callback);
     glfwSetCursorPosCallback(window, HID::cursor_position_callback);
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     setVsync(vsync);
 
 #ifdef DEBUG

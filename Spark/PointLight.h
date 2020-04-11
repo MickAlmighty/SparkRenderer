@@ -14,7 +14,7 @@ class PointLight final : public Component
 {
     public:
     PointLight();
-    ~PointLight() = default;
+    ~PointLight();
     PointLight(const PointLight&) = delete;
     PointLight(const PointLight&&) = delete;
     PointLight& operator=(const PointLight&) = delete;

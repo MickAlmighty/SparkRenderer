@@ -17,7 +17,7 @@ namespace spark
 {
 PointLightData PointLight::getLightData() const
 {
-    return { glm::vec4(getPosition(), getRadius()), getColor() * getColorStrength(), getLightModel()};
+    return {glm::vec4(getPosition(), getRadius()), getColor() * getColorStrength(), getLightModel()};
 }
 
 bool PointLight::getDirty() const
@@ -84,11 +84,14 @@ PointLight::PointLight() : Component("PointLight")
     std::filesystem::path p = Spark::pathToResources;
 
     const auto attribute = VertexShaderAttribute::createVertexShaderAttributeInfo(0, 3, ShapeCreator::createSphere(1.0f, 10));
-    sphere = std::make_shared<Mesh>(std::vector<VertexShaderAttribute>{attribute}, 
-        std::vector<unsigned int>{}, 
-        std::map<TextureTarget, std::shared_ptr<resources::Texture>>{}, 
-        "Mesh", 
-        ShaderType::SOLID_COLOR_SHADER);
+    sphere = std::make_shared<Mesh>(std::vector<VertexShaderAttribute>{attribute}, std::vector<unsigned int>{},
+                                    std::map<TextureTarget, std::shared_ptr<resources::Texture>>{}, "Mesh", ShaderType::SOLID_COLOR_SHADER);
+    sphere->gpuLoad();
+}
+
+PointLight::~PointLight()
+{
+    sphere->gpuUnload();
 }
 
 void PointLight::setActive(bool active_)
@@ -109,13 +112,13 @@ void PointLight::update()
     sphereModel = glm::scale(sphereModel, glm::vec3(radius));
     sphereModel[3] = glm::vec4(getPosition(), 1.0f);
 
-    if (sphereModel != lightModel)
+    if(sphereModel != lightModel)
     {
         setLightModel(sphereModel);
-        //it also takes light position into consideration
+        // it also takes light position into consideration
     }
-    
-    if (getGameObject() == getGameObject()->getScene()->getGameObjectToPreview())
+
+    if(getGameObject() == getGameObject()->getScene()->getGameObjectToPreview())
     {
         sphere->addToRenderQueue(getLightModel());
     }
@@ -159,9 +162,9 @@ RTTR_REGISTRATION
 {
     rttr::registration::class_<spark::PointLight>("PointLight")
         .constructor()(rttr::policy::ctor::as_std_shared_ptr)
-    //.property("dirty", &spark::PointLight::dirty) //FIXME: shouldn't it always be dirty when loaded? maybe not
-    //.property("addedToLightManager", &spark::PointLight::addedToLightManager)
-    .property("color", &spark::PointLight::color)
-    .property("colorStrength", &spark::PointLight::colorStrength)
-    .property("radius", &spark::PointLight::radius);
+        //.property("dirty", &spark::PointLight::dirty) //FIXME: shouldn't it always be dirty when loaded? maybe not
+        //.property("addedToLightManager", &spark::PointLight::addedToLightManager)
+        .property("color", &spark::PointLight::color)
+        .property("colorStrength", &spark::PointLight::colorStrength)
+        .property("radius", &spark::PointLight::radius);
 }

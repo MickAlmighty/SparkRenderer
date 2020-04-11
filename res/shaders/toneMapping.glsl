@@ -13,10 +13,11 @@ void main()
 
 #type fragment
 #version 450
-layout (location = 0) out vec3 FragColor;
+layout (location = 0) out vec4 FragColor;
 
 layout (binding = 0) uniform sampler2D inputTexture;
 layout (binding = 1) uniform sampler2D averageLuminance;
+layout (binding = 2) uniform sampler2D bloomTexture;
 uniform vec2 invertedScreenSize;
 
 in vec2 tex_coords;
@@ -82,11 +83,13 @@ vec3 accurateLinearToSRGB(vec3 linearColor)
 
 void main()
 {
-	vec3 color = texture(inputTexture, tex_coords).xyz; //for unchartedTonemapping
+	vec3 color = texture(inputTexture, tex_coords).xyz;
 	float avgLuminance = texture(averageLuminance, tex_coords).x;
 
 	color /= avgLuminance;
-	vec3 resultColor = approximationLinearToSRGB(ACESFilm(color));
+	vec4 resultColor = vec4(approximationLinearToSRGB(ACESFilm(color)), 0.0f);
 	//resultColor = approximationLinearToSRGB(resultColor);
+	resultColor.a = dot(resultColor.rgb, vec3(0.299, 0.587, 0.114));
+	
 	FragColor = resultColor;
 }

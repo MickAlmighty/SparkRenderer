@@ -39,32 +39,48 @@ class SparkRenderer
     std::unique_ptr<BlurPass> ssaoBlurPass;
 
     GLuint mainFramebuffer{}, colorTexture{}, normalsTexture{}, depthTexture{};
-    GLuint lightFrameBuffer{}, lightColorTexture{}, lightDiffuseTexture{}, lightSpecularTexture{};
+    GLuint lightFrameBuffer{}, lightColorTexture{}, brightPassTexture{};
+    GLuint cubemapFramebuffer{};
     GLuint toneMappingFramebuffer{}, toneMappingTexture{};
     GLuint motionBlurFramebuffer{}, motionBlurTexture{};
     GLuint lightShaftFramebuffer{}, lightShaftTexture{};
     GLuint fxaaFramebuffer{}, fxaaTexture{};
     GLuint averageLuminance{};
 
+    // bloom start
+    std::unique_ptr<BlurPass> upsampleBloomBlurPass2;
+    std::unique_ptr<BlurPass> upsampleBloomBlurPass4;
+    std::unique_ptr<BlurPass> upsampleBloomBlurPass8;
+    std::unique_ptr<BlurPass> upsampleBloomBlurPass16;
+
+    GLuint bloomFramebuffer{}, bloomTexture{};
+    GLuint downsampleFramebuffer2{}, downsampleTexture2{};
+    GLuint downsampleFramebuffer4{}, downsampleTexture4{};
+    GLuint downsampleFramebuffer8{}, downsampleTexture8{};
+    GLuint downsampleFramebuffer16{}, downsampleTexture16{};
+    // bloom end
+
     GLuint ssaoFramebuffer{}, ssaoTexture{}, randomNormalsTexture{}, ssaoDisabledTexture{};
 
     GLuint textureHandle{};  // temporary, its only a handle to other texture -> dont delete it
 
-    std::shared_ptr<resources::Shader> mainShader{ nullptr };
-    std::shared_ptr<resources::Shader> screenShader{ nullptr };
-    std::shared_ptr<resources::Shader> toneMappingShader{ nullptr };
-    std::shared_ptr<resources::Shader> lightShader{ nullptr };
-    std::shared_ptr<resources::Shader> motionBlurShader{ nullptr };
-    std::shared_ptr<resources::Shader> cubemapShader{ nullptr };
-    std::shared_ptr<resources::Shader> ssaoShader{ nullptr };
-    std::shared_ptr<resources::Shader> circleOfConfusionShader{ nullptr };
-    std::shared_ptr<resources::Shader> bokehDetectionShader{ nullptr };
-    std::shared_ptr<resources::Shader> blendDofShader{ nullptr };
-    std::shared_ptr<resources::Shader> solidColorShader{ nullptr };
-    std::shared_ptr<resources::Shader> lightShaftsShader{ nullptr };
-    std::shared_ptr<resources::Shader> luminanceHistogramComputeShader{ nullptr };
-    std::shared_ptr<resources::Shader> averageLuminanceComputeShader{ nullptr };
-    std::shared_ptr<resources::Shader> fxaaShader{ nullptr };
+    std::shared_ptr<resources::Shader> mainShader{nullptr};
+    std::shared_ptr<resources::Shader> screenShader{nullptr};
+    std::shared_ptr<resources::Shader> toneMappingShader{nullptr};
+    std::shared_ptr<resources::Shader> lightShader{nullptr};
+    std::shared_ptr<resources::Shader> motionBlurShader{nullptr};
+    std::shared_ptr<resources::Shader> cubemapShader{nullptr};
+    std::shared_ptr<resources::Shader> ssaoShader{nullptr};
+    std::shared_ptr<resources::Shader> circleOfConfusionShader{nullptr};
+    std::shared_ptr<resources::Shader> bokehDetectionShader{nullptr};
+    std::shared_ptr<resources::Shader> blendDofShader{nullptr};
+    std::shared_ptr<resources::Shader> solidColorShader{nullptr};
+    std::shared_ptr<resources::Shader> lightShaftsShader{nullptr};
+    std::shared_ptr<resources::Shader> luminanceHistogramComputeShader{nullptr};
+    std::shared_ptr<resources::Shader> averageLuminanceComputeShader{nullptr};
+    std::shared_ptr<resources::Shader> fxaaShader{nullptr};
+    std::shared_ptr<resources::Shader> medianFilterShader{nullptr};
+    std::shared_ptr<resources::Shader> downscaleShader{nullptr};
 
     Cube cube = Cube();
     UniformBuffer cameraUBO{};
@@ -96,11 +112,17 @@ class SparkRenderer
     float logLuminanceRange = 12.0f;
     float tau = 1.1f;
 
+    bool bloomEnable = true;
+    float bloomIntensity = 0.2f;
+
+    bool motionBlurEnable = true;
+
     void resizeWindowIfNecessary();
     void fillGBuffer();
     void ssaoComputing();
     void renderLights();
     void renderCubemap() const;
+    void bloom();
     void lightShafts();
     void helperShapes();
     void depthOfField();

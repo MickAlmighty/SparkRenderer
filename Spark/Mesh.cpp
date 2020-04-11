@@ -53,7 +53,8 @@ void Mesh::draw(std::shared_ptr<resources::Shader>& shader, glm::mat4 model)
         texturesToBind[static_cast<GLuint>(textureTarget) - 1] = texture->getID();
     }
 
-    glBindTextures(1, 4, texturesToBind);
+    if (!textures.empty())
+        glBindTextures(1, 4, texturesToBind);
 
     glBindVertexArray(vao);
 

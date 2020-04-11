@@ -14,6 +14,7 @@ void main()
 #type fragment
 #version 450
 layout(location = 0) out vec4 FragColor;
+layout(location = 1) out vec4 BrightPass;
 
 in vec2 texCoords;
 #define M_PI 3.14159265359 
@@ -113,6 +114,13 @@ vec3 decodeViewSpaceNormal(vec2 enc)
     return n;
 }
 
+vec3 getBrightPassColor(vec3 color)
+{
+    const float luma = dot(color, vec3(0.299, 0.587, 0.114));
+    float weight = 1 / (1 + luma);
+    return color * weight;
+}
+
 void main()
 {
 	//vec3 pos = texture(positionTexture, texCoords).xyz;
@@ -180,10 +188,13 @@ void main()
 	if ( valid.x || valid.y || valid.z || valid.w )
 	{
 		FragColor = vec4(0.5f);
-		return;
+	}
+	else
+	{
+		FragColor = color * ssao;
 	}
 
-	FragColor = vec4(L0 + ambient, 1) * ssao;
+	BrightPass = vec4(getBrightPassColor(FragColor.xyz), 1.0f);
 }
 
 vec3 directionalLightAddition(vec3 V, vec3 N, Material m)
