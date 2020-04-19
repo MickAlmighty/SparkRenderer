@@ -38,7 +38,7 @@ class SparkRenderer
     std::unique_ptr<DepthOfFieldPass> dofPass;
     std::unique_ptr<BlurPass> ssaoBlurPass;
 
-    GLuint mainFramebuffer{}, colorTexture{}, normalsTexture{}, depthTexture{};
+    GLuint mainFramebuffer{}, colorTexture{}, normalsTexture{}, roughnessMetalnessTexture{}, depthTexture{};
     GLuint lightFrameBuffer{}, lightColorTexture{}, brightPassTexture{};
     GLuint cubemapFramebuffer{};
     GLuint toneMappingFramebuffer{}, toneMappingTexture{};
@@ -46,6 +46,9 @@ class SparkRenderer
     GLuint lightShaftFramebuffer{}, lightShaftTexture{};
     GLuint fxaaFramebuffer{}, fxaaTexture{};
     GLuint averageLuminance{};
+
+    //IBL
+    GLuint brdfLookupTexture{};
 
     // bloom start
     std::unique_ptr<BlurPass> upsampleBloomBlurPass2;

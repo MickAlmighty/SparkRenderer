@@ -175,8 +175,8 @@ void DepthOfFieldPass::blendDepthOfField(GLuint lightPassTexture) const
 
 void DepthOfFieldPass::createGlObjects()
 {
-    utils::createTexture(cocTexture, width, height, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::createTexture(blendDofTexture, width, height, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::createTexture2D(cocTexture, width, height, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::createTexture2D(blendDofTexture, width, height, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
 
     utils::createFramebuffer(cocFramebuffer, {cocTexture});
     utils::createFramebuffer(blendDofFramebuffer, {blendDofTexture});

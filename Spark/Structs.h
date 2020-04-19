@@ -1,6 +1,7 @@
 #ifndef STRUCTS_H
 #define STRUCTS_H
 
+#include <array>
 #include <vector>
 #include <filesystem>
 
@@ -14,6 +15,8 @@
 
 namespace spark
 {
+struct Cube;
+
 struct Transform final
 {
     LocalTransform local;
@@ -103,10 +106,6 @@ struct PbrCubemapTexture final
     GLuint prefilteredCubemap{};
     GLuint brdfLUTTexture{};
 
-    std::shared_ptr<resources::Shader> equirectangularToCubemapShader{ nullptr };
-    std::shared_ptr<resources::Shader> irradianceShader{ nullptr };
-    std::shared_ptr<resources::Shader> prefilterShader{ nullptr };
-    std::shared_ptr<resources::Shader> brdfShader{ nullptr };
     const std::string getPath();
 
     PbrCubemapTexture(GLuint hdrTexture, const std::string& path, unsigned int size = 1024);
@@ -114,9 +113,20 @@ struct PbrCubemapTexture final
 
     private:
     std::string path{};
+    std::array<glm::mat4, 6> viewMatrices{};
+    glm::mat4 projection{};
+
+    std::shared_ptr<resources::Shader> equirectangularToCubemapShader{nullptr};
+    std::shared_ptr<resources::Shader> irradianceShader{nullptr};
+    std::shared_ptr<resources::Shader> prefilterShader{nullptr};
+    std::shared_ptr<resources::Shader> brdfShader{nullptr};
+
     void setup(GLuint hdrTexture, unsigned int size);
-    GLuint generateCubemap(unsigned int texSize, bool mipmaps = false) const;
-    void generateCubemapMipMaps();
+    GLuint createEnvironmentCubemapWithMipmapChain(GLuint framebuffer, GLuint equirectangularTexture, unsigned int size, Cube& cube) const; 
+    GLuint createIrradianceCubemap(GLuint framebuffer, GLuint environmentCubemap, Cube& cube) const; 
+    GLuint createPreFilteredCubemap(GLuint framebuffer, GLuint environmentCubemap, unsigned int envCubemapSize, Cube& cube) const;
+    GLuint createBrdfLookupTexture(GLuint framebuffer, unsigned int envCubemapSize) const;
+    GLuint createCubemapAndCopyDataFromFirstLayerOf(GLuint cubemap, unsigned int cubemapSize) const;
 };
 
 struct Vertex final
@@ -140,7 +150,7 @@ struct VertexShaderAttribute final
         return location < attribute.location;
     }
 
-    template <typename T>
+    template<typename T>
     static VertexShaderAttribute createVertexShaderAttributeInfo(unsigned int location, unsigned int components, std::vector<T> vertexAttributeData)
     {
         unsigned int elemSize = sizeof(T);
@@ -279,16 +289,22 @@ struct Cube final
         glDrawArrays(GL_TRIANGLES, 0, 36);
         glBindVertexArray(0);
     }
+
+    ~Cube()
+    {
+        glDeleteBuffers(1, &vbo);
+        glDeleteVertexArrays(1, &vao);
+    }
 };
 
-template <GLenum BUFFER_TYPE>
+template<GLenum BUFFER_TYPE>
 struct Buffer
 {
     static inline std::set<uint32_t> bindings{};
     static inline std::set<uint32_t> freedBindings{};
 
-    GLuint ID{ 0 };
-    GLint binding{ -1 };
+    GLuint ID{0};
+    GLint binding{-1};
     GLsizei size{0};
 
     Buffer() = default;
@@ -320,9 +336,10 @@ struct Buffer
     void updateData(const std::vector<T>& buffer)
     {
         const size_t vectorSize = buffer.size() * sizeof(T);
-        if (vectorSize < size || vectorSize > size)
+        if(vectorSize < size || vectorSize > size)
         {
-            //SPARK_WARN("Trying to update SSBO with a vector with too large size! SSBO size: {}, vector size: {}. Buffer will be resized and update will be processed!", size, vectorSize);
+            // SPARK_WARN("Trying to update SSBO with a vector with too large size! SSBO size: {}, vector size: {}. Buffer will be resized and update
+            // will be processed!", size, vectorSize);
             size = static_cast<GLsizei>(vectorSize);
             glNamedBufferData(ID, vectorSize, buffer.data(), GL_DYNAMIC_DRAW);
         }
@@ -338,11 +355,11 @@ struct Buffer
         const size_t vectorSize = buffer.size() * sizeof(T);
         const GLintptr offset = static_cast<GLintptr>(offsetFromBeginning);
 
-        if (offset > size)
+        if(offset > size)
         {
             return;
         }
-        if (offset + vectorSize > size)
+        if(offset + vectorSize > size)
         {
             return;
         }
@@ -362,16 +379,16 @@ struct Buffer
         freeBinding();
     }
 
-private:
+    private:
     void getBinding()
     {
-        if (!freedBindings.empty())
+        if(!freedBindings.empty())
         {
             binding = *freedBindings.begin();
             freedBindings.erase(freedBindings.begin());
             return;
         }
-        if (bindings.empty())
+        if(bindings.empty())
         {
             bindings.insert(0);
             binding = 0;
@@ -386,7 +403,7 @@ private:
     void freeBinding()
     {
         const auto it = bindings.find(binding);
-        if (it != bindings.end())
+        if(it != bindings.end())
         {
             freedBindings.insert(*it);
             bindings.erase(it);

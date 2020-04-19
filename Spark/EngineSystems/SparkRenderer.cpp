@@ -128,23 +128,18 @@ void SparkRenderer::setup()
             ssaoNoise.push_back(noise);
         }
 
-        glGenTextures(1, &randomNormalsTexture);
-        glBindTexture(GL_TEXTURE_2D, randomNormalsTexture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, 4, 4, 0, GL_RGB, GL_FLOAT, ssaoNoise.data());
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        utils::createTexture2D(randomNormalsTexture, 4, 4, GL_RGB32F, GL_RGB, GL_FLOAT, GL_REPEAT, GL_NEAREST, false, ssaoNoise.data());
     };
 
     generateSsaoSamples();
     generateSsaoNoiseTexture();
 
-    utils::createTexture(ssaoDisabledTexture, 1, 1, GL_RED, GL_RED, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_NEAREST);
-    utils::uploadDataToTexture2D(ssaoDisabledTexture, 0, 1, 1, GL_RED, GL_UNSIGNED_BYTE, std::vector<unsigned char>{255});
-    utils::createTexture(averageLuminance, 1, 1, GL_R16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
+    unsigned char red = 255;
+    utils::createTexture2D(ssaoDisabledTexture, 1, 1, GL_RED, GL_RED, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_NEAREST, false, &red);
+    utils::createTexture2D(averageLuminance, 1, 1, GL_R16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
 
     luminanceHistogram.genBuffer(256 * sizeof(uint32_t));
+    brdfLookupTexture = utils::createBrdfLookupTexture(1024);
 
     initMembers();
 }
@@ -333,16 +328,17 @@ void SparkRenderer::renderLights()
     lightShader->use();
     if(cubemap)
     {
-        std::array<GLuint, 7> textures{
-            depthTexture, colorTexture, normalsTexture, cubemap->irradianceCubemap, cubemap->prefilteredCubemap, cubemap->brdfLUTTexture,
-            textureHandle};
+        std::array<GLuint, 8> textures{
+            depthTexture,      colorTexture, normalsTexture, roughnessMetalnessTexture, cubemap->irradianceCubemap, cubemap->prefilteredCubemap,
+            brdfLookupTexture, textureHandle};
         glBindTextures(0, static_cast<GLsizei>(textures.size()), textures.data());
         screenQuad.draw();
         glBindTextures(0, static_cast<GLsizei>(textures.size()), nullptr);
     }
     else
     {
-        std::array<GLuint, 7> textures{depthTexture, colorTexture, normalsTexture, 0, 0, 0, ssaoBlurPass->getBlurredTexture()};
+        std::array<GLuint, 8> textures{
+            depthTexture, colorTexture, normalsTexture, roughnessMetalnessTexture, 0, 0, 0, ssaoBlurPass->getBlurredTexture()};
         glBindTextures(0, static_cast<GLsizei>(textures.size()), textures.data());
         screenQuad.draw();
         glBindTextures(0, static_cast<GLsizei>(textures.size()), nullptr);
@@ -651,25 +647,27 @@ void SparkRenderer::createFrameBuffersAndTextures()
     dofPass->recreateWithNewSize(Spark::WIDTH, Spark::HEIGHT);
     ssaoBlurPass->recreateWithNewSize(Spark::WIDTH / 2, Spark::HEIGHT / 2);
 
-    utils::createTexture(colorTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
-    utils::createTexture(normalsTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
-    utils::createTexture(depthTexture, Spark::WIDTH, Spark::HEIGHT, GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
+    utils::createTexture2D(colorTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_NEAREST);
+    utils::createTexture2D(normalsTexture, Spark::WIDTH, Spark::HEIGHT, GL_RG16F, GL_RG, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
+    utils::createTexture2D(roughnessMetalnessTexture, Spark::WIDTH, Spark::HEIGHT, GL_RG, GL_RG, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_NEAREST);
+    utils::createTexture2D(depthTexture, Spark::WIDTH, Spark::HEIGHT, GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT, GL_FLOAT, GL_CLAMP_TO_EDGE,
+                           GL_NEAREST);
 
-    utils::createTexture(lightColorTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::createTexture(brightPassTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::createTexture(toneMappingTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::createTexture(motionBlurTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGB16F, GL_RGB, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::createTexture(lightShaftTexture, Spark::WIDTH / 2, Spark::HEIGHT / 2, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::createTexture(ssaoTexture, Spark::WIDTH, Spark::HEIGHT, GL_RED, GL_RED, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::createTexture(fxaaTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::createTexture(downsampleTexture2, Spark::WIDTH / 2, Spark::HEIGHT / 2, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::createTexture(downsampleTexture4, Spark::WIDTH / 4, Spark::HEIGHT / 4, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::createTexture(downsampleTexture8, Spark::WIDTH / 8, Spark::HEIGHT / 8, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::createTexture(downsampleTexture16, Spark::WIDTH / 16, Spark::HEIGHT / 16, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE,
-                         GL_LINEAR);
-    utils::createTexture(bloomTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::createTexture2D(lightColorTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::createTexture2D(brightPassTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::createTexture2D(toneMappingTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::createTexture2D(motionBlurTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGB16F, GL_RGB, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::createTexture2D(lightShaftTexture, Spark::WIDTH / 2, Spark::HEIGHT / 2, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::createTexture2D(ssaoTexture, Spark::WIDTH, Spark::HEIGHT, GL_RED, GL_RED, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::createTexture2D(fxaaTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::createTexture2D(downsampleTexture2, Spark::WIDTH / 2, Spark::HEIGHT / 2, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::createTexture2D(downsampleTexture4, Spark::WIDTH / 4, Spark::HEIGHT / 4, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::createTexture2D(downsampleTexture8, Spark::WIDTH / 8, Spark::HEIGHT / 8, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::createTexture2D(downsampleTexture16, Spark::WIDTH / 16, Spark::HEIGHT / 16, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE,
+                           GL_LINEAR);
+    utils::createTexture2D(bloomTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
 
-    utils::createFramebuffer(mainFramebuffer, {colorTexture, normalsTexture});
+    utils::createFramebuffer(mainFramebuffer, {colorTexture, normalsTexture, roughnessMetalnessTexture});
     utils::bindDepthTexture(mainFramebuffer, depthTexture);
     utils::createFramebuffer(lightFrameBuffer, {lightColorTexture, brightPassTexture});
     utils::bindDepthTexture(lightFrameBuffer, depthTexture);
@@ -696,14 +694,16 @@ void SparkRenderer::cleanup()
     glDeleteTextures(1, &randomNormalsTexture);
     glDeleteTextures(1, &ssaoDisabledTexture);
     glDeleteTextures(1, &averageLuminance);
+    glDeleteTextures(1, &brdfLookupTexture);
 }
 
 void SparkRenderer::deleteFrameBuffersAndTextures() const
 {
-    GLuint textures[13] = {colorTexture,       normalsTexture,     lightColorTexture,   brightPassTexture, downsampleTexture2,
-                           downsampleTexture4, downsampleTexture8, downsampleTexture16, bloomTexture,      toneMappingTexture,
-                           motionBlurTexture,  depthTexture,       ssaoTexture};
-    glDeleteTextures(13, textures);
+    GLuint textures[14] = {colorTexture,        normalsTexture,     roughnessMetalnessTexture, lightColorTexture,
+                           brightPassTexture,   downsampleTexture2, downsampleTexture4,        downsampleTexture8,
+                           downsampleTexture16, bloomTexture,       toneMappingTexture,        motionBlurTexture,
+                           depthTexture,        ssaoTexture};
+    glDeleteTextures(14, textures);
 
     GLuint frameBuffers[11] = {mainFramebuffer,        lightFrameBuffer,        cubemapFramebuffer,     toneMappingFramebuffer,
                                motionBlurFramebuffer,  ssaoFramebuffer,         downsampleFramebuffer2, downsampleFramebuffer4,

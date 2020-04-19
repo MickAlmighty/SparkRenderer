@@ -1,7 +1,7 @@
 #type compute
 #version 450
 layout(local_size_x = 16, local_size_y = 16) in;
-layout(RGBA16F, binding = 0) uniform image2D img_input;
+layout(rgba16f, binding = 0) uniform image2D img_input;
 
 #define HISTOGRAM_BINS 256
 #define EPSILON 0.005

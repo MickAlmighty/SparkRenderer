@@ -20,10 +20,15 @@ namespace spark
 {
 namespace utils
 {
-    void createTexture(GLuint& texture, GLuint width, GLuint height, GLenum internalFormat, GLenum format, GLenum pixelFormat, GLenum textureWrapping,
+    void createTexture2D(GLuint& texture, GLuint width, GLuint height, GLenum internalFormat, GLenum format, GLenum pixelFormat, GLenum textureWrapping,
+                       GLenum textureSampling, bool mipMaps = false, void* data = nullptr);
+    void createCubemap(GLuint& texture, unsigned int size, GLenum internalFormat, GLenum format, GLenum pixelFormat, GLenum textureWrapping,
                        GLenum textureSampling, bool mipMaps = false);
+
     void bindDepthTexture(GLuint& framebuffer, GLuint depthTexture);
     void createFramebuffer(GLuint& framebuffer, const std::vector<GLuint>&& colorTextures, GLuint renderbuffer = 0);
+
+    GLuint createBrdfLookupTexture(unsigned int size);
 
     template<typename T>
     void uploadDataToTexture2D(GLuint texture, GLuint mipMapLevel, GLuint width, GLuint height, GLenum format, GLenum type, const std::vector<T>& buffer)

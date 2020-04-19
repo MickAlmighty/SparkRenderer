@@ -16,38 +16,46 @@ void main()
 #type fragment
 #version 450 core
 layout (location = 0) out vec4 FragColor;
-in vec3 localPos;
 
-uniform samplerCube environmentMap;
+layout (location = 0) in vec3 localPos;
 
-const float PI = 3.14159265359;
+layout (binding = 0) uniform samplerCube environmentMap;
+
+#define SAMPLE_DELTA 0.01
+
+#define PI 3.14159265359
+#define TWO_PI 2 * PI
+#define HALF_PI 0.5 * PI
+
+//#define PHI_SAMPLES floor(TWO_PI / SAMPLE_DELTA)
+//#define THETA_SAMPLES floor(HALF_PI / SAMPLE_DELTA)
+#define INV_TOTAL_SAMPLES 1 / ( floor(TWO_PI / SAMPLE_DELTA) * floor(HALF_PI / SAMPLE_DELTA) ) 
 
 void main()
-{		
-    vec3 normal = normalize(localPos);
+{
+    const vec3 normal = normalize(localPos);
+    const vec3 right = cross(vec3(0.0, 1.0, 0.0), normal);
+    const vec3 up    = cross(normal, right);
 
     vec3 irradiance = vec3(0.0);
-
-    vec3 up    = vec3(0.0, 1.0, 0.0);
-    vec3 right = cross(up, normal);
-    up         = cross(normal, right);
-
-    float sampleDelta = 0.005;
-    float nrSamples = 0.0; 
-    for(float phi = 0.0; phi < 2.0 * PI; phi += sampleDelta)
+    for(float phi = 0.0; phi < TWO_PI; phi += SAMPLE_DELTA)
     {
-        for(float theta = 0.0; theta < 0.5 * PI; theta += sampleDelta)
+        const float sinPhi = sin(phi);
+        const float cosPhi = cos(phi);
+        
+        for(float theta = 0.0; theta < HALF_PI; theta += SAMPLE_DELTA)
         {
-            
-            vec3 tangentSample = vec3(sin(theta) * cos(phi),  sin(theta) * sin(phi), cos(theta));
+            const float sinTheta = sin(theta);
+            const float cosTheta = cos(theta);
+
+            vec3 tangentSample = vec3(sinTheta * cosPhi,  sinTheta * sinPhi, cosTheta);
 
             vec3 sampleVec = tangentSample.x * right + tangentSample.y * up + tangentSample.z * normal; 
 
-            irradiance += texture(environmentMap, sampleVec).rgb * cos(theta) * sin(theta);
-            nrSamples++;
+            irradiance += texture(environmentMap, sampleVec).rgb * cosTheta * sinTheta;
         }
     }
-    irradiance = PI * irradiance * (1.0 / float(nrSamples));
+    irradiance = PI * irradiance * INV_TOTAL_SAMPLES;
 
     FragColor = vec4(irradiance, 1.0);
 }

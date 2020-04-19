@@ -68,8 +68,8 @@ BlurPass::~BlurPass()
 
 void BlurPass::createGlObjects()
 {
-    utils::createTexture(hTexture, width, height, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::createTexture(vTexture, width, height , GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::createTexture2D(hTexture, width, height, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::createTexture2D(vTexture, width, height , GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
 
     utils::createFramebuffer(hFramebuffer, {hTexture});
     utils::createFramebuffer(vFramebuffer, {vTexture});

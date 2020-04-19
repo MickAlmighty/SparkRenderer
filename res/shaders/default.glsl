@@ -40,8 +40,9 @@ void main()
 
 #type fragment
 #version 450
-layout (location = 0) out vec4 FragColor;
-layout (location = 1) out vec3 Normal;
+layout (location = 0) out vec3 FragColor;
+layout (location = 1) out vec2 Normal;
+layout (location = 2) out vec2 RoughnessMetalness;
 
 layout (binding = 1) uniform sampler2D diffuseTexture;
 layout (binding = 2) uniform sampler2D normalTexture;
@@ -53,21 +54,21 @@ in mat3 viewTBN_matrix;
 
 vec2 encodeViewSpaceNormal(vec3 n)
 {
-	//Lambert Azimuthal Equal-Area projection
-	//http://aras-p.info/texts/CompactNormalStorage.html
-	float p = sqrt(n.z*8+8);
+    //Lambert Azimuthal Equal-Area projection
+    //http://aras-p.info/texts/CompactNormalStorage.html
+    float p = sqrt(n.z*8+8);
     return vec2(n.xy/p + 0.5);
 }
 
 vec3 approximationSRgbToLinear (vec3 sRGBColor )
 {
-	return pow ( sRGBColor, vec3(2.2));
+    return pow ( sRGBColor, vec3(2.2));
 }
 
 vec3 accurateSRGBToLinear(vec3 sRGBColor)
 {
-	// https://seblagarde.files.wordpress.com/2015/07/course_notes_moving_frostbite_to_pbr_v32.pdf
-	// page 88
+    // https://seblagarde.files.wordpress.com/2015/07/course_notes_moving_frostbite_to_pbr_v32.pdf
+    // page 88
     vec3 linearRGBLo = sRGBColor / 12.92f;
     vec3 linearRGBHi = pow((sRGBColor + 0.055f) / 1.055f, vec3(2.4f));
     vec3 linearRGB;
@@ -79,16 +80,14 @@ vec3 accurateSRGBToLinear(vec3 sRGBColor)
 
 void main()
 {
-    FragColor.xyz = accurateSRGBToLinear(texture(diffuseTexture, tex_coords).xyz);
+    FragColor.rgb = accurateSRGBToLinear(texture(diffuseTexture, tex_coords).rgb);
 
-	vec3 normalFromTexture = texture(normalTexture, tex_coords).xyz;
-	normalFromTexture = normalize(normalFromTexture * 2.0 - 1.0);
+    vec3 normalFromTexture = texture(normalTexture, tex_coords).xyz;
+    normalFromTexture = normalize(normalFromTexture * 2.0 - 1.0);
+    vec3 viewNormal = normalize(viewTBN_matrix * normalFromTexture);
+    vec2 encodedNormal = encodeViewSpaceNormal(viewNormal);
+    Normal.rg = encodedNormal;
 
-	vec3 viewNormal = normalize(viewTBN_matrix * normalFromTexture);
-
-	vec2 encodedNormal = encodeViewSpaceNormal(viewNormal);
-	Normal.xy = encodedNormal;
-	Normal.z = texture(metalnessTexture, tex_coords).x;
-	//Normal.xyz = normalize(TBN_matrix * normalFromTexture);
-	FragColor.w = texture(roughnessTexture, tex_coords).x;
+    RoughnessMetalness.r = texture(roughnessTexture, tex_coords).x;
+    RoughnessMetalness.g = texture(metalnessTexture, tex_coords).x;
 }

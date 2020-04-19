@@ -8,6 +8,7 @@
 #include <gli/gli.hpp>
 #include <stb_image/stb_image.h>
 
+#include "CommonUtils.h"
 #include "Mesh.h"
 #include "Shader.h"
 #include "Spark.h"
@@ -292,18 +293,13 @@ std::optional<std::shared_ptr<PbrCubemapTexture>> ResourceLoader::loadHdrTexture
         return std::nullopt;
     }
     GLuint hdrTexture{0};
-    glGenTextures(1, &hdrTexture);
-    glBindTexture(GL_TEXTURE_2D, hdrTexture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, data);
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    utils::createTexture2D(hdrTexture, width, height, GL_RGB16F, GL_RGB, 
+        GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR, false, data);
 
     stbi_image_free(data);
 
-    auto tex = std::make_shared<PbrCubemapTexture>(hdrTexture, path, 1024);
+    auto tex = std::make_shared<PbrCubemapTexture>(hdrTexture, path, 512);
     glDeleteTextures(1, &hdrTexture);
     return tex;
 }

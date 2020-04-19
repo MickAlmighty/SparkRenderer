@@ -22,10 +22,11 @@ in vec2 texCoords;
 layout(binding = 0) uniform sampler2D depthTexture;
 layout(binding = 1) uniform sampler2D diffuseTexture;
 layout(binding = 2) uniform sampler2D normalTexture;
-layout(binding = 3) uniform samplerCube irradianceMap;
-layout(binding = 4) uniform samplerCube prefilterMap;
-layout(binding = 5) uniform sampler2D brdfLUT;
-layout(binding = 6) uniform sampler2D ssaoTexture;
+layout(binding = 3) uniform sampler2D rougnessMetalnessTexture;
+layout(binding = 4) uniform samplerCube irradianceMap;
+layout(binding = 5) uniform samplerCube prefilterMap;
+layout(binding = 6) uniform sampler2D brdfLUT;
+layout(binding = 7) uniform sampler2D ssaoTexture;
 
 layout (std140) uniform Camera
 {
@@ -123,26 +124,26 @@ vec3 getBrightPassColor(vec3 color)
 
 void main()
 {
-	//vec3 pos = texture(positionTexture, texCoords).xyz;
 	float depthValue = texture(depthTexture, texCoords).x;
-	if (depthValue == 0.0f)
+	if (depthValue == 0.0f) // 0.0f means its far plane or there is nothing in G-Buffer
 	{
 		discard;
 	}
 	vec3 pos = worldPosFromDepth(depthValue);
 
-	vec4 colorAndRoughness = texture(diffuseTexture, texCoords);
-	vec3 normalAndMetalness = texture(normalTexture, texCoords).xyz;
+	vec3 albedo = texture(diffuseTexture, texCoords).rgb;
+	vec2 normal = texture(normalTexture, texCoords).xy;
+	vec2 roughnessAndMetalness = texture(rougnessMetalnessTexture, texCoords).rg;
     float ssao = texture(ssaoTexture, texCoords).x;
 
-	vec3 decoded = decodeViewSpaceNormal(normalAndMetalness.xy);
+	vec3 decoded = decodeViewSpaceNormal(normal.xy);
 	
 	vec3 worldPosNormal = (camera.invertedView * vec4(decoded, 0.0f)).xyz;
 	
 	Material material = {
-		colorAndRoughness.xyz, //albedo in linear space
-		colorAndRoughness.w,
-		normalAndMetalness.z,
+		albedo.xyz, //albedo in linear space
+		roughnessAndMetalness.r,
+		roughnessAndMetalness.g,
 		vec3(0)
 	};
 

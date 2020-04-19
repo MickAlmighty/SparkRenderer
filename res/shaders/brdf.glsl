@@ -22,8 +22,8 @@ const float PI = 3.14159265359;
 float RadicalInverse_VdC(uint bits);
 vec2 Hammersley(uint i, uint N);
 vec3 ImportanceSampleGGX(vec2 Xi, vec3 N, float roughness);
-float GeometrySchlickGGX(float NdotV, float roughness);
-float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness);
+float GeometrySchlickGGX(float NdotV, float k);
+float GeometrySmith(float NdotV, float NdotL, float roughness);
 vec2 IntegrateBRDF(float NdotV, float roughness);
 
 void main()
@@ -70,24 +70,21 @@ vec3 ImportanceSampleGGX(vec2 Xi, vec3 N, float roughness)
 	return normalize(sampleVec);
 }
 
-float GeometrySchlickGGX(float NdotV, float roughness)
+float GeometrySchlickGGX(float NdotV, float k)
 {
-    // note that we use a different k for IBL
-    float a = roughness;
-    float k = (a * a) / 2.0;
-
     float nom   = NdotV;
     float denom = NdotV * (1.0 - k) + k;
 
     return nom / denom;
 }
 
-float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
+float GeometrySmith(float NdotV, float NdotL, float roughness)
 {
-    float NdotV = max(dot(N, V), 0.0);
-    float NdotL = max(dot(N, L), 0.0);
-    float ggx2 = GeometrySchlickGGX(NdotV, roughness);
-    float ggx1 = GeometrySchlickGGX(NdotL, roughness);
+    float r = roughness;
+    float k = (r * r) / 2.0; // Epic suggests using this roughness remapping for IBL lighting.
+    
+    float ggx2 = GeometrySchlickGGX(NdotV, k);
+    float ggx1 = GeometrySchlickGGX(NdotL, k);
 
     return ggx1 * ggx2;
 }
@@ -95,7 +92,7 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
 vec2 IntegrateBRDF(float NdotV, float roughness)
 {
     vec3 V;
-    V.x = sqrt(1.0 - NdotV*NdotV);
+    V.x = sqrt(1.0 - NdotV * NdotV);
     V.y = 0.0;
     V.z = NdotV;
 
@@ -119,7 +116,7 @@ vec2 IntegrateBRDF(float NdotV, float roughness)
 
         if(NdotL > 0.0)
         {
-            float G = GeometrySmith(N, V, L, roughness);
+            float G = GeometrySmith(NdotV, NdotL, roughness);
             float G_Vis = (G * VdotH) / (NdotH * NdotV);
             float Fc = pow(1.0 - VdotH, 5.0);
 

@@ -154,7 +154,9 @@ std::vector<GLuint> Shader::compileShaders(const std::map<GLenum, std::string>& 
         if (!success)
         {
             glGetShaderInfoLog(shader, 512, nullptr, infoLog);
-            throw std::runtime_error("ERROR::SHADER::COMPILATION_FAILED/n");
+            std::string fullInfo = "ERROR::SHADER::COMPILATION_FAILED, cause: ";
+            fullInfo.append(infoLog);
+            throw std::runtime_error(fullInfo);
         }
         shaderIds.push_back(shader);
     }
