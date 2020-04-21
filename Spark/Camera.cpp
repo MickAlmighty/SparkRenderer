@@ -1,7 +1,9 @@
 #include "Camera.h"
-#include "JsonSerializer.h"
+
+#include "CommonUtils.h"
 #include "Clock.h"
 #include "HID.h"
+#include "JsonSerializer.h"
 #include "Spark.h"
 
 namespace spark
@@ -34,24 +36,12 @@ glm::mat4 Camera::getProjection() const
 
 glm::mat4 Camera::getProjectionReversedZInfiniteFarPlane() const
 {
-    const float aspectWbyH = (float)Spark::WIDTH / (1.0f * Spark::HEIGHT);
-    const float f = 1.0f / tan(glm::radians(fov) / 2.0f);
-
-    return glm::mat4(f / aspectWbyH, 0.0f, 0.0f, 0.0f, 0.0f, f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, zNear, 0.0f);
+     return utils::getProjectionReversedZInfFar(Spark::WIDTH, Spark::HEIGHT, fov, zNear);
 }
 
 glm::mat4 Camera::getProjectionReversedZ() const
 {
-    const float rad = glm::radians(fov);
-    const float h = glm::cos(0.5f * rad) / glm::sin(0.5f * rad);
-    const float w = h * (float)Spark::HEIGHT / (float)Spark::WIDTH;
-    glm::mat<4, 4, float, glm::defaultp> p(static_cast<float>(0));
-    p[0][0] = w;
-    p[1][1] = h;
-    p[2][2] = zNear / (zFar - zNear);
-    p[2][3] = -1;
-    p[3][2] = -(zFar * zNear) / (zNear - zFar);
-    return p;
+    return utils::getProjectionReversedZ(Spark::WIDTH, Spark::HEIGHT, fov, zNear, zFar);
 }
 
 glm::vec3 Camera::getPosition() const
@@ -78,70 +68,87 @@ glm::vec3 Camera::getCameraTarget() const
 {
     return cameraTarget;
 }
+
 glm::vec3 Camera::getFront() const
 {
     return Front;
 }
+
 glm::vec3 Camera::getUp() const
 {
     return Up;
 }
+
 glm::vec3 Camera::getRight() const
 {
     return Right;
 }
+
 float Camera::getYaw() const
 {
     return Yaw;
 }
+
 float Camera::getPitch() const
 {
     return Pitch;
 }
+
 float Camera::getMovementSpeed() const
 {
     return MovementSpeed;
 }
+
 float Camera::getMouseSensitivity() const
 {
     return MouseSensitivity;
 }
+
 float Camera::getZoom() const
 {
     return Zoom;
 }
+
 float Camera::getFov() const
 {
     return fov;
 }
+
 float Camera::getNearPlane() const
 {
     return zNear;
 }
+
 float Camera::getFarPlane() const
 {
     return zFar;
 }
+
 bool Camera::isDirty() const
 {
     return dirty;
 }
+
 void Camera::cleanDirty()
 {
     dirty = false;
 }
+
 CameraMode Camera::getCameraMode() const
 {
     return cameraMode;
 }
+
 void Camera::setYaw(float yaw)
 {
     Yaw = yaw;
 }
+
 void Camera::setPitch(float pitch)
 {
     Pitch = pitch;
 }
+
 void Camera::setRotation(float yaw, float pitch)
 {
     Yaw = yaw;

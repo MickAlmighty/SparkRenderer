@@ -8,13 +8,13 @@ namespace spark
 {
 namespace utils
 {
-    void createTexture2D(GLuint& texture, GLuint width, GLuint height, GLenum internalFormat, GLenum format, GLenum pixelFormat, GLenum textureWrapping,
-                       GLenum textureSampling, bool mipMaps, void* data)
+    void createTexture2D(GLuint& texture, GLuint width, GLuint height, GLenum internalFormat, GLenum format, GLenum pixelFormat,
+                         GLenum textureWrapping, GLenum textureSampling, bool mipMaps, void* data)
     {
         glCreateTextures(GL_TEXTURE_2D, 1, &texture);
         glBindTexture(GL_TEXTURE_2D, texture);
 
-        if (data == nullptr)
+        if(data == nullptr)
             glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, pixelFormat, nullptr);
         else
             glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, pixelFormat, data);
@@ -60,7 +60,7 @@ namespace utils
         {
             if(textureSampling == GL_LINEAR)
             {
-                 glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+                glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
             }
             else if(textureSampling == GL_NEAREST)
             {
@@ -122,6 +122,33 @@ namespace utils
         POP_DEBUG_GROUP();
 
         return brdfLUTTexture;
+    }
+
+    glm::mat4 getProjectionReversedZInfFar(uint32_t width, uint32_t height, float fovDegrees, float zNear)
+    {
+        const float aspectWbyH = static_cast<float>(width) / (1.0f * height);
+        const float f = 1.0f / glm::tan(glm::radians(fovDegrees) / 2.0f);
+
+        const glm::vec4 column0{f / aspectWbyH, 0.0f, 0.0f, 0.0f};
+        const glm::vec4 column1{0.0f, f, 0.0f, 0.0f};
+        const glm::vec4 column2{0.0f, 0.0f, 0.0f, -1.0f};
+        const glm::vec4 column3{0.0f, 0.0f, zNear, 0.0f};
+
+        return glm::mat4(column0, column1, column2, column3);
+    }
+
+    glm::mat4 getProjectionReversedZ(uint32_t width, uint32_t height, float fovDegrees, float zNear, float zFar)
+    {
+        const float rad = glm::radians(fovDegrees);
+        const float h = glm::cos(0.5f * rad) / glm::sin(0.5f * rad);
+        const float w = h * static_cast<float>(height) / (1.0f * width);
+
+        const glm::vec4 column0{w, 0.0f, 0.0f, 0.0f};
+        const glm::vec4 column1{0.0f, h, 0.0f, 0.0f};
+        const glm::vec4 column2{0.0f, 0.0f, zNear / (zFar - zNear), -1.0f};
+        const glm::vec4 column3{0.0f, 0.0f, -(zFar * zNear) / (zNear - zFar), 0.0f};
+
+        return glm::mat4(column0, column1, column2, column3);
     }
 }  // namespace utils
 }  // namespace spark

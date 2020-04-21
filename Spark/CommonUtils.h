@@ -7,7 +7,6 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 
-
 #define PUSH_DEBUG_GROUP(x)                                                                                       \
     {                                                                                                             \
         std::string message = #x;                                                                                 \
@@ -20,8 +19,8 @@ namespace spark
 {
 namespace utils
 {
-    void createTexture2D(GLuint& texture, GLuint width, GLuint height, GLenum internalFormat, GLenum format, GLenum pixelFormat, GLenum textureWrapping,
-                       GLenum textureSampling, bool mipMaps = false, void* data = nullptr);
+    void createTexture2D(GLuint& texture, GLuint width, GLuint height, GLenum internalFormat, GLenum format, GLenum pixelFormat,
+                         GLenum textureWrapping, GLenum textureSampling, bool mipMaps = false, void* data = nullptr);
     void createCubemap(GLuint& texture, unsigned int size, GLenum internalFormat, GLenum format, GLenum pixelFormat, GLenum textureWrapping,
                        GLenum textureSampling, bool mipMaps = false);
 
@@ -31,10 +30,14 @@ namespace utils
     GLuint createBrdfLookupTexture(unsigned int size);
 
     template<typename T>
-    void uploadDataToTexture2D(GLuint texture, GLuint mipMapLevel, GLuint width, GLuint height, GLenum format, GLenum type, const std::vector<T>& buffer)
+    void uploadDataToTexture2D(GLuint texture, GLuint mipMapLevel, GLuint width, GLuint height, GLenum format, GLenum type,
+                               const std::vector<T>& buffer)
     {
         glTextureSubImage2D(texture, mipMapLevel, 0, 0, width, height, format, type, buffer.data());
     }
+
+    glm::mat4 getProjectionReversedZInfFar(uint32_t width, uint32_t height, float fovDegrees, float zNear);
+    glm::mat4 getProjectionReversedZ(uint32_t width, uint32_t height, float fovDegrees, float zNear, float zFar);
 }  // namespace utils
 }  // namespace spark
 

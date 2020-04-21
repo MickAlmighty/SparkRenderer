@@ -209,7 +209,7 @@ void SparkRenderer::renderPass()
                 glm::mat4 matrices[4];
             };
             const glm::mat4 view = camera->getViewMatrix();
-            const glm::mat4 projection = camera->getProjectionReversedZ();
+            const glm::mat4 projection = camera->getProjectionReversedZInfiniteFarPlane();
             const glm::mat4 invertedView = glm::inverse(view);
             const glm::mat4 invertedProj = glm::inverse(projection);
             const CamData camData{glm::vec4(camera->getPosition(), 1.0f), {view, projection, invertedView, invertedProj}};
@@ -237,6 +237,8 @@ void SparkRenderer::renderPass()
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     POP_DEBUG_GROUP();
     glfwSwapBuffers(Spark::window);
+
+    clearRenderQueues();
 }
 
 void SparkRenderer::resizeWindowIfNecessary()
@@ -268,16 +270,11 @@ void SparkRenderer::fillGBuffer()
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_GREATER);
 
-    glCullFace(GL_BACK);
-
     mainShader->use();
     for(auto& drawMesh : renderQueue[ShaderType::DEFAULT_SHADER])
     {
         drawMesh(mainShader);
     }
-    renderQueue[ShaderType::DEFAULT_SHADER].clear();
-
-    glCullFace(GL_FRONT);
 
     POP_DEBUG_GROUP();
 }
@@ -449,7 +446,6 @@ void SparkRenderer::helperShapes()
     {
         drawMesh(solidColorShader);
     }
-    renderQueue[ShaderType::SOLID_COLOR_SHADER].clear();
 
     glEnable(GL_CULL_FACE);
     disableWireframeMode();
@@ -640,6 +636,14 @@ void SparkRenderer::renderToScreen() const
 
     screenQuad.draw();
     POP_DEBUG_GROUP();
+}
+
+void SparkRenderer::clearRenderQueues()
+{
+    for (auto& [shaderType, shaderRenderList] : renderQueue)
+    {
+        shaderRenderList.clear();
+    }
 }
 
 void SparkRenderer::createFrameBuffersAndTextures()

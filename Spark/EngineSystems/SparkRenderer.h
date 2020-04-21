@@ -134,6 +134,7 @@ class SparkRenderer
     void toneMapping();
     void calculateAverageLuminance();
     void renderToScreen() const;
+    void clearRenderQueues();
     void initMembers();
     void createFrameBuffersAndTextures();
     void deleteFrameBuffersAndTextures() const;
