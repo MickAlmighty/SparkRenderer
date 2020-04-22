@@ -86,24 +86,32 @@ namespace utils
         glCreateFramebuffers(1, &framebuffer);
         glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
 
-        std::vector<GLenum> colorAttachments;
-        colorAttachments.reserve(colorTextures.size());
-        for(unsigned int i = 0; i < colorTextures.size(); ++i)
+        if(!colorTextures.empty())
         {
-            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, colorTextures[i], 0);
-            colorAttachments.push_back(GL_COLOR_ATTACHMENT0 + i);
+            std::vector<GLenum> colorAttachments;
+            colorAttachments.reserve(colorTextures.size());
+            for(unsigned int i = 0; i < colorTextures.size(); ++i)
+            {
+                glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, colorTextures[i], 0);
+                colorAttachments.push_back(GL_COLOR_ATTACHMENT0 + i);
+            }
+
+            glDrawBuffers(static_cast<GLsizei>(colorAttachments.size()), colorAttachments.data());
         }
-        glDrawBuffers(static_cast<GLsizei>(colorAttachments.size()), colorAttachments.data());
 
         if(renderbuffer != 0)
         {
             glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, renderbuffer);
         }
 
-        if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        if(!colorTextures.empty() || renderbuffer != 0)
         {
-            throw std::exception("Framebuffer incomplete!");
+            if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+            {
+                throw std::exception("Framebuffer incomplete!");
+            }
         }
+
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 

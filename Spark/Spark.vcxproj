@@ -135,6 +135,7 @@
     <ClCompile Include="Enums.cpp" />
     <ClCompile Include="Factory.cpp" />
     <ClCompile Include="GameObject.cpp" />
+    <ClCompile Include="GBuffer.cpp" />
     <ClCompile Include="glad.c" />
     <ClCompile Include="GPUResource.cpp" />
     <ClCompile Include="GUI\ImGuizmo.cpp" />
@@ -188,6 +189,7 @@
     <ClInclude Include="Enums.h" />
     <ClInclude Include="Factory.h" />
     <ClInclude Include="GameObject.h" />
+    <ClInclude Include="GBuffer.h" />
     <ClInclude Include="GPUResource.h" />
     <ClInclude Include="GUI\ImGuizmo.h" />
     <ClInclude Include="GUI\ImGui\imconfig.h" />

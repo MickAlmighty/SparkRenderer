@@ -5,6 +5,7 @@
 #include <GLFW/glfw3.h>
 
 #include "Enums.h"
+#include "GBuffer.h"
 #include "ModelMesh.h"
 #include "Structs.h"
 #include "Shader.h"
@@ -38,14 +39,16 @@ class SparkRenderer
     std::unique_ptr<DepthOfFieldPass> dofPass;
     std::unique_ptr<BlurPass> ssaoBlurPass;
 
-    GLuint mainFramebuffer{}, colorTexture{}, normalsTexture{}, roughnessMetalnessTexture{}, depthTexture{};
+    GBuffer gBuffer{};
+
     GLuint lightFrameBuffer{}, lightColorTexture{}, brightPassTexture{};
     GLuint cubemapFramebuffer{};
     GLuint toneMappingFramebuffer{}, toneMappingTexture{};
     GLuint motionBlurFramebuffer{}, motionBlurTexture{};
     GLuint lightShaftFramebuffer{}, lightShaftTexture{};
     GLuint fxaaFramebuffer{}, fxaaTexture{};
-    GLuint averageLuminance{};
+    GLuint averageLuminanceTexture{};
+
 
     //IBL
     GLuint brdfLookupTexture{};
@@ -115,16 +118,17 @@ class SparkRenderer
     float logLuminanceRange = 12.0f;
     float tau = 1.1f;
 
-    bool bloomEnable = true;
-    float bloomIntensity = 0.2f;
+    bool bloomEnable = false;
+    float bloomIntensity = 0.1f;
 
     bool motionBlurEnable = true;
+    bool renderingToCubemap = false;
 
     void resizeWindowIfNecessary();
-    void fillGBuffer();
-    void ssaoComputing();
-    void renderLights();
-    void renderCubemap() const;
+    void fillGBuffer(const GBuffer& geometryBuffer);
+    void ssaoComputing(const GBuffer& geometryBuffer);
+    void renderLights(GLuint framebuffer, const GBuffer& geometryBuffer);
+    void renderCubemap(GLuint framebuffer) const;
     void bloom();
     void lightShafts();
     void helperShapes();
@@ -137,10 +141,13 @@ class SparkRenderer
     void clearRenderQueues();
     void initMembers();
     void createFrameBuffersAndTextures();
-    void deleteFrameBuffersAndTextures() const;
+    void deleteFrameBuffersAndTextures();
 
     static void enableWireframeMode();
     static void disableWireframeMode();
+
+    void updateCameraUBO(glm::mat4 projection, glm::mat4 view, glm::vec3 pos);
+    void renderSceneToCubemap();
 };
 }  // namespace spark
 #endif

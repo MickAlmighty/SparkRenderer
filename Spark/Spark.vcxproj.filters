@@ -186,6 +186,9 @@
     <ClCompile Include="ResourceLoader.cpp">
       <Filter>ResourceManagement</Filter>
     </ClCompile>
+    <ClCompile Include="GBuffer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Spark.h">
@@ -343,6 +346,9 @@
     </ClInclude>
     <ClInclude Include="ResourceLoader.h">
       <Filter>ResourceManagement</Filter>
+    </ClInclude>
+    <ClInclude Include="GBuffer.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

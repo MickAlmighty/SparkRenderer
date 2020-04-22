@@ -111,6 +111,11 @@ struct PbrCubemapTexture final
     PbrCubemapTexture(GLuint hdrTexture, const std::string& path, unsigned int size = 1024);
     ~PbrCubemapTexture();
 
+    static GLuint createIrradianceCubemap(GLuint framebuffer, GLuint environmentCubemap, Cube& cube, glm::mat4 projection,
+                                   const std::array<glm::mat4, 6>& views, const std::shared_ptr<resources::Shader>& irradianceShader);
+    static GLuint createPreFilteredCubemap(GLuint framebuffer, GLuint environmentCubemap, unsigned int envCubemapSize, Cube& cube, glm::mat4 projection,
+                                   const std::array<glm::mat4, 6>& views, const std::shared_ptr<resources::Shader>& prefilterShader);
+
     private:
     std::string path{};
     std::array<glm::mat4, 6> viewMatrices{};
@@ -122,9 +127,7 @@ struct PbrCubemapTexture final
     std::shared_ptr<resources::Shader> brdfShader{nullptr};
 
     void setup(GLuint hdrTexture, unsigned int size);
-    GLuint createEnvironmentCubemapWithMipmapChain(GLuint framebuffer, GLuint equirectangularTexture, unsigned int size, Cube& cube) const; 
-    GLuint createIrradianceCubemap(GLuint framebuffer, GLuint environmentCubemap, Cube& cube) const; 
-    GLuint createPreFilteredCubemap(GLuint framebuffer, GLuint environmentCubemap, unsigned int envCubemapSize, Cube& cube) const;
+    GLuint createEnvironmentCubemapWithMipmapChain(GLuint framebuffer, GLuint equirectangularTexture, unsigned int size, Cube& cube) const;
     GLuint createBrdfLookupTexture(GLuint framebuffer, unsigned int envCubemapSize) const;
     GLuint createCubemapAndCopyDataFromFirstLayerOf(GLuint cubemap, unsigned int cubemapSize) const;
 };
@@ -178,13 +181,9 @@ struct ScreenQuad final
     GLuint vbo{};
 
     std::vector<QuadVertex> vertices = {
-        {{-1.0f, 1.0f, 0.0f}, {0.0f, 1.0f}},
-        {{1.0f, -1.0f, 0.0f}, {1.0f, 0.0f}},
-        {{1.0f, 1.0f, 0.0f}, {1.0f, 1.0f}},
+        {{-1.0f, 1.0f, 0.0f}, {0.0f, 1.0f}}, {{1.0f, -1.0f, 0.0f}, {1.0f, 0.0f}},  {{1.0f, 1.0f, 0.0f}, {1.0f, 1.0f}},
 
-        {{-1.0f, 1.0f, 0.0f}, {0.0f, 1.0f}},
-        {{-1.0f, -1.0f, 0.0f}, {0.0f, 0.0f}},
-        {{1.0f, -1.0f, 0.0f}, {1.0f, 0.0f}}};
+        {{-1.0f, 1.0f, 0.0f}, {0.0f, 1.0f}}, {{-1.0f, -1.0f, 0.0f}, {0.0f, 0.0f}}, {{1.0f, -1.0f, 0.0f}, {1.0f, 0.0f}}};
 
     void setup()
     {

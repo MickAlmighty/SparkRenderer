@@ -72,8 +72,8 @@ void PbrCubemapTexture::setup(GLuint hdrTexture, unsigned size)
 
     // creating cubemap in the line below is meant to reduce memory usage by getting rid of mipmaps
     this->cubemap = createCubemapAndCopyDataFromFirstLayerOf(envCubemap, cubemapSize);
-    this->irradianceCubemap = createIrradianceCubemap(captureFBO, envCubemap, cube);
-    this->prefilteredCubemap = createPreFilteredCubemap(captureFBO, envCubemap, cubemapSize, cube);
+    this->irradianceCubemap = createIrradianceCubemap(captureFBO, envCubemap, cube, projection, viewMatrices, irradianceShader);
+    this->prefilteredCubemap = createPreFilteredCubemap(captureFBO, envCubemap, cubemapSize, cube, projection, viewMatrices, prefilterShader);
     // this->brdfLUTTexture = createBrdfLookupTexture(captureFBO, 1024);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -109,7 +109,9 @@ GLuint PbrCubemapTexture::createEnvironmentCubemapWithMipmapChain(GLuint framebu
     return envCubemap;
 }
 
-GLuint PbrCubemapTexture::createIrradianceCubemap(GLuint framebuffer, GLuint environmentCubemap, Cube& cube) const
+GLuint PbrCubemapTexture::createIrradianceCubemap(GLuint framebuffer, GLuint environmentCubemap, Cube& cube, glm::mat4 projection,
+                                                  const std::array<glm::mat4, 6>& views,
+                                                  const std::shared_ptr<resources::Shader>& irradianceShader)
 {
     PUSH_DEBUG_GROUP(IRRADIANCE_CUBEMAP);
 
@@ -124,7 +126,7 @@ GLuint PbrCubemapTexture::createIrradianceCubemap(GLuint framebuffer, GLuint env
 
     for(unsigned int i = 0; i < 6; ++i)
     {
-        irradianceShader->setMat4("view", viewMatrices[i]);
+        irradianceShader->setMat4("view", views[i]);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, irradianceMap, 0);
 
         cube.draw();
@@ -135,7 +137,8 @@ GLuint PbrCubemapTexture::createIrradianceCubemap(GLuint framebuffer, GLuint env
     return irradianceMap;
 }
 
-GLuint PbrCubemapTexture::createPreFilteredCubemap(GLuint framebuffer, GLuint environmentCubemap, unsigned envCubemapSize, Cube& cube) const
+GLuint PbrCubemapTexture::createPreFilteredCubemap(GLuint framebuffer, GLuint environmentCubemap, unsigned envCubemapSize, Cube& cube, glm::mat4 projection,
+                                   const std::array<glm::mat4, 6>& views, const std::shared_ptr<resources::Shader>& prefilterShader)
 {
     PUSH_DEBUG_GROUP(PREFILTER_CUBEMAP);
 
@@ -159,7 +162,7 @@ GLuint PbrCubemapTexture::createPreFilteredCubemap(GLuint framebuffer, GLuint en
         prefilterShader->setFloat("roughness", roughness);
         for(unsigned int i = 0; i < 6; ++i)
         {
-            prefilterShader->setMat4("view", viewMatrices[i]);
+            prefilterShader->setMat4("view", views[i]);
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, prefilteredMap, mip);
 
             cube.draw();
