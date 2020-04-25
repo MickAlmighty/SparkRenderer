@@ -4,10 +4,13 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
+
+#include "EngineSystems/SparkRenderer.h"
 #include "Enums.h"
 #include "GameObject.h"
 #include "JsonSerializer.h"
 #include "Mesh.h"
+#include "RenderingRequest.h"
 #include "ResourceLoader.h"
 #include "ShapeCreator.h"
 #include "Spark.h"
@@ -108,19 +111,23 @@ void PointLight::update()
         addedToLightManager = true;
     }
 
-    glm::mat4 sphereModel(1);
-    sphereModel = glm::scale(sphereModel, glm::vec3(radius));
-    sphereModel[3] = glm::vec4(getPosition(), 1.0f);
+    getGameObject()->transform.local.setScale(glm::vec3(radius));
 
-    if(sphereModel != lightModel)
+    const glm::mat4 mat = getGameObject()->transform.local.getMatrix();
+    if(mat != lightModel)
     {
-        setLightModel(sphereModel);
+        setLightModel(mat);
         // it also takes light position into consideration
     }
 
     if(getGameObject() == getGameObject()->getScene()->getGameObjectToPreview())
     {
-        sphere->addToRenderQueue(getLightModel());
+        RenderingRequest request{};
+        request.shaderType = sphere->shaderType;
+        request.gameObject = getGameObject();
+        request.mesh = sphere;
+
+        SparkRenderer::getInstance()->addRenderingRequest(request);
     }
 }
 

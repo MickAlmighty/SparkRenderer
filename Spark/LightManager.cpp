@@ -7,6 +7,11 @@
 
 namespace spark
 {
+void LightManager::addLightProbe(const std::shared_ptr<LightProbe>& lightProbe)
+{
+    lightProbes.push_back(lightProbe);
+}
+
 void LightManager::addDirectionalLight(const std::shared_ptr<DirectionalLight>& directionalLight)
 {
     directionalLights.push_back(directionalLight);

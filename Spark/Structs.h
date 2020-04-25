@@ -308,6 +308,13 @@ struct Buffer
         glNamedBufferSubData(ID, offset, vectorSize, buffer.data());
     }
 
+    void resizeBuffer(size_t sizeInBytes)
+    {
+        glNamedBufferData(ID, sizeInBytes, nullptr, GL_DYNAMIC_DRAW);
+        size = sizeInBytes;
+    }
+
+    //this method sets value 0 for all bytes in the buffer
     void clearBuffer() const
     {
         glClearNamedBufferData(ID, GL_R32F, GL_RED, GL_FLOAT, nullptr);

@@ -116,7 +116,7 @@ GLuint PbrCubemapTexture::createIrradianceCubemap(GLuint framebuffer, GLuint env
     PUSH_DEBUG_GROUP(IRRADIANCE_CUBEMAP);
 
     GLuint irradianceMap{};
-    utils::createCubemap(irradianceMap, 32, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::createCubemap(irradianceMap, 32, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
 
     glViewport(0, 0, 32, 32);
 
@@ -144,7 +144,7 @@ GLuint PbrCubemapTexture::createPreFilteredCubemap(GLuint framebuffer, GLuint en
 
     const unsigned int prefilteredMapSize = 128;
     GLuint prefilteredMap{};
-    utils::createCubemap(prefilteredMap, prefilteredMapSize, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR, true);
+    utils::createCubemap(prefilteredMap, prefilteredMapSize, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR, true);
 
     prefilterShader->use();
     glBindTextureUnit(0, environmentCubemap);

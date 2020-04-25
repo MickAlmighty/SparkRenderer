@@ -11,6 +11,7 @@
 #include "PointLight.h"
 #include "SpotLight.h"
 #include "TerrainGenerator.h"
+#include "LightProbe.h"
 #include <optional>
 
 namespace spark
@@ -119,6 +120,7 @@ const static std::map<std::string, std::function<std::shared_ptr<Component>()>> 
     {"ActorAI", [] { return std::make_shared<ActorAI>(); }},
     {"DirectionalLight", [] { return std::make_shared<DirectionalLight>(); }},
     {"PointLight", [] { return std::make_shared<PointLight>(); }},
-    {"SpotLight", [] { return std::make_shared<SpotLight>(); }}};
+    {"SpotLight", [] { return std::make_shared<SpotLight>(); }},
+    {"LightProbe", [] { return std::make_shared<LightProbe>(); }}};
 }  // namespace spark
 #endif

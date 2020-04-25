@@ -56,9 +56,9 @@ MeshPlane::~MeshPlane()
 
 void MeshPlane::addToRenderQueue() const
 {
-    glm::mat4 model = getGameObject()->transform.world.getMatrix();
+   /* glm::mat4 model = getGameObject()->transform.world.getMatrix();
     auto f = [this, model](std::shared_ptr<resources::Shader>& shader) { draw(shader, model); };
-    SparkRenderer::getInstance()->renderQueue[shaderType].push_back(f);
+    SparkRenderer::getInstance()->renderQueue[shaderType].push_back(f);*/
 }
 
 void MeshPlane::draw(std::shared_ptr<resources::Shader>& shader, glm::mat4 model) const

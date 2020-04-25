@@ -10,8 +10,8 @@
 
 namespace spark
 {
-Mesh::Mesh(std::vector<VertexShaderAttribute>& verticesAttributes, std::vector<unsigned>& indices, std::map<TextureTarget, std::shared_ptr<resources::Texture>>& meshTextures,
-           std::string&& newName_, ShaderType shaderType)
+Mesh::Mesh(std::vector<VertexShaderAttribute>& verticesAttributes, std::vector<unsigned>& indices,
+           std::map<TextureTarget, std::shared_ptr<resources::Texture>>& meshTextures, std::string&& newName_, ShaderType shaderType)
 {
     this->indices = std::move(indices);
     this->textures = std::move(meshTextures);
@@ -21,10 +21,10 @@ Mesh::Mesh(std::vector<VertexShaderAttribute>& verticesAttributes, std::vector<u
     {
         attributesAndVbos.emplace_back(verticesAttribute, 0);
     }
-    //Mesh::gpuLoad();
+    // Mesh::gpuLoad();
 }
 
-    Mesh::Mesh(std::vector<VertexShaderAttribute>& verticesAttributes, std::vector<unsigned>& indices, std::string&& newName_, ShaderType shaderType)
+Mesh::Mesh(std::vector<VertexShaderAttribute>& verticesAttributes, std::vector<unsigned>& indices, std::string&& newName_, ShaderType shaderType)
 {
     this->indices = std::move(indices);
     this->shaderType = shaderType;
@@ -33,13 +33,6 @@ Mesh::Mesh(std::vector<VertexShaderAttribute>& verticesAttributes, std::vector<u
     {
         attributesAndVbos.emplace_back(verticesAttribute, 0);
     }
-}
-
-void Mesh::addToRenderQueue(glm::mat4 model)
-{
-    const auto thisPtr = shared_from_this();
-    auto f = [thisPtr, model](std::shared_ptr<resources::Shader>& shader) { thisPtr->draw(shader, model); };
-    SparkRenderer::getInstance()->renderQueue[shaderType].push_back(f);
 }
 
 void Mesh::draw(std::shared_ptr<resources::Shader>& shader, glm::mat4 model)
@@ -53,7 +46,7 @@ void Mesh::draw(std::shared_ptr<resources::Shader>& shader, glm::mat4 model)
         texturesToBind[static_cast<GLuint>(textureTarget) - 1] = texture->getID();
     }
 
-    if (!textures.empty())
+    if(!textures.empty())
         glBindTextures(1, 4, texturesToBind);
 
     glBindVertexArray(vao);
@@ -87,14 +80,14 @@ bool Mesh::gpuLoad()
     std::vector<GLuint> bufferIDs;
     bufferIDs.resize(attributesAndVbos.size());
 
-    if (!attributesAndVbos.empty())
+    if(!attributesAndVbos.empty())
     {
         glCreateBuffers(static_cast<GLsizei>(attributesAndVbos.size()), bufferIDs.data());
         verticesCount = static_cast<unsigned int>(attributesAndVbos[0].first.bytes.size()) / attributesAndVbos[0].first.stride;
     }
 
     unsigned int bufferIndex = 0;
-    for (auto& [attribute, vboId] : attributesAndVbos)
+    for(auto& [attribute, vboId] : attributesAndVbos)
     {
         glBindBuffer(GL_ARRAY_BUFFER, bufferIDs[bufferIndex]);
         glBufferData(GL_ARRAY_BUFFER, attribute.bytes.size(), reinterpret_cast<const void*>(attribute.bytes.data()), GL_DYNAMIC_DRAW);
@@ -107,7 +100,7 @@ bool Mesh::gpuLoad()
         ++bufferIndex;
     }
 
-    if (!indices.empty())
+    if(!indices.empty())
     {
         glCreateBuffers(1, &ebo);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
@@ -126,7 +119,7 @@ bool Mesh::gpuUnload()
     glDeleteBuffers(1, &ebo);
     glDeleteVertexArrays(1, &vao);
 
-    for (auto& [attribute, vbo] : attributesAndVbos)
+    for(auto& [attribute, vbo] : attributesAndVbos)
     {
         glDeleteBuffers(1, &vbo);
         vbo = 0;

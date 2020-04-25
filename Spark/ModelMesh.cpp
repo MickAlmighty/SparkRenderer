@@ -9,7 +9,9 @@
 #include "Logging.h"
 #include "Mesh.h"
 #include "Model.h"
+#include "RenderingRequest.h"
 #include "ResourceLibrary.h"
+#include "EngineSystems/SparkRenderer.h"
 
 namespace spark
 {
@@ -29,7 +31,12 @@ void ModelMesh::update()
     {
         for(const auto& mesh : model->getMeshes())
         {
-            mesh->addToRenderQueue(worldMatrix);
+            RenderingRequest request{};
+            request.shaderType = mesh->shaderType;
+            request.gameObject = getGameObject();
+            request.mesh = mesh;
+
+            SparkRenderer::getInstance()->addRenderingRequest(request);
         }
     }
 }

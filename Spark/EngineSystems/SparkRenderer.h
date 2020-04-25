@@ -6,7 +6,6 @@
 
 #include "Enums.h"
 #include "GBuffer.h"
-#include "ModelMesh.h"
 #include "Structs.h"
 #include "Shader.h"
 
@@ -14,12 +13,12 @@ namespace spark
 {
 class BlurPass;
 class DepthOfFieldPass;
+class LightProbe;
+struct RenderingRequest;
 
 class SparkRenderer
 {
     public:
-    std::map<ShaderType, std::list<std::function<void(std::shared_ptr<resources::Shader>&)>>> renderQueue;
-
     SparkRenderer(const SparkRenderer&) = delete;
     SparkRenderer operator=(const SparkRenderer&) = delete;
 
@@ -30,10 +29,10 @@ class SparkRenderer
     static SparkRenderer* getInstance();
     void updateBufferBindings() const;
     void drawGui();
+    void addRenderingRequest(const RenderingRequest& request);
 
     private:
-    SparkRenderer() = default;
-    ~SparkRenderer() = default;
+    std::map<ShaderType, std::deque<RenderingRequest>> renderQueue;
 
     ScreenQuad screenQuad{};
     std::unique_ptr<DepthOfFieldPass> dofPass;
@@ -48,9 +47,9 @@ class SparkRenderer
     GLuint lightShaftFramebuffer{}, lightShaftTexture{};
     GLuint fxaaFramebuffer{}, fxaaTexture{};
     GLuint averageLuminanceTexture{};
+    GLuint lightsPerTileTexture{};
 
-
-    //IBL
+    // IBL
     GLuint brdfLookupTexture{};
 
     // bloom start
@@ -87,13 +86,15 @@ class SparkRenderer
     std::shared_ptr<resources::Shader> fxaaShader{nullptr};
     std::shared_ptr<resources::Shader> medianFilterShader{nullptr};
     std::shared_ptr<resources::Shader> downscaleShader{nullptr};
+    std::shared_ptr<resources::Shader> tileBasedLightCullingShader{nullptr};
 
     Cube cube = Cube();
     UniformBuffer cameraUBO{};
     UniformBuffer sampleUniformBuffer{};
     SSBO luminanceHistogram{};
+    SSBO pointLightIndices{};
 
-    bool ssaoEnable = true;
+    bool ssaoEnable = false;
     int kernelSize = 24;
     float radius = 0.45f;
     float bias = 0.015f;
@@ -113,7 +114,7 @@ class SparkRenderer
     float weight = 6.65f;
 
     // tone mapping
-    float minLogLuminance = -0.5f;
+    float minLogLuminance = 0.5f;
     float oneOverLogLuminanceRange = 1.0f / 12.0f;
     float logLuminanceRange = 12.0f;
     float tau = 1.1f;
@@ -124,11 +125,16 @@ class SparkRenderer
     bool motionBlurEnable = true;
     bool renderingToCubemap = false;
 
+    SparkRenderer() = default;
+    ~SparkRenderer() = default;
+
     void resizeWindowIfNecessary();
     void fillGBuffer(const GBuffer& geometryBuffer);
+    void fillGBuffer(const GBuffer& geometryBuffer, const std::function<bool(const RenderingRequest& request)>& filter);
     void ssaoComputing(const GBuffer& geometryBuffer);
     void renderLights(GLuint framebuffer, const GBuffer& geometryBuffer);
     void renderCubemap(GLuint framebuffer) const;
+    void tileBasedLightRendering(const GBuffer& geometryBuffer);
     void bloom();
     void lightShafts();
     void helperShapes();
@@ -147,7 +153,8 @@ class SparkRenderer
     static void disableWireframeMode();
 
     void updateCameraUBO(glm::mat4 projection, glm::mat4 view, glm::vec3 pos);
-    void renderSceneToCubemap();
+    void generateLightProbe(const std::shared_ptr<LightProbe>& lightProbe);
+    void renderSceneToCubemap(const GBuffer& geometryBuffer, GLuint lightFbo, GLuint skyboxFbo);
 };
 }  // namespace spark
 #endif
