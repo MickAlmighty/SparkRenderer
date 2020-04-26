@@ -112,9 +112,10 @@ struct PbrCubemapTexture final
     ~PbrCubemapTexture();
 
     static GLuint createIrradianceCubemap(GLuint framebuffer, GLuint environmentCubemap, Cube& cube, glm::mat4 projection,
-                                   const std::array<glm::mat4, 6>& views, const std::shared_ptr<resources::Shader>& irradianceShader);
-    static GLuint createPreFilteredCubemap(GLuint framebuffer, GLuint environmentCubemap, unsigned int envCubemapSize, Cube& cube, glm::mat4 projection,
-                                   const std::array<glm::mat4, 6>& views, const std::shared_ptr<resources::Shader>& prefilterShader);
+                                          const std::array<glm::mat4, 6>& views, const std::shared_ptr<resources::Shader>& irradianceShader);
+    static GLuint createPreFilteredCubemap(GLuint framebuffer, GLuint environmentCubemap, unsigned int envCubemapSize, Cube& cube,
+                                           glm::mat4 projection, const std::array<glm::mat4, 6>& views,
+                                           const std::shared_ptr<resources::Shader>& prefilterShader);
 
     private:
     std::string path{};
@@ -311,10 +312,10 @@ struct Buffer
     void resizeBuffer(size_t sizeInBytes)
     {
         glNamedBufferData(ID, sizeInBytes, nullptr, GL_DYNAMIC_DRAW);
-        size = sizeInBytes;
+        size = static_cast<GLsizei>(sizeInBytes);
     }
 
-    //this method sets value 0 for all bytes in the buffer
+    // this method sets value 0 for all bytes in the buffer
     void clearBuffer() const
     {
         glClearNamedBufferData(ID, GL_R32F, GL_RED, GL_FLOAT, nullptr);

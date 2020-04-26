@@ -88,10 +88,15 @@ struct Material
 };
 
 //light culling functions
+void pointLightsFrustumCulling(float minDepthZ, float maxDepthZ, vec2 texSize);
+void pointLightsAABBCulling(float minDepthZ, float maxDepthZ, vec2 texSize);
+bool testSphereVsAABB(vec3 sphereCenter, float sphereRadius, vec3 AABBCenter, vec3 AABBHalfSize);
 vec3 fromNdcToViewSpace(vec4 ndcPoint);
 float pixToNDC(uint point, float dimSize);
 vec3 createPlane(vec3 p1, vec3 p2);
+vec4 createPlanePerpendicularToView(vec3 dir1, vec3 dir2, vec3 pointOnPlane);
 float getDistanceFromPlane(vec3 position, vec3 plane);
+float getDistanceFromPerpendicularPlane(vec3 position, vec4 perpendicularPlane);
 //
 
 vec3 worldPosFromDepth(float depth, vec2 texCoords);
@@ -114,7 +119,9 @@ vec3 spotLightAddition(vec3 V, vec3 N, vec3 Pos, Material m);
 void main()
 {
 	vec2 texSize = vec2(imageSize(diffuseImage));
-	
+	ivec2 texCoords = ivec2(gl_GlobalInvocationID.xy);
+	float depthFloat = texelFetch(depthTexture, texCoords, 0).x;
+
 	if (gl_LocalInvocationIndex == 0)
 	{
 		pointLightCount = 0;
@@ -128,9 +135,6 @@ void main()
 
 	barrier();
 
-	ivec2 texCoords = ivec2(gl_GlobalInvocationID.xy);
-	float depthFloat = texelFetch(depthTexture, texCoords, 0).x;
-
 	if (depthFloat != 0.0f)
 	{
 		atomicAdd(pixelsToShade, 1);
@@ -143,74 +147,23 @@ void main()
 		return;
 	}
 	
-	{
-		uint depthInt = uint(depthFloat * 0xffffffffu);
+	uint depthInt = uint(depthFloat * 0xffffffffu);
 
-		//Calcutate the depth range of this tile
-		//Depth values are reversed, that means that zFar = 0, zNear = 1
-		// atomicMin(minDepth, depthInt); //tile zFar
-		// atomicMax(maxDepth, depthInt); //tile zNear
+	//Calcutate the depth range of this tile
+	//Depth values are reversed, that means that zFar = 0, zNear = 1
+	atomicMin(minDepth, depthInt); //tile zFar
+	atomicMax(maxDepth, depthInt); //tile zNear
 
-		// // wait for process all invocations
-		// barrier();
+	// wait for process all invocations
+	barrier();
 
-		// //create tile frustum
-		// float maxDepthZ = float(float(maxDepth) / float(0xffffffffu));
-		// float minDepthZ = float(float(minDepth) / float(0xffffffffu));
-
-	}
+	//create tile frustum
+	float maxDepthZ = float(float(maxDepth) / float(0xffffffffu));
+	float minDepthZ = float(float(minDepth) / float(0xffffffffu));
 	
-	//calculate tile corners (2d points in pixels)
-	uint minX = MAX_WORK_GROUP_SIZE * gl_WorkGroupID.x;
-	uint minY = MAX_WORK_GROUP_SIZE * gl_WorkGroupID.y;
-	uint maxX = MAX_WORK_GROUP_SIZE * (gl_WorkGroupID.x + 1);
-	uint maxY = MAX_WORK_GROUP_SIZE * (gl_WorkGroupID.y + 1);
-
-	//Convert tile corners to NDC and then to view space
-	vec3 tileCorners[4];
-	tileCorners[0] = fromNdcToViewSpace(vec4(pixToNDC(minX, texSize.x), pixToNDC(minY, texSize.y), 0.00001f, 1.0f));
-	tileCorners[1] = fromNdcToViewSpace(vec4(pixToNDC(maxX, texSize.x), pixToNDC(minY, texSize.y), 0.00001f, 1.0f));
-	tileCorners[2] = fromNdcToViewSpace(vec4(pixToNDC(maxX, texSize.x), pixToNDC(maxY, texSize.y), 0.00001f, 1.0f));
-	tileCorners[3] = fromNdcToViewSpace(vec4(pixToNDC(minX, texSize.x), pixToNDC(maxY, texSize.y), 0.00001f, 1.0f));
-
-	//create the frustum planes by using the product between these points
-	vec3 frustum[4];
-	for(int i = 0; i < 4; ++i)
-	{
-		frustum[i] = createPlane(tileCorners[i],tileCorners[(i+1) & 3]);
-	}
-	barrier();
-
-	//Now check the lights against the frustum and append them to the list
-	int threadsPerTile = MAX_WORK_GROUP_SIZE * MAX_WORK_GROUP_SIZE;
-
-	for (uint i = gl_LocalInvocationIndex; i < pointLights.length(); i += threadsPerTile)
-	{
-		uint il = i;
-		PointLight p = pointLights[il];
-
-		vec3 lightViewPosition = (camera.view * vec4(p.positionAndRadius.xyz, 1.0f)).xyz;
-		float r = p.positionAndRadius.w;
-
-		if( ( getDistanceFromPlane(lightViewPosition, frustum[0]) < r ) &&
-			( getDistanceFromPlane(lightViewPosition, frustum[1]) < r ) &&
-			( getDistanceFromPlane(lightViewPosition, frustum[2]) < r ) &&
-			( getDistanceFromPlane(lightViewPosition, frustum[3]) < r) )
-		{
-			uint id = atomicAdd(pointLightCount, 1);
-			pointLightIndices[startIndex + id] = il;
-		}
-	}
-
-	barrier();
-
-#ifdef DEBUG
-	if (gl_LocalInvocationIndex == 0)
-	{
-		imageStore(lightCountImage, ivec2(gl_WorkGroupID.xy), vec4(float(pointLightCount)));
-	}
-#endif
-
+	pointLightsAABBCulling(minDepthZ, maxDepthZ, texSize);
+	//pointLightsFrustumCulling(minDepthZ, maxDepthZ, texSize);
+	
 	if (depthFloat == 0)
 		return;
 
@@ -280,6 +233,152 @@ void main()
 	imageStore(brightPassOutput, texCoords, vec4(getBrightPassColor(color.xyz), 1.0f));
 }
 
+void pointLightsFrustumCulling(float minDepthZ, float maxDepthZ, vec2 texSize)
+{
+	//calculate tile corners (2d points in pixels)
+	uint minX = MAX_WORK_GROUP_SIZE * gl_WorkGroupID.x;
+	uint minY = MAX_WORK_GROUP_SIZE * gl_WorkGroupID.y;
+	uint maxX = MAX_WORK_GROUP_SIZE * (gl_WorkGroupID.x + 1);
+	uint maxY = MAX_WORK_GROUP_SIZE * (gl_WorkGroupID.y + 1);
+
+	//Convert tile corners to NDC and then to view space
+	vec3 tileCorners[4];
+	const float infZProjectionAdjustment = 0.00001f; //protection when projection far plane z = 0 is inf
+	const float depth = max(minDepthZ, infZProjectionAdjustment);
+	tileCorners[0] = fromNdcToViewSpace(vec4(pixToNDC(minX, texSize.x), pixToNDC(minY, texSize.y), depth, 1.0f));
+	tileCorners[1] = fromNdcToViewSpace(vec4(pixToNDC(maxX, texSize.x), pixToNDC(minY, texSize.y), depth, 1.0f));
+	tileCorners[2] = fromNdcToViewSpace(vec4(pixToNDC(maxX, texSize.x), pixToNDC(maxY, texSize.y), depth, 1.0f));
+	tileCorners[3] = fromNdcToViewSpace(vec4(pixToNDC(minX, texSize.x), pixToNDC(maxY, texSize.y), depth, 1.0f));
+
+	//create the frustum planes by using the product between these points
+	vec3 frustum[4];
+	for(int i = 0; i < 4; ++i)
+	{
+		frustum[i] = createPlane(tileCorners[i],tileCorners[(i+1) & 3]);
+	}
+
+	//create far plane
+	vec4 farPlane = createPlanePerpendicularToView(tileCorners[0] - tileCorners[1], 
+		tileCorners[2] - tileCorners[1], tileCorners[1]);
+
+	//create nearPlane
+	vec3 nearTileCorners[3];
+	nearTileCorners[0] = fromNdcToViewSpace(vec4(pixToNDC(minX, texSize.x), pixToNDC(minY, texSize.y), maxDepthZ, 1.0f));
+	nearTileCorners[1] = fromNdcToViewSpace(vec4(pixToNDC(maxX, texSize.x), pixToNDC(minY, texSize.y), maxDepthZ, 1.0f));
+	nearTileCorners[2] = fromNdcToViewSpace(vec4(pixToNDC(maxX, texSize.x), pixToNDC(maxY, texSize.y), maxDepthZ, 1.0f));
+
+	vec4 nearPlane = createPlanePerpendicularToView(nearTileCorners[2] - nearTileCorners[1], 
+		nearTileCorners[0] - nearTileCorners[1], nearTileCorners[1]);
+
+	barrier();
+
+	//Now check the lights against the frustum and append them to the list
+	int threadsPerTile = MAX_WORK_GROUP_SIZE * MAX_WORK_GROUP_SIZE;
+
+	for (uint i = gl_LocalInvocationIndex; i < pointLights.length(); i += threadsPerTile)
+	{
+		uint il = i;
+		PointLight p = pointLights[il];
+
+		vec3 lightViewPosition = (camera.view * vec4(p.positionAndRadius.xyz, 1.0f)).xyz;
+		float r = p.positionAndRadius.w;
+
+		if( 
+			( getDistanceFromPlane(lightViewPosition, frustum[0]) < r ) &&
+			( getDistanceFromPlane(lightViewPosition, frustum[1]) < r ) &&
+			( getDistanceFromPlane(lightViewPosition, frustum[2]) < r ) &&
+			( getDistanceFromPlane(lightViewPosition, frustum[3]) < r)  &&
+			( getDistanceFromPerpendicularPlane(lightViewPosition, farPlane) < r) &&
+			( getDistanceFromPerpendicularPlane(lightViewPosition, nearPlane) < r)
+			)
+		{
+			uint id = atomicAdd(pointLightCount, 1);
+			pointLightIndices[startIndex + id] = il;
+		}
+	}
+
+	barrier();
+
+#ifdef DEBUG
+	if (gl_LocalInvocationIndex == 0)
+	{
+		imageStore(lightCountImage, ivec2(gl_WorkGroupID.xy), vec4(float(pointLightCount)));
+	}
+#endif
+}
+
+void pointLightsAABBCulling(float minDepthZ, float maxDepthZ, vec2 texSize)
+{
+	//calculate tile corners (2d points in pixels)
+	uint minX = MAX_WORK_GROUP_SIZE * gl_WorkGroupID.x;
+	uint minY = MAX_WORK_GROUP_SIZE * gl_WorkGroupID.y;
+	uint maxX = MAX_WORK_GROUP_SIZE * (gl_WorkGroupID.x + 1);
+	uint maxY = MAX_WORK_GROUP_SIZE * (gl_WorkGroupID.y + 1);
+
+	//Convert bottom tile corners to NDC and then to view space
+	const float depth = max(minDepthZ, 0.00001f); //protection when projection far plane z = 0 is inf
+	vec3 tileFarBottomLeftCorner = fromNdcToViewSpace(vec4(pixToNDC(minX, texSize.x), pixToNDC(minY, texSize.y), depth, 1.0f));
+	//vec3 tileFarBottomRightCorner = fromNdcToViewSpace(vec4(pixToNDC(maxX, texSize.x), pixToNDC(minY, texSize.y), depth, 1.0f));
+	//vec3 tileFarUpperLeftCorner = fromNdcToViewSpace(vec4(pixToNDC(minX, texSize.x), pixToNDC(maxY, texSize.y), depth, 1.0f));
+	vec3 tileFarUpperRightCorner = fromNdcToViewSpace(vec4(pixToNDC(maxX, texSize.x), pixToNDC(maxY, texSize.y), depth, 1.0f));
+
+	vec3 tileNearBottomLeftCorner = fromNdcToViewSpace(vec4(pixToNDC(minX, texSize.x), pixToNDC(minY, texSize.y), maxDepthZ, 1.0f));
+	//vec3 tileNearBottomRightCorner = fromNdcToViewSpace(vec4(pixToNDC(maxX, texSize.x), pixToNDC(minY, texSize.y), maxDepthZ, 1.0f));
+	//vec3 tileNearUpperLeftCorner = fromNdcToViewSpace(vec4(pixToNDC(minX, texSize.x), pixToNDC(maxY, texSize.y), maxDepthZ, 1.0f));
+	vec3 tileNearUpperRightCorner = fromNdcToViewSpace(vec4(pixToNDC(maxX, texSize.x), pixToNDC(maxY, texSize.y), maxDepthZ, 1.0f));
+
+	//AABB's min-max points
+	float minXViewSpace = min(tileFarBottomLeftCorner.x, tileNearBottomLeftCorner.x);
+	float minYViewSpace = min(tileFarBottomLeftCorner.y, tileNearBottomLeftCorner.y);
+	vec3 minPoint = vec3(minXViewSpace, minYViewSpace, tileFarBottomLeftCorner.z);
+
+	float maxXViewSpace = max(tileFarUpperRightCorner.x, tileNearUpperRightCorner.x);
+	float maxYViewSpace = max(tileFarUpperRightCorner.y, tileNearUpperRightCorner.y);
+	vec3 maxPoint = vec3(maxXViewSpace, maxYViewSpace, tileNearUpperRightCorner.z); 
+
+	vec3 aabbHalfSize = abs(maxPoint - minPoint) * 0.5;
+	vec3 aabbCenter = minPoint + aabbHalfSize;
+	
+	barrier();
+
+	//Now check the lights against the frustum and append them to the list
+	int threadsPerTile = MAX_WORK_GROUP_SIZE * MAX_WORK_GROUP_SIZE;
+
+	for (uint i = gl_LocalInvocationIndex; i < pointLights.length(); i += threadsPerTile)
+	{
+		uint il = i;
+		PointLight p = pointLights[il];
+
+		vec3 lightViewPosition = (camera.view * vec4(p.positionAndRadius.xyz, 1.0f)).xyz;
+		float r = p.positionAndRadius.w;
+
+		if( testSphereVsAABB(lightViewPosition, r, aabbCenter, aabbHalfSize) )
+		{
+			uint id = atomicAdd(pointLightCount, 1);
+			pointLightIndices[startIndex + id] = il;
+		}
+	}
+
+	barrier();
+
+#ifdef DEBUG
+	if (gl_LocalInvocationIndex == 0)
+	{
+		imageStore(lightCountImage, ivec2(gl_WorkGroupID.xy), vec4(float(pointLightCount)));
+	}
+#endif
+}
+
+bool testSphereVsAABB(vec3 sphereCenter, float sphereRadius, vec3 AABBCenter, vec3 AABBHalfSize)
+{
+	vec3 delta = vec3(0);
+	delta.x = max(0, abs(AABBCenter.x - sphereCenter.x) - AABBHalfSize.x);
+	delta.y = max(0, abs(AABBCenter.y - sphereCenter.y) - AABBHalfSize.y);
+	delta.z = max(0, abs(AABBCenter.z - sphereCenter.z) - AABBHalfSize.z);
+	float distSq = dot(delta, delta);
+	return distSq <= (sphereRadius * sphereRadius);
+}
+
 vec3 fromNdcToViewSpace(vec4 ndcPoint)
 {
 	vec4 viewSpacePosition = camera.invertedProjection * ndcPoint;
@@ -301,9 +400,22 @@ vec3 createPlane(vec3 p1, vec3 p2)
 	return normalize(cross(p1, p2));
 }
 
+vec4 createPlanePerpendicularToView(vec3 dir1, vec3 dir2, vec3 pointOnPlane)
+{
+	vec4 planeCoeffs = {0,0,0,0};
+	planeCoeffs.xyz = normalize(cross(dir1, dir2));
+	planeCoeffs.w = -dot(planeCoeffs.xyz, pointOnPlane);
+	return planeCoeffs;
+}
+
 float getDistanceFromPlane(vec3 position, vec3 plane)
 {
 	return dot(position, plane);
+}
+
+float getDistanceFromPerpendicularPlane(vec3 position, vec4 perpendicularPlane)
+{
+	return dot(position, perpendicularPlane.xyz) + perpendicularPlane.w;
 }
 
 vec3 worldPosFromDepth(float depth, vec2 texCoords) {
