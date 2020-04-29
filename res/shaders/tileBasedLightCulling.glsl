@@ -14,14 +14,16 @@ layout(rg8, binding = 2) readonly uniform image2D rougnessMetalnessImage;
 layout(rgba16f, binding = 3) writeonly uniform image2D lightOutput;
 layout(rgba16f, binding = 4) writeonly uniform image2D brightPassOutput;
 
-//#define DEBUG
+#define DEBUG
 #ifdef DEBUG
 	layout(r32f, binding = 5) uniform image2D lightCountImage;
 #endif
 
 shared uint minDepth;
 shared uint maxDepth;
+shared uint tileDepthMask;
 shared uint pointLightCount;
+shared uint spotLightCount;
 shared uint pixelsToShade;
 shared uint startIndex;
 
@@ -57,6 +59,8 @@ struct SpotLight {
 	vec3 color;
 	float outerCutOff;
 	vec3 direction;
+	float maxDistance;
+	vec4 boundingSphere; //xyz - sphere center, w - radius 
 };
 
 layout(std430) buffer DirLightData
@@ -79,6 +83,11 @@ layout(std430) buffer PointLightIndices
 	uint pointLightIndices[];
 };
 
+layout(std430) buffer SpotLightIndices
+{
+	uint spotLightIndices[];
+};
+
 struct Material
 {
 	vec3 albedo;
@@ -87,9 +96,20 @@ struct Material
 	vec3 F0;
 };
 
+struct AABB 
+{
+	vec3 aabbCenter;
+	vec3 aabbHalfSize;
+};
+
+struct Frustum
+{
+	vec4 planes[6];
+};
+
 //light culling functions
-void pointLightsFrustumCulling(float minDepthZ, float maxDepthZ, vec2 texSize);
-void pointLightsAABBCulling(float minDepthZ, float maxDepthZ, vec2 texSize);
+AABB createTileAABB(float minDepthZ, float maxDepthZ, vec2 texSize);
+Frustum createTileFrustum(float minDepthZ, float maxDepthZ, vec2 texSize);
 bool testSphereVsAABB(vec3 sphereCenter, float sphereRadius, vec3 AABBCenter, vec3 AABBHalfSize);
 vec3 fromNdcToViewSpace(vec4 ndcPoint);
 float pixToNDC(uint point, float dimSize);
@@ -97,6 +117,9 @@ vec3 createPlane(vec3 p1, vec3 p2);
 vec4 createPlanePerpendicularToView(vec3 dir1, vec3 dir2, vec3 pointOnPlane);
 float getDistanceFromPlane(vec3 position, vec3 plane);
 float getDistanceFromPerpendicularPlane(vec3 position, vec4 perpendicularPlane);
+void cullPointLights(AABB tileAABB, float minDepthVS, float depthRangeRecip);
+void cullPointLights(Frustum tileFrustum, float minDepthVS, float depthRangeRecip);
+void cullSpotLights(AABB tileAABB);
 //
 
 vec3 worldPosFromDepth(float depth, vec2 texCoords);
@@ -110,7 +133,7 @@ float geometrySchlickGGX(float cosTheta, float k);
 float geometrySmith(float NdotL, float NdotV, float roughness);
 float computeSpecOcclusion(float NdotV, float AO, float roughness);
 float calculateAttenuation(vec3 lightPos, vec3 Pos);
-float calculateAttenuation(vec3 lightPos, vec3 pos, float lightRadius);
+float calculateAttenuation(vec3 lightPos, vec3 pos, float maxDistance);
 
 vec3 directionalLightAddition(vec3 V, vec3 N, Material m);
 vec3 pointLightAddition(vec3 V, vec3 N, vec3 Pos, Material m);
@@ -120,20 +143,23 @@ void main()
 {
 	vec2 texSize = vec2(imageSize(diffuseImage));
 	ivec2 texCoords = ivec2(gl_GlobalInvocationID.xy);
-	float depthFloat = texelFetch(depthTexture, texCoords, 0).x;
 
 	if (gl_LocalInvocationIndex == 0)
 	{
 		pointLightCount = 0;
+		spotLightCount = 0;
 		pixelsToShade = 0;
 		minDepth = 0xffffffffu;
 		maxDepth = 0;
+		tileDepthMask = 0;
 
 		uint nrOfElementsInColum = 256 * gl_NumWorkGroups.y;
 		startIndex = nrOfElementsInColum * gl_WorkGroupID.x + 256 * gl_WorkGroupID.y;
 	}
 
 	barrier();
+
+	float depthFloat = texelFetch(depthTexture, texCoords, 0).x;
 
 	if (depthFloat != 0.0f)
 	{
@@ -157,13 +183,40 @@ void main()
 	// wait for process all invocations
 	barrier();
 
-	//create tile frustum
+	//convert min and max depth back to the float
 	float maxDepthZ = float(float(maxDepth) / float(0xffffffffu));
 	float minDepthZ = float(float(minDepth) / float(0xffffffffu));
+
+	float minDepthVS = fromNdcToViewSpace(vec4(0.0f, 0.0f, max(minDepthZ, 0.00001f), 1.0f)).z;
+	float maxDepthVS = fromNdcToViewSpace(vec4(0.0f, 0.0f, maxDepthZ, 1.0f)).z;
+	float pixelDepthVS = fromNdcToViewSpace(vec4(0.0f, 0.0f, depthFloat, 1.0f)).z;
+
+	//assigning linear depth [0,32] for each pixel from tile view space depth range
+	float depthRangeRecip = 32.0f / (maxDepthVS - minDepthVS); // positive result
+	//calculating proper bit index  
+	uint depthMaskCellIndex = uint(max(0, min(32, floor((pixelDepthVS - minDepthVS) * depthRangeRecip))));
+
+	atomicOr(tileDepthMask, 1 << depthMaskCellIndex);
+
+	barrier();
+
+	AABB tileAABB = createTileAABB(minDepthZ, maxDepthZ, texSize);
+	//Frustum tileFrustum = createTileFrustum(minDepthZ, maxDepthZ, texSize);
+	barrier();
+
+	cullPointLights(tileAABB, minDepthVS, depthRangeRecip);
+	//cullPointLights(tileFrustum, minDepthVS, depthRangeRecip);
+	cullSpotLights(tileAABB);
 	
-	pointLightsAABBCulling(minDepthZ, maxDepthZ, texSize);
-	//pointLightsFrustumCulling(minDepthZ, maxDepthZ, texSize);
-	
+	barrier();
+
+#ifdef DEBUG
+	if (gl_LocalInvocationIndex == 0)
+	{
+		imageStore(lightCountImage, ivec2(gl_WorkGroupID.xy), vec4(float(pointLightCount)));
+	}
+#endif
+
 	if (depthFloat == 0)
 		return;
 
@@ -228,12 +281,12 @@ void main()
 	}
 
 	barrier();
-	//imageStore(lightOutput, texCoords, vec4(pointLightCount, 0, 0, 0));
+	//imageStore(lightOutput, texCoords, vec4(pointLightCount, spotLightCount, 0, 0));
 	imageStore(lightOutput, texCoords, color);
 	imageStore(brightPassOutput, texCoords, vec4(getBrightPassColor(color.xyz), 1.0f));
 }
 
-void pointLightsFrustumCulling(float minDepthZ, float maxDepthZ, vec2 texSize)
+Frustum createTileFrustum(float minDepthZ, float maxDepthZ, vec2 texSize)
 {
 	//calculate tile corners (2d points in pixels)
 	uint minX = MAX_WORK_GROUP_SIZE * gl_WorkGroupID.x;
@@ -251,14 +304,14 @@ void pointLightsFrustumCulling(float minDepthZ, float maxDepthZ, vec2 texSize)
 	tileCorners[3] = fromNdcToViewSpace(vec4(pixToNDC(minX, texSize.x), pixToNDC(maxY, texSize.y), depth, 1.0f));
 
 	//create the frustum planes by using the product between these points
-	vec3 frustum[4];
+	vec4 planes[6];
 	for(int i = 0; i < 4; ++i)
 	{
-		frustum[i] = createPlane(tileCorners[i],tileCorners[(i+1) & 3]);
+		planes[i].xyz = createPlane(tileCorners[i],tileCorners[(i+1) & 3]);
 	}
 
 	//create far plane
-	vec4 farPlane = createPlanePerpendicularToView(tileCorners[0] - tileCorners[1], 
+	planes[4] = createPlanePerpendicularToView(tileCorners[0] - tileCorners[1], 
 		tileCorners[2] - tileCorners[1], tileCorners[1]);
 
 	//create nearPlane
@@ -267,47 +320,13 @@ void pointLightsFrustumCulling(float minDepthZ, float maxDepthZ, vec2 texSize)
 	nearTileCorners[1] = fromNdcToViewSpace(vec4(pixToNDC(maxX, texSize.x), pixToNDC(minY, texSize.y), maxDepthZ, 1.0f));
 	nearTileCorners[2] = fromNdcToViewSpace(vec4(pixToNDC(maxX, texSize.x), pixToNDC(maxY, texSize.y), maxDepthZ, 1.0f));
 
-	vec4 nearPlane = createPlanePerpendicularToView(nearTileCorners[2] - nearTileCorners[1], 
+	planes[5] = createPlanePerpendicularToView(nearTileCorners[2] - nearTileCorners[1], 
 		nearTileCorners[0] - nearTileCorners[1], nearTileCorners[1]);
 
-	barrier();
-
-	//Now check the lights against the frustum and append them to the list
-	int threadsPerTile = MAX_WORK_GROUP_SIZE * MAX_WORK_GROUP_SIZE;
-
-	for (uint i = gl_LocalInvocationIndex; i < pointLights.length(); i += threadsPerTile)
-	{
-		uint il = i;
-		PointLight p = pointLights[il];
-
-		vec3 lightViewPosition = (camera.view * vec4(p.positionAndRadius.xyz, 1.0f)).xyz;
-		float r = p.positionAndRadius.w;
-
-		if( 
-			( getDistanceFromPlane(lightViewPosition, frustum[0]) < r ) &&
-			( getDistanceFromPlane(lightViewPosition, frustum[1]) < r ) &&
-			( getDistanceFromPlane(lightViewPosition, frustum[2]) < r ) &&
-			( getDistanceFromPlane(lightViewPosition, frustum[3]) < r)  &&
-			( getDistanceFromPerpendicularPlane(lightViewPosition, farPlane) < r) &&
-			( getDistanceFromPerpendicularPlane(lightViewPosition, nearPlane) < r)
-			)
-		{
-			uint id = atomicAdd(pointLightCount, 1);
-			pointLightIndices[startIndex + id] = il;
-		}
-	}
-
-	barrier();
-
-#ifdef DEBUG
-	if (gl_LocalInvocationIndex == 0)
-	{
-		imageStore(lightCountImage, ivec2(gl_WorkGroupID.xy), vec4(float(pointLightCount)));
-	}
-#endif
+	return Frustum(planes);
 }
 
-void pointLightsAABBCulling(float minDepthZ, float maxDepthZ, vec2 texSize)
+AABB createTileAABB(float minDepthZ, float maxDepthZ, vec2 texSize)
 {
 	//calculate tile corners (2d points in pixels)
 	uint minX = MAX_WORK_GROUP_SIZE * gl_WorkGroupID.x;
@@ -318,13 +337,9 @@ void pointLightsAABBCulling(float minDepthZ, float maxDepthZ, vec2 texSize)
 	//Convert bottom tile corners to NDC and then to view space
 	const float depth = max(minDepthZ, 0.00001f); //protection when projection far plane z = 0 is inf
 	vec3 tileFarBottomLeftCorner = fromNdcToViewSpace(vec4(pixToNDC(minX, texSize.x), pixToNDC(minY, texSize.y), depth, 1.0f));
-	//vec3 tileFarBottomRightCorner = fromNdcToViewSpace(vec4(pixToNDC(maxX, texSize.x), pixToNDC(minY, texSize.y), depth, 1.0f));
-	//vec3 tileFarUpperLeftCorner = fromNdcToViewSpace(vec4(pixToNDC(minX, texSize.x), pixToNDC(maxY, texSize.y), depth, 1.0f));
 	vec3 tileFarUpperRightCorner = fromNdcToViewSpace(vec4(pixToNDC(maxX, texSize.x), pixToNDC(maxY, texSize.y), depth, 1.0f));
 
 	vec3 tileNearBottomLeftCorner = fromNdcToViewSpace(vec4(pixToNDC(minX, texSize.x), pixToNDC(minY, texSize.y), maxDepthZ, 1.0f));
-	//vec3 tileNearBottomRightCorner = fromNdcToViewSpace(vec4(pixToNDC(maxX, texSize.x), pixToNDC(minY, texSize.y), maxDepthZ, 1.0f));
-	//vec3 tileNearUpperLeftCorner = fromNdcToViewSpace(vec4(pixToNDC(minX, texSize.x), pixToNDC(maxY, texSize.y), maxDepthZ, 1.0f));
 	vec3 tileNearUpperRightCorner = fromNdcToViewSpace(vec4(pixToNDC(maxX, texSize.x), pixToNDC(maxY, texSize.y), maxDepthZ, 1.0f));
 
 	//AABB's min-max points
@@ -339,34 +354,7 @@ void pointLightsAABBCulling(float minDepthZ, float maxDepthZ, vec2 texSize)
 	vec3 aabbHalfSize = abs(maxPoint - minPoint) * 0.5;
 	vec3 aabbCenter = minPoint + aabbHalfSize;
 	
-	barrier();
-
-	//Now check the lights against the frustum and append them to the list
-	int threadsPerTile = MAX_WORK_GROUP_SIZE * MAX_WORK_GROUP_SIZE;
-
-	for (uint i = gl_LocalInvocationIndex; i < pointLights.length(); i += threadsPerTile)
-	{
-		uint il = i;
-		PointLight p = pointLights[il];
-
-		vec3 lightViewPosition = (camera.view * vec4(p.positionAndRadius.xyz, 1.0f)).xyz;
-		float r = p.positionAndRadius.w;
-
-		if( testSphereVsAABB(lightViewPosition, r, aabbCenter, aabbHalfSize) )
-		{
-			uint id = atomicAdd(pointLightCount, 1);
-			pointLightIndices[startIndex + id] = il;
-		}
-	}
-
-	barrier();
-
-#ifdef DEBUG
-	if (gl_LocalInvocationIndex == 0)
-	{
-		imageStore(lightCountImage, ivec2(gl_WorkGroupID.xy), vec4(float(pointLightCount)));
-	}
-#endif
+	return AABB(aabbCenter, aabbHalfSize);
 }
 
 bool testSphereVsAABB(vec3 sphereCenter, float sphereRadius, vec3 AABBCenter, vec3 AABBHalfSize)
@@ -416,6 +404,106 @@ float getDistanceFromPlane(vec3 position, vec3 plane)
 float getDistanceFromPerpendicularPlane(vec3 position, vec4 perpendicularPlane)
 {
 	return dot(position, perpendicularPlane.xyz) + perpendicularPlane.w;
+}
+
+void cullPointLights(Frustum tileFrustum, float minDepthVS, float depthRangeRecip)
+{
+	//Now check the lights against the frustum and append them to the list
+	int threadsPerTile = MAX_WORK_GROUP_SIZE * MAX_WORK_GROUP_SIZE;
+
+	for (uint i = gl_LocalInvocationIndex; i < pointLights.length(); i += threadsPerTile)
+	{
+		uint il = i;
+		PointLight p = pointLights[il];
+
+		vec3 lightViewPosition = (camera.view * vec4(p.positionAndRadius.xyz, 1.0f)).xyz;
+		float r = p.positionAndRadius.w;
+
+		float zMin = lightViewPosition.z - r;
+		float zMax = lightViewPosition.z + r;
+
+		uint lightMaskCellIndexStart = uint(max(0, min(32, floor(zMin - minDepthVS) * depthRangeRecip)));
+		uint lightMaskCellIndexEnd = uint(max(0, min(32, floor(zMax - minDepthVS) * depthRangeRecip)));
+
+		uint lightMask = 0xffffffffu;
+		lightMask >>= 31 - (lightMaskCellIndexEnd - lightMaskCellIndexStart);
+		lightMask <<= lightMaskCellIndexStart;
+
+		bool intersect2_5D = bool(tileDepthMask & lightMask);
+
+		if (!intersect2_5D)
+			continue;
+
+		if( 
+			( getDistanceFromPlane(lightViewPosition, tileFrustum.planes[0].xyz) < r ) &&
+			( getDistanceFromPlane(lightViewPosition, tileFrustum.planes[1].xyz) < r ) &&
+			( getDistanceFromPlane(lightViewPosition, tileFrustum.planes[2].xyz) < r ) &&
+			( getDistanceFromPlane(lightViewPosition, tileFrustum.planes[3].xyz) < r)  &&
+			( getDistanceFromPerpendicularPlane(lightViewPosition, tileFrustum.planes[4]) < r) &&
+			( getDistanceFromPerpendicularPlane(lightViewPosition, tileFrustum.planes[5]) < r)
+			)
+		{
+			uint id = atomicAdd(pointLightCount, 1);
+			pointLightIndices[startIndex + id] = il;
+		}
+	}
+}
+
+void cullPointLights(AABB tileAABB, float minDepthVS, float depthRangeRecip)
+{
+	//Now check the lights against the frustum and append them to the list
+	int threadsPerTile = MAX_WORK_GROUP_SIZE * MAX_WORK_GROUP_SIZE;
+
+	for (uint i = gl_LocalInvocationIndex; i < pointLights.length(); i += threadsPerTile)
+	{
+		uint il = i;
+		PointLight p = pointLights[il];
+
+		vec3 lightViewPosition = (camera.view * vec4(p.positionAndRadius.xyz, 1.0f)).xyz;
+		float r = p.positionAndRadius.w;
+
+		float zMin = lightViewPosition.z - r;
+		float zMax = lightViewPosition.z + r;
+
+		uint lightMaskCellIndexStart = uint(max(0, min(32, floor(zMin - minDepthVS) * depthRangeRecip)));
+		uint lightMaskCellIndexEnd = uint(max(0, min(32, floor(zMax - minDepthVS) * depthRangeRecip)));
+
+		uint lightMask = 0xffffffffu;
+		lightMask >>= 31 - (lightMaskCellIndexEnd - lightMaskCellIndexStart);
+		lightMask <<= lightMaskCellIndexStart;
+
+		bool intersect2_5D = bool(tileDepthMask & lightMask);
+
+		if (!intersect2_5D)
+			continue;
+
+		if( testSphereVsAABB(lightViewPosition, r, tileAABB.aabbCenter, tileAABB.aabbHalfSize) )
+		{
+			uint id = atomicAdd(pointLightCount, 1);
+			pointLightIndices[startIndex + id] = il;
+		}
+	}
+}
+
+void cullSpotLights(AABB tileAABB)
+{
+	//Now check the lights against the frustum and append them to the list
+	int threadsPerTile = MAX_WORK_GROUP_SIZE * MAX_WORK_GROUP_SIZE;
+
+	for (uint i = gl_LocalInvocationIndex; i < spotLights.length(); i += threadsPerTile)
+	{
+		uint il = i;
+		SpotLight s = spotLights[il];
+
+		vec3 lightViewPosition = (camera.view * vec4(s.boundingSphere.xyz, 1.0f)).xyz;
+		float r = s.boundingSphere.w;
+
+		if( testSphereVsAABB(lightViewPosition, r, tileAABB.aabbCenter, tileAABB.aabbHalfSize) )
+		{
+			uint id = atomicAdd(spotLightCount, 1);
+			spotLightIndices[startIndex + id] = il;
+		}
+	}
 }
 
 vec3 worldPosFromDepth(float depth, vec2 texCoords) {
@@ -512,14 +600,16 @@ vec3 spotLightAddition(vec3 V, vec3 N, vec3 Pos, Material m)
 	float NdotV = max(dot(N, V), 0.0f);
 
 	vec3 L0 = { 0, 0, 0 };
-	for (uint i = 0; i < spotLights.length(); ++i)
+	for (int index = 0; index < spotLightCount; ++index)
 	{
-		vec3 directionToLight = normalize(-spotLights[i].direction);
-		vec3 L = normalize(spotLights[i].position - Pos);
+		//PointLight p = pointLights[index];
+		SpotLight s = spotLights[spotLightIndices[startIndex + index]];
+		vec3 directionToLight = normalize(-s.direction);
+		vec3 L = normalize(s.position - Pos);
 
 		float theta = dot(directionToLight, L);
-		float epsilon = max(spotLights[i].cutOff - spotLights[i].outerCutOff, 0.0);
-		float intensity = clamp((theta - spotLights[i].outerCutOff) / epsilon, 0.0, 1.0);  
+		float epsilon = max(s.cutOff - s.outerCutOff, 0.0);
+		float intensity = clamp((theta - s.outerCutOff) / epsilon, 0.0, 1.0);  
 
 		vec3 H = normalize(V + L);
 
@@ -529,7 +619,7 @@ vec3 spotLightAddition(vec3 V, vec3 N, vec3 Pos, Material m)
 		float D = normalDistributionGGX(N, H, m.roughness);
 		float G = geometrySmith(NdotV, NdotL, m.roughness);
 		
-		vec3 radiance = spotLights[i].color * calculateAttenuation(spotLights[i].position, Pos);
+		vec3 radiance = s.color * calculateAttenuation(s.position, Pos, s.maxDistance);
 		radiance *= intensity;
 
 		vec3 kD = mix(vec3(1.0) - F, vec3(0.0), m.metalness);
@@ -590,11 +680,11 @@ float calculateAttenuation(vec3 lightPos, vec3 Pos)
 	return attenuation; 
 }
 
-float calculateAttenuation(vec3 lightPos, vec3 pos, float lightRadius)
+float calculateAttenuation(vec3 lightPos, vec3 pos, float maxDistance)
 {
     //https://seblagarde.files.wordpress.com/2015/07/course_notes_moving_frostbite_to_pbr_v32.pdf
     //page 31
 	float distance    = length(lightPos - pos);
-    float attenuation = max((1.0 / (distance * distance) * (1 - distance / lightRadius)), 0.0000001f);
+    float attenuation = max((1.0 / (distance * distance) * (1 - distance / maxDistance)), 0.0000001f);
     return attenuation; 
 }

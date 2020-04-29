@@ -171,7 +171,7 @@ void Camera::processKeyboardFirstPerson()
 {
     float velocity = MovementSpeed * static_cast<float>(Clock::getDeltaTime());
     if(HID::isKeyPressed(GLFW_KEY_LEFT_SHIFT))
-        velocity *= 1.5f;
+        velocity *= 3.5f;
     glm::vec3 front = glm::normalize(glm::vec3(Front.x, 0, Front.z));
     glm::vec3 right = glm::normalize(glm::vec3(Right.x, 0, Right.z));
 

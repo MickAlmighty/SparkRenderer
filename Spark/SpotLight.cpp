@@ -16,6 +16,9 @@ SpotLightData SpotLight::getLightData() const
     data.color = getColor() * getColorStrength();
     data.cutOff = glm::cos(glm::radians(getCutOff()));
     data.outerCutOff = glm::cos(glm::radians(getOuterCutOff()));
+    data.maxDistance = getMaxDistance();
+    data.boundingSphere = calculateCullingSphereProperties();
+    //SPARK_INFO("Spot light sphere pos {}, {}, {}, radius: {}",data.boundingSphere.x, data.boundingSphere.y, data.boundingSphere.z, data.boundingSphere.w);
     return data;
 }
 
@@ -52,6 +55,11 @@ float SpotLight::getCutOff() const
 float SpotLight::getOuterCutOff() const
 {
     return outerCutOff;
+}
+
+float SpotLight::getMaxDistance() const
+{
+    return maxDistance;
 }
 
 void SpotLight::resetDirty()
@@ -94,6 +102,12 @@ void SpotLight::setOuterCutOff(float outerCutOff_)
     outerCutOff = outerCutOff_;
 }
 
+void SpotLight::setMaxDistance(float maxDistance_)
+{
+    dirty = true;
+    maxDistance = maxDistance_;
+}
+
 SpotLight::SpotLight() : Component("SpotLight") {}
 
 void SpotLight::setActive(bool active_)
@@ -127,11 +141,13 @@ void SpotLight::drawGUI()
     float cutOffToEdit = getCutOff();
     float outerCutOffToEdit = getOuterCutOff();
     glm::vec3 directionToEdit = getDirection();
+    float maxDistanceToEdit = getMaxDistance();
     ImGui::ColorEdit3("color", glm::value_ptr(colorToEdit));
     ImGui::DragFloat("colorStrength", &colorStrengthToEdit, 0.01f);
     ImGui::DragFloat("cutOff", &cutOffToEdit, 1.0f, 0.0f, 180.0f);
     ImGui::DragFloat("outerCutOff", &outerCutOffToEdit, 1.0f, 0.0f, 180.0f);
     ImGui::SliderFloat3("direction", glm::value_ptr(directionToEdit), -1.0f, 1.0f);
+    ImGui::DragFloat("maxDistance", &maxDistanceToEdit, 1.0f, 0.0f);
 
     if(colorStrengthToEdit < 0)
     {
@@ -163,7 +179,55 @@ void SpotLight::drawGUI()
         setDirection(directionToEdit);
     }
 
+    if(maxDistanceToEdit < 0)
+    {
+        maxDistanceToEdit = 0;
+    }
+
+    if(maxDistanceToEdit != getMaxDistance())
+    {
+        setMaxDistance(maxDistanceToEdit);
+    }
+
     removeComponentGUI<SpotLight>();
+}
+
+glm::vec4 SpotLight::calculateCullingSphereProperties() const
+{
+    /*if (outerCutOff == 180)
+    {
+        return {getGameObject()->transform.world.getPosition(), maxDistance};
+    }*/
+
+    const float angleRad = glm::radians(outerCutOff);
+    const glm::vec3 pos = getGameObject()->transform.world.getPosition();
+    /*if (angleRad > glm::pi<float>() / 4.0f)
+    {
+        const float radius = glm::tan(angleRad) * maxDistance;
+        const glm::vec3 center = pos + direction * radius;
+        return {center, radius};
+    }
+    else
+    {
+        const float radius = maxDistance * 0.5f / glm::pow(cos(angleRad), 2.0f);
+        const glm::vec3 center = pos + direction * radius;
+        return {center, radius};
+    }*/
+
+    /*if (angleRad > glm::pi<float>() / 4.0f)
+    {
+        const glm::vec3 center = pos + cos(angleRad) * maxDistance * direction;
+        const float radius = sin(angleRad) * maxDistance;
+        return {center, radius};
+    }
+    else
+    {
+        const glm::vec3 center = pos + maxDistance / (2.0f * cos(angleRad)) * direction;
+        const float radius = maxDistance / (2.0f * cos(angleRad));
+        return {center, radius};
+    }*/
+
+    return glm::vec4(pos, maxDistance);
 }
 }  // namespace spark
 
@@ -177,5 +241,6 @@ RTTR_REGISTRATION
         .property("colorStrength", &spark::SpotLight::colorStrength)
         .property("direction", &spark::SpotLight::direction)
         .property("cutOff", &spark::SpotLight::cutOff)
-        .property("lastPos", &spark::SpotLight::lastPos);
+        .property("lastPos", &spark::SpotLight::lastPos)
+        .property("maxDistance", &spark::SpotLight::maxDistance);
 }

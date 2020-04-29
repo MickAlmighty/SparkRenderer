@@ -93,6 +93,7 @@ class SparkRenderer
     UniformBuffer sampleUniformBuffer{};
     SSBO luminanceHistogram{};
     SSBO pointLightIndices{};
+    SSBO spotLightIndices{};
 
     bool ssaoEnable = false;
     int kernelSize = 24;

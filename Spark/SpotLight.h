@@ -29,11 +29,14 @@ class SpotLight final : public Component
     float getColorStrength() const;
     float getCutOff() const;
     float getOuterCutOff() const;
+    float getMaxDistance() const;
+
     void setColor(glm::vec3 color_);
     void setColorStrength(float strength);
     void setDirection(glm::vec3 direction_);
     void setCutOff(float cutOff_);
     void setOuterCutOff(float outerCutOff_);
+    void setMaxDistance(float maxDistance_);
     void setActive(bool active_) override;
     void update() override;
     void fixedUpdate() override;
@@ -47,7 +50,11 @@ class SpotLight final : public Component
     glm::vec3 direction{0.0f, -1.0f, 0.0f};
     float cutOff{30.0f};
     float outerCutOff{45.0f};
+    float maxDistance{1.0f};
     glm::vec3 lastPos{0};
+
+    glm::vec4 calculateCullingSphereProperties() const;
+
     RTTR_REGISTRATION_FRIEND;
     RTTR_ENABLE(Component);
 };

@@ -57,6 +57,8 @@ struct SpotLight {
 	vec3 color;
 	float outerCutOff;
 	vec3 direction;
+	float maxDistance;
+	vec4 boundingSphere; //xyz - sphere center, w - radius 
 };
 
 layout(std430) buffer DirLightData
@@ -277,7 +279,7 @@ vec3 spotLightAddition(vec3 V, vec3 N, vec3 Pos, Material m)
 		float D = normalDistributionGGX(N, H, m.roughness);
 		float G = geometrySmith(NdotV, NdotL, m.roughness);
 		
-		vec3 radiance = spotLights[i].color * calculateAttenuation(spotLights[i].position, Pos);
+		vec3 radiance = spotLights[i].color * calculateAttenuation(spotLights[i].position, Pos, spotLights[i].maxDistance);
 		radiance *= intensity;
 
 		vec3 kD = mix(vec3(1.0) - F, vec3(0.0), m.metalness);

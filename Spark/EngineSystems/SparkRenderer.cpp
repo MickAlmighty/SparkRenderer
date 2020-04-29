@@ -148,6 +148,7 @@ void SparkRenderer::setup()
 
     luminanceHistogram.genBuffer(256 * sizeof(uint32_t));
     pointLightIndices.genBuffer(256 * (uint32_t)glm::ceil(Spark::HEIGHT / 16.0f) * (uint32_t)glm::ceil(Spark::WIDTH / 16.0f) * sizeof(uint32_t));
+    spotLightIndices.genBuffer(256 * (uint32_t)glm::ceil(Spark::HEIGHT / 16.0f) * (uint32_t)glm::ceil(Spark::WIDTH / 16.0f) * sizeof(uint32_t));
     brdfLookupTexture = utils::createBrdfLookupTexture(1024);
 
     initMembers();
@@ -210,6 +211,7 @@ void SparkRenderer::updateBufferBindings() const
     tileBasedLightCullingShader->bindSSBO("SpotLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->spotLightSSBO);
 
     tileBasedLightCullingShader->bindSSBO("PointLightIndices", pointLightIndices);
+    tileBasedLightCullingShader->bindSSBO("SpotLightIndices", spotLightIndices);
 }
 
 void SparkRenderer::renderPass()
@@ -291,7 +293,7 @@ void SparkRenderer::fillGBuffer(const GBuffer& geometryBuffer)
     PUSH_DEBUG_GROUP(RENDER_TO_MAIN_FRAMEBUFFER);
 
     glBindFramebuffer(GL_FRAMEBUFFER, geometryBuffer.framebuffer);
-    glClearColor(1, 1, 1, 1);
+    glClearColor(0, 0, 0, 0);
     glClearDepth(0.0f);
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
@@ -312,7 +314,7 @@ void SparkRenderer::fillGBuffer(const GBuffer& geometryBuffer, const std::functi
     PUSH_DEBUG_GROUP(RENDER_TO_MAIN_FRAMEBUFFER_FILTERED);
 
     glBindFramebuffer(GL_FRAMEBUFFER, geometryBuffer.framebuffer);
-    glClearColor(1, 1, 1, 1);
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClearDepth(0.0f);
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
@@ -342,7 +344,7 @@ void SparkRenderer::ssaoComputing(const GBuffer& geometryBuffer)
     PUSH_DEBUG_GROUP(SSAO);
 
     glBindFramebuffer(GL_FRAMEBUFFER, ssaoFramebuffer);
-    glClearColor(1.0f, 1.0f, 1.0f, 0);
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
     GLuint textures[3] = {geometryBuffer.depthTexture, geometryBuffer.normalsTexture, randomNormalsTexture};
@@ -412,6 +414,7 @@ void SparkRenderer::tileBasedLightRendering(const GBuffer& geometryBuffer)
 {
     PUSH_DEBUG_GROUP(TILE_BASED_DEFERRED)
     pointLightIndices.clearBuffer();
+    spotLightIndices.clearBuffer();
 
     float clearRgba[] = {0.0f, 0.0f, 0.0f, 0.0f};
     glClearTexImage(lightColorTexture, 0, GL_RGBA, GL_FLOAT, &clearRgba);
@@ -441,9 +444,9 @@ void SparkRenderer::tileBasedLightRendering(const GBuffer& geometryBuffer)
     glBindImageTexture(4, brightPassTexture, 0, false, 0, GL_WRITE_ONLY, GL_RGBA16F);
 
     // debug of light count per tile
-    // float clear = 0.0f;
-    //glClearTexImage(lightsPerTileTexture, 0, GL_RED, GL_FLOAT, &clear);
-    //glBindImageTexture(7, lightsPerTileTexture, 0, false, 0, GL_READ_WRITE, GL_R32F);
+     float clear = 0.0f;
+     glClearTexImage(lightsPerTileTexture, 0, GL_RED, GL_FLOAT, &clear);
+     glBindImageTexture(7, lightsPerTileTexture, 0, false, 0, GL_READ_WRITE, GL_R32F);
 
     tileBasedLightCullingShader->dispatchCompute(Spark::WIDTH / 16, Spark::HEIGHT / 16, 1);
     glBindTextures(0, 0, nullptr);
@@ -543,6 +546,9 @@ void SparkRenderer::helperShapes()
         return;
 
     PUSH_DEBUG_GROUP(HELPER_SHAPES);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, cubemapFramebuffer);
+
     glDisable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
 
@@ -635,9 +641,19 @@ void SparkRenderer::motionBlur()
     const auto camera = SceneManager::getInstance()->getCurrentScene()->getCamera();
     const glm::mat4 projectionView = camera->getProjectionReversedZ() * camera->getViewMatrix();
     static glm::mat4 prevProjectionView = projectionView;
+    static bool initialized = false;
 
     if(projectionView == prevProjectionView || !motionBlurEnable)
         return;
+
+    if(!initialized) 
+    {
+        //it is necessary when the scene has been loaded and
+        //the difference between current VP and last frame VP matrices generates huge velocities for all pixels
+        //so it needs to be reset
+        prevProjectionView = projectionView;
+        initialized = true;
+    }
 
     PUSH_DEBUG_GROUP(MOTION_BLUR);
     glBindFramebuffer(GL_FRAMEBUFFER, motionBlurFramebuffer);
@@ -737,11 +753,15 @@ void SparkRenderer::renderToScreen() const
     glClearColor(0, 0, 0, 0);
     glClear(GL_COLOR_BUFFER_BIT);
 
+    glDisable(GL_DEPTH_TEST);
+
     screenShader->use();
 
     glBindTextureUnit(0, textureHandle);
 
     screenQuad.draw();
+
+    glEnable(GL_DEPTH_TEST);
     POP_DEBUG_GROUP();
 }
 
@@ -758,8 +778,8 @@ void SparkRenderer::createFrameBuffersAndTextures()
     dofPass->recreateWithNewSize(Spark::WIDTH, Spark::HEIGHT);
     ssaoBlurPass->recreateWithNewSize(Spark::WIDTH / 2, Spark::HEIGHT / 2);
 
-    // pointLightIndices.cleanup();
     pointLightIndices.resizeBuffer(256 * (uint32_t)glm::ceil(Spark::HEIGHT / 16.0f) * (uint32_t)glm::ceil(Spark::WIDTH / 16.0f) * sizeof(uint32_t));
+    spotLightIndices.resizeBuffer(256 * (uint32_t)glm::ceil(Spark::HEIGHT / 16.0f) * (uint32_t)glm::ceil(Spark::WIDTH / 16.0f) * sizeof(uint32_t));
 
     gBuffer.setup(Spark::WIDTH, Spark::HEIGHT);
 

@@ -385,6 +385,8 @@ struct SpotLightData final
     glm::vec3 color;  // strength baked into color
     float outerCutOff;
     glm::vec3 direction;
+    float maxDistance;
+    glm::vec4 boundingSphere; //for cone culling approximation
 };
 
 struct DrawArraysIndirectCommand final
