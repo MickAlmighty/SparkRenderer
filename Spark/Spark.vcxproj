@@ -146,7 +146,7 @@
     <ClCompile Include="GUI\ImGui\imgui_impl_opengl3.cpp" />
     <ClCompile Include="GUI\ImGui\imgui_widgets.cpp" />
     <ClCompile Include="GUI\SparkGui.cpp" />
-    <ClCompile Include="HID.cpp" />
+    <ClCompile Include="HID\HID.cpp" />
     <ClCompile Include="JsonSerializer.cpp" />
     <ClCompile Include="LightManager.cpp" />
     <ClCompile Include="LightProbe.cpp" />
@@ -202,7 +202,9 @@
     <ClInclude Include="GUI\ImGui\imstb_textedit.h" />
     <ClInclude Include="GUI\ImGui\imstb_truetype.h" />
     <ClInclude Include="GUI\SparkGui.h" />
-    <ClInclude Include="HID.h" />
+    <ClInclude Include="HID\HID.h" />
+    <ClInclude Include="HID\Key.h" />
+    <ClInclude Include="HID\State.h" />
     <ClInclude Include="JsonSerializer.h" />
     <ClInclude Include="LightManager.h" />
     <ClInclude Include="LightProbe.h" />
@@ -231,12 +233,6 @@
     <ClInclude Include="Texture.h" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="WorldTransform.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\res\shaders\default.glsl" />
-    <None Include="..\res\shaders\light.glsl" />
-    <None Include="..\res\shaders\postprocessing.glsl" />
-    <None Include="..\res\shaders\screen.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -9,13 +9,6 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
-    <Filter Include="shaders">
-      <UniqueIdentifier>{37dbd568-aa14-43ff-9b5b-f5c699c61789}</UniqueIdentifier>
-    </Filter>
     <Filter Include="EngineSystems">
       <UniqueIdentifier>{ce002514-0c19-4342-9276-421614628bce}</UniqueIdentifier>
     </Filter>
@@ -31,6 +24,9 @@
     <Filter Include="ResourceManagement\Resources">
       <UniqueIdentifier>{adf89da3-d4be-4cd5-abcf-839cb5154ee3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="HID">
+      <UniqueIdentifier>{5fc90c86-851b-4707-a2be-04201f49a5f0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Spark.cpp">
@@ -43,9 +39,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Clock.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="HID.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="stb_image.cpp">
@@ -192,6 +185,9 @@
     <ClCompile Include="LightProbe.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="HID\HID.cpp">
+      <Filter>HID</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Spark.h">
@@ -204,9 +200,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Clock.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="HID.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Camera.h">
@@ -359,19 +352,14 @@
     <ClInclude Include="LightProbe.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\res\shaders\default.glsl">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="..\res\shaders\postprocessing.glsl">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="..\res\shaders\screen.glsl">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="..\res\shaders\light.glsl">
-      <Filter>shaders</Filter>
-    </None>
+    <ClInclude Include="HID\HID.h">
+      <Filter>HID</Filter>
+    </ClInclude>
+    <ClInclude Include="HID\Key.h">
+      <Filter>HID</Filter>
+    </ClInclude>
+    <ClInclude Include="HID\State.h">
+      <Filter>HID</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -5,11 +5,12 @@
 #include <GUI/ImGui/imgui.h>
 #include <GUI/ImGui/imgui_impl_glfw.h>
 #include <GUI/ImGui/imgui_impl_opengl3.h>
+#include <stb_image/stb_image.h>
 
 #include "Clock.h"
 #include "EngineSystems/SparkRenderer.h"
 #include "EngineSystems/SceneManager.h"
-#include "HID.h"
+#include "HID/HID.h"
 #include "JsonSerializer.h"
 #include "Logging.h"
 #include "ResourceLibrary.h"
@@ -30,11 +31,53 @@ void Spark::setInitVariables(const InitializationVariables& variables)
 void Spark::setup()
 {
     initOpenGL();
+    initImGui();
+    createCustomCursor();
     resourceLibrary.setup();
     resourceLibrary.createResources(pathToResources);
     SceneManager::getInstance()->setup();
 
     SparkRenderer::getInstance()->setup();
+}
+
+void Spark::run()
+{
+    while(!glfwWindowShouldClose(window) && runProgram)
+    {
+        Clock::tick();
+        glfwPollEvents();
+
+        static bool mouseDisabled = false;
+
+        if(HID::isKeyReleased(Key::LEFT_ALT) && mouseDisabled)
+        {
+            glfwSetInputMode(Spark::window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            mouseDisabled = false;
+        }
+        else if(HID::isKeyReleased(Key::LEFT_ALT) && !mouseDisabled)
+        {
+            glfwSetInputMode(Spark::window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+            mouseDisabled = true;
+        }
+
+        if(HID::isKeyPressed(Key::ESC))
+            glfwSetWindowShouldClose(Spark::window, GLFW_TRUE);
+        
+        resourceLibrary.processGpuResources();
+        SceneManager::getInstance()->update();
+        sparkGui.drawGui();
+        SparkRenderer::getInstance()->renderPass();
+        HID::processInputDevicesStates();
+    }
+}
+
+void Spark::clean()
+{
+    SparkRenderer::getInstance()->cleanup();
+    SceneManager::getInstance()->cleanup();
+    resourceLibrary.cleanup();
+    destroyImGui();
+    destroyOpenGLContext();
 }
 
 void APIENTRY glDebugOutput(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam);
@@ -84,32 +127,6 @@ void Spark::initOpenGL()
     glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
     glEnable(GL_CULL_FACE);
     glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);
-
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO();
-    (void)io;
-    ImGui::StyleColorsLight();
-
-    ImGui_ImplGlfw_InitForOpenGL(window, true);
-    const char* glsl_version = "#version 450";
-    ImGui_ImplOpenGL3_Init(glsl_version);
-    ImGui_ImplOpenGL3_NewFrame();
-}
-
-void Spark::run()
-{
-    while(!glfwWindowShouldClose(window) && runProgram)
-    {
-        Clock::tick();
-        glfwPollEvents();
-        resourceLibrary.processGpuResources();
-        SceneManager::getInstance()->update();
-        sparkGui.drawGui();
-        SparkRenderer::getInstance()->renderPass();
-        HID::clearStates();
-        // SPARK_DEBUG("FPS: {}", Clock::getFPS());
-    }
 }
 
 void Spark::resizeWindow(GLuint width, GLuint height)
@@ -120,25 +137,14 @@ void Spark::resizeWindow(GLuint width, GLuint height)
 void Spark::setVsync(bool state)
 {
     vsync = state;
-    if (vsync)
+    if(vsync)
         glfwSwapInterval(1);
     else
         glfwSwapInterval(0);
 }
 
-void Spark::clean()
-{
-    SparkRenderer::getInstance()->cleanup();
-    SceneManager::getInstance()->cleanup();
-    resourceLibrary.cleanup();
-    destroyOpenGLContext();
-}
-
 void Spark::destroyOpenGLContext()
 {
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
     glfwDestroyWindow(window);
     glfwTerminate();
 }
@@ -146,6 +152,46 @@ void Spark::destroyOpenGLContext()
 spark::resourceManagement::ResourceLibrary* Spark::getResourceLibrary()
 {
     return &resourceLibrary;
+}
+
+void Spark::initImGui()
+{
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGui::StyleColorsLight();
+
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    const char* glsl_version = "#version 450";
+    ImGui_ImplOpenGL3_Init(glsl_version);
+    // ImGui::SetMouseCursor(ImGuiMouseCursor_None);
+    ImGui_ImplOpenGL3_NewFrame();
+}
+
+void Spark::destroyImGui()
+{
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+}
+
+void Spark::createCustomCursor()
+{
+    int width{0};
+    int height{0};
+    int channels{0};
+    unsigned char* pixels = stbi_load((pathToResources / "cursor.png").string().c_str(), &width, &height, &channels, 4);
+
+    GLFWimage image;
+    image.width = width;
+    image.height = height;
+    image.pixels = pixels;
+
+    GLFWcursor* cursor = glfwCreateCursor(&image, 0, 0);
+
+    glfwSetCursor(window, cursor);
+    ImGui_implGlfw_SetMouseCursor(ImGuiMouseCursor_Arrow, cursor);
+
+    stbi_image_free(pixels);
 }
 
 void APIENTRY glDebugOutput(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam)

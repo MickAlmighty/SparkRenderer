@@ -125,6 +125,15 @@ void ImGui_ImplGlfw_CharCallback(GLFWwindow* window, unsigned int c)
     io.AddInputCharacter(c);
 }
 
+void ImGui_implGlfw_SetMouseCursor(ImGuiMouseCursor_ cursorType, GLFWcursor* cursor)
+{
+    if (g_MouseCursors[cursorType] != NULL && cursor != NULL)
+    {
+        glfwDestroyCursor(g_MouseCursors[cursorType]);
+        g_MouseCursors[cursorType] = cursor;
+    }
+}
+
 static bool ImGui_ImplGlfw_Init(GLFWwindow* window, bool install_callbacks, GlfwClientApi client_api)
 {
     g_Window = window;
