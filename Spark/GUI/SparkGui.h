@@ -3,15 +3,15 @@
 
 #include "ActorAI.h"
 #include "Component.h"
-#include "DirectionalLight.h"
+#include "Lights/DirectionalLight.h"
 #include "GameObject.h"
 #include "Mesh.h"
 #include "MeshPlane.h"
 #include "ModelMesh.h"
-#include "PointLight.h"
-#include "SpotLight.h"
+#include "Lights/PointLight.h"
+#include "Lights/SpotLight.h"
 #include "TerrainGenerator.h"
-#include "LightProbe.h"
+#include "Lights/LightProbe.h"
 #include <optional>
 
 namespace spark

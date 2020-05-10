@@ -128,7 +128,7 @@
     <ClCompile Include="CommonUtils.cpp" />
     <ClCompile Include="Component.cpp" />
     <ClCompile Include="DepthOfFieldPass.cpp" />
-    <ClCompile Include="DirectionalLight.cpp" />
+    <ClCompile Include="Lights\DirectionalLight.cpp" />
     <ClCompile Include="EngineSystems\ResourceManager.cpp" />
     <ClCompile Include="EngineSystems\SceneManager.cpp" />
     <ClCompile Include="EngineSystems\SparkRenderer.cpp" />
@@ -148,8 +148,8 @@
     <ClCompile Include="GUI\SparkGui.cpp" />
     <ClCompile Include="HID\HID.cpp" />
     <ClCompile Include="JsonSerializer.cpp" />
-    <ClCompile Include="LightManager.cpp" />
-    <ClCompile Include="LightProbe.cpp" />
+    <ClCompile Include="Lights\LightManager.cpp" />
+    <ClCompile Include="Lights\LightProbe.cpp" />
     <ClCompile Include="LocalTransform.cpp" />
     <ClCompile Include="Logging.cpp" />
     <ClCompile Include="Mesh.cpp" />
@@ -157,7 +157,7 @@
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="ModelMesh.cpp" />
     <ClCompile Include="NodeAI.cpp" />
-    <ClCompile Include="PointLight.cpp" />
+    <ClCompile Include="Lights\PointLight.cpp" />
     <ClCompile Include="Resource.cpp" />
     <ClCompile Include="ResourceFactory.cpp" />
     <ClCompile Include="ResourceIdentifier.cpp" />
@@ -167,7 +167,7 @@
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="ShapeCreator.cpp" />
     <ClCompile Include="Spark.cpp" />
-    <ClCompile Include="SpotLight.cpp" />
+    <ClCompile Include="Lights\SpotLight.cpp" />
     <ClCompile Include="stb_image.cpp" />
     <ClCompile Include="Structs.cpp" />
     <ClCompile Include="TerrainGenerator.cpp" />
@@ -183,7 +183,7 @@
     <ClInclude Include="CommonUtils.h" />
     <ClInclude Include="Component.h" />
     <ClInclude Include="DepthOfFieldPass.h" />
-    <ClInclude Include="DirectionalLight.h" />
+    <ClInclude Include="Lights\DirectionalLight.h" />
     <ClInclude Include="EngineSystems\ResourceManager.h" />
     <ClInclude Include="EngineSystems\SceneManager.h" />
     <ClInclude Include="EngineSystems\SparkRenderer.h" />
@@ -206,8 +206,8 @@
     <ClInclude Include="HID\Key.h" />
     <ClInclude Include="HID\State.h" />
     <ClInclude Include="JsonSerializer.h" />
-    <ClInclude Include="LightManager.h" />
-    <ClInclude Include="LightProbe.h" />
+    <ClInclude Include="Lights\LightManager.h" />
+    <ClInclude Include="Lights\LightProbe.h" />
     <ClInclude Include="LocalTransform.h" />
     <ClInclude Include="Logging.h" />
     <ClInclude Include="Mesh.h" />
@@ -215,7 +215,7 @@
     <ClInclude Include="Model.h" />
     <ClInclude Include="ModelMesh.h" />
     <ClInclude Include="NodeAI.h" />
-    <ClInclude Include="PointLight.h" />
+    <ClInclude Include="Lights\PointLight.h" />
     <ClInclude Include="ReflectionUtils.h" />
     <ClInclude Include="RenderingRequest.h" />
     <ClInclude Include="Resource.h" />
@@ -227,7 +227,7 @@
     <ClInclude Include="Shader.h" />
     <ClInclude Include="ShapeCreator.h" />
     <ClInclude Include="Spark.h" />
-    <ClInclude Include="SpotLight.h" />
+    <ClInclude Include="Lights\SpotLight.h" />
     <ClInclude Include="Structs.h" />
     <ClInclude Include="TerrainGenerator.h" />
     <ClInclude Include="Texture.h" />

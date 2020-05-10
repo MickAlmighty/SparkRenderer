@@ -37,6 +37,8 @@ void LightManager::updateLightBuffers()
 
     const auto spotLightDataBuffer = getLightDataBuffer<SpotLightData, SpotLight>(spotLights);
     updateBufferIfNecessary(spotLightDataBuffer, spotLightSSBO);
+
+    findAndRemoveExpiredPointer(lightProbes);
 }
 
 LightManager::LightManager()

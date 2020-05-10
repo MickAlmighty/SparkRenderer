@@ -16,11 +16,7 @@ void main()
 layout (location = 0) out vec4 FragColor;
 
 layout (binding = 0) uniform sampler2D inputTexture;
-layout (binding = 1) uniform sampler2D toBlendTexture;
 
-uniform bool blend = false;
-uniform bool downscale = true;
-uniform float intensity = 1.0f;
 uniform vec2 outputTextureSizeInversion; //equals to 1.0f / texture size 
 
 in vec2 texCoords;
@@ -83,8 +79,5 @@ vec3 sampleTexture()
 
 void main()
 {
-    if (downscale)
-        FragColor = vec4(sampleTexture() * max(intensity, 0.0f), 0.0f); // 13 samples
-    else
-        FragColor = vec4(sampleInputRGB(texCoords) * max(intensity, 0.0f), 0.0f); // one center sample
+    FragColor = vec4(sampleTexture(), 0.0f); // 13 samples
 }

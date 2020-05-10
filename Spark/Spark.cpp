@@ -123,7 +123,7 @@ void Spark::initOpenGL()
     glDebugMessageCallback(glDebugOutput, nullptr);
 #endif
 
-    glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAnisotropicFiltering);
+    glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &maxAnisotropicFiltering);
     glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
     glEnable(GL_CULL_FACE);
     glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);

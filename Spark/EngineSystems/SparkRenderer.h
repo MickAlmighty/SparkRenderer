@@ -85,7 +85,8 @@ class SparkRenderer
     std::shared_ptr<resources::Shader> averageLuminanceComputeShader{nullptr};
     std::shared_ptr<resources::Shader> fxaaShader{nullptr};
     std::shared_ptr<resources::Shader> medianFilterShader{nullptr};
-    std::shared_ptr<resources::Shader> downscaleShader{nullptr};
+    std::shared_ptr<resources::Shader> bloomDownScaleShader{nullptr};
+    std::shared_ptr<resources::Shader> bloomUpScaleShader{nullptr};
     std::shared_ptr<resources::Shader> tileBasedLightCullingShader{nullptr};
 
     Cube cube = Cube();

@@ -15,7 +15,7 @@
 #include "CommonUtils.h"
 #include "DepthOfFieldPass.h"
 #include "EngineSystems/SceneManager.h"
-#include "LightProbe.h"
+#include "Lights/LightProbe.h"
 #include "RenderingRequest.h"
 #include "ResourceLibrary.h"
 #include "Scene.h"
@@ -172,7 +172,8 @@ void SparkRenderer::initMembers()
     luminanceHistogramComputeShader = Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("luminanceHistogramCompute.glsl");
     averageLuminanceComputeShader = Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("averageLuminanceCompute.glsl");
     fxaaShader = Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("fxaa.glsl");
-    downscaleShader = Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("downScale.glsl");
+    bloomDownScaleShader = Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("bloomDownScale.glsl");
+    bloomUpScaleShader = Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("bloomUpScale.glsl");
     tileBasedLightCullingShader = Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("tileBasedLightCulling.glsl");
 
     dofPass = std::make_unique<DepthOfFieldPass>(Spark::WIDTH, Spark::HEIGHT);
@@ -243,6 +244,9 @@ void SparkRenderer::renderPass()
 
     for(const auto& lightProbeWeakPtr : SceneManager::getInstance()->getCurrentScene()->lightManager->lightProbes)
     {
+        if(lightProbeWeakPtr.expired())
+            continue;
+
         const auto lightProbe = lightProbeWeakPtr.lock();
         if(lightProbe->generateLightProbe)
         {
@@ -444,9 +448,9 @@ void SparkRenderer::tileBasedLightRendering(const GBuffer& geometryBuffer)
     glBindImageTexture(4, brightPassTexture, 0, false, 0, GL_WRITE_ONLY, GL_RGBA16F);
 
     // debug of light count per tile
-     float clear = 0.0f;
-     glClearTexImage(lightsPerTileTexture, 0, GL_RED, GL_FLOAT, &clear);
-     glBindImageTexture(7, lightsPerTileTexture, 0, false, 0, GL_READ_WRITE, GL_R32F);
+    float clear = 0.0f;
+    glClearTexImage(lightsPerTileTexture, 0, GL_RED, GL_FLOAT, &clear);
+    glBindImageTexture(7, lightsPerTileTexture, 0, false, 0, GL_READ_WRITE, GL_R32F);
 
     tileBasedLightCullingShader->dispatchCompute(Spark::WIDTH / 16, Spark::HEIGHT / 16, 1);
     glBindTextures(0, 0, nullptr);
@@ -495,18 +499,22 @@ void SparkRenderer::bloom()
         // glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         // glClear(GL_COLOR_BUFFER_BIT);
 
-        downscaleShader->use();
-        downscaleShader->setBool("downscale", downscale);
-        downscaleShader->setFloat("intensity", intensity);
-        downscaleShader->setVec2("outputTextureSizeInversion",
+        bloomDownScaleShader->use();
+        bloomDownScaleShader->setVec2("outputTextureSizeInversion",
                                  glm::vec2(1.0f / static_cast<float>(viewportWidth), 1.0f / static_cast<float>(viewportHeight)));
         glBindTextureUnit(0, texture);
         screenQuad.draw();
     };
 
-    const auto upsampleTexture = [&downsampleTexture](GLuint framebuffer, GLuint texture, GLuint viewportWidth, GLuint viewportHeight,
-                                                      float intensity = 1.0f) {
-        downsampleTexture(framebuffer, texture, viewportWidth, viewportHeight, false, intensity);
+    const auto upsampleTexture = [this](GLuint framebuffer, GLuint texture, GLuint viewportWidth, GLuint viewportHeight, float intensity = 1.0f) {
+        glViewport(0, 0, viewportWidth, viewportHeight);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+
+        bloomUpScaleShader->use();
+        bloomUpScaleShader->setFloat("intensity", intensity);
+        glBindTextureUnit(0, texture);
+        screenQuad.draw();
     };
 
     upsampleTexture(bloomFramebuffer, lightColorTexture, Spark::WIDTH, Spark::HEIGHT);
@@ -646,11 +654,11 @@ void SparkRenderer::motionBlur()
     if(projectionView == prevProjectionView || !motionBlurEnable)
         return;
 
-    if(!initialized) 
+    if(!initialized)
     {
-        //it is necessary when the scene has been loaded and
-        //the difference between current VP and last frame VP matrices generates huge velocities for all pixels
-        //so it needs to be reset
+        // it is necessary when the scene has been loaded and
+        // the difference between current VP and last frame VP matrices generates huge velocities for all pixels
+        // so it needs to be reset
         prevProjectionView = projectionView;
         initialized = true;
     }

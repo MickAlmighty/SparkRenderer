@@ -1,15 +1,15 @@
 #ifndef SCENE_H
 #define SCENE_H
 
-#include "Structs.h"
-#include "LightManager.h"
+#include <memory>
+#include <list>
+#include <functional>
 
 #include <rttr/registration_friend>
 #include <rttr/registration>
 
-#include <memory>
-#include <list>
-#include <functional>
+#include "Structs.h"
+#include "Lights/LightManager.h"
 
 namespace spark
 {
