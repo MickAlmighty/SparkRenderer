@@ -2,10 +2,6 @@
 #define MESH_PLANE_H
 
 #include "Component.h"
-#include "Enums.h"
-#include "Structs.h"
-
-#include <vector>
 
 namespace spark
 {
@@ -13,6 +9,8 @@ namespace resources
 {
     class Shader;
 }
+
+class Mesh;
 
 class MeshPlane final : public Component
 {
@@ -25,20 +23,15 @@ class MeshPlane final : public Component
     MeshPlane& operator=(const MeshPlane&) = delete;
     MeshPlane& operator=(const MeshPlane&&) = delete;
 
-    void setup();
-    void addToRenderQueue() const;
-    void draw(std::shared_ptr<resources::Shader>& shader, glm::mat4 model) const;
-    void setTexture(TextureTarget target, Texture tex);
     void update() override;
     void fixedUpdate() override;
     void drawGUI() override;
 
     private:
-    GLuint vao{0}, vbo{0}, ebo{0};
-    std::vector<QuadVertex> vertices;
-    std::vector<unsigned int> indices;
-    std::map<TextureTarget, Texture> textures;
-    ShaderType shaderType{ShaderType::DEFAULT_SHADER};
+    std::shared_ptr<Mesh> planeMesh{nullptr};
+
+    void setup();
+
     RTTR_REGISTRATION_FRIEND;
     RTTR_ENABLE(Component);
 };

@@ -84,8 +84,6 @@ void PointLight::setLightModel(glm::mat4 model)
 
 PointLight::PointLight() : Component("PointLight")
 {
-    std::filesystem::path p = Spark::pathToResources;
-
     const auto attribute = VertexShaderAttribute::createVertexShaderAttributeInfo(0, 3, ShapeCreator::createSphere(1.0f, 10));
     sphere = std::make_shared<Mesh>(std::vector<VertexShaderAttribute>{attribute}, std::vector<unsigned int>{},
                                     std::map<TextureTarget, std::shared_ptr<resources::Texture>>{}, "Mesh", ShaderType::SOLID_COLOR_SHADER);
@@ -111,12 +109,13 @@ void PointLight::update()
         addedToLightManager = true;
     }
 
-    getGameObject()->transform.local.setScale(glm::vec3(radius));
+    glm::mat4 sphereModel(1);
+    sphereModel = glm::scale(sphereModel, glm::vec3(radius));
+    sphereModel[3] = glm::vec4(getPosition(), 1.0f);
 
-    const glm::mat4 mat = getGameObject()->transform.local.getMatrix();
-    if(mat != lightModel)
+    if(sphereModel != lightModel)
     {
-        setLightModel(mat);
+        setLightModel(sphereModel);
         // it also takes light position into consideration
     }
 
@@ -126,6 +125,7 @@ void PointLight::update()
         request.shaderType = sphere->shaderType;
         request.gameObject = getGameObject();
         request.mesh = sphere;
+        request.model = sphereModel;
 
         SparkRenderer::getInstance()->addRenderingRequest(request);
     }

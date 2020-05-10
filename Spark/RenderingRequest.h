@@ -13,5 +13,6 @@ struct RenderingRequest
     spark::ShaderType shaderType = spark::ShaderType::DEFAULT_SHADER;
     std::shared_ptr<GameObject> gameObject = nullptr;
     std::shared_ptr<Mesh> mesh = nullptr;
+    glm::mat4 model{1};
 };
 }  // namespace spark

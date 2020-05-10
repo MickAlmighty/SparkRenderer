@@ -389,6 +389,14 @@ struct SpotLightData final
     glm::vec4 boundingSphere; //for cone culling approximation
 };
 
+struct LightProbeData final
+{
+    GLint64 irradianceCubemapHandle{0};
+    GLint64 prefilterCubemapHandle{0};
+    alignas(16) glm::vec3 position{0};
+    float radius{0};
+};
+
 struct DrawArraysIndirectCommand final
 {
     GLuint count;

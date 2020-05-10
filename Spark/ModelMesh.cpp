@@ -35,6 +35,7 @@ void ModelMesh::update()
             request.shaderType = mesh->shaderType;
             request.gameObject = getGameObject();
             request.mesh = mesh;
+            request.model = getGameObject()->transform.world.getMatrix();
 
             SparkRenderer::getInstance()->addRenderingRequest(request);
         }

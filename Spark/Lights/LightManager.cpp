@@ -1,6 +1,7 @@
 #include "LightManager.h"
 
 #include "DirectionalLight.h"
+#include "LightProbe.h"
 #include "PointLight.h"
 #include "SpotLight.h"
 #include "Structs.h"
@@ -38,7 +39,8 @@ void LightManager::updateLightBuffers()
     const auto spotLightDataBuffer = getLightDataBuffer<SpotLightData, SpotLight>(spotLights);
     updateBufferIfNecessary(spotLightDataBuffer, spotLightSSBO);
 
-    findAndRemoveExpiredPointer(lightProbes);
+    const auto lightProbesDataBuffer = getLightDataBuffer<LightProbeData, LightProbe>(lightProbes);
+    updateBufferIfNecessary(lightProbesDataBuffer, lightProbeSSBO);
 }
 
 LightManager::LightManager()
@@ -46,6 +48,7 @@ LightManager::LightManager()
     dirLightSSBO.genBuffer();
     pointLightSSBO.genBuffer();
     spotLightSSBO.genBuffer();
+    lightProbeSSBO.genBuffer();
 }
 
 LightManager::~LightManager()
@@ -53,6 +56,7 @@ LightManager::~LightManager()
     dirLightSSBO.cleanup();
     spotLightSSBO.cleanup();
     pointLightSSBO.cleanup();
+    lightProbeSSBO.cleanup();
 }
 }  // namespace spark
 

@@ -62,7 +62,7 @@ void Spark::run()
 
         if(HID::isKeyPressed(Key::ESC))
             glfwSetWindowShouldClose(Spark::window, GLFW_TRUE);
-        
+
         resourceLibrary.processGpuResources();
         SceneManager::getInstance()->update();
         sparkGui.drawGui();
@@ -93,8 +93,14 @@ void Spark::initOpenGL()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    // glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
+    glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+#ifdef DEBUG
+    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
+#else
+    //glfwWindowHint(GLFW_CONTEXT_NO_ERROR, GL_TRUE);
+    //SPARK_INFO("Created context with disabled gl errors checking and reporting.");
+#endif
 
     window = glfwCreateWindow(static_cast<int>(Spark::WIDTH), static_cast<int>(Spark::HEIGHT), "Spark", nullptr, nullptr);
     if(!window)
@@ -111,17 +117,18 @@ void Spark::initOpenGL()
         throw std::exception("Failed to initialize OpenGL loader!");
     }
 
+#ifdef DEBUG
+    glEnable(GL_DEBUG_OUTPUT);
+    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+    glDebugMessageCallback(glDebugOutput, nullptr);
+#else
+
+#endif
+
     glfwSetKeyCallback(window, HID::key_callback);
     glfwSetCursorPosCallback(window, HID::cursor_position_callback);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     setVsync(vsync);
-
-#ifdef DEBUG
-    glEnable(GL_DEBUG_OUTPUT);
-    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
-    glDebugMessageCallback(glDebugOutput, nullptr);
-#endif
 
     glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &maxAnisotropicFiltering);
     glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);

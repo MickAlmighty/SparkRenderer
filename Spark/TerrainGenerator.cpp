@@ -47,16 +47,6 @@ void TerrainGenerator::drawGUI()
         updateTerrain();
     }
 
-    if(ImGui::Button("Generate Terrain"))
-    {
-        Texture tex = generateTerrain();
-        auto meshPlane = getGameObject()->getComponent<MeshPlane>();
-        if(meshPlane != nullptr)
-        {
-            meshPlane->setTexture(TextureTarget::DIFFUSE_TARGET, tex);
-        }
-    }
-
     removeComponentGUI<TerrainGenerator>();
 }
 

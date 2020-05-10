@@ -95,6 +95,7 @@ class SparkRenderer
     SSBO luminanceHistogram{};
     SSBO pointLightIndices{};
     SSBO spotLightIndices{};
+    SSBO lightProbeIndices{};
 
     bool ssaoEnable = false;
     int kernelSize = 24;

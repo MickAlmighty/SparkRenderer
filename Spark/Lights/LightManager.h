@@ -22,7 +22,7 @@ class LightProbe;
 class LightManager
 {
     public:
-    SSBO dirLightSSBO{}, pointLightSSBO{}, spotLightSSBO{};
+    SSBO dirLightSSBO{}, pointLightSSBO{}, spotLightSSBO{}, lightProbeSSBO{};
 
     std::vector<std::weak_ptr<DirectionalLight>> directionalLights;
     std::vector<std::weak_ptr<PointLight>> pointLights;

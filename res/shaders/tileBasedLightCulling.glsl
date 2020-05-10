@@ -1,5 +1,8 @@
 #type compute
 #version 450
+#extension GL_ARB_bindless_texture : require
+#extension GL_ARB_gpu_shader_int64 : require
+
 layout(local_size_x = 16, local_size_y = 16) in;
 
 layout(binding = 0) uniform sampler2D depthTexture; 
@@ -24,10 +27,12 @@ shared uint maxDepth;
 shared uint tileDepthMask;
 shared uint pointLightCount;
 shared uint spotLightCount;
+shared uint lightProbesCount;
 shared uint pixelsToShade;
 shared uint startIndex;
 
 #define MAX_WORK_GROUP_SIZE 16
+#define THREADS_PER_TILE MAX_WORK_GROUP_SIZE * MAX_WORK_GROUP_SIZE
 #define M_PI 3.14159265359 
 
 layout (std140) uniform Camera
@@ -63,6 +68,13 @@ struct SpotLight {
 	vec4 boundingSphere; //xyz - sphere center, w - radius 
 };
 
+struct LightProbe {
+	int64_t irradianceCubemapHandle;
+	int64_t prefilterCubemapHandle;
+	vec3 position;
+	float radius;
+};
+
 layout(std430) buffer DirLightData
 {
 	DirLight dirLights[];
@@ -78,6 +90,11 @@ layout(std430) buffer SpotLightData
 	SpotLight spotLights[];
 };
 
+layout(std430) buffer LightProbeData
+{
+	LightProbe lightProbes[];
+};
+
 layout(std430) buffer PointLightIndices
 {
 	uint pointLightIndices[];
@@ -87,6 +104,11 @@ layout(std430) buffer SpotLightIndices
 {
 	uint spotLightIndices[];
 };
+
+//layout(std430) buffer LightProbeIndices
+//{
+//	uint lightProbeIndices[];
+//};
 
 struct Material
 {
@@ -120,6 +142,7 @@ float getDistanceFromPerpendicularPlane(vec3 position, vec4 perpendicularPlane);
 void cullPointLights(AABB tileAABB, float minDepthVS, float depthRangeRecip);
 void cullPointLights(Frustum tileFrustum, float minDepthVS, float depthRangeRecip);
 void cullSpotLights(AABB tileAABB);
+//void cullLightProbes(AABB tileAABB, float minDepthVS, float depthRangeRecip);
 //
 
 vec3 worldPosFromDepth(float depth, vec2 texCoords);
@@ -148,6 +171,7 @@ void main()
 	{
 		pointLightCount = 0;
 		spotLightCount = 0;
+		lightProbesCount = 0;
 		pixelsToShade = 0;
 		minDepth = 0xffffffffu;
 		maxDepth = 0;
@@ -207,6 +231,7 @@ void main()
 	cullPointLights(tileAABB, minDepthVS, depthRangeRecip);
 	//cullPointLights(tileFrustum, minDepthVS, depthRangeRecip);
 	cullSpotLights(tileAABB);
+	//cullLightProbes(tileAABB, minDepthVS, depthRangeRecip);
 	
 	barrier();
 
@@ -249,6 +274,7 @@ void main()
 //IBL here
 	vec3 ambient = vec3(0.0);
 	float ssao = texture(ssaoTexture, screenSpaceTexCoords).x;
+	if (lightProbes.length() == 0)
 	{
 		float NdotV = max(dot(N, V), 0.0);
 		vec3 kS = fresnelSchlickRoughness(NdotV, material.F0, material.roughness);
@@ -270,6 +296,63 @@ void main()
 		vec3 specular = prefilteredColor * (F * brdf.x + brdf.y) * specOcclusion;
 		
 		ambient = (kD * diffuse + specular);
+	}
+	else
+	{
+		for(int i = 0; i < lightProbes.length(); ++i)
+		{
+			LightProbe lightProbe = lightProbes[i];
+			samplerCube irradianceSampler = samplerCube(lightProbe.irradianceCubemapHandle);
+			samplerCube prefilterSampler = samplerCube(lightProbe.prefilterCubemapHandle);
+			
+			float NdotV = max(dot(N, V), 0.0);
+			vec3 kS = fresnelSchlickRoughness(NdotV, material.F0, material.roughness);
+			vec3 kD = 1.0 - kS;
+			kD *= 1.0 - material.metalness;
+			vec3 irradiance = texture(irradianceSampler, N).rgb;
+			vec3 diffuse    = irradiance * material.albedo;
+
+			vec3 R = reflect(-V, N);
+			vec3 F = fresnelSchlickRoughness(NdotV, material.F0, material.roughness);
+			const float MAX_REFLECTION_LOD = 4.0;
+
+			//float mipMapLevel = material.roughness * MAX_REFLECTION_LOD; //base
+			float mipMapLevel = sqrt(material.roughness * MAX_REFLECTION_LOD); //frostbite 3
+			vec3 prefilteredColor = textureLod(prefilterSampler, R, mipMapLevel).rgb;    
+			vec2 brdf = texture(brdfLUT, vec2(NdotV, material.roughness)).rg;
+		
+			float specOcclusion = computeSpecOcclusion(NdotV, ssao, material.roughness);
+			vec3 specular = prefilteredColor * (F * brdf.x + brdf.y) * specOcclusion;
+		
+			ambient = (kD * diffuse + specular);
+		}
+//		for(int i = 0; i < lightProbesCount; ++i)
+//		{
+//			LightProbe lightProbe = lightProbes[lightProbeIndices[i]];
+//			samplerCube irradianceSampler = samplerCube(lightProbe.irradianceCubemapHandle);
+//			samplerCube prefilterSampler = samplerCube(lightProbe.prefilterCubemapHandle);
+//			
+//			float NdotV = max(dot(N, V), 0.0);
+//			vec3 kS = fresnelSchlickRoughness(NdotV, material.F0, material.roughness);
+//			vec3 kD = 1.0 - kS;
+//			kD *= 1.0 - material.metalness;
+//			vec3 irradiance = texture(irradianceSampler, N).rgb;
+//			vec3 diffuse    = irradiance * material.albedo;
+//
+//			vec3 R = reflect(-V, N);
+//			vec3 F = fresnelSchlickRoughness(NdotV, material.F0, material.roughness);
+//			const float MAX_REFLECTION_LOD = 4.0;
+//
+//			//float mipMapLevel = material.roughness * MAX_REFLECTION_LOD; //base
+//			float mipMapLevel = sqrt(material.roughness * MAX_REFLECTION_LOD); //frostbite 3
+//			vec3 prefilteredColor = textureLod(prefilterSampler, R, mipMapLevel).rgb;    
+//			vec2 brdf = texture(brdfLUT, vec2(NdotV, material.roughness)).rg;
+//		
+//			float specOcclusion = computeSpecOcclusion(NdotV, ssao, material.roughness);
+//			vec3 specular = prefilteredColor * (F * brdf.x + brdf.y) * specOcclusion;
+//		
+//			ambient = (kD * diffuse + specular);
+//		}
 	}
 	
 	vec4 color = vec4(L0 + ambient, 1);// * ssao;
@@ -409,9 +492,8 @@ float getDistanceFromPerpendicularPlane(vec3 position, vec4 perpendicularPlane)
 void cullPointLights(Frustum tileFrustum, float minDepthVS, float depthRangeRecip)
 {
 	//Now check the lights against the frustum and append them to the list
-	int threadsPerTile = MAX_WORK_GROUP_SIZE * MAX_WORK_GROUP_SIZE;
 
-	for (uint i = gl_LocalInvocationIndex; i < pointLights.length(); i += threadsPerTile)
+	for (uint i = gl_LocalInvocationIndex; i < pointLights.length(); i += THREADS_PER_TILE)
 	{
 		uint il = i;
 		PointLight p = pointLights[il];
@@ -452,9 +534,8 @@ void cullPointLights(Frustum tileFrustum, float minDepthVS, float depthRangeReci
 void cullPointLights(AABB tileAABB, float minDepthVS, float depthRangeRecip)
 {
 	//Now check the lights against the frustum and append them to the list
-	int threadsPerTile = MAX_WORK_GROUP_SIZE * MAX_WORK_GROUP_SIZE;
 
-	for (uint i = gl_LocalInvocationIndex; i < pointLights.length(); i += threadsPerTile)
+	for (uint i = gl_LocalInvocationIndex; i < pointLights.length(); i += THREADS_PER_TILE)
 	{
 		uint il = i;
 		PointLight p = pointLights[il];
@@ -488,9 +569,8 @@ void cullPointLights(AABB tileAABB, float minDepthVS, float depthRangeRecip)
 void cullSpotLights(AABB tileAABB)
 {
 	//Now check the lights against the frustum and append them to the list
-	int threadsPerTile = MAX_WORK_GROUP_SIZE * MAX_WORK_GROUP_SIZE;
 
-	for (uint i = gl_LocalInvocationIndex; i < spotLights.length(); i += threadsPerTile)
+	for (uint i = gl_LocalInvocationIndex; i < spotLights.length(); i += THREADS_PER_TILE)
 	{
 		uint il = i;
 		SpotLight s = spotLights[il];
@@ -505,6 +585,40 @@ void cullSpotLights(AABB tileAABB)
 		}
 	}
 }
+
+//void cullLightProbes(AABB tileAABB, float minDepthVS, float depthRangeRecip)
+//{
+//	//Now check the lights against the frustum and append them to the list
+//
+//	for (uint i = gl_LocalInvocationIndex; i < lightProbes.length(); i += THREADS_PER_TILE)
+//	{
+//		LightProbe lightProbe = lightProbes[i];
+//
+//		vec3 lightViewPosition = (camera.view * vec4(lightProbe.position, 1.0f)).xyz;
+//		float r = lightProbe.radius;
+//
+//		float zMin = lightViewPosition.z - r;
+//		float zMax = lightViewPosition.z + r;
+//
+//		uint lightMaskCellIndexStart = uint(max(0, min(32, floor(zMin - minDepthVS) * depthRangeRecip)));
+//		uint lightMaskCellIndexEnd = uint(max(0, min(32, floor(zMax - minDepthVS) * depthRangeRecip)));
+//
+//		uint lightMask = 0xffffffffu;
+//		lightMask >>= 31 - (lightMaskCellIndexEnd - lightMaskCellIndexStart);
+//		lightMask <<= lightMaskCellIndexStart;
+//
+//		bool intersect2_5D = bool(tileDepthMask & lightMask);
+//
+//		if (!intersect2_5D)
+//			continue;
+//
+//		if( testSphereVsAABB(lightViewPosition, r, tileAABB.aabbCenter, tileAABB.aabbHalfSize) )
+//		{
+//			uint id = atomicAdd(lightProbesCount, 1);
+//			lightProbeIndices[startIndex + id] = i;
+//		}
+//	}
+//}
 
 vec3 worldPosFromDepth(float depth, vec2 texCoords) {
     vec4 clipSpacePosition = vec4(texCoords * 2.0 - 1.0, depth, 1.0);

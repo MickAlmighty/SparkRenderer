@@ -3,13 +3,16 @@
 
 namespace spark
 {
+struct LightProbeData;
+class Mesh;
+
 class LightProbe : public Component
 {
     public:
     bool generateLightProbe{true};
 
     LightProbe();
-    ~LightProbe() = default;
+    ~LightProbe();
 
     LightProbe(const LightProbe&) = delete;
     LightProbe(const LightProbe&&) = delete;
@@ -20,17 +23,38 @@ class LightProbe : public Component
     void fixedUpdate() override;
     void drawGUI() override;
 
-    GLuint getPrefilterCubemap() const;
-    GLuint getIrradianceCubemap() const;
+    [[nodiscard]] LightProbeData getLightData() const;
+    [[nodiscard]] bool getDirty() const;
+    [[nodiscard]] float getRadius() const;
+    void resetDirty();
+    [[nodiscard]] GLuint getPrefilterCubemap() const;
+    [[nodiscard]] GLuint getIrradianceCubemap() const;
 
-    void setIrradianceCubemap(GLuint irradianceCubemap_);
-    void setPrefilterCubemap(GLuint prefilterCubemap_);
+    void renderIntoIrradianceCubemap(GLuint framebuffer, GLuint environmentCubemap, Cube& cube, glm::mat4 projection,
+                                     const std::array<glm::mat4, 6>& views, const std::shared_ptr<resources::Shader>& irradianceShader) const;
+    void renderIntoPrefilterCubemap(GLuint framebuffer, GLuint environmentCubemap, unsigned envCubemapSize, Cube& cube, glm::mat4 projection,
+                                    const std::array<glm::mat4, 6>& views, const std::shared_ptr<resources::Shader>& prefilterShader) const;
+
+    void setActive(bool active_) override;
+    void setRadius(float radius_);
+    // void setIrradianceCubemap(GLuint irradianceCubemap_);
+    // void setPrefilterCubemap(GLuint prefilterCubemap_);
 
     private:
     GLuint irradianceCubemap{};
     GLuint prefilterCubemap{};
+    GLuint64 irradianceCubemapHandle{};
+    GLuint64 prefilterCubemapHandle{};
+    float radius{1};
 
+    GLuint irradianceCubemapSize = 32;
+    GLuint prefilterCubemapSize = 128;
+
+    bool dirty{true};
     bool addedToLightManager{false};
+
+    std::shared_ptr<Mesh> sphere{nullptr};
+    
 
     RTTR_REGISTRATION_FRIEND;
     RTTR_ENABLE(Component);

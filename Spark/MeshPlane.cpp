@@ -4,37 +4,35 @@
 #include "EngineSystems/SparkRenderer.h"
 #include "GameObject.h"
 #include "GUI/SparkGui.h"
+#include "ReflectionUtils.h"
+#include "RenderingRequest.h"
 #include "Shader.h"
 
 namespace spark
 {
 void MeshPlane::setup()
 {
-    vertices = {{{-1.0f, 1.0f, 0.0f}, {0.0f, 1.0f}},
-                {{1.0f, 1.0f, 0.0f}, {1.0f, 1.0f}},
-                {{1.0f, -1.0f, 0.0f}, {1.0f, 0.0f}},
-                {{-1.0f, -1.0f, 0.0f}, {0.0f, 0.0f}}};
+    const std::vector<glm::vec3> vertices{
+        {-1.0f, 1.0f, 0.0f},
+        {1.0f, 1.0f, 0.0f},
+        {1.0f, -1.0f, 0.0f},
+        {-1.0f, -1.0f, 0.0f}
+    };
 
-    indices = {0, 1, 2, 2, 3, 0};
+    const std::vector<glm::vec2> texCoords{
+        {0.0f, 1.0f},
+        {1.0f, 1.0f},
+        {1.0f, 0.0f},
+        {0.0f, 0.0f}
+    };
 
-    glCreateVertexArrays(1, &vao);
-    glBindVertexArray(vao);
+    std::vector<unsigned int> indices{0, 1, 2, 2, 3, 0};
 
-    glCreateBuffers(1, &vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(QuadVertex), vertices.data(), GL_STATIC_DRAW);
-
-    glCreateBuffers(1, &ebo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
-
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(QuadVertex), reinterpret_cast<void*>(offsetof(QuadVertex, pos)));
-
-    glEnableVertexAttribArray(2);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(QuadVertex), reinterpret_cast<void*>(offsetof(QuadVertex, texCoords)));
-
-    glBindVertexArray(0);
+    const auto positionAttribute = VertexShaderAttribute::createVertexShaderAttributeInfo(0, 3, vertices);
+    const auto texCoordsAttribute = VertexShaderAttribute::createVertexShaderAttributeInfo(1, 2, texCoords);
+    planeMesh = std::make_shared<Mesh>(std::vector<VertexShaderAttribute>{positionAttribute, texCoordsAttribute}, indices,
+                                    std::map<TextureTarget, std::shared_ptr<resources::Texture>>{}, "Mesh", ShaderType::SOLID_COLOR_SHADER);
+    planeMesh->gpuLoad();
 }
 
 MeshPlane::MeshPlane() : Component("MeshPlane")
@@ -49,82 +47,25 @@ MeshPlane::MeshPlane(std::string&& name) : Component(std::move(name))
 
 MeshPlane::~MeshPlane()
 {
-    glDeleteBuffers(1, &vbo);
-    glDeleteBuffers(1, &ebo);
-    glDeleteVertexArrays(1, &vao);
+    planeMesh->gpuUnload();
 }
 
-void MeshPlane::addToRenderQueue() const
-{
-   /* glm::mat4 model = getGameObject()->transform.world.getMatrix();
-    auto f = [this, model](std::shared_ptr<resources::Shader>& shader) { draw(shader, model); };
-    SparkRenderer::getInstance()->renderQueue[shaderType].push_back(f);*/
-}
-
-void MeshPlane::draw(std::shared_ptr<resources::Shader>& shader, glm::mat4 model) const
-{
-    shader->setMat4("model", model);
-
-    for(auto& texture_it : textures)
-    {
-        glBindTextureUnit(static_cast<GLuint>(texture_it.first), texture_it.second.ID);
-    }
-
-    glBindVertexArray(vao);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-    glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indices.size()), GL_UNSIGNED_INT, nullptr);
-    glBindVertexArray(0);
-
-    glBindTextures(static_cast<GLuint>(TextureTarget::DIFFUSE_TARGET), static_cast<GLsizei>(textures.size()), nullptr);
-}
-
-void MeshPlane::setTexture(TextureTarget target, Texture tex)
-{
-    textures[target] = tex;
-}
 
 void MeshPlane::update()
 {
-    addToRenderQueue();
+    RenderingRequest request{};
+    request.shaderType = ShaderType::DEFAULT_SHADER;
+    request.gameObject = getGameObject();
+    request.mesh = planeMesh;
+    request.model = getGameObject()->transform.world.getMatrix();
+
+    SparkRenderer::getInstance()->addRenderingRequest(request);
 }
 
 void MeshPlane::fixedUpdate() {}
 
 void MeshPlane::drawGUI()
 {
-    ImGui::Text("Vertices:");
-    ImGui::SameLine();
-    ImGui::Text(std::to_string(vertices.size()).c_str());
-    ImGui::Text("Indices:");
-    ImGui::SameLine();
-    ImGui::Text(std::to_string(indices.size()).c_str());
-    ImGui::Text("Textures:");
-    ImGui::SameLine();
-    ImGui::Text(std::to_string(textures.size()).c_str());
-    ImGui::Text("resources::Shader enum:");
-    ImGui::SameLine();
-    ImGui::Text(std::to_string(static_cast<int>(shaderType)).c_str());
-    ImGui::Separator();
-    // ImGui::com
-    static int mode = static_cast<int>(TextureTarget::DIFFUSE_TARGET);
-    if(ImGui::RadioButton("Diffuse", mode == static_cast<int>(TextureTarget::DIFFUSE_TARGET)))
-    {
-        mode = static_cast<int>(TextureTarget::DIFFUSE_TARGET);
-    }
-    ImGui::SameLine();
-    if(ImGui::RadioButton("Normal", mode == static_cast<int>(TextureTarget::NORMAL_TARGET)))
-    {
-        mode = static_cast<int>(TextureTarget::NORMAL_TARGET);
-    }
-
-    std::string name = "texture: " + std::to_string(textures[static_cast<TextureTarget>(mode)].ID);
-    ImGui::Text(name.c_str());
-    const auto optionalResult = SparkGui::getDraggedObject<Texture>("TEXTURE");
-    if(optionalResult)
-    {
-        textures[static_cast<TextureTarget>(mode)] = optionalResult.value();
-    }
-
     removeComponentGUI<MeshPlane>();
 }
 }  // namespace spark
@@ -133,6 +74,5 @@ RTTR_REGISTRATION
 {
     rttr::registration::class_<spark::MeshPlane>("MeshPlane")
         .constructor()(rttr::policy::ctor::as_std_shared_ptr)
-        .property("shaderType", &spark::MeshPlane::shaderType)
-        .property("textures", &spark::MeshPlane::textures);
+        .property("planeMesh", &spark::MeshPlane::planeMesh)(rttr::detail::metadata(spark::SerializerMeta::Serializable, false));
 }

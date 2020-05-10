@@ -149,6 +149,7 @@ void SparkRenderer::setup()
     luminanceHistogram.genBuffer(256 * sizeof(uint32_t));
     pointLightIndices.genBuffer(256 * (uint32_t)glm::ceil(Spark::HEIGHT / 16.0f) * (uint32_t)glm::ceil(Spark::WIDTH / 16.0f) * sizeof(uint32_t));
     spotLightIndices.genBuffer(256 * (uint32_t)glm::ceil(Spark::HEIGHT / 16.0f) * (uint32_t)glm::ceil(Spark::WIDTH / 16.0f) * sizeof(uint32_t));
+    lightProbeIndices.genBuffer(256 * (uint32_t)glm::ceil(Spark::HEIGHT / 16.0f) * (uint32_t)glm::ceil(Spark::WIDTH / 16.0f) * sizeof(uint32_t));
     brdfLookupTexture = utils::createBrdfLookupTexture(1024);
 
     initMembers();
@@ -210,9 +211,11 @@ void SparkRenderer::updateBufferBindings() const
     tileBasedLightCullingShader->bindSSBO("DirLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->dirLightSSBO);
     tileBasedLightCullingShader->bindSSBO("PointLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->pointLightSSBO);
     tileBasedLightCullingShader->bindSSBO("SpotLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->spotLightSSBO);
+    tileBasedLightCullingShader->bindSSBO("LightProbeData", SceneManager::getInstance()->getCurrentScene()->lightManager->lightProbeSSBO);
 
     tileBasedLightCullingShader->bindSSBO("PointLightIndices", pointLightIndices);
     tileBasedLightCullingShader->bindSSBO("SpotLightIndices", spotLightIndices);
+    tileBasedLightCullingShader->bindSSBO("LightProbeIndices", lightProbeIndices);
 }
 
 void SparkRenderer::renderPass()
@@ -307,7 +310,7 @@ void SparkRenderer::fillGBuffer(const GBuffer& geometryBuffer)
     mainShader->use();
     for(auto& request : renderQueue[ShaderType::DEFAULT_SHADER])
     {
-        request.mesh->draw(mainShader, request.gameObject->transform.world.getMatrix());
+        request.mesh->draw(mainShader, request.model);
     }
 
     POP_DEBUG_GROUP();
@@ -330,7 +333,7 @@ void SparkRenderer::fillGBuffer(const GBuffer& geometryBuffer, const std::functi
     {
         if(filter(request))
         {
-            request.mesh->draw(mainShader, request.gameObject->transform.world.getMatrix());
+            request.mesh->draw(mainShader, request.model);
         }
     }
 
@@ -419,6 +422,7 @@ void SparkRenderer::tileBasedLightRendering(const GBuffer& geometryBuffer)
     PUSH_DEBUG_GROUP(TILE_BASED_DEFERRED)
     pointLightIndices.clearBuffer();
     spotLightIndices.clearBuffer();
+    lightProbeIndices.clearBuffer();
 
     float clearRgba[] = {0.0f, 0.0f, 0.0f, 0.0f};
     glClearTexImage(lightColorTexture, 0, GL_RGBA, GL_FLOAT, &clearRgba);
@@ -501,7 +505,7 @@ void SparkRenderer::bloom()
 
         bloomDownScaleShader->use();
         bloomDownScaleShader->setVec2("outputTextureSizeInversion",
-                                 glm::vec2(1.0f / static_cast<float>(viewportWidth), 1.0f / static_cast<float>(viewportHeight)));
+                                      glm::vec2(1.0f / static_cast<float>(viewportWidth), 1.0f / static_cast<float>(viewportHeight)));
         glBindTextureUnit(0, texture);
         screenQuad.draw();
     };
@@ -566,7 +570,7 @@ void SparkRenderer::helperShapes()
 
     for(auto& request : renderQueue[ShaderType::SOLID_COLOR_SHADER])
     {
-        request.mesh->draw(solidColorShader, request.gameObject->transform.world.getMatrix());
+        request.mesh->draw(solidColorShader, request.model);
     }
 
     glEnable(GL_CULL_FACE);
@@ -740,8 +744,6 @@ void SparkRenderer::fxaa()
     PUSH_DEBUG_GROUP(FXAA);
 
     glBindFramebuffer(GL_FRAMEBUFFER, fxaaFramebuffer);
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
 
     fxaaShader->use();
     fxaaShader->setVec2("inversedScreenSize", {1.0f / static_cast<float>(Spark::WIDTH), 1.0f / static_cast<float>(Spark::HEIGHT)});
@@ -788,6 +790,7 @@ void SparkRenderer::createFrameBuffersAndTextures()
 
     pointLightIndices.resizeBuffer(256 * (uint32_t)glm::ceil(Spark::HEIGHT / 16.0f) * (uint32_t)glm::ceil(Spark::WIDTH / 16.0f) * sizeof(uint32_t));
     spotLightIndices.resizeBuffer(256 * (uint32_t)glm::ceil(Spark::HEIGHT / 16.0f) * (uint32_t)glm::ceil(Spark::WIDTH / 16.0f) * sizeof(uint32_t));
+    lightProbeIndices.resizeBuffer(256 * (uint32_t)glm::ceil(Spark::HEIGHT / 16.0f) * (uint32_t)glm::ceil(Spark::WIDTH / 16.0f) * sizeof(uint32_t));
 
     gBuffer.setup(Spark::WIDTH, Spark::HEIGHT);
 
@@ -826,6 +829,10 @@ void SparkRenderer::cleanup()
 {
     cameraUBO.cleanup();
     sampleUniformBuffer.cleanup();
+    pointLightIndices.cleanup();
+    spotLightIndices.cleanup();
+    lightProbeIndices.cleanup();
+
     deleteFrameBuffersAndTextures();
     glDeleteTextures(1, &randomNormalsTexture);
     glDeleteTextures(1, &ssaoDisabledTexture);
@@ -927,19 +934,8 @@ void SparkRenderer::generateLightProbe(const std::shared_ptr<LightProbe>& lightP
     glGenFramebuffers(1, &lightProbeFramebuffer);
     glBindFramebuffer(GL_FRAMEBUFFER, lightProbeFramebuffer);
 
-    auto skybox = SceneManager::getInstance()->getCurrentScene()->cubemap;
-
-    glDeleteTextures(1, &skybox->irradianceCubemap);
-    glDeleteTextures(1, &skybox->prefilteredCubemap);
-
-    skybox->irradianceCubemap =
-        PbrCubemapTexture::createIrradianceCubemap(lightProbeFramebuffer, sceneCubemap, cube, projection, cubemapViews, irradianceShader);
-    skybox->prefilteredCubemap = PbrCubemapTexture::createPreFilteredCubemap(lightProbeFramebuffer, sceneCubemap, cubemapSize, cube, projection,
-                                                                             cubemapViews, prefilterShader);
-    /*lightProbe->setIrradianceCubemap(
-        PbrCubemapTexture::createIrradianceCubemap(lightProbeFramebuffer, sceneCubemap, cube, projection, cubemapViews, irradianceShader));
-    lightProbe->setPrefilterCubemap(PbrCubemapTexture::createPreFilteredCubemap(lightProbeFramebuffer, sceneCubemap, cubemapSize, cube, projection,
-                                                                                cubemapViews, prefilterShader));*/
+    lightProbe->renderIntoIrradianceCubemap(lightProbeFramebuffer, sceneCubemap, cube, projection, cubemapViews, irradianceShader);
+    lightProbe->renderIntoPrefilterCubemap(lightProbeFramebuffer, sceneCubemap, cubemapSize, cube, projection, cubemapViews, prefilterShader);
 
     geometryBuffer.cleanup();
     glDeleteTextures(1, &sceneCubemap);
