@@ -88,6 +88,7 @@ class SparkRenderer
     std::shared_ptr<resources::Shader> bloomDownScaleShader{nullptr};
     std::shared_ptr<resources::Shader> bloomUpScaleShader{nullptr};
     std::shared_ptr<resources::Shader> tileBasedLightCullingShader{nullptr};
+    std::shared_ptr<resources::Shader> tileBasedLightingShader{nullptr};
 
     Cube cube = Cube();
     UniformBuffer cameraUBO{};
@@ -137,6 +138,7 @@ class SparkRenderer
     void ssaoComputing(const GBuffer& geometryBuffer);
     void renderLights(GLuint framebuffer, const GBuffer& geometryBuffer);
     void renderCubemap(GLuint framebuffer) const;
+    void tileBasedLightCulling(const GBuffer& geometryBuffer) const;
     void tileBasedLightRendering(const GBuffer& geometryBuffer);
     void bloom();
     void lightShafts();

@@ -176,6 +176,7 @@ void SparkRenderer::initMembers()
     bloomDownScaleShader = Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("bloomDownScale.glsl");
     bloomUpScaleShader = Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("bloomUpScale.glsl");
     tileBasedLightCullingShader = Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("tileBasedLightCulling.glsl");
+    tileBasedLightingShader = Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("tileBasedLighting.glsl");
 
     dofPass = std::make_unique<DepthOfFieldPass>(Spark::WIDTH, Spark::HEIGHT);
     ssaoBlurPass = std::make_unique<BlurPass>(Spark::WIDTH / 2, Spark::HEIGHT / 2);
@@ -216,6 +217,16 @@ void SparkRenderer::updateBufferBindings() const
     tileBasedLightCullingShader->bindSSBO("PointLightIndices", pointLightIndices);
     tileBasedLightCullingShader->bindSSBO("SpotLightIndices", spotLightIndices);
     tileBasedLightCullingShader->bindSSBO("LightProbeIndices", lightProbeIndices);
+
+    tileBasedLightingShader->bindUniformBuffer("Camera", cameraUBO);
+    tileBasedLightingShader->bindSSBO("DirLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->dirLightSSBO);
+    tileBasedLightingShader->bindSSBO("PointLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->pointLightSSBO);
+    tileBasedLightingShader->bindSSBO("SpotLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->spotLightSSBO);
+    tileBasedLightingShader->bindSSBO("LightProbeData", SceneManager::getInstance()->getCurrentScene()->lightManager->lightProbeSSBO);
+
+    tileBasedLightingShader->bindSSBO("PointLightIndices", pointLightIndices);
+    tileBasedLightingShader->bindSSBO("SpotLightIndices", spotLightIndices);
+    tileBasedLightingShader->bindSSBO("LightProbeIndices", lightProbeIndices);
 }
 
 void SparkRenderer::renderPass()
@@ -417,20 +428,39 @@ void SparkRenderer::renderLights(GLuint framebuffer, const GBuffer& geometryBuff
     POP_DEBUG_GROUP();
 }
 
-void SparkRenderer::tileBasedLightRendering(const GBuffer& geometryBuffer)
+void SparkRenderer::tileBasedLightCulling(const GBuffer& geometryBuffer) const
 {
-    PUSH_DEBUG_GROUP(TILE_BASED_DEFERRED)
+    PUSH_DEBUG_GROUP(TILE_BASED_LIGHTS_CULLING);
     pointLightIndices.clearBuffer();
     spotLightIndices.clearBuffer();
     lightProbeIndices.clearBuffer();
 
+    tileBasedLightCullingShader->use();
+
+    glBindTextureUnit(0, geometryBuffer.depthTexture);
+
+    // debug of light count per tile
+    float clear = 0.0f;
+    glClearTexImage(lightsPerTileTexture, 0, GL_RED, GL_FLOAT, &clear);
+    glBindImageTexture(7, lightsPerTileTexture, 0, false, 0, GL_READ_WRITE, GL_R32F);
+
+    tileBasedLightCullingShader->dispatchCompute(Spark::WIDTH / 16, Spark::HEIGHT / 16, 1);
+
+    POP_DEBUG_GROUP();
+}
+
+void SparkRenderer::tileBasedLightRendering(const GBuffer& geometryBuffer)
+{
+    tileBasedLightCulling(geometryBuffer);
+
+    PUSH_DEBUG_GROUP(TILE_BASED_DEFERRED)
     float clearRgba[] = {0.0f, 0.0f, 0.0f, 0.0f};
     glClearTexImage(lightColorTexture, 0, GL_RGBA, GL_FLOAT, &clearRgba);
     glClearTexImage(brightPassTexture, 0, GL_RGBA, GL_FLOAT, &clearRgba);
 
     const auto cubemap = SceneManager::getInstance()->getCurrentScene()->cubemap;
 
-    tileBasedLightCullingShader->use();
+    tileBasedLightingShader->use();
 
     // depth texture as sampler2D
     glBindTextureUnit(0, geometryBuffer.depthTexture);
@@ -451,12 +481,8 @@ void SparkRenderer::tileBasedLightRendering(const GBuffer& geometryBuffer)
     glBindImageTexture(3, lightColorTexture, 0, false, 0, GL_WRITE_ONLY, GL_RGBA16F);
     glBindImageTexture(4, brightPassTexture, 0, false, 0, GL_WRITE_ONLY, GL_RGBA16F);
 
-    // debug of light count per tile
-    float clear = 0.0f;
-    glClearTexImage(lightsPerTileTexture, 0, GL_RED, GL_FLOAT, &clear);
-    glBindImageTexture(7, lightsPerTileTexture, 0, false, 0, GL_READ_WRITE, GL_R32F);
 
-    tileBasedLightCullingShader->dispatchCompute(Spark::WIDTH / 16, Spark::HEIGHT / 16, 1);
+    tileBasedLightingShader->dispatchCompute(Spark::WIDTH / 16, Spark::HEIGHT / 16, 1);
     glBindTextures(0, 0, nullptr);
 
     textureHandle = lightColorTexture;
