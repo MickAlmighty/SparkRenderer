@@ -26,6 +26,6 @@ void main()
     vec3 blur = texture(bluredColorTexture, texCoords).xyz;
     vec3 color = texture(sourceColorTexture, texCoords).xyz;
     float cocValue = texture(cocTexture, texCoords).x;
-    
+
     FragColor = mix(color, blur, cocValue);
 }

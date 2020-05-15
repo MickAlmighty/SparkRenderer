@@ -39,7 +39,7 @@ void Mesh::draw(std::shared_ptr<resources::Shader>& shader, glm::mat4 model)
 {
     shader->setMat4("model", model);
 
-    GLuint texturesToBind[4];
+    GLuint texturesToBind[5]{0,0,0,0,0};
 
     for(const auto& [textureTarget, texture] : textures)
     {
@@ -47,7 +47,7 @@ void Mesh::draw(std::shared_ptr<resources::Shader>& shader, glm::mat4 model)
     }
 
     if(!textures.empty())
-        glBindTextures(1, 4, texturesToBind);
+        glBindTextures(1, 5, texturesToBind);
 
     glBindVertexArray(vao);
 

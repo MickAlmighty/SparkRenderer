@@ -40,7 +40,7 @@ vec3 sampleTexture()
         vec3 bottomRight = sampleInputRGB(texCoords + texelOffset(vec2(0.5f, -0.5f)));
         vec3 topRight = sampleInputRGB(texCoords + texelOffset(vec2(0.5f)));
         vec3 topLeft = sampleInputRGB(texCoords + texelOffset(vec2(-0.5f, 0.5f)));
-        
+
         vec3 centerQuadAverage = 0.25 * (bottomLeft + bottomRight + topRight + topLeft);
         outputColor += centerQuadAverage * 0.5f; // 0.5f is a total weight
     }

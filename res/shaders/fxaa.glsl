@@ -6,8 +6,8 @@ layout(location = 1) in vec2 textureCoords;
 out vec2 texCoords;
 
 void main() {
-	texCoords = textureCoords;
-	gl_Position = vec4(pos, 1.0);
+    texCoords = textureCoords;
+    gl_Position = vec4(pos, 1.0);
 }
 
 #type fragment
@@ -29,46 +29,46 @@ vec4 fxaaPixelShader(vec2 pos, sampler2D tex, vec2 fxaaQualityRcpFrame);
 
 void main() 
 {
-	FragColor = fxaaPixelShader(texCoords, inputTexture, inversedScreenSize).xyz;
+    FragColor = fxaaPixelShader(texCoords, inputTexture, inversedScreenSize).xyz;
     //FragColor = FXAA();
 }
 
 vec3 FXAA()
 {
     vec3 luma = vec3(0.299, 0.587, 0.114);
-	float lumaTL = dot(luma, texture(inputTexture, texCoords + (vec2(-1.0, -1.0) * inversedScreenSize)).rgb);
-	float lumaTR = dot(luma, texture(inputTexture, texCoords + (vec2(1.0, -1.0) * inversedScreenSize)).rgb);
-	float lumaBL = dot(luma, texture(inputTexture, texCoords + (vec2(-1.0, 1.0) * inversedScreenSize)).rgb);
-	float lumaBR = dot(luma, texture(inputTexture, texCoords + (vec2(1.0, 1.0) * inversedScreenSize)).rgb);
-	float lumaM = dot(luma, texture(inputTexture, texCoords).rgb);
+    float lumaTL = dot(luma, texture(inputTexture, texCoords + (vec2(-1.0, -1.0) * inversedScreenSize)).rgb);
+    float lumaTR = dot(luma, texture(inputTexture, texCoords + (vec2(1.0, -1.0) * inversedScreenSize)).rgb);
+    float lumaBL = dot(luma, texture(inputTexture, texCoords + (vec2(-1.0, 1.0) * inversedScreenSize)).rgb);
+    float lumaBR = dot(luma, texture(inputTexture, texCoords + (vec2(1.0, 1.0) * inversedScreenSize)).rgb);
+    float lumaM = dot(luma, texture(inputTexture, texCoords).rgb);
 
-	vec2 dir;
-	dir.x = -((lumaTL + lumaTR) - (lumaBL + lumaBR));
-	dir.y = ((lumaTL + lumaBL) - (lumaTR + lumaBR));
+    vec2 dir;
+    dir.x = -((lumaTL + lumaTR) - (lumaBL + lumaBR));
+    dir.y = ((lumaTL + lumaBL) - (lumaTR + lumaBR));
 
-	float dirReduce = max((lumaTL + lumaTR + lumaBL + lumaBR) * (fxaaReduceMul * 0.25), fxaaReduceMin);
-	float inverseDirAdjustment = 1.0 / (min(abs(dir.x), abs(dir.y)) + dirReduce);
+    float dirReduce = max((lumaTL + lumaTR + lumaBL + lumaBR) * (fxaaReduceMul * 0.25), fxaaReduceMin);
+    float inverseDirAdjustment = 1.0 / (min(abs(dir.x), abs(dir.y)) + dirReduce);
 
-	dir = min(vec2(fxaaSpanMax, fxaaSpanMax),
-			  max(vec2(-fxaaSpanMax, -fxaaSpanMax), dir * inverseDirAdjustment)) * inversedScreenSize;
+    dir = min(vec2(fxaaSpanMax, fxaaSpanMax),
+                max(vec2(-fxaaSpanMax, -fxaaSpanMax), dir * inverseDirAdjustment)) * inversedScreenSize;
 
-	vec3 result1 = (1.0 / 2.0) * (
-		texture(inputTexture, texCoords + (dir * vec2(1.0 / 3.0 - 0.5))).rgb +
-		texture(inputTexture, texCoords + (dir * vec2(2.0 / 3.0 - 0.5))).rgb);
+    vec3 result1 = (1.0 / 2.0) * (
+        texture(inputTexture, texCoords + (dir * vec2(1.0 / 3.0 - 0.5))).rgb +
+        texture(inputTexture, texCoords + (dir * vec2(2.0 / 3.0 - 0.5))).rgb);
 
-	vec3 result2 = result1 * (1.0 / 2.0) + (1.0 / 4.0) * (
-		texture(inputTexture, texCoords + (dir * vec2(0.0 / 3.0 - 0.5))).rgb +
-		texture(inputTexture, texCoords + (dir * vec2(3.0 / 3.0 - 0.5))).rgb);
+    vec3 result2 = result1 * (1.0 / 2.0) + (1.0 / 4.0) * (
+        texture(inputTexture, texCoords + (dir * vec2(0.0 / 3.0 - 0.5))).rgb +
+        texture(inputTexture, texCoords + (dir * vec2(3.0 / 3.0 - 0.5))).rgb);
 
-	float lumaMin = min(lumaM, min(min(lumaTL, lumaTR), min(lumaBL, lumaBR)));
-	float lumaMax = max(lumaM, max(max(lumaTL, lumaTR), max(lumaBL, lumaBR)));
-	float lumaResult2 = dot(luma, result2);
+    float lumaMin = min(lumaM, min(min(lumaTL, lumaTR), min(lumaBL, lumaBR)));
+    float lumaMax = max(lumaM, max(max(lumaTL, lumaTR), max(lumaBL, lumaBR)));
+    float lumaResult2 = dot(luma, result2);
 
-	if (lumaResult2 < lumaMin || lumaResult2 > lumaMax) 
-	{
-		return result1;
-	}
-	return result2;
+    if (lumaResult2 < lumaMin || lumaResult2 > lumaMax) 
+    {
+        return result1;
+    }
+    return result2;
     //return vec3(1, 0, 0); // debug
 }
 
@@ -111,11 +111,11 @@ vec3 FXAA()
 #define FxaaTexTop(t, p) textureLod(t, p, 0.0)
 #define FxaaTexOff(t, p, o, r) textureLodOffset(t, p, 0.0, o)
 #if (FXAA_GATHER4_ALPHA == 1)
-	// use #extension GL_ARB_gpu_shader5 : enable
-	#define FxaaTexAlpha4(t, p) textureGather(t, p, 3)
-	#define FxaaTexOffAlpha4(t, p, o) textureGatherOffset(t, p, o, 3)
-	#define FxaaTexGreen4(t, p) textureGather(t, p, 1)
-	#define FxaaTexOffGreen4(t, p, o) textureGatherOffset(t, p, o, 1)
+    // use #extension GL_ARB_gpu_shader5 : enable
+    #define FxaaTexAlpha4(t, p) textureGather(t, p, 3)
+    #define FxaaTexOffAlpha4(t, p, o) textureGatherOffset(t, p, o, 3)
+    #define FxaaTexGreen4(t, p) textureGather(t, p, 1)
+    #define FxaaTexOffGreen4(t, p, o) textureGatherOffset(t, p, o, 1)
 #endif
 
 
@@ -159,30 +159,30 @@ FxaaFloat fxaaQualityEdgeThresholdMin = 0.0312;
 
 FxaaFloat FxaaLuma(FxaaFloat4 rgba) 
 { 
-	return rgba.w; 
+    return rgba.w; 
 }
 
 vec4 fxaaPixelShader(FxaaFloat2 pos, FxaaTex tex, FxaaFloat2 fxaaQualityRcpFrame)
 {
-	FxaaFloat2 posM;
+    FxaaFloat2 posM;
     posM.x = pos.x;
     posM.y = pos.y;
 
-	FxaaFloat4 rgbyM = FxaaTexTop(tex, posM);
+    FxaaFloat4 rgbyM = FxaaTexTop(tex, posM);
 
-	FxaaFloat4 luma4A = FxaaTexAlpha4(tex, posM);
-	FxaaFloat4 luma4B = FxaaTexOffAlpha4(tex, posM, FxaaInt2(-1, -1));
+    FxaaFloat4 luma4A = FxaaTexAlpha4(tex, posM);
+    FxaaFloat4 luma4B = FxaaTexOffAlpha4(tex, posM, FxaaInt2(-1, -1));
 
-	#define lumaM luma4A.w
+    #define lumaM luma4A.w
 
-	#define lumaE luma4A.z
-	#define lumaS luma4A.x
-	#define lumaSE luma4A.y
-	#define lumaNW luma4B.w
-	#define lumaN luma4B.z
-	#define lumaW luma4B.x
+    #define lumaE luma4A.z
+    #define lumaS luma4A.x
+    #define lumaSE luma4A.y
+    #define lumaNW luma4B.w
+    #define lumaN luma4B.z
+    #define lumaW luma4B.x
 
-	FxaaFloat maxSM = max(lumaS, lumaM);
+    FxaaFloat maxSM = max(lumaS, lumaM);
     FxaaFloat minSM = min(lumaS, lumaM);
     FxaaFloat maxESM = max(lumaE, maxSM);
     FxaaFloat minESM = min(lumaE, minSM);
@@ -195,17 +195,17 @@ vec4 fxaaPixelShader(FxaaFloat2 pos, FxaaTex tex, FxaaFloat2 fxaaQualityRcpFrame
     FxaaFloat rangeMaxClamped = max(fxaaQualityEdgeThresholdMin, rangeMaxScaled);
     FxaaBool earlyExit = range < rangeMaxClamped;
 
-	if(earlyExit)
-	{
-	//	discard;
-		return rgbyM;
-	}
-		
+    if(earlyExit)
+    {
+    //	discard;
+        return rgbyM;
+    }
+        
 
-	FxaaFloat lumaNE = FxaaLuma(FxaaTexOff(tex, posM, FxaaInt2(1, -1), fxaaQualityRcpFrame.xy));
-	FxaaFloat lumaSW = FxaaLuma(FxaaTexOff(tex, posM, FxaaInt2(-1, 1), fxaaQualityRcpFrame.xy));
+    FxaaFloat lumaNE = FxaaLuma(FxaaTexOff(tex, posM, FxaaInt2(1, -1), fxaaQualityRcpFrame.xy));
+    FxaaFloat lumaSW = FxaaLuma(FxaaTexOff(tex, posM, FxaaInt2(-1, 1), fxaaQualityRcpFrame.xy));
 
-	/*--------------------------------------------------------------------------*/
+    /*--------------------------------------------------------------------------*/
     FxaaFloat lumaNS = lumaN + lumaS;
     FxaaFloat lumaWE = lumaW + lumaE;
     FxaaFloat subpixRcpRange = 1.0/range;
@@ -488,6 +488,6 @@ if(doneNP) {
     FxaaFloat pixelOffsetSubpix = max(pixelOffsetGood, subpixH);
     if(!horzSpan) posM.x += pixelOffsetSubpix * lengthSign;
     if( horzSpan) posM.y += pixelOffsetSubpix * lengthSign;
-    
-	return FxaaTexTop(tex, posM);
+
+    return FxaaTexTop(tex, posM);
 }

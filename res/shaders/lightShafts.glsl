@@ -33,35 +33,35 @@ void main()
     vec4 outColor = vec4(0);
 
     vec2 textureCoords = texCoords;
-	vec2 texCoordStep = (textureCoords - lightScreenPos);
+    vec2 texCoordStep = (textureCoords - lightScreenPos);
     texCoordStep *= (1.0 / float(samples)) * density;
 
-	float distanceToScreenCenter = clamp(1.0f - length(vec2(0.5f) - lightScreenPos) * 2.5f, 0.0f, 1.0f);
+    float distanceToScreenCenter = clamp(1.0f - length(vec2(0.5f) - lightScreenPos) * 2.5f, 0.0f, 1.0f);
 
     float illuminationDecay = 1.0f;
 
     for(int i = 0; i < samples; ++i)
-	{
-		// Step sample location along ray.
-		textureCoords -= texCoordStep;
- 		
-		vec4 colorSample =  vec4(lightColor, 1.0f);
+    {
+        // Step sample location along ray.
+        textureCoords -= texCoordStep;
+        
+        vec4 colorSample =  vec4(lightColor, 1.0f);
 
-		float depth = texture(depthTexture, clamp(textureCoords, 0.0f, 1.0f)).x;
-		if (depth != 0.0f)
-		{
-			colorSample = vec4(0);
-		}
-		
-		// Apply sample attenuation scale/decay factors.
-		colorSample  *= illuminationDecay * weight;
- 
-		// Accumulate combined color.  
-		outColor += colorSample;
- 
-		// Update exponential decay factor.
-		illuminationDecay *= decay;
-	}
+        float depth = texture(depthTexture, clamp(textureCoords, 0.0f, 1.0f)).x;
+        if (depth != 0.0f)
+        {
+            colorSample = vec4(0);
+        }
+
+        // Apply sample attenuation scale/decay factors.
+        colorSample  *= illuminationDecay * weight;
+
+        // Accumulate combined color.  
+        outColor += colorSample;
+
+        // Update exponential decay factor.
+        illuminationDecay *= decay;
+    }
 
     FragColor = outColor * exposure * distanceToScreenCenter;
 }

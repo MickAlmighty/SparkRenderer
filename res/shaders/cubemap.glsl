@@ -4,11 +4,11 @@ layout (location = 0) in vec3 aPos;
 
 layout (std140) uniform Camera
 {
-	vec4 pos;
-	mat4 view;
-	mat4 projection;
-	mat4 invertedView;
-	mat4 invertedProjection;
+    vec4 pos;
+    mat4 view;
+    mat4 projection;
+    mat4 invertedView;
+    mat4 invertedProjection;
 } camera;
 
 out vec3 texCoords;

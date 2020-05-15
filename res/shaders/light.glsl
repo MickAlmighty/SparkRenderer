@@ -30,50 +30,50 @@ layout(binding = 7) uniform sampler2D ssaoTexture;
 
 layout (std140) uniform Camera
 {
-	vec4 pos;
-	mat4 view;
-	mat4 projection;
-	mat4 invertedView;
-	mat4 invertedProjection;
+    vec4 pos;
+    mat4 view;
+    mat4 projection;
+    mat4 invertedView;
+    mat4 invertedProjection;
 } camera;
 
 struct DirLight {
-	vec3 direction;
-	float nothing;
-	vec3 color;
-	float nothing2;
+    vec3 direction;
+    float nothing;
+    vec3 color;
+    float nothing2;
 };
 
 struct PointLight {
-	vec4 positionAndRadius; // radius in w component
-	vec3 color;
-	float nothing2;
-	mat4 modelMat;
+    vec4 positionAndRadius; // radius in w component
+    vec3 color;
+    float nothing2;
+    mat4 modelMat;
 };
 
 struct SpotLight {
-	vec3 position;
-	float cutOff;
-	vec3 color;
-	float outerCutOff;
-	vec3 direction;
-	float maxDistance;
-	vec4 boundingSphere; //xyz - sphere center, w - radius 
+    vec3 position;
+    float cutOff;
+    vec3 color;
+    float outerCutOff;
+    vec3 direction;
+    float maxDistance;
+    vec4 boundingSphere; //xyz - sphere center, w - radius 
 };
 
 layout(std430) buffer DirLightData
 {
-	DirLight dirLights[];
+    DirLight dirLights[];
 };
 
 layout(std430) buffer PointLightData
 {
-	PointLight pointLights[];
+    PointLight pointLights[];
 };
 
 layout(std430) buffer SpotLightData
 {
-	SpotLight spotLights[];
+    SpotLight spotLights[];
 };
 
 float normalDistributionGGX(vec3 N, vec3 H, float roughness);
@@ -87,10 +87,10 @@ float calculateAttenuation(vec3 lightPos, vec3 pos, float lightRadius);
 
 struct Material
 {
-	vec3 albedo;
-	float roughness;
-	float metalness;
-	vec3 F0;
+    vec3 albedo;
+    float roughness;
+    float metalness;
+    vec3 F0;
 };
 
 vec3 directionalLightAddition(vec3 V, vec3 N, Material m);
@@ -106,9 +106,9 @@ vec3 worldPosFromDepth(float depth) {
 
 vec3 decodeViewSpaceNormal(vec2 enc)
 {
-	//Lambert Azimuthal Equal-Area projection
-	//http://aras-p.info/texts/CompactNormalStorage.html
-	vec2 fenc = enc*4-2;
+    //Lambert Azimuthal Equal-Area projection
+    //http://aras-p.info/texts/CompactNormalStorage.html
+    vec2 fenc = enc*4-2;
     float f = dot(fenc,fenc);
     float g = sqrt(1-f/4);
     vec3 n;
@@ -126,187 +126,187 @@ vec3 getBrightPassColor(vec3 color)
 
 void main()
 {
-	float depthValue = texture(depthTexture, texCoords).x;
-	if (depthValue == 0.0f) // 0.0f means its far plane or there is nothing in G-Buffer
-	{
-		discard;
-	}
-	vec3 pos = worldPosFromDepth(depthValue);
+    float depthValue = texture(depthTexture, texCoords).x;
+    if (depthValue == 0.0f) // 0.0f means its far plane or there is nothing in G-Buffer
+    {
+        discard;
+    }
+    vec3 pos = worldPosFromDepth(depthValue);
 
-	vec3 albedo = texture(diffuseTexture, texCoords).rgb;
-	vec2 normal = texture(normalTexture, texCoords).xy;
-	vec2 roughnessAndMetalness = texture(rougnessMetalnessTexture, texCoords).rg;
+    vec3 albedo = texture(diffuseTexture, texCoords).rgb;
+    vec2 normal = texture(normalTexture, texCoords).xy;
+    vec2 roughnessAndMetalness = texture(rougnessMetalnessTexture, texCoords).rg;
     float ssao = texture(ssaoTexture, texCoords).x;
 
-	vec3 decoded = decodeViewSpaceNormal(normal.xy);
-	
-	vec3 worldPosNormal = (camera.invertedView * vec4(decoded, 0.0f)).xyz;
-	
-	Material material = {
-		albedo.xyz, //albedo in linear space
-		roughnessAndMetalness.r,
-		roughnessAndMetalness.g,
-		vec3(0)
-	};
+    vec3 decoded = decodeViewSpaceNormal(normal.xy);
 
-	//vec3 F0 = vec3(0.04);
-	vec3 F0 = vec3(0.16) * pow(material.roughness, 2); //frostbite3 fresnel reflectance https://seblagarde.files.wordpress.com/2015/07/course_notes_moving_frostbite_to_pbr_v32.pdf page 14
+    vec3 worldPosNormal = (camera.invertedView * vec4(decoded, 0.0f)).xyz;
+
+    Material material = {
+        albedo.xyz, //albedo in linear space
+        pow(roughnessAndMetalness.r, 2.0),
+        roughnessAndMetalness.g,
+        vec3(0)
+    };
+
+    //vec3 F0 = vec3(0.04);
+    vec3 F0 = vec3(0.16) * pow(material.roughness, 2); //frostbite3 fresnel reflectance https://seblagarde.files.wordpress.com/2015/07/course_notes_moving_frostbite_to_pbr_v32.pdf page 14
     material.F0 = mix(F0, material.albedo, material.metalness);
 
-	vec3 N = worldPosNormal;
-	vec3 V = normalize(camera.pos.xyz - pos);
+    vec3 N = worldPosNormal;
+    vec3 V = normalize(camera.pos.xyz - pos);
 
-	vec3 L0 = directionalLightAddition(V, N, material);
-	L0 += pointLightAddition(V, N, pos, material);
-	L0 += spotLightAddition(V, N, pos, material);
+    vec3 L0 = directionalLightAddition(V, N, material);
+    L0 += pointLightAddition(V, N, pos, material);
+    L0 += spotLightAddition(V, N, pos, material);
 
-	//IBL	
-	vec3 ambient = vec3(0.0);
-	{
-		float NdotV = max(dot(N, V), 0.0);
-		vec3 kS = fresnelSchlickRoughness(NdotV, material.F0, material.roughness);
-		vec3 kD = 1.0 - kS;
-		kD *= 1.0 - material.metalness;
-		vec3 irradiance = texture(irradianceMap, N).rgb;
-		vec3 diffuse    = irradiance * material.albedo;
+    //IBL	
+    vec3 ambient = vec3(0.0);
+    {
+        float NdotV = max(dot(N, V), 0.0);
+        vec3 kS = fresnelSchlickRoughness(NdotV, material.F0, material.roughness);
+        vec3 kD = 1.0 - kS;
+        kD *= 1.0 - material.metalness;
+        vec3 irradiance = texture(irradianceMap, N).rgb;
+        vec3 diffuse    = irradiance * material.albedo;
 
-		vec3 R = reflect(-V, N);
-		vec3 F = fresnelSchlickRoughness(NdotV, material.F0, material.roughness);
-		const float MAX_REFLECTION_LOD = 4.0;
+        vec3 R = reflect(-V, N);
+        vec3 F = fresnelSchlickRoughness(NdotV, material.F0, material.roughness);
+        const float MAX_REFLECTION_LOD = 4.0;
 
-		//float mipMapLevel = material.roughness * MAX_REFLECTION_LOD; //base
-		float mipMapLevel = sqrt(material.roughness * MAX_REFLECTION_LOD); //frostbite 3
-		vec3 prefilteredColor = textureLod(prefilterMap, R, mipMapLevel).rgb;    
-		vec2 brdf = texture(brdfLUT, vec2(NdotV, material.roughness)).rg;
-		
-		float specOcclusion = computeSpecOcclusion(NdotV, ssao, material.roughness);
-		vec3 specular = prefilteredColor * (F * brdf.x + brdf.y) * specOcclusion;
-		
-		ambient = (kD * diffuse + specular);
-	}
-    
-	vec4 color = vec4(L0 + ambient, 1);// * ssao;
-	
-	bvec4 valid = isnan(color);
-	if ( valid.x || valid.y || valid.z || valid.w )
-	{
-		FragColor = vec4(0.5f);
-	}
-	else
-	{
-		FragColor = color * ssao;
-	}
+        //float mipMapLevel = material.roughness * MAX_REFLECTION_LOD; //base
+        float mipMapLevel = sqrt(material.roughness * MAX_REFLECTION_LOD); //frostbite 3
+        vec3 prefilteredColor = textureLod(prefilterMap, R, mipMapLevel).rgb;    
+        vec2 brdf = texture(brdfLUT, vec2(NdotV, material.roughness)).rg;
+        
+        float specOcclusion = computeSpecOcclusion(NdotV, ssao, material.roughness);
+        vec3 specular = prefilteredColor * (F * brdf.x + brdf.y) * specOcclusion;
+        
+        ambient = (kD * diffuse + specular);
+    }
 
-	BrightPass = vec4(getBrightPassColor(FragColor.xyz), 1.0f);
+    vec4 color = vec4(L0 + ambient, 1);// * ssao;
+
+    bvec4 valid = isnan(color);
+    if ( valid.x || valid.y || valid.z || valid.w )
+    {
+        FragColor = vec4(0.5f);
+    }
+    else
+    {
+        FragColor = color * ssao;
+    }
+
+    BrightPass = vec4(getBrightPassColor(FragColor.xyz), 1.0f);
 }
 
 vec3 directionalLightAddition(vec3 V, vec3 N, Material m)
 {
-	float NdotV = max(dot(N, V), 0.0f);
+    float NdotV = max(dot(N, V), 0.0f);
 
-	vec3 L0 = { 0, 0, 0 };
-	for (uint i = 0; i < dirLights.length(); ++i)
-	{
-		vec3 L = normalize(-dirLights[i].direction);
-		vec3 H = normalize(V + L);
+    vec3 L0 = { 0, 0, 0 };
+    for (uint i = 0; i < dirLights.length(); ++i)
+    {
+        vec3 L = normalize(-dirLights[i].direction);
+        vec3 H = normalize(V + L);
 
-		float NdotL = max(dot(N, L), 0.0f);
+        float NdotL = max(dot(N, L), 0.0f);
 
-		vec3 F = fresnelSchlick(V, H, m.F0);
-		float D = normalDistributionGGX(N, H, m.roughness);
-		float G = geometrySmith(NdotL, NdotV, m.roughness);
+        vec3 F = fresnelSchlick(V, H, m.F0);
+        float D = normalDistributionGGX(N, H, m.roughness);
+        float G = geometrySmith(NdotL, NdotV, m.roughness);
 
-		vec3 kD = mix(vec3(1.0) - F, vec3(0.0), m.metalness);
-		vec3 diffuseColor = kD * m.albedo / M_PI;
+        vec3 kD = mix(vec3(1.0) - F, vec3(0.0), m.metalness);
+        vec3 diffuseColor = kD * m.albedo / M_PI;
 
-		vec3 specularColor = (F * D * G) / max(4 * NdotV * NdotL, 0.00001);
-		
-		L0 += (diffuseColor + specularColor) * dirLights[i].color * NdotL;
-	}
-	return L0;
+        vec3 specularColor = (F * D * G) / max(4 * NdotV * NdotL, 0.00001);
+        
+        L0 += (diffuseColor + specularColor) * dirLights[i].color * NdotL;
+    }
+    return L0;
 }
 
 vec3 pointLightAddition(vec3 V, vec3 N, vec3 Pos, Material m)
 {
-	float NdotV = max(dot(N, V), 0.0f);
+    float NdotV = max(dot(N, V), 0.0f);
 
-	vec3 L0 = { 0, 0, 0 };
-	
-	for (uint i = 0; i < pointLights.length(); ++i)
-	{
-		vec3 lightPos = pointLights[i].positionAndRadius.xyz;
-		float lightRadius = pointLights[i].positionAndRadius.w;
-		vec3 L = normalize(lightPos - Pos);
-		vec3 H = normalize(V + L);
+    vec3 L0 = { 0, 0, 0 };
 
-		float NdotL = max(dot(N, L), 0.0f);
+    for (uint i = 0; i < pointLights.length(); ++i)
+    {
+        vec3 lightPos = pointLights[i].positionAndRadius.xyz;
+        float lightRadius = pointLights[i].positionAndRadius.w;
+        vec3 L = normalize(lightPos - Pos);
+        vec3 H = normalize(V + L);
 
-		vec3 F = fresnelSchlick(V, H, m.F0);
-		float D = normalDistributionGGX(N, H, m.roughness);
-		float G = geometrySmith(NdotV, NdotL, m.roughness);
-		
-		vec3 radiance = pointLights[i].color * calculateAttenuation(lightPos, Pos, lightRadius);
+        float NdotL = max(dot(N, L), 0.0f);
 
-		vec3 kD = mix(vec3(1.0) - F, vec3(0.0), m.metalness);
-		vec3 diffuseColor = kD * m.albedo / M_PI;
+        vec3 F = fresnelSchlick(V, H, m.F0);
+        float D = normalDistributionGGX(N, H, m.roughness);
+        float G = geometrySmith(NdotV, NdotL, m.roughness);
+        
+        vec3 radiance = pointLights[i].color * calculateAttenuation(lightPos, Pos, lightRadius);
 
-		vec3 specularColor = (F * D * G) / max(4 * NdotV * NdotL, 0.00001);
+        vec3 kD = mix(vec3(1.0) - F, vec3(0.0), m.metalness);
+        vec3 diffuseColor = kD * m.albedo / M_PI;
 
-		L0 += (diffuseColor + specularColor) * radiance * NdotL;
-	}
-	return L0;
+        vec3 specularColor = (F * D * G) / max(4 * NdotV * NdotL, 0.00001);
+
+        L0 += (diffuseColor + specularColor) * radiance * NdotL;
+    }
+    return L0;
 }
 
 vec3 spotLightAddition(vec3 V, vec3 N, vec3 Pos, Material m)
 {
-	float NdotV = max(dot(N, V), 0.0f);
+    float NdotV = max(dot(N, V), 0.0f);
 
-	vec3 L0 = { 0, 0, 0 };
-	for (uint i = 0; i < spotLights.length(); ++i)
-	{
-		vec3 directionToLight = normalize(-spotLights[i].direction);
-		vec3 L = normalize(spotLights[i].position - Pos);
+    vec3 L0 = { 0, 0, 0 };
+    for (uint i = 0; i < spotLights.length(); ++i)
+    {
+        vec3 directionToLight = normalize(-spotLights[i].direction);
+        vec3 L = normalize(spotLights[i].position - Pos);
 
-		float theta = dot(directionToLight, L);
-		float epsilon = max(spotLights[i].cutOff - spotLights[i].outerCutOff, 0.0);
-		float intensity = clamp((theta - spotLights[i].outerCutOff) / epsilon, 0.0, 1.0);  
+        float theta = dot(directionToLight, L);
+        float epsilon = max(spotLights[i].cutOff - spotLights[i].outerCutOff, 0.0);
+        float intensity = clamp((theta - spotLights[i].outerCutOff) / epsilon, 0.0, 1.0);  
 
-		vec3 H = normalize(V + L);
+        vec3 H = normalize(V + L);
 
-		float NdotL = max(dot(N, L), 0.0f);
+        float NdotL = max(dot(N, L), 0.0f);
 
-		vec3 F = fresnelSchlick(V, H, m.F0);
-		float D = normalDistributionGGX(N, H, m.roughness);
-		float G = geometrySmith(NdotV, NdotL, m.roughness);
-		
-		vec3 radiance = spotLights[i].color * calculateAttenuation(spotLights[i].position, Pos, spotLights[i].maxDistance);
-		radiance *= intensity;
+        vec3 F = fresnelSchlick(V, H, m.F0);
+        float D = normalDistributionGGX(N, H, m.roughness);
+        float G = geometrySmith(NdotV, NdotL, m.roughness);
+        
+        vec3 radiance = spotLights[i].color * calculateAttenuation(spotLights[i].position, Pos, spotLights[i].maxDistance);
+        radiance *= intensity;
 
-		vec3 kD = mix(vec3(1.0) - F, vec3(0.0), m.metalness);
-		vec3 diffuseColor = kD * m.albedo / M_PI;
+        vec3 kD = mix(vec3(1.0) - F, vec3(0.0), m.metalness);
+        vec3 diffuseColor = kD * m.albedo / M_PI;
 
-		vec3 specularColor = (F * D * G) / max(4 * NdotV * NdotL, 0.00001);
+        vec3 specularColor = (F * D * G) / max(4 * NdotV * NdotL, 0.00001);
 
-		L0 += (diffuseColor + specularColor) * radiance * NdotL;
-	}
-	return L0;
+        L0 += (diffuseColor + specularColor) * radiance * NdotL;
+    }
+    return L0;
 }
 
 float normalDistributionGGX(vec3 N, vec3 H, float roughness)
 {
-	float a = roughness * roughness;
-	float a2 = a * a;
-	float NdotH = max(dot(N, H), 0.0);
-	
-	float nom = a2;
-	float denom = (NdotH * NdotH) * (a2 - 1.0) + 1.0;
-	return nom / (M_PI * denom * denom);
+    float a = roughness * roughness;
+    float a2 = a * a;
+    float NdotH = max(dot(N, H), 0.0);
+
+    float nom = a2;
+    float denom = (NdotH * NdotH) * (a2 - 1.0) + 1.0;
+    return nom / (M_PI * denom * denom);
 }
 
 vec3 fresnelSchlick(vec3 V, vec3 H, vec3 F0)
 {
-	float cosTheta = max(dot(V, H), 0.0);
-	return F0 + (vec3(1.0) - F0) * pow(1.0 - cosTheta, 5);
+    float cosTheta = max(dot(V, H), 0.0);
+    return F0 + (vec3(1.0) - F0) * pow(1.0 - cosTheta, 5);
 }
 
 vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
@@ -316,26 +316,26 @@ vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
 
 float geometrySchlickGGX(float cosTheta, float k)
 {
-	return cosTheta / (cosTheta * (1.0 - k) + k);
+    return cosTheta / (cosTheta * (1.0 - k) + k);
 }
 
 float geometrySmith(float NdotL, float NdotV, float roughness)
 {
-	float r = (roughness + 1.0);
-	float k = (r * r) / 8.0;
-	return geometrySchlickGGX(NdotL, k) * geometrySchlickGGX(NdotV, k);
+    float r = (roughness + 1.0);
+    float k = (r * r) / 8.0;
+    return geometrySchlickGGX(NdotL, k) * geometrySchlickGGX(NdotV, k);
 }
 
 float computeSpecOcclusion(float NdotV, float AO, float roughness)
 {
     //https://seblagarde.files.wordpress.com/2015/07/course_notes_moving_frostbite_to_pbr_v32.pdf
     //page 77
-	return clamp(pow(NdotV + AO, exp2(-16.0f * roughness - 1.0f)) - 1.0f + AO, 0.0f, 1.0f);
+    return clamp(pow(NdotV + AO, exp2(-16.0f * roughness - 1.0f)) - 1.0f + AO, 0.0f, 1.0f);
 }
 
 float calculateAttenuation(vec3 lightPos, vec3 Pos)
 {
-	float distance    = length(lightPos - Pos);
+    float distance    = length(lightPos - Pos);
     float attenuation = 1.0 / (distance * distance);
     return attenuation; 
 }
@@ -344,7 +344,7 @@ float calculateAttenuation(vec3 lightPos, vec3 pos, float lightRadius)
 {
     //https://seblagarde.files.wordpress.com/2015/07/course_notes_moving_frostbite_to_pbr_v32.pdf
     //page 31
-	float distance    = length(lightPos - pos);
+    float distance    = length(lightPos - pos);
     float attenuation = max((1.0 / (distance * distance) * (1 - distance / lightRadius)), 0.0000001f);
     return attenuation; 
 }

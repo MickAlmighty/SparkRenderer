@@ -28,11 +28,11 @@ uniform vec2 texelSize;
 
 layout (std140) uniform Camera
 {
-	vec4 pos;
-	mat4 view;
-	mat4 projection;
-	mat4 invertedView;
-	mat4 invertedProjection;
+    vec4 pos;
+    mat4 view;
+    mat4 projection;
+    mat4 invertedView;
+    mat4 invertedProjection;
 } camera;
 
 #define MAX_SAMPLES 16
@@ -82,9 +82,9 @@ void main()
     vec2 currentPos = texCoords;
     vec2 previousPos = previousViewPos.xy * 0.5 + 0.5;
     
-	float mblurScale = currentFPS / 60.0; // divided by target fps
-	vec2 velocity = (previousPos.xy - currentPos.xy);
-	velocity *= mblurScale;
+    float mblurScale = currentFPS / 60.0; // divided by target fps
+    vec2 velocity = (previousPos.xy - currentPos.xy);
+    velocity *= mblurScale;
     
     float speed = length(velocity / texelSize);
     

@@ -109,11 +109,11 @@ void SparkRenderer::setup()
     const std::uniform_real_distribution<float> randomFloats(0.0, 1.0);  // random floats between 0.0 - 1.0
     std::default_random_engine generator;
     const auto generateSsaoSamples = [this, &randomFloats, &generator] {
-        std::vector<glm::vec3> ssaoKernel;
+        std::vector<glm::vec4> ssaoKernel;
         ssaoKernel.reserve(64);
         for(unsigned int i = 0; i < 64; ++i)
         {
-            glm::vec3 sample(randomFloats(generator) * 2.0f - 1.0f, randomFloats(generator) * 2.0f - 1.0f, randomFloats(generator));
+            glm::vec4 sample(randomFloats(generator) * 2.0f - 1.0f, randomFloats(generator) * 2.0f - 1.0f, randomFloats(generator), 0.0f);
             sample = glm::normalize(sample);
             sample *= randomFloats(generator);
 
@@ -123,7 +123,7 @@ void SparkRenderer::setup()
 
             ssaoKernel.push_back(sample);
         }
-        sampleUniformBuffer.genBuffer();
+        sampleUniformBuffer.genBuffer(64 * sizeof(glm::vec4));
         sampleUniformBuffer.updateData(ssaoKernel);
     };
 
@@ -362,7 +362,7 @@ void SparkRenderer::ssaoComputing(const GBuffer& geometryBuffer)
     PUSH_DEBUG_GROUP(SSAO);
 
     glBindFramebuffer(GL_FRAMEBUFFER, ssaoFramebuffer);
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    glClearColor(1.0f, 0.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
     GLuint textures[3] = {geometryBuffer.depthTexture, geometryBuffer.normalsTexture, randomNormalsTexture};
@@ -440,9 +440,9 @@ void SparkRenderer::tileBasedLightCulling(const GBuffer& geometryBuffer) const
     glBindTextureUnit(0, geometryBuffer.depthTexture);
 
     // debug of light count per tile
-    float clear = 0.0f;
-    glClearTexImage(lightsPerTileTexture, 0, GL_RED, GL_FLOAT, &clear);
-    glBindImageTexture(7, lightsPerTileTexture, 0, false, 0, GL_READ_WRITE, GL_R32F);
+    /*uint8_t clear[]{0,0,0,0};
+    glClearTexImage(lightsPerTileTexture, 0, GL_RGBA, GL_UNSIGNED_BYTE, &clear);*/
+    glBindImageTexture(5, lightsPerTileTexture, 0, false, 0, GL_READ_WRITE, GL_RGBA16F);
 
     tileBasedLightCullingShader->dispatchCompute(Spark::WIDTH / 16, Spark::HEIGHT / 16, 1);
 
@@ -480,7 +480,6 @@ void SparkRenderer::tileBasedLightRendering(const GBuffer& geometryBuffer)
     // output image
     glBindImageTexture(3, lightColorTexture, 0, false, 0, GL_WRITE_ONLY, GL_RGBA16F);
     glBindImageTexture(4, brightPassTexture, 0, false, 0, GL_WRITE_ONLY, GL_RGBA16F);
-
 
     tileBasedLightingShader->dispatchCompute(Spark::WIDTH / 16, Spark::HEIGHT / 16, 1);
     glBindTextures(0, 0, nullptr);
@@ -833,7 +832,7 @@ void SparkRenderer::createFrameBuffersAndTextures()
     utils::createTexture2D(downsampleTexture16, Spark::WIDTH / 16, Spark::HEIGHT / 16, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE,
                            GL_LINEAR);
     utils::createTexture2D(bloomTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::createTexture2D(lightsPerTileTexture, Spark::WIDTH / 16, Spark::HEIGHT / 16, GL_R32F, GL_RED, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
+    utils::createTexture2D(lightsPerTileTexture, Spark::WIDTH / 16, Spark::HEIGHT / 16, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
 
     utils::createFramebuffer(lightFrameBuffer, {lightColorTexture, brightPassTexture});
     utils::createFramebuffer(cubemapFramebuffer, {lightColorTexture});
