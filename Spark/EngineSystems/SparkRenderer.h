@@ -99,10 +99,10 @@ class SparkRenderer
     SSBO lightProbeIndices{};
 
     bool ssaoEnable = false;
-    int kernelSize = 24;
-    float radius = 0.45f;
-    float bias = 0.015f;
-    float power = 5.0f;
+    int kernelSize = 32;
+    float radius = 0.7f;
+    float bias = 0.035f;
+    float power = 4.0f;
 
     bool dofEnable = false;
     float nearStart = 1.0f;

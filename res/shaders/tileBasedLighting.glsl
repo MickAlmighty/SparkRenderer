@@ -1,7 +1,6 @@
 #type compute
 #version 450
 #extension GL_ARB_bindless_texture : require
-#extension GL_ARB_gpu_shader_int64 : require
 
 layout(local_size_x = 16, local_size_y = 16) in;
 
@@ -58,8 +57,8 @@ struct SpotLight {
 };
 
 struct LightProbe {
-    int64_t irradianceCubemapHandle;
-    int64_t prefilterCubemapHandle;
+    uvec2 irradianceCubemapHandle;
+    uvec2 prefilterCubemapHandle;
     vec3 position;
     float radius;
 };
@@ -124,6 +123,14 @@ vec3 directionalLightAddition(vec3 V, vec3 N, Material m);
 vec3 pointLightAddition(vec3 V, vec3 N, vec3 Pos, Material m);
 vec3 spotLightAddition(vec3 V, vec3 N, vec3 Pos, Material m);
 
+vec3 calculateDiffuseIBL(vec3 N, vec3 V, float NdotV, Material material, samplerCube irradianceCubemap);
+vec3 calculateSpecularIBL(vec3 N, vec3 V, float NdotV, Material material);
+vec3 calculateSpecularFromLightProbe(vec3 N, vec3 V, vec3 P, float NdotV, Material material, LightProbe lightProbe);
+vec3 getDiffuseDominantDir(vec3 N , vec3 V , float NdotV , float roughness);
+vec3 getSpecularDominantDir( vec3 N , vec3 R, float roughness );
+float raySphereIntersection(vec3 rayCenter, vec3 rayDir, vec3 sphereCenter, float sphereRadius);
+float computeDistanceBaseRoughness(float distInteresectionToShadedPoint, float distInteresectionToProbeCenter, float linearRoughness );
+
 void main()
 {
     vec2 texSize = vec2(imageSize(diffuseImage));
@@ -153,7 +160,7 @@ void main()
 
     Material material = {
         albedo,
-        pow(roughness, 1.5),
+        pow(roughness, 1.2),
         metalness,
         vec3(0)
     };
@@ -164,7 +171,7 @@ void main()
     vec3 V = normalize(camera.pos.xyz - P);
 
     //vec3 F0 = vec3(0.04);
-    vec3 F0 = vec3(0.16) * pow(material.roughness, 1.5); //frostbite3 fresnel reflectance https://seblagarde.files.wordpress.com/2015/07/course_notes_moving_frostbite_to_pbr_v32.pdf page 14
+    vec3 F0 = vec3(0.16) * pow(1 - material.roughness, 2.0); //frostbite3 fresnel reflectance https://seblagarde.files.wordpress.com/2015/07/course_notes_moving_frostbite_to_pbr_v32.pdf page 14
     material.F0 = mix(F0, material.albedo, material.metalness);
 
     vec3 L0 = directionalLightAddition(V, N, material);
@@ -174,28 +181,13 @@ void main()
     //IBL here
     vec3 ambient = vec3(0.0);
     float ssao = texture(ssaoTexture, screenSpaceTexCoords).x;
+    float NdotV = max(dot(N, V), 0.0);
+
     if (lightProbes.length() == 0)
     {
-        float NdotV = max(dot(N, V), 0.0);
-        vec3 kS = fresnelSchlickRoughness(NdotV, material.F0, material.roughness);
-        vec3 kD = 1.0 - kS;
-        kD *= 1.0 - material.metalness;
-        vec3 irradiance = texture(irradianceMap, N).rgb;
-        vec3 diffuse    = irradiance * material.albedo;
-
-        vec3 R = reflect(-V, N);
-        vec3 F = fresnelSchlickRoughness(NdotV, material.F0, material.roughness);
-        const float MAX_REFLECTION_LOD = 4.0;
-
-        //float mipMapLevel = material.roughness * MAX_REFLECTION_LOD; //base
-        float mipMapLevel = sqrt(material.roughness * MAX_REFLECTION_LOD); //frostbite 3
-        vec3 prefilteredColor = textureLod(prefilterMap, R, mipMapLevel).rgb;    
-        vec2 brdf = texture(brdfLUT, vec2(NdotV, material.roughness)).rg;
-        
-        //float specOcclusion = computeSpecOcclusion(NdotV, ssao, material.roughness);
-        vec3 specular = prefilteredColor * (F * brdf.x + brdf.y); //* specOcclusion;
-        
-        ambient = (kD * diffuse + specular);
+        vec3 diffuseIBL = calculateDiffuseIBL(N, V, NdotV, material, irradianceMap);
+        vec3 specularIBL = calculateSpecularIBL(N, V, NdotV, material);
+        ambient = diffuseIBL + specularIBL;
     }
     else
     {
@@ -203,56 +195,19 @@ void main()
         {
             LightProbe lightProbe = lightProbes[i];
             samplerCube irradianceSampler = samplerCube(lightProbe.irradianceCubemapHandle);
-            samplerCube prefilterSampler = samplerCube(lightProbe.prefilterCubemapHandle);
-            
-            float NdotV = max(dot(N, V), 0.0);
-            vec3 kS = fresnelSchlickRoughness(NdotV, material.F0, material.roughness);
-            vec3 kD = 1.0 - kS;
-            kD *= 1.0 - material.metalness;
-            vec3 irradiance = texture(irradianceSampler, N).rgb;
-            vec3 diffuse    = irradiance * material.albedo;
-
-            vec3 R = reflect(-V, N);
-            vec3 F = fresnelSchlickRoughness(NdotV, material.F0, material.roughness);
-            const float MAX_REFLECTION_LOD = 4.0;
-
-            //float mipMapLevel = material.roughness * MAX_REFLECTION_LOD; //base
-            float mipMapLevel = sqrt(material.roughness * MAX_REFLECTION_LOD); //frostbite 3
-            vec3 prefilteredColor = textureLod(prefilterSampler, R, mipMapLevel).rgb;    
-            vec2 brdf = texture(brdfLUT, vec2(NdotV, material.roughness)).rg;
-        
-            //float specOcclusion = computeSpecOcclusion(NdotV, ssao, material.roughness);
-            vec3 specular = prefilteredColor * (F * brdf.x + brdf.y); //* specOcclusion;
-        
-            ambient = (kD * diffuse + specular);
+            vec3 diffuseIBL = calculateDiffuseIBL(N, V, NdotV, material, irradianceSampler);
+            vec3 specularIBL = calculateSpecularFromLightProbe(N, V, P, NdotV, material, lightProbe);
+            ambient = diffuseIBL + specularIBL;
         }
-        // for(int i = 0; i < lightProbeIndices[numberOfLightsIndex]; ++i)
-        // {
-        // 	LightProbe lightProbe = lightProbes[lightProbeIndices[lightBeginIndex + i]];
-        // 	samplerCube irradianceSampler = samplerCube(lightProbe.irradianceCubemapHandle);
-        // 	samplerCube prefilterSampler = samplerCube(lightProbe.prefilterCubemapHandle);
-            
-        // 	float NdotV = max(dot(N, V), 0.0);
-        // 	vec3 kS = fresnelSchlickRoughness(NdotV, material.F0, material.roughness);
-        // 	vec3 kD = 1.0 - kS;
-        // 	kD *= 1.0 - material.metalness;
-        // 	vec3 irradiance = texture(irradianceSampler, N).rgb;
-        // 	vec3 diffuse    = irradiance * material.albedo;
-
-        // 	vec3 R = reflect(-V, N);
-        // 	vec3 F = fresnelSchlickRoughness(NdotV, material.F0, material.roughness);
-        // 	const float MAX_REFLECTION_LOD = 4.0;
-
-        // 	//float mipMapLevel = material.roughness * MAX_REFLECTION_LOD; //base
-        // 	float mipMapLevel = sqrt(material.roughness * MAX_REFLECTION_LOD); //frostbite 3
-        // 	vec3 prefilteredColor = textureLod(prefilterSampler, R, mipMapLevel).rgb;    
-        // 	vec2 brdf = texture(brdfLUT, vec2(NdotV, material.roughness)).rg;
-        
-        // 	float specOcclusion = computeSpecOcclusion(NdotV, ssao, material.roughness);
-        // 	vec3 specular = prefilteredColor * (F * brdf.x + brdf.y) * specOcclusion;
-        
-        // 	ambient = (kD * diffuse + specular);// * calculateAttenuation(lightProbe.position, P, lightProbe.radius);
-        // }
+//        for(int i = 0; i < lightProbeIndices[numberOfLightsIndex]; ++i)
+//        {
+//            LightProbe lightProbe = lightProbes[lightProbeIndices[lightBeginIndex + i]];
+//            samplerCube irradianceSampler = samplerCube(lightProbe.irradianceCubemapHandle);
+//            float NdotV = max(dot(N, V), 0.0);
+//            vec3 diffuseIBL = calculateDiffuseIBL(N, V, NdotV, material, irradianceSampler);
+//            vec3 specularIBL = calculateSpecularFromLightProbe(N, V, P, NdotV, material, lightProbe);
+//            ambient = diffuseIBL + specularIBL;
+//        }
     }
 
     vec4 color = vec4(L0 + ambient, 1) * ssao;
@@ -455,4 +410,124 @@ float calculateAttenuation(vec3 lightPos, vec3 pos, float maxDistance)
     float smoothFactor = clamp(1.0f - factor * factor, 0.0f, 1.0f);
     float attenuation = 1.0 / max(squaredDistance, 0.01f * 0.01f) * smoothFactor * smoothFactor;
     return attenuation; 
+}
+
+vec3 calculateDiffuseIBL(vec3 N, vec3 V, float NdotV, Material material, samplerCube irradianceCubemap)
+{
+    vec3 kS = fresnelSchlickRoughness(NdotV, material.F0, material.roughness);
+    vec3 kD = 1.0 - kS;
+    kD *= 1.0 - material.metalness;
+    vec3 irradiance = texture(irradianceCubemap, N).rgb;
+    vec3 diffuse = kD * irradiance * material.albedo;
+    return diffuse;
+}
+
+vec3 calculateSpecularIBL(vec3 N, vec3 V, float NdotV, Material material)
+{
+    vec3 R = reflect(-V, N);
+    vec3 F = fresnelSchlickRoughness(NdotV, material.F0, material.roughness);
+    const float MAX_REFLECTION_LOD = 4.0;
+
+    //float mipMapLevel = material.roughness * MAX_REFLECTION_LOD; //base
+    float mipMapLevel = sqrt(material.roughness * MAX_REFLECTION_LOD); //frostbite 3
+    vec3 prefilteredColor = textureLod(prefilterMap, R, mipMapLevel).rgb;    
+    vec2 brdf = texture(brdfLUT, vec2(NdotV, material.roughness)).rg;
+        
+    //float specOcclusion = computeSpecOcclusion(NdotV, ssao, material.roughness);
+    vec3 specular = prefilteredColor * (F * brdf.x + brdf.y); //* specOcclusion;
+
+    return specular;
+}
+
+vec3 calculateSpecularFromLightProbe(vec3 N, vec3 V, vec3 P, float NdotV, Material material, LightProbe lightProbe)
+{
+    vec3 specular = vec3(0);
+    vec3 R = reflect(-V, N);
+    vec3 dominantR = getSpecularDominantDir(N, R, material.roughness);
+
+    float distToFarIntersection = raySphereIntersection(P, R, lightProbe.position, lightProbe.radius);
+    if (distToFarIntersection != 0.0f)
+    {
+        // Compute the actual direction to sample , only consider far intersection
+        // No need to normalize for fetching cubemap
+        vec3 localR = (P + distToFarIntersection * dominantR) - lightProbe.position;
+
+        // We use normalized R to calc the intersection , thus intersections .y is
+        // the distance between the intersection and the receiving pixel
+        float distanceReceiverIntersection = distToFarIntersection;
+        float distanceSphereCenterIntersection = length ( localR );
+
+        // Compute the modified roughness based on the travelled distance
+        float localRoughness = computeDistanceBaseRoughness(distanceReceiverIntersection, 
+            distanceSphereCenterIntersection, material.roughness);
+
+        const float MAX_REFLECTION_LOD = 4.0;
+
+        //float mipMapLevel = material.roughness * MAX_REFLECTION_LOD; //base
+        float mipMapLevel = sqrt(localRoughness * MAX_REFLECTION_LOD); //frostbite 3
+        samplerCube prefilterSampler = samplerCube(lightProbe.prefilterCubemapHandle);
+        vec3 prefilteredColor = textureLod(prefilterSampler, localR, mipMapLevel).rgb;
+        vec2 brdf = texture(brdfLUT, vec2(NdotV, material.roughness)).rg;
+        
+        //float specOcclusion = computeSpecOcclusion(NdotV, ssao, material.roughness);
+        vec3 F = fresnelSchlickRoughness(NdotV, material.F0, material.roughness);
+        specular = prefilteredColor * (F * brdf.x + brdf.y); //* specOcclusion;
+    }
+
+    return specular;
+}
+
+vec3 getDiffuseDominantDir(vec3 N , vec3 V , float NdotV , float roughness)
+{
+    float a = 1.02341f * roughness - 1.51174f;
+    float b = -0.511705f * roughness + 0.755868f;
+    float lerpFactor = clamp(( NdotV * a + b) * roughness, 0.0, 1.0);
+    // The result is not normalized as we fetch in a cubemap
+    return mix (N , V , lerpFactor);
+}
+
+// N is the normal direction
+// R is the mirror vector
+// This approximation works fine for G smith correlated and uncorrelated
+vec3 getSpecularDominantDir( vec3 N , vec3 R, float roughness )
+{
+    float smoothness = clamp(0.0f, 1.0f, 1.0f - roughness);
+    float lerpFactor = smoothness * ( sqrt ( smoothness ) + roughness );
+    // The result is not normalized as we fetch in a cubemap
+    return mix(N , R , lerpFactor);
+}
+
+float raySphereIntersection(vec3 rayCenter, vec3 rayDir, vec3 sphereCenter, float sphereRadius)
+{
+    vec3 rayToSphere = sphereCenter - rayCenter;
+    //formula A + dot(AP,AB) / dot(AB,AB) * AB, where P is a point
+    //we don't need to divide by dot(AB,AB) because rayDir is normalized then dot product is equal 1
+    vec3 pointOnRayLine = rayCenter + dot(rayToSphere, rayDir) * rayDir;
+
+    vec3 fromSphereToLine = sphereCenter - pointOnRayLine;
+    float distanceSquaredToLine = dot(fromSphereToLine, fromSphereToLine);
+    float radiusSquared = sphereRadius * sphereRadius;
+    
+    if (distanceSquaredToLine > radiusSquared)
+        return 0.0f;
+
+    if (distanceSquaredToLine == 0.0)
+        return length(rayToSphere) + sphereRadius;
+
+    float distFromProjectedPointToIntersection = sqrt(radiusSquared - distanceSquaredToLine);
+    
+    return length(pointOnRayLine - rayCenter) + distFromProjectedPointToIntersection;
+}
+
+float computeDistanceBaseRoughness (
+    float distInteresectionToShadedPoint,
+    float distInteresectionToProbeCenter,
+    float linearRoughness )
+{
+    // To avoid artifacts we clamp to the original linearRoughness
+    // which introduces an acceptable bias and allows conservation
+    // of mirror reflection behavior for a smooth surface .
+    float newLinearRoughness = clamp( distInteresectionToShadedPoint /
+        distInteresectionToProbeCenter * linearRoughness, 0, linearRoughness);
+    return mix( newLinearRoughness , linearRoughness , linearRoughness );
 }

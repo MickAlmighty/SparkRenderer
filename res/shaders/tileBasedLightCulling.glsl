@@ -51,8 +51,8 @@ struct SpotLight {
 };
 
 struct LightProbe {
-    ivec2 irradianceCubemapHandle; //int64_t handle
-    ivec2 prefilterCubemapHandle; //int64_t handle
+    uvec2 irradianceCubemapHandle; //int64_t handle
+    uvec2 prefilterCubemapHandle; //int64_t handle
     vec3 position;
     float radius;
 };

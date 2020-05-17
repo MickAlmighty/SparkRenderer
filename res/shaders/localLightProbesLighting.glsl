@@ -14,7 +14,6 @@ void main()
 #type fragment
 #version 450
 layout(location = 0) out vec4 FragColor;
-layout(location = 1) out vec4 BrightPass;
 
 in vec2 texCoords;
 #define M_PI 3.14159265359 
@@ -23,10 +22,7 @@ layout(binding = 0) uniform sampler2D depthTexture;
 layout(binding = 1) uniform sampler2D diffuseTexture;
 layout(binding = 2) uniform sampler2D normalTexture;
 layout(binding = 3) uniform sampler2D rougnessMetalnessTexture;
-layout(binding = 4) uniform samplerCube irradianceMap;
-layout(binding = 5) uniform samplerCube prefilterMap;
-layout(binding = 6) uniform sampler2D brdfLUT;
-layout(binding = 7) uniform sampler2D ssaoTexture;
+layout(binding = 4) uniform sampler2D ssaoTexture;
 
 layout (std140) uniform Camera
 {
@@ -117,13 +113,6 @@ vec3 decodeViewSpaceNormal(vec2 enc)
     return n;
 }
 
-vec3 getBrightPassColor(vec3 color)
-{
-    const float luma = dot(color, vec3(0.299, 0.587, 0.114));
-    float weight = 1 / (1 + luma);
-    return color * weight;
-}
-
 void main()
 {
     float depthValue = texture(depthTexture, texCoords).x;
@@ -144,8 +133,8 @@ void main()
 
     Material material = {
         albedo.xyz, //albedo in linear space
-        pow(roughnessAndMetalness.r, 1.2f),
-        roughnessAndMetalness.g,
+        pow(roughnessAndMetalness.r, 1.2f), //roughness
+        0.0f,   //metalness
         vec3(0.0f)
     };
 
@@ -160,32 +149,7 @@ void main()
     L0 += pointLightAddition(V, N, pos, material);
     L0 += spotLightAddition(V, N, pos, material);
 
-    //IBL	
-    vec3 ambient = vec3(0.0);
-    {
-        float NdotV = max(dot(N, V), 0.0);
-        vec3 kS = fresnelSchlickRoughness(NdotV, material.F0, material.roughness);
-        vec3 kD = 1.0 - kS;
-        kD *= 1.0 - material.metalness;
-        vec3 irradiance = texture(irradianceMap, N).rgb;
-        vec3 diffuse    = irradiance * material.albedo;
-
-        vec3 R = reflect(-V, N);
-        vec3 F = fresnelSchlickRoughness(NdotV, material.F0, material.roughness);
-        const float MAX_REFLECTION_LOD = 4.0;
-
-        //float mipMapLevel = material.roughness * MAX_REFLECTION_LOD; //base
-        float mipMapLevel = sqrt(material.roughness * MAX_REFLECTION_LOD); //frostbite 3
-        vec3 prefilteredColor = textureLod(prefilterMap, R, mipMapLevel).rgb;    
-        vec2 brdf = texture(brdfLUT, vec2(NdotV, material.roughness)).rg;
-        
-        float specOcclusion = computeSpecOcclusion(NdotV, ssao, material.roughness);
-        vec3 specular = prefilteredColor * (F * brdf.x + brdf.y) * specOcclusion;
-        
-        ambient = (kD * diffuse + specular);
-    }
-
-    vec4 color = vec4(L0 + ambient, 1);// * ssao;
+    vec4 color = vec4(L0, 1) * ssao;
 
     bvec4 valid = isnan(color);
     if ( valid.x || valid.y || valid.z || valid.w )
@@ -196,8 +160,6 @@ void main()
     {
         FragColor = color * ssao;
     }
-
-    BrightPass = vec4(getBrightPassColor(FragColor.xyz), 1.0f);
 }
 
 vec3 directionalLightAddition(vec3 V, vec3 N, Material m)
