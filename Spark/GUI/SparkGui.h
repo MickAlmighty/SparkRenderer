@@ -33,7 +33,7 @@ class SparkGui
     static std::shared_ptr<Component> addComponent();
     static std::shared_ptr<resources::Model> SparkGui::getModel();
     static std::shared_ptr<resources::Texture> getTexture();
-    static std::shared_ptr<PbrCubemapTexture> getCubemapTexture();
+    static std::tuple<bool, std::shared_ptr<PbrCubemapTexture>> getCubemapTexture();
     static std::shared_ptr<resources::Shader> getShader();
 
     template<typename T>

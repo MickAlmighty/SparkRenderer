@@ -23,6 +23,7 @@ uniform float roughness;
 uniform float textureSize;
 
 const float PI = 3.14159265359;
+const uint SAMPLE_COUNT = 256u;
 
 float RadicalInverse_VdC(uint bits);
 vec2 Hammersley(uint i, uint N);
@@ -35,7 +36,6 @@ void main()
     vec3 R = N;
     vec3 V = R;
 
-    const uint SAMPLE_COUNT = 1024u;
     float totalWeight = 0.0;   
     vec3 prefilteredColor = vec3(0.0);
     for(uint i = 0u; i < SAMPLE_COUNT; ++i)

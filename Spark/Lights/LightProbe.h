@@ -48,7 +48,7 @@ class LightProbe : public Component
     float radius{1};
 
     GLuint irradianceCubemapSize = 32;
-    GLuint prefilterCubemapSize = 128;
+    GLuint prefilterCubemapSize = 256;
 
     bool dirty{true};
     bool addedToLightManager{false};

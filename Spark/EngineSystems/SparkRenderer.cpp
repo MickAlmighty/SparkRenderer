@@ -22,6 +22,7 @@
 #include "Spark.h"
 #include "Clock.h"
 #include "Logging.h"
+#include "Timer.h"
 
 namespace spark
 {
@@ -906,6 +907,8 @@ void SparkRenderer::generateLightProbe(const std::shared_ptr<LightProbe>& lightP
 {
     PUSH_DEBUG_GROUP(SCENE_TO_CUBEMAP);
 
+    auto t = Timer("Local Light Probe creation");
+
     const glm::vec3 viewPos = lightProbe->getGameObject()->transform.world.getPosition();
     const unsigned int cubemapSize = 512;
     const auto projection = utils::getProjectionReversedZ(cubemapSize, cubemapSize, 90.0f, 0.05f, 100.0f);
@@ -949,7 +952,6 @@ void SparkRenderer::generateLightProbe(const std::shared_ptr<LightProbe>& lightP
         //renderSceneToCubemap(geometryBuffer, lightFbo, skyboxFbo);
 
         fillGBuffer(geometryBuffer, [](const RenderingRequest& request) { return request.gameObject->isStatic() == true; });
-        ssaoComputing(geometryBuffer);
 
         {
             PUSH_DEBUG_GROUP(PBR_LIGHT);
@@ -963,7 +965,7 @@ void SparkRenderer::generateLightProbe(const std::shared_ptr<LightProbe>& lightP
                                            geometryBuffer.colorTexture,
                                            geometryBuffer.normalsTexture,
                                            geometryBuffer.roughnessMetalnessTexture,
-                                           textureHandle};  // ssao
+                                           ssaoDisabledTexture};  // ssao
             glBindTextures(0, static_cast<GLsizei>(textures.size()), textures.data());
             screenQuad.draw();
             glBindTextures(0, static_cast<GLsizei>(textures.size()), nullptr);

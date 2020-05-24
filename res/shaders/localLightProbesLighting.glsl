@@ -113,6 +113,13 @@ vec3 decodeViewSpaceNormal(vec2 enc)
     return n;
 }
 
+vec3 attenuateHighFrequencies(vec3 color)
+{
+    const float luma = dot(color, vec3(0.299, 0.587, 0.114));
+    float weight = 1 / (1 + luma * 0.1f);
+    return color * weight;
+}
+
 void main()
 {
     float depthValue = texture(depthTexture, texCoords).x;
@@ -135,12 +142,13 @@ void main()
         albedo.xyz, //albedo in linear space
         pow(roughnessAndMetalness.r, 1.2f), //roughness
         0.0f,   //metalness
-        vec3(0.0f)
+        vec3(0.0f) // F0 reflectance
     };
 
     //vec3 F0 = vec3(0.04);
-    vec3 F0 = vec3(0.16f) * pow(1.0f - material.roughness, 2.0); //frostbite3 fresnel reflectance https://seblagarde.files.wordpress.com/2015/07/course_notes_moving_frostbite_to_pbr_v32.pdf page 14
-    material.F0 = mix(F0, material.albedo, material.metalness);
+    //float reflectance = 0.0f;
+    vec3 F0 = vec3(0.16f) * (1 - material.roughness); //frostbite3 fresnel reflectance https://seblagarde.files.wordpress.com/2015/07/course_notes_moving_frostbite_to_pbr_v32.pdf page 14
+    //material.F0 = mix(F0, material.albedo, material.metalness); //metalness is equal 0
 
     vec3 N = worldPosNormal;
     vec3 V = normalize(camera.pos.xyz - pos);
@@ -149,7 +157,7 @@ void main()
     L0 += pointLightAddition(V, N, pos, material);
     L0 += spotLightAddition(V, N, pos, material);
 
-    vec4 color = vec4(L0, 1) * ssao;
+    vec4 color = vec4(L0 * ssao, 1);
 
     bvec4 valid = isnan(color);
     if ( valid.x || valid.y || valid.z || valid.w )
@@ -158,7 +166,7 @@ void main()
     }
     else
     {
-        FragColor = color * ssao;
+        FragColor = vec4(attenuateHighFrequencies(color.xyz), 1.0f);
     }
 }
 

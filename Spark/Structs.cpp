@@ -79,6 +79,7 @@ void PbrCubemapTexture::setup(GLuint hdrTexture, unsigned size)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glDeleteFramebuffers(1, &captureFBO);
     glDeleteTextures(1, &envCubemap);
+    glFinish();
 }
 
 GLuint PbrCubemapTexture::createEnvironmentCubemapWithMipmapChain(GLuint framebuffer, GLuint equirectangularTexture, unsigned size, Cube& cube) const
