@@ -1,6 +1,7 @@
 # SparkRenderer
 Attempt to develop game engine using OpenGL 4.5
 
+<img src="https://i.stack.imgur.com/bvnj3.jpg"/>
 <img src="https://i.stack.imgur.com/gW6hR.jpg"/>
 
 <b>Work done so far:</b>
