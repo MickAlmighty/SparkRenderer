@@ -61,6 +61,7 @@ struct LightProbe {
     uvec2 prefilterCubemapHandle;
     vec3 position;
     float radius;
+    float fadeDistance;
 };
 
 layout(std430) readonly buffer DirLightData
@@ -125,7 +126,7 @@ vec3 spotLightAddition(vec3 V, vec3 N, vec3 Pos, Material m);
 
 vec3 calculateDiffuseIBL(vec3 N, vec3 V, float NdotV, Material material, samplerCube irradianceCubemap);
 vec3 calculateSpecularIBL(vec3 N, vec3 V, float NdotV, Material material);
-vec3 calculateSpecularFromLightProbe(vec3 N, vec3 V, vec3 P, float NdotV, Material material, LightProbe lightProbe);
+vec4 calculateSpecularFromLightProbe(vec3 N, vec3 V, vec3 P, float NdotV, Material material, LightProbe lightProbe);
 vec3 getDiffuseDominantDir(vec3 N , vec3 V , float NdotV , float roughness);
 vec3 getSpecularDominantDir( vec3 N , vec3 R, float roughness );
 float raySphereIntersection(vec3 rayCenter, vec3 rayDir, vec3 sphereCenter, float sphereRadius);
@@ -183,31 +184,54 @@ void main()
     float ssao = texture(ssaoTexture, screenSpaceTexCoords).x;
     float NdotV = max(dot(N, V), 0.0);
 
-    if (lightProbes.length() == 0)
+    float iblWeight = 0.0f;
+
+    for(int i = 0; i < lightProbes.length(); ++i)
+    {
+        LightProbe lightProbe = lightProbes[i];
+        samplerCube irradianceSampler = samplerCube(lightProbe.irradianceCubemapHandle);
+        vec3 diffuseIBL = calculateDiffuseIBL(N, V, NdotV, material, irradianceSampler);
+        vec4 specularIBL = calculateSpecularFromLightProbe(N, V, P, NdotV, material, lightProbe);
+        
+        //calculating the the smooth light fading at the border of light probe
+        float localDistance = length(P - lightProbe.position);
+        float alpha = clamp((lightProbe.radius - localDistance) / 
+                    max(lightProbe.fadeDistance, 0.0001f), 0.0f, 1.0f);
+        
+        float alphaAttenuation = smoothstep(0.0f, 1.0f, alpha);
+        iblWeight += alphaAttenuation;
+
+        ambient += (diffuseIBL + specularIBL.rgb) * alphaAttenuation;
+
+        if (iblWeight >= 1.0f)
+            break;
+    }
+//    for(int i = 0; i < lightProbeIndices[numberOfLightsIndex]; ++i)
+//    {
+//        LightProbe lightProbe = lightProbes[i];
+//        samplerCube irradianceSampler = samplerCube(lightProbe.irradianceCubemapHandle);
+//        vec3 diffuseIBL = calculateDiffuseIBL(N, V, NdotV, material, irradianceSampler);
+//        vec4 specularIBL = calculateSpecularFromLightProbe(N, V, P, NdotV, material, lightProbe);
+//        
+//        //calculating the the smooth light fading at the border of light probe
+//        float localDistance = length(P - lightProbe.position);
+//        float alpha = clamp((lightProbe.radius - localDistance) / 
+//                    max(lightProbe.fadeDistance, 0.0001f), 0.0f, 1.0f);
+//        
+//        float alphaAttenuation = smoothstep(0.0f, 1.0f, alpha);
+//        iblWeight += alphaAttenuation * specularIBL.a;
+//
+//        ambient += (diffuseIBL + specularIBL.rgb) * alphaAttenuation * specularIBL.a;
+//
+//        if (iblWeight >= 1.0f)
+//            break;
+//    }
+
+    if (iblWeight < 1.0f)
     {
         vec3 diffuseIBL = calculateDiffuseIBL(N, V, NdotV, material, irradianceMap);
         vec3 specularIBL = calculateSpecularIBL(N, V, NdotV, material);
-        ambient = diffuseIBL + specularIBL;
-    }
-    else
-    {
-        for(int i = 0; i < lightProbes.length(); ++i)
-        {
-            LightProbe lightProbe = lightProbes[i];
-            samplerCube irradianceSampler = samplerCube(lightProbe.irradianceCubemapHandle);
-            vec3 diffuseIBL = calculateDiffuseIBL(N, V, NdotV, material, irradianceSampler);
-            vec3 specularIBL = calculateSpecularFromLightProbe(N, V, P, NdotV, material, lightProbe);
-            ambient = diffuseIBL + specularIBL;
-        }
-//        for(int i = 0; i < lightProbeIndices[numberOfLightsIndex]; ++i)
-//        {
-//            LightProbe lightProbe = lightProbes[lightProbeIndices[lightBeginIndex + i]];
-//            samplerCube irradianceSampler = samplerCube(lightProbe.irradianceCubemapHandle);
-//            float NdotV = max(dot(N, V), 0.0);
-//            vec3 diffuseIBL = calculateDiffuseIBL(N, V, NdotV, material, irradianceSampler);
-//            vec3 specularIBL = calculateSpecularFromLightProbe(N, V, P, NdotV, material, lightProbe);
-//            ambient = diffuseIBL + specularIBL;
-//        }
+        ambient += (diffuseIBL + specularIBL) * (1.0f - iblWeight);
     }
 
     vec4 color = vec4(L0 + ambient, 1) * ssao;
@@ -439,9 +463,9 @@ vec3 calculateSpecularIBL(vec3 N, vec3 V, float NdotV, Material material)
     return specular;
 }
 
-vec3 calculateSpecularFromLightProbe(vec3 N, vec3 V, vec3 P, float NdotV, Material material, LightProbe lightProbe)
+vec4 calculateSpecularFromLightProbe(vec3 N, vec3 V, vec3 P, float NdotV, Material material, LightProbe lightProbe)
 {
-    vec3 specular = vec3(0);
+    vec4 specular = vec4(0);
     vec3 R = reflect(-V, N);
     vec3 dominantR = getSpecularDominantDir(N, R, material.roughness);
 
@@ -466,12 +490,12 @@ vec3 calculateSpecularFromLightProbe(vec3 N, vec3 V, vec3 P, float NdotV, Materi
         //float mipMapLevel = material.roughness * MAX_REFLECTION_LOD; //base
         float mipMapLevel = sqrt(localRoughness * MAX_REFLECTION_LOD); //frostbite 3
         samplerCube prefilterSampler = samplerCube(lightProbe.prefilterCubemapHandle);
-        vec3 prefilteredColor = textureLod(prefilterSampler, localR, mipMapLevel).rgb;
+        vec4 prefilteredColor = textureLod(prefilterSampler, localR, mipMapLevel).rgba;
         vec2 brdf = texture(brdfLUT, vec2(NdotV, material.roughness)).rg;
         
         //float specOcclusion = computeSpecOcclusion(NdotV, ssao, material.roughness);
         vec3 F = fresnelSchlickRoughness(NdotV, material.F0, material.roughness);
-        specular = prefilteredColor * (F * brdf.x + brdf.y); //* specOcclusion;
+        specular = vec4(prefilteredColor.rgb * (F * brdf.x + brdf.y), prefilteredColor.a);
     }
 
     return specular;

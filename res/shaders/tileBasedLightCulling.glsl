@@ -55,6 +55,7 @@ struct LightProbe {
     uvec2 prefilterCubemapHandle; //int64_t handle
     vec3 position;
     float radius;
+    float fadeDistance;
 };
 
 layout(std430) readonly buffer PointLightData

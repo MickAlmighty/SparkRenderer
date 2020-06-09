@@ -22,7 +22,6 @@ layout(binding = 0) uniform sampler2D depthTexture;
 layout(binding = 1) uniform sampler2D diffuseTexture;
 layout(binding = 2) uniform sampler2D normalTexture;
 layout(binding = 3) uniform sampler2D rougnessMetalnessTexture;
-layout(binding = 4) uniform sampler2D ssaoTexture;
 
 layout (std140) uniform Camera
 {
@@ -132,7 +131,6 @@ void main()
     vec3 albedo = texture(diffuseTexture, texCoords).rgb;
     vec2 normal = texture(normalTexture, texCoords).xy;
     vec2 roughnessAndMetalness = texture(rougnessMetalnessTexture, texCoords).rg;
-    float ssao = texture(ssaoTexture, texCoords).x;
 
     vec3 decoded = decodeViewSpaceNormal(normal.xy);
 
@@ -145,9 +143,7 @@ void main()
         vec3(0.0f) // F0 reflectance
     };
 
-    //vec3 F0 = vec3(0.04);
-    //float reflectance = 0.0f;
-    vec3 F0 = vec3(0.16f) * (1 - material.roughness); //frostbite3 fresnel reflectance https://seblagarde.files.wordpress.com/2015/07/course_notes_moving_frostbite_to_pbr_v32.pdf page 14
+    material.F0 = vec3(0.16f) * (1 - material.roughness); //frostbite3 fresnel reflectance https://seblagarde.files.wordpress.com/2015/07/course_notes_moving_frostbite_to_pbr_v32.pdf page 14
     //material.F0 = mix(F0, material.albedo, material.metalness); //metalness is equal 0
 
     vec3 N = worldPosNormal;
@@ -157,12 +153,12 @@ void main()
     L0 += pointLightAddition(V, N, pos, material);
     L0 += spotLightAddition(V, N, pos, material);
 
-    vec4 color = vec4(L0 * ssao, 1);
+    vec4 color = vec4(L0, 1);
 
     bvec4 valid = isnan(color);
     if ( valid.x || valid.y || valid.z || valid.w )
     {
-        FragColor = vec4(0.5f);
+        FragColor = vec4(vec3(0.5f), 1.0f);
     }
     else
     {

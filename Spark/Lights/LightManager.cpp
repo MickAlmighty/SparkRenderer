@@ -8,9 +8,14 @@
 
 namespace spark
 {
+bool LightManager::compareLightProbes::operator()(const std::weak_ptr<LightProbe>& l, const std::weak_ptr<LightProbe>& r) const 
+{
+    return l.lock()->getRadius() < r.lock()->getRadius();
+}
+
 void LightManager::addLightProbe(const std::shared_ptr<LightProbe>& lightProbe)
 {
-    lightProbes.push_back(lightProbe);
+    lightProbes.insert(lightProbe);
 }
 
 void LightManager::addDirectionalLight(const std::shared_ptr<DirectionalLight>& directionalLight)
@@ -30,17 +35,17 @@ void LightManager::addSpotLight(const std::shared_ptr<SpotLight>& spotLight)
 
 void LightManager::updateLightBuffers()
 {
-    const auto dirLightDataBuffer = getLightDataBuffer<DirectionalLightData, DirectionalLight>(directionalLights);
-    updateBufferIfNecessary(dirLightDataBuffer, dirLightSSBO);
+    const auto dirLightDataBufferOpt = getLightDataBuffer<DirectionalLightData, DirectionalLight>(directionalLights);
+    updateBufferIfNecessary(dirLightDataBufferOpt, dirLightSSBO);
 
-    const auto pointLightDataBuffer = getLightDataBuffer<PointLightData, PointLight>(pointLights);
-    updateBufferIfNecessary(pointLightDataBuffer, pointLightSSBO);
+    const auto pointLightDataBufferOpt = getLightDataBuffer<PointLightData, PointLight>(pointLights);
+    updateBufferIfNecessary(pointLightDataBufferOpt, pointLightSSBO);
 
-    const auto spotLightDataBuffer = getLightDataBuffer<SpotLightData, SpotLight>(spotLights);
-    updateBufferIfNecessary(spotLightDataBuffer, spotLightSSBO);
+    const auto spotLightDataBufferOpt = getLightDataBuffer<SpotLightData, SpotLight>(spotLights);
+    updateBufferIfNecessary(spotLightDataBufferOpt, spotLightSSBO);
 
-    const auto lightProbesDataBuffer = getLightDataBuffer<LightProbeData, LightProbe>(lightProbes);
-    updateBufferIfNecessary(lightProbesDataBuffer, lightProbeSSBO);
+    const auto lightProbesDataBufferOpt = getLightProbeDataBufer(lightProbes);
+    updateBufferIfNecessary(lightProbesDataBufferOpt, lightProbeSSBO);
 }
 
 LightManager::LightManager()
@@ -57,6 +62,77 @@ LightManager::~LightManager()
     spotLightSSBO.cleanup();
     pointLightSSBO.cleanup();
     lightProbeSSBO.cleanup();
+}
+
+bool LightManager::removeExpiredLightPointers(std::multiset<std::weak_ptr<LightProbe>, compareLightProbes>& lightContainer)
+{
+    bool isBufferDirty = false;
+    bool atLeastOnExpiredPointerRemoved = false;
+
+    do
+    {
+        const auto containerIt = std::find_if(std::begin(lightContainer), std::end(lightContainer),
+                                              [](const std::weak_ptr<LightProbe>& weakPtr) { return weakPtr.expired(); });
+
+        if(containerIt != std::end(lightContainer))
+        {
+            lightContainer.erase(containerIt);
+            atLeastOnExpiredPointerRemoved = true;
+            isBufferDirty = true;
+        }
+        else
+        {
+            break;
+        }
+    } while(atLeastOnExpiredPointerRemoved);
+
+    return isBufferDirty;
+}
+
+std::optional<std::vector<LightProbeData>> LightManager::getLightProbeDataBufer(
+    std::multiset<std::weak_ptr<LightProbe>, compareLightProbes>& lightProbeContainer)
+{
+    bool isBufferDirty = removeExpiredLightPointers(lightProbeContainer);
+    bool isAtLeastOneLightDirty = std::any_of(lightProbeContainer.begin(), lightProbeContainer.end(),
+                                              [](const std::weak_ptr<LightProbe>& light) { return light.lock()->getDirty(); });
+
+    if(isBufferDirty || isAtLeastOneLightDirty)
+    {
+        auto lightProbeIt = lightProbeContainer.begin();
+        while(lightProbeIt != lightProbeContainer.end())
+        {
+            if(lightProbeIt->lock()->getDirty())
+            {
+                const auto lightProbeWeakPtr = *lightProbeIt;
+                const auto lightProbeToEraseIt = lightProbeIt;
+                lightProbeIt = std::next(lightProbeIt);
+                lightProbeContainer.erase(lightProbeToEraseIt);
+
+                // doing insertion sort here using the set container property
+                lightProbeContainer.insert(lightProbeWeakPtr);
+                lightProbeWeakPtr.lock()->resetDirty();
+            }
+            else
+            {
+                lightProbeIt = std::next(lightProbeIt);
+            }
+        }
+
+        std::vector<LightProbeData> bufferData;
+        bufferData.reserve(lightProbeContainer.size());
+
+        for(const auto& light : lightProbeContainer)
+        {
+            if(light.lock()->getActive())
+            {
+                bufferData.push_back(light.lock()->getLightData());
+            }
+        }
+
+        return bufferData;
+    }
+
+    return std::nullopt;
 }
 }  // namespace spark
 

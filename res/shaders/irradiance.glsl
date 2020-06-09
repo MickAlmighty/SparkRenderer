@@ -21,7 +21,7 @@ layout (location = 0) in vec3 localPos;
 
 layout (binding = 0) uniform samplerCube environmentMap;
 
-#define SAMPLE_DELTA 0.085
+#define SAMPLE_DELTA 0.04908738521
 
 #define PI 3.14159265359
 #define TWO_PI 2 * PI

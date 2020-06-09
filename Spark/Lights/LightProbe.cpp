@@ -42,6 +42,11 @@ LightProbe::~LightProbe()
     sphere->gpuUnload();
 }
 
+bool LightProbe::operator<(const LightProbe& lightProbe) const
+{
+    return radius < lightProbe.radius;
+}
+
 void LightProbe::update()
 {
     if(!addedToLightManager)
@@ -80,13 +85,21 @@ void LightProbe::drawGUI()
     }
 
     float r = getRadius();
+    float fDist = getFadeDistance();
     ImGui::DragFloat("radius", &r, 0.1f);
+    ImGui::DragFloat("fadeDistance", &fDist, 0.1f);
 
     if(r < 0.0f)
         r = 0.0f;
 
     if(r != getRadius())
         setRadius(r);
+
+    if(fDist < 0.0f)
+        fDist = 0.0f;
+
+    if(fDist != getFadeDistance())
+        setFadeDistance(fDist);
 
     removeComponentGUI<LightProbe>();
 }
@@ -98,6 +111,7 @@ LightProbeData LightProbe::getLightData() const
     data.prefilterCubemapHandle = prefilterCubemapHandle;
     data.position = getGameObject()->transform.world.getPosition();
     data.radius = getRadius();
+    data.fadeDistance = getFadeDistance();
     return data;
 }
 
@@ -109,6 +123,11 @@ bool LightProbe::getDirty() const
 float LightProbe::getRadius() const
 {
     return radius;
+}
+
+float LightProbe::getFadeDistance() const
+{
+    return fadeDistance;
 }
 
 void LightProbe::resetDirty()
@@ -173,9 +192,8 @@ void LightProbe::renderIntoPrefilterCubemap(GLuint framebuffer, GLuint environme
     const GLuint maxMipLevels = 5;
     for(unsigned int face = 0; face < 6; ++face)
     {
-        prefilterShader->setMat4("view", views[face]);
 
-        {  // for mip 0 just rewrite pixel colors
+        {  // for mip 0 just rewrite pixel colors using linear interpolation
             glViewport(0, 0, prefilterCubemapSize, prefilterCubemapSize);
 
             resampleCubemapShader->use();
@@ -185,11 +203,11 @@ void LightProbe::renderIntoPrefilterCubemap(GLuint framebuffer, GLuint environme
         }
 
         prefilterShader->use();
+        prefilterShader->setMat4("view", views[face]);
         for(unsigned int mip = 1; mip < maxMipLevels; ++mip)
         {
-            const auto mipWidth = static_cast<unsigned int>(prefilterCubemapSize * std::pow(0.5, mip));
-            const auto mipHeight = static_cast<unsigned int>(prefilterCubemapSize * std::pow(0.5, mip));
-            glViewport(0, 0, mipWidth, mipHeight);
+            const auto mipSize = static_cast<unsigned int>(prefilterCubemapSize * std::pow(0.5, mip));
+            glViewport(0, 0, mipSize, mipSize);
 
             const float roughness = static_cast<float>(mip) / static_cast<float>(maxMipLevels - 1);
             prefilterShader->setFloat("roughness", roughness);
@@ -215,6 +233,12 @@ void LightProbe::setRadius(float radius_)
     radius = radius_;
 }
 
+void LightProbe::setFadeDistance(float fadeDistance_)
+{
+    dirty = true;
+    fadeDistance = fadeDistance_;
+}
+
 // void LightProbe::setIrradianceCubemap(GLuint irradianceCubemap_)
 //{
 //    irradianceCubemap = irradianceCubemap_;
@@ -233,6 +257,7 @@ RTTR_REGISTRATION
         //.property("dirty", &spark::DirectionalLight::dirty) //FIXME: shouldn't it always be dirty when loaded? maybe not
         //.property("addedToLightManager", &spark::DirectionalLight::addedToLightManager)
         .property("radius", &spark::LightProbe::radius)
+        .property("fadeDistance", &spark::LightProbe::fadeDistance)
         .property("generateLightProbe", &spark::LightProbe::generateLightProbe)(rttr::detail::metadata(spark::SerializerMeta::Serializable, false))
         .property("irradianceCubemap", &spark::LightProbe::irradianceCubemap)(rttr::detail::metadata(spark::SerializerMeta::Serializable, false))
         .property("prefilterCubemap", &spark::LightProbe::prefilterCubemap)(rttr::detail::metadata(spark::SerializerMeta::Serializable, false))

@@ -912,7 +912,6 @@ void SparkRenderer::generateLightProbe(const std::shared_ptr<LightProbe>& lightP
     const glm::vec3 viewPos = lightProbe->getGameObject()->transform.world.getPosition();
     const unsigned int cubemapSize = 512;
     const auto projection = utils::getProjectionReversedZ(cubemapSize, cubemapSize, 90.0f, 0.05f, 100.0f);
-    // const auto projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
     const std::array<glm::mat4, 6> viewMatrices = {glm::lookAt(viewPos, viewPos + glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
                                                    glm::lookAt(viewPos, viewPos + glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
                                                    glm::lookAt(viewPos, viewPos + glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
@@ -921,7 +920,7 @@ void SparkRenderer::generateLightProbe(const std::shared_ptr<LightProbe>& lightP
                                                    glm::lookAt(viewPos, viewPos + glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f))};
 
     GLuint sceneCubemap{};
-    utils::createCubemap(sceneCubemap, cubemapSize, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::createCubemap(sceneCubemap, cubemapSize, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR, true);
     GBuffer geometryBuffer{};
     geometryBuffer.setup(cubemapSize, cubemapSize);
 
@@ -930,7 +929,8 @@ void SparkRenderer::generateLightProbe(const std::shared_ptr<LightProbe>& lightP
     utils::createFramebuffer(skyboxFbo, {});
     utils::bindDepthTexture(skyboxFbo, geometryBuffer.depthTexture);
 
-    const auto localLightProbesLightingShader = Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("localLightProbesLighting.glsl");
+    const auto localLightProbesLightingShader =
+        Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("localLightProbesLighting.glsl");
     localLightProbesLightingShader->bindSSBO("DirLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->dirLightSSBO);
     localLightProbesLightingShader->bindSSBO("PointLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->pointLightSSBO);
     localLightProbesLightingShader->bindSSBO("SpotLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->spotLightSSBO);
@@ -957,15 +957,16 @@ void SparkRenderer::generateLightProbe(const std::shared_ptr<LightProbe>& lightP
             PUSH_DEBUG_GROUP(PBR_LIGHT);
 
             glBindFramebuffer(GL_FRAMEBUFFER, lightFbo);
-            glClearColor(0, 0, 0, 1);
+            glClearColor(0, 0, 0, 0);
             glClear(GL_COLOR_BUFFER_BIT);
 
             localLightProbesLightingShader->use();
-            std::array<GLuint, 5> textures{geometryBuffer.depthTexture,
-                                           geometryBuffer.colorTexture,
-                                           geometryBuffer.normalsTexture,
-                                           geometryBuffer.roughnessMetalnessTexture,
-                                           ssaoDisabledTexture};  // ssao
+            std::array<GLuint, 4> textures{
+                geometryBuffer.depthTexture,
+                geometryBuffer.colorTexture,
+                geometryBuffer.normalsTexture,
+                geometryBuffer.roughnessMetalnessTexture,
+            };
             glBindTextures(0, static_cast<GLsizei>(textures.size()), textures.data());
             screenQuad.draw();
             glBindTextures(0, static_cast<GLsizei>(textures.size()), nullptr);
@@ -978,6 +979,8 @@ void SparkRenderer::generateLightProbe(const std::shared_ptr<LightProbe>& lightP
 
         POP_DEBUG_GROUP();
     }
+
+    glGenerateTextureMipmap(sceneCubemap);
 
     // light probe generation
     const auto irradianceShader = Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("irradiance.glsl");

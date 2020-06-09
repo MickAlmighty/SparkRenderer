@@ -4,6 +4,8 @@
 #include <algorithm>
 #include <memory>
 #include <vector>
+#include <optional>
+#include <set>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -28,7 +30,12 @@ class LightManager
     std::vector<std::weak_ptr<PointLight>> pointLights;
     std::vector<std::weak_ptr<SpotLight>> spotLights;
 
-    std::vector<std::weak_ptr<LightProbe>> lightProbes;
+    struct compareLightProbes
+    {
+        bool operator()(const std::weak_ptr<LightProbe>& l, const std::weak_ptr<LightProbe>& r) const;
+    };
+
+    std::multiset<std::weak_ptr<LightProbe>, compareLightProbes> lightProbes;
 
     void addLightProbe(const std::shared_ptr<LightProbe>& lightProbe);
 
@@ -45,102 +52,84 @@ class LightManager
     LightManager&& operator=(const LightManager&& lightManager) = delete;
 
     private:
-    bool updateBuffer = false;
+    template<typename T>
+    void updateBufferIfNecessary(const std::optional<std::vector<T>>& bufferLightDataOpt, SSBO& ssbo);
 
     template<typename T>
-    void updateBufferIfNecessary(const std::vector<T>& bufferLightData, SSBO& ssbo);
-
-    template<typename T>
-    bool findDirtyLight(const std::vector<std::weak_ptr<T>>& lightContainer);
-
-    template<typename T>
-    bool findAndRemoveExpiredPointer(std::vector<std::weak_ptr<T>>& lightContainer);
+    bool removeExpiredLightPointers(std::vector<std::weak_ptr<T>>& lightContainer);
 
     template<typename N, typename T>
-    std::vector<N> getLightDataBuffer(std::vector<std::weak_ptr<T>>& lightContainer);
+    std::optional<std::vector<N>> getLightDataBuffer(std::vector<std::weak_ptr<T>>& lightContainer);
+
+    bool removeExpiredLightPointers(std::multiset<std::weak_ptr<LightProbe>, compareLightProbes>& lightContainer);
+    std::optional<std::vector<LightProbeData>> LightManager::getLightProbeDataBufer(
+        std::multiset<std::weak_ptr<LightProbe>, compareLightProbes>& lightProbeContainer);
+
     RTTR_REGISTRATION_FRIEND;
     RTTR_ENABLE();
 };
 
 template<typename T>
-void LightManager::updateBufferIfNecessary(const std::vector<T>& bufferLightData, SSBO& ssbo)
+void LightManager::updateBufferIfNecessary(const std::optional<std::vector<T>>& bufferLightDataOpt, SSBO& ssbo)
 {
-    if(updateBuffer)
+    if(bufferLightDataOpt.has_value())
     {
-        ssbo.updateData(bufferLightData);
-        updateBuffer = false;
+        ssbo.updateData(bufferLightDataOpt.value());
     }
 }
 
 template<typename T>
-bool LightManager::findDirtyLight(const std::vector<std::weak_ptr<T>>& lightContainer)
+inline bool LightManager::removeExpiredLightPointers(std::vector<std::weak_ptr<T>>& lightContainer)
 {
-    for(const std::weak_ptr<T>& light : lightContainer)
+    bool isBufferDirty = false;
+    bool atLeastOnExpiredPointerRemoved = false;
+    do
     {
-        if(light.lock()->getDirty())
+        const auto containerIt =
+            std::find_if(std::begin(lightContainer), std::end(lightContainer), [](const std::weak_ptr<T>& weakPtr) { return weakPtr.expired(); });
+
+        if(containerIt != std::end(lightContainer))
         {
-            return true;
+            lightContainer.erase(containerIt);
+            atLeastOnExpiredPointerRemoved = true;
+            isBufferDirty = true;
         }
-    }
-    return false;
-}
+        else
+        {
+            break;
+        }
+    } while(atLeastOnExpiredPointerRemoved);
 
-template<typename T>
-bool LightManager::findAndRemoveExpiredPointer(std::vector<std::weak_ptr<T>>& lightContainer)
-{
-    const auto containerIt =
-        std::find_if(std::begin(lightContainer), std::end(lightContainer), [](const std::weak_ptr<T>& weakPtr) { return weakPtr.expired(); });
-
-    if(containerIt != std::end(lightContainer))
-    {
-        lightContainer.erase(containerIt);
-        return true;
-    }
-    return false;
+    return isBufferDirty;
 }
 
 template<typename N, typename T>
-std::vector<N> LightManager::getLightDataBuffer(std::vector<std::weak_ptr<T>>& lightContainer)
+std::optional<std::vector<N>> LightManager::getLightDataBuffer(std::vector<std::weak_ptr<T>>& lightContainer)
 {
-    bool expiredPointer = false;
-    do
-    {
-        expiredPointer = findAndRemoveExpiredPointer(lightContainer);
-        if(expiredPointer)
-        {
-            updateBuffer = true;
-        }
-    }
-    while(expiredPointer);
+    bool isBufferDirty = removeExpiredLightPointers(lightContainer);
+    bool isAtLeastOneLightDirty =
+        std::any_of(lightContainer.begin(), lightContainer.end(), [](const std::weak_ptr<T>& light) { return light.lock()->getDirty(); });
 
-    if(updateBuffer)
+    if(isBufferDirty || isAtLeastOneLightDirty)
     {
         std::vector<N> bufferData;
+        bufferData.reserve(lightContainer.size());
+
         for(const auto& light : lightContainer)
         {
-            bufferData.push_back(light.lock()->getLightData());
+            light.lock()->resetDirty();
+            if(light.lock()->getActive())
+            {
+                bufferData.push_back(light.lock()->getLightData());
+            }
         }
 
         return bufferData;
     }
-    else
-    {
-        std::vector<N> bufferData;
-        updateBuffer = findDirtyLight(lightContainer);
-        if(updateBuffer)
-        {
-            for(const auto& light : lightContainer)
-            {
-                light.lock()->resetDirty();
-                if(light.lock()->getActive())
-                {
-                    bufferData.push_back(light.lock()->getLightData());
-                }
-            }
-        }
-        return bufferData;
-    }
+
+    return std::nullopt;
 }
+
 }  // namespace spark
 
 #endif

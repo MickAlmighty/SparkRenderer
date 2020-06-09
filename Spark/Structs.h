@@ -386,7 +386,7 @@ struct SpotLightData final
     float outerCutOff;
     glm::vec3 direction;
     float maxDistance;
-    glm::vec4 boundingSphere; //for cone culling approximation
+    glm::vec4 boundingSphere;  // for cone culling approximation
 };
 
 struct LightProbeData final
@@ -395,6 +395,7 @@ struct LightProbeData final
     GLint64 prefilterCubemapHandle{0};
     alignas(16) glm::vec3 position{0};
     float radius{0};
+    float fadeDistance{0};
 };
 
 struct DrawArraysIndirectCommand final

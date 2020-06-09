@@ -299,7 +299,7 @@ std::optional<std::shared_ptr<PbrCubemapTexture>> ResourceLoader::loadHdrTexture
 
     stbi_image_free(data);
 
-    auto tex = std::make_shared<PbrCubemapTexture>(hdrTexture, path, 512);
+    auto tex = std::make_shared<PbrCubemapTexture>(hdrTexture, path, 1024);
     glDeleteTextures(1, &hdrTexture);
     return tex;
 }
