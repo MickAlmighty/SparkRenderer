@@ -8,7 +8,7 @@
 
 namespace spark
 {
-bool LightManager::compareLightProbes::operator()(const std::weak_ptr<LightProbe>& l, const std::weak_ptr<LightProbe>& r) const 
+bool LightManager::compareLightProbes::operator()(const std::weak_ptr<LightProbe>& l, const std::weak_ptr<LightProbe>& r) const
 {
     return l.lock()->getRadius() < r.lock()->getRadius();
 }
@@ -92,11 +92,11 @@ bool LightManager::removeExpiredLightPointers(std::multiset<std::weak_ptr<LightP
 std::optional<std::vector<LightProbeData>> LightManager::getLightProbeDataBufer(
     std::multiset<std::weak_ptr<LightProbe>, compareLightProbes>& lightProbeContainer)
 {
-    bool isBufferDirty = removeExpiredLightPointers(lightProbeContainer);
-    bool isAtLeastOneLightDirty = std::any_of(lightProbeContainer.begin(), lightProbeContainer.end(),
-                                              [](const std::weak_ptr<LightProbe>& light) { return light.lock()->getDirty(); });
+    const bool wasLightRemoved = removeExpiredLightPointers(lightProbeContainer);
+    const bool isAtLeastOneLightDirty = std::any_of(lightProbeContainer.begin(), lightProbeContainer.end(),
+                                                    [](const std::weak_ptr<LightProbe>& light) { return light.lock()->getDirty(); });
 
-    if(isBufferDirty || isAtLeastOneLightDirty)
+    if(wasLightRemoved || isAtLeastOneLightDirty)
     {
         auto lightProbeIt = lightProbeContainer.begin();
         while(lightProbeIt != lightProbeContainer.end())

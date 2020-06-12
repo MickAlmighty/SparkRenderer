@@ -1,6 +1,7 @@
 #ifndef COMMON_UTILS_H
 #define COMMON_UTILS_H
 
+#include <array>
 #include <vector>
 
 #include <glad/glad.h>
@@ -38,6 +39,8 @@ namespace utils
 
     glm::mat4 getProjectionReversedZInfFar(uint32_t width, uint32_t height, float fovDegrees, float zNear);
     glm::mat4 getProjectionReversedZ(uint32_t width, uint32_t height, float fovDegrees, float zNear, float zFar);
+
+    std::array<glm::mat4, 6> getCubemapViewMatrices(glm::vec3 cameraPosition);
 }  // namespace utils
 }  // namespace spark
 

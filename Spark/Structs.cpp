@@ -1,7 +1,6 @@
 #include "Structs.h"
 
 #include <glm/ext/matrix_clip_space.hpp>
-#include <glm/ext/matrix_transform.hpp>
 
 #include "CommonUtils.h"
 #include "Logging.h"
@@ -36,82 +35,68 @@ const std::string PbrCubemapTexture::getPath()
 
 PbrCubemapTexture::PbrCubemapTexture(GLuint hdrTexture, const std::string& path, unsigned size) : path(path)
 {
-    equirectangularToCubemapShader = Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("equirectangularToCubemap.glsl");
-    irradianceShader = Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("irradiance.glsl");
-    prefilterShader = Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("prefilter.glsl");
-    brdfShader = Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("brdf.glsl");
-
-    projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
-    viewMatrices = {glm::lookAt(glm::vec3(0.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
-                    glm::lookAt(glm::vec3(0.0f), glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
-                    glm::lookAt(glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
-                    glm::lookAt(glm::vec3(0.0f), glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f)),
-                    glm::lookAt(glm::vec3(0.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
-                    glm::lookAt(glm::vec3(0.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f))};
-
     setup(hdrTexture, size);
 }
 
 PbrCubemapTexture::~PbrCubemapTexture()
 {
-    GLuint textures[] = {cubemap, irradianceCubemap, prefilteredCubemap, brdfLUTTexture};
+    GLuint textures[] = {cubemap, irradianceCubemap, prefilteredCubemap};
     glDeleteTextures(4, textures);
 }
 
-void PbrCubemapTexture::setup(GLuint hdrTexture, unsigned size)
+void PbrCubemapTexture::setup(GLuint hdrTexture, unsigned cubemapSize)
 {
     Timer t("HDR PBR cubemap generation time");
     Cube cube = Cube();
 
-    const unsigned int cubemapSize = size;
     GLuint captureFBO;
     glGenFramebuffers(1, &captureFBO);
     glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
 
-    const GLuint envCubemap = createEnvironmentCubemapWithMipmapChain(captureFBO, hdrTexture, cubemapSize, cube);
+    // these shaders are created in SparkRenderer with uniforms and buffers already bound
+    const std::shared_ptr<resources::Shader> resampleCubemapShader =
+        Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("resampleCubemap.glsl");
+    const auto equirectangularToCubemapShader =
+        Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("equirectangularToCubemap.glsl");
+    const auto irradianceShader = Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("irradiance.glsl");
+    const auto prefilterShader = Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("prefilter.glsl");
+
+    const GLuint envCubemap = createEnvironmentCubemapWithMipmapChain(captureFBO, hdrTexture, cubemapSize, cube, equirectangularToCubemapShader);
+    this->irradianceCubemap = createIrradianceCubemap(captureFBO, envCubemap, cube, irradianceShader);
+    this->prefilteredCubemap = createPreFilteredCubemap(captureFBO, envCubemap, cubemapSize, cube, prefilterShader, resampleCubemapShader);
 
     // creating cubemap in the line below is meant to reduce memory usage by getting rid of mipmaps
     this->cubemap = createCubemapAndCopyDataFromFirstLayerOf(envCubemap, cubemapSize);
-    this->irradianceCubemap = createIrradianceCubemap(captureFBO, envCubemap, cube, projection, viewMatrices, irradianceShader);
-    this->prefilteredCubemap = createPreFilteredCubemap(captureFBO, envCubemap, cubemapSize, cube, projection, viewMatrices, prefilterShader);
     // this->brdfLUTTexture = createBrdfLookupTexture(captureFBO, 1024);
 
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glDeleteFramebuffers(1, &captureFBO);
     glDeleteTextures(1, &envCubemap);
-    glFinish();
 }
 
-GLuint PbrCubemapTexture::createEnvironmentCubemapWithMipmapChain(GLuint framebuffer, GLuint equirectangularTexture, unsigned size, Cube& cube) const
+GLuint PbrCubemapTexture::createEnvironmentCubemapWithMipmapChain(GLuint framebuffer, GLuint equirectangularTexture, unsigned size, Cube& cube,
+                                                                  const std::shared_ptr<resources::Shader>& equirectangularToCubemapShader)
 {
     PUSH_DEBUG_GROUP(EQUIRECTANGULAR_TO_CUBEMAP_WITH_MIPS);
 
     GLuint envCubemap{};
-    utils::createCubemap(envCubemap, size, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::createCubemap(envCubemap, size, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR, true);
 
     glViewport(0, 0, size, size);
 
     equirectangularToCubemapShader->use();
-    equirectangularToCubemapShader->setMat4("projection", projection);
     glBindTextureUnit(0, equirectangularTexture);
 
-    for(unsigned int i = 0; i < 6; ++i)
-    {
-        equirectangularToCubemapShader->setMat4("view", viewMatrices[i]);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, envCubemap, 0);
-        cube.draw();
-    }
+    glNamedFramebufferTexture(framebuffer, GL_COLOR_ATTACHMENT0, envCubemap, 0);
+    cube.draw();
 
     glBindTexture(GL_TEXTURE_CUBE_MAP, envCubemap);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
 
     POP_DEBUG_GROUP();
     return envCubemap;
 }
 
-GLuint PbrCubemapTexture::createIrradianceCubemap(GLuint framebuffer, GLuint environmentCubemap, Cube& cube, glm::mat4 projection,
-                                                  const std::array<glm::mat4, 6>& views,
+GLuint PbrCubemapTexture::createIrradianceCubemap(GLuint framebuffer, GLuint environmentCubemap, Cube& cube,
                                                   const std::shared_ptr<resources::Shader>& irradianceShader)
 {
     PUSH_DEBUG_GROUP(IRRADIANCE_CUBEMAP);
@@ -123,23 +108,18 @@ GLuint PbrCubemapTexture::createIrradianceCubemap(GLuint framebuffer, GLuint env
 
     irradianceShader->use();
     glBindTextureUnit(0, environmentCubemap);
-    irradianceShader->setMat4("projection", projection);
 
-    for(unsigned int i = 0; i < 6; ++i)
-    {
-        irradianceShader->setMat4("view", views[i]);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, irradianceMap, 0);
-
-        cube.draw();
-    }
+    glNamedFramebufferTexture(framebuffer, GL_COLOR_ATTACHMENT0, irradianceMap, 0);
+    cube.draw();
 
     POP_DEBUG_GROUP();
 
     return irradianceMap;
 }
 
-GLuint PbrCubemapTexture::createPreFilteredCubemap(GLuint framebuffer, GLuint environmentCubemap, unsigned envCubemapSize, Cube& cube, glm::mat4 projection,
-                                   const std::array<glm::mat4, 6>& views, const std::shared_ptr<resources::Shader>& prefilterShader)
+GLuint PbrCubemapTexture::createPreFilteredCubemap(GLuint framebuffer, GLuint environmentCubemap, unsigned envCubemapSize, Cube& cube,
+                                                   const std::shared_ptr<resources::Shader>& prefilterShader,
+                                                   const std::shared_ptr<resources::Shader>& resampleCubemapShader)
 {
     PUSH_DEBUG_GROUP(PREFILTER_CUBEMAP);
 
@@ -147,27 +127,31 @@ GLuint PbrCubemapTexture::createPreFilteredCubemap(GLuint framebuffer, GLuint en
     GLuint prefilteredMap{};
     utils::createCubemap(prefilteredMap, prefilteredMapSize, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR, true);
 
-    prefilterShader->use();
-    glBindTextureUnit(0, environmentCubemap);
-    prefilterShader->setMat4("projection", projection);
-    prefilterShader->setFloat("textureSize", static_cast<float>(envCubemapSize));
+    {
+        resampleCubemapShader->use();
+        glBindTextureUnit(0, environmentCubemap);
+
+        glNamedFramebufferTexture(framebuffer, GL_COLOR_ATTACHMENT0, prefilteredMap, 0);
+
+        glViewport(0, 0, prefilteredMapSize, prefilteredMapSize);
+        cube.draw();
+    }
 
     const GLuint maxMipLevels = 5;
-    for(unsigned int mip = 0; mip < maxMipLevels; ++mip)
+    prefilterShader->use();
+    glBindTextureUnit(0, environmentCubemap);
+    prefilterShader->setFloat("textureSize", static_cast<float>(envCubemapSize));
+
+    for(unsigned int mip = 1; mip < maxMipLevels; ++mip)
     {
-        const auto mipWidth = static_cast<unsigned int>(prefilteredMapSize * std::pow(0.5, mip));
-        const auto mipHeight = static_cast<unsigned int>(prefilteredMapSize * std::pow(0.5, mip));
-        glViewport(0, 0, mipWidth, mipHeight);
+        const auto mipSize = static_cast<unsigned int>(prefilteredMapSize * std::pow(0.5, mip));
+        glViewport(0, 0, mipSize, mipSize);
+        glNamedFramebufferTexture(framebuffer, GL_COLOR_ATTACHMENT0, prefilteredMap, mip);
 
         const float roughness = static_cast<float>(mip) / static_cast<float>(maxMipLevels - 1);
         prefilterShader->setFloat("roughness", roughness);
-        for(unsigned int i = 0; i < 6; ++i)
-        {
-            prefilterShader->setMat4("view", views[i]);
-            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, prefilteredMap, mip);
 
-            cube.draw();
-        }
+        cube.draw();
     }
 
     POP_DEBUG_GROUP();
@@ -175,7 +159,8 @@ GLuint PbrCubemapTexture::createPreFilteredCubemap(GLuint framebuffer, GLuint en
     return prefilteredMap;
 }
 
-GLuint PbrCubemapTexture::createBrdfLookupTexture(GLuint framebuffer, unsigned int envCubemapSize) const
+GLuint PbrCubemapTexture::createBrdfLookupTexture(GLuint framebuffer, unsigned int envCubemapSize,
+                                                  const std::shared_ptr<resources::Shader>& brdfShader)
 {
     PUSH_DEBUG_GROUP(BRDF_LOOKUP_TABLE);
 
@@ -195,7 +180,7 @@ GLuint PbrCubemapTexture::createBrdfLookupTexture(GLuint framebuffer, unsigned i
     return brdfLUTTexture;
 }
 
-GLuint PbrCubemapTexture::createCubemapAndCopyDataFromFirstLayerOf(GLuint cubemap, unsigned cubemapSize) const
+GLuint PbrCubemapTexture::createCubemapAndCopyDataFromFirstLayerOf(GLuint cubemap, unsigned cubemapSize)
 {
     PUSH_DEBUG_GROUP(COPY_CUBEMAP_BASE_LAYER);
 

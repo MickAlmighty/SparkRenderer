@@ -32,10 +32,11 @@ class LightProbe : public Component
     [[nodiscard]] GLuint getPrefilterCubemap() const;
     [[nodiscard]] GLuint getIrradianceCubemap() const;
 
-    void renderIntoIrradianceCubemap(GLuint framebuffer, GLuint environmentCubemap, Cube& cube, glm::mat4 projection,
-                                     const std::array<glm::mat4, 6>& views, const std::shared_ptr<resources::Shader>& irradianceShader) const;
-    void renderIntoPrefilterCubemap(GLuint framebuffer, GLuint environmentCubemap, unsigned envCubemapSize, Cube& cube, glm::mat4 projection,
-                                    const std::array<glm::mat4, 6>& views, const std::shared_ptr<resources::Shader>& prefilterShader) const;
+    void renderIntoIrradianceCubemap(GLuint framebuffer, GLuint environmentCubemap, Cube& cube,
+                                     const std::shared_ptr<resources::Shader>& irradianceShader) const;
+    void renderIntoPrefilterCubemap(GLuint framebuffer, GLuint environmentCubemap, unsigned envCubemapSize, Cube& cube,
+                                    const std::shared_ptr<resources::Shader>& prefilterShader,
+                                    const std::shared_ptr<resources::Shader>& resampleCubemapShader) const;
 
     void setActive(bool active_) override;
     void setRadius(float radius_);
@@ -58,7 +59,6 @@ class LightProbe : public Component
     bool addedToLightManager{false};
 
     std::shared_ptr<Mesh> sphere{nullptr};
-    
 
     RTTR_REGISTRATION_FRIEND;
     RTTR_ENABLE(Component);

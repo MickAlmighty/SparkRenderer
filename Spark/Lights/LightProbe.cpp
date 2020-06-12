@@ -145,76 +145,57 @@ GLuint LightProbe::getIrradianceCubemap() const
     return irradianceCubemap;
 }
 
-void LightProbe::renderIntoIrradianceCubemap(GLuint framebuffer, GLuint environmentCubemap, Cube& cube, glm::mat4 projection,
-                                             const std::array<glm::mat4, 6>& views, const std::shared_ptr<resources::Shader>& irradianceShader) const
+void LightProbe::renderIntoIrradianceCubemap(GLuint framebuffer, GLuint environmentCubemap, Cube& cube,
+                                             const std::shared_ptr<resources::Shader>& irradianceShader) const
 {
     PUSH_DEBUG_GROUP(IRRADIANCE_CUBEMAP);
     auto t = Timer("Local Light Probe Irradiance Cubemap creation");
 
     glViewport(0, 0, irradianceCubemapSize, irradianceCubemapSize);
 
-    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-
     irradianceShader->use();
     glBindTextureUnit(0, environmentCubemap);
-    irradianceShader->setMat4("projection", projection);
 
-    for(unsigned int i = 0; i < 6; ++i)
-    {
-        irradianceShader->setMat4("view", views[i]);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, irradianceCubemap, 0);
-
-        cube.draw();
-    }
+    glNamedFramebufferTexture(framebuffer, GL_COLOR_ATTACHMENT0, irradianceCubemap, 0);
+    cube.draw();
 
     glFinish();
     POP_DEBUG_GROUP();
 }
 
-void LightProbe::renderIntoPrefilterCubemap(GLuint framebuffer, GLuint environmentCubemap, unsigned envCubemapSize, Cube& cube, glm::mat4 projection,
-                                            const std::array<glm::mat4, 6>& views, const std::shared_ptr<resources::Shader>& prefilterShader) const
+void LightProbe::renderIntoPrefilterCubemap(GLuint framebuffer, GLuint environmentCubemap, unsigned envCubemapSize, Cube& cube,
+                                            const std::shared_ptr<resources::Shader>& prefilterShader,
+                                            const std::shared_ptr<resources::Shader>& resampleCubemapShader) const
 {
     PUSH_DEBUG_GROUP(PREFILTER_CUBEMAP);
 
     auto t = Timer("Local Light Probe Prefiltered Cubemap creation");
-    const auto resampleCubemapShader = Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("resampleCubemap.glsl");
-    resampleCubemapShader->use();
-    resampleCubemapShader->setMat4("projection", projection);
-    glBindTextureUnit(0, environmentCubemap);
 
-    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+    {
+        resampleCubemapShader->use();
+        glBindTextureUnit(0, environmentCubemap);
 
-    prefilterShader->use();
-    glBindTextureUnit(0, environmentCubemap);
-    prefilterShader->setMat4("projection", projection);
-    prefilterShader->setFloat("textureSize", static_cast<float>(envCubemapSize));
+        glNamedFramebufferTexture(framebuffer, GL_COLOR_ATTACHMENT0, prefilterCubemap, 0);
+
+        glViewport(0, 0, prefilterCubemapSize, prefilterCubemapSize);
+        cube.draw();
+    }
 
     const GLuint maxMipLevels = 5;
-    for(unsigned int face = 0; face < 6; ++face)
+    prefilterShader->use();
+    glBindTextureUnit(0, environmentCubemap);
+    prefilterShader->setFloat("textureSize", static_cast<float>(envCubemapSize));
+
+    for(unsigned int mip = 1; mip < maxMipLevels; ++mip)
     {
+        const auto mipSize = static_cast<unsigned int>(prefilterCubemapSize * std::pow(0.5, mip));
+        glViewport(0, 0, mipSize, mipSize);
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, prefilterCubemap, mip);
 
-        {  // for mip 0 just rewrite pixel colors using linear interpolation
-            glViewport(0, 0, prefilterCubemapSize, prefilterCubemapSize);
+        const float roughness = static_cast<float>(mip) / static_cast<float>(maxMipLevels - 1);
+        prefilterShader->setFloat("roughness", roughness);
 
-            resampleCubemapShader->use();
-            resampleCubemapShader->setMat4("view", views[face]);
-            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, prefilterCubemap, 0);
-            cube.draw();
-        }
-
-        prefilterShader->use();
-        prefilterShader->setMat4("view", views[face]);
-        for(unsigned int mip = 1; mip < maxMipLevels; ++mip)
-        {
-            const auto mipSize = static_cast<unsigned int>(prefilterCubemapSize * std::pow(0.5, mip));
-            glViewport(0, 0, mipSize, mipSize);
-
-            const float roughness = static_cast<float>(mip) / static_cast<float>(maxMipLevels - 1);
-            prefilterShader->setFloat("roughness", roughness);
-            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, prefilterCubemap, mip);
-
-            cube.draw();
-        }
+        cube.draw();
     }
 
     glFinish();

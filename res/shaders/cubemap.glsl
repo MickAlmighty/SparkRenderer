@@ -33,16 +33,9 @@ in vec3 texCoords;
 
 layout (binding = 0) uniform samplerCube environmentMap;
 
-vec3 attenuateHighFrequencies(vec3 color)
-{
-    const float luma = dot(color, vec3(0.299, 0.587, 0.114));
-    float weight = 1 / (1 + luma * 0.1f);
-    return color * weight;
-}
-
 void main()
 {
     //vec3 envColor = pow(texture(environmentMap, texCoords).rgb, vec3(2.2));
     vec3 envColor = texture(environmentMap, texCoords).rgb;
-    FragColor = vec4(attenuateHighFrequencies(envColor), 1.0);
+    FragColor = vec4(envColor, 1.0);
 }

@@ -106,11 +106,11 @@ inline bool LightManager::removeExpiredLightPointers(std::vector<std::weak_ptr<T
 template<typename N, typename T>
 std::optional<std::vector<N>> LightManager::getLightDataBuffer(std::vector<std::weak_ptr<T>>& lightContainer)
 {
-    bool isBufferDirty = removeExpiredLightPointers(lightContainer);
-    bool isAtLeastOneLightDirty =
+    const bool wasLightRemoved = removeExpiredLightPointers(lightContainer);
+    const bool isAtLeastOneLightDirty =
         std::any_of(lightContainer.begin(), lightContainer.end(), [](const std::weak_ptr<T>& light) { return light.lock()->getDirty(); });
 
-    if(isBufferDirty || isAtLeastOneLightDirty)
+    if(wasLightRemoved || isAtLeastOneLightDirty)
     {
         std::vector<N> bufferData;
         bufferData.reserve(lightContainer.size());

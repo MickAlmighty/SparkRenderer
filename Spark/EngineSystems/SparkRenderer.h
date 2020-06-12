@@ -65,6 +65,15 @@ class SparkRenderer
     GLuint downsampleFramebuffer16{}, downsampleTexture16{};
     // bloom end
 
+    // local light probes start
+    const unsigned int sceneCubemapSize{256};
+    GLuint lightProbeSceneCubemap{};
+    GLuint lightProbeLightFbo{};
+    GLuint lightProbeSkyboxFbo{};
+    GBuffer localLightProbeGBuffer{};
+    SSBO cubemapViewMatrices{};
+    // local light probes end
+
     GLuint ssaoFramebuffer{}, ssaoTexture{}, randomNormalsTexture{}, ssaoDisabledTexture{};
 
     GLuint textureHandle{};  // temporary, its only a handle to other texture -> dont delete it
@@ -89,6 +98,11 @@ class SparkRenderer
     std::shared_ptr<resources::Shader> bloomUpScaleShader{nullptr};
     std::shared_ptr<resources::Shader> tileBasedLightCullingShader{nullptr};
     std::shared_ptr<resources::Shader> tileBasedLightingShader{nullptr};
+    std::shared_ptr<resources::Shader> localLightProbesLightingShader{nullptr};
+    std::shared_ptr<resources::Shader> equirectangularToCubemapShader{nullptr};
+    std::shared_ptr<resources::Shader> irradianceShader{nullptr};
+    std::shared_ptr<resources::Shader> prefilterShader{nullptr};
+    std::shared_ptr<resources::Shader> resampleCubemapShader{nullptr};
 
     Cube cube = Cube();
     UniformBuffer cameraUBO{};

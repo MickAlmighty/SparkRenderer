@@ -104,33 +104,26 @@ struct PbrCubemapTexture final
     GLuint cubemap{};
     GLuint irradianceCubemap{};
     GLuint prefilteredCubemap{};
-    GLuint brdfLUTTexture{};
 
     const std::string getPath();
 
     PbrCubemapTexture(GLuint hdrTexture, const std::string& path, unsigned int size = 1024);
     ~PbrCubemapTexture();
 
-    static GLuint createIrradianceCubemap(GLuint framebuffer, GLuint environmentCubemap, Cube& cube, glm::mat4 projection,
-                                          const std::array<glm::mat4, 6>& views, const std::shared_ptr<resources::Shader>& irradianceShader);
+    static GLuint createIrradianceCubemap(GLuint framebuffer, GLuint environmentCubemap, Cube& cube,
+                                          const std::shared_ptr<resources::Shader>& irradianceShader);
     static GLuint createPreFilteredCubemap(GLuint framebuffer, GLuint environmentCubemap, unsigned int envCubemapSize, Cube& cube,
-                                           glm::mat4 projection, const std::array<glm::mat4, 6>& views,
-                                           const std::shared_ptr<resources::Shader>& prefilterShader);
+                                           const std::shared_ptr<resources::Shader>& prefilterShader,
+                                           const std::shared_ptr<resources::Shader>& resampleCubemapShader);
 
     private:
     std::string path{};
-    std::array<glm::mat4, 6> viewMatrices{};
-    glm::mat4 projection{};
 
-    std::shared_ptr<resources::Shader> equirectangularToCubemapShader{nullptr};
-    std::shared_ptr<resources::Shader> irradianceShader{nullptr};
-    std::shared_ptr<resources::Shader> prefilterShader{nullptr};
-    std::shared_ptr<resources::Shader> brdfShader{nullptr};
-
-    void setup(GLuint hdrTexture, unsigned int size);
-    GLuint createEnvironmentCubemapWithMipmapChain(GLuint framebuffer, GLuint equirectangularTexture, unsigned int size, Cube& cube) const;
-    GLuint createBrdfLookupTexture(GLuint framebuffer, unsigned int envCubemapSize) const;
-    GLuint createCubemapAndCopyDataFromFirstLayerOf(GLuint cubemap, unsigned int cubemapSize) const;
+    void setup(GLuint hdrTexture, unsigned int cubemapSize);
+    static GLuint createEnvironmentCubemapWithMipmapChain(GLuint framebuffer, GLuint equirectangularTexture, unsigned int size, Cube& cube,
+                                                          const std::shared_ptr<resources::Shader>& equirectangularToCubemapShader);
+    static GLuint createBrdfLookupTexture(GLuint framebuffer, unsigned int envCubemapSize, const std::shared_ptr<resources::Shader>& brdfShader);
+    static GLuint createCubemapAndCopyDataFromFirstLayerOf(GLuint cubemap, unsigned int cubemapSize);
 };
 
 struct Vertex final
@@ -295,6 +288,41 @@ struct Buffer
     void updateSubData(size_t offsetFromBeginning, const std::vector<T>& buffer)
     {
         const size_t vectorSize = buffer.size() * sizeof(T);
+        const GLintptr offset = static_cast<GLintptr>(offsetFromBeginning);
+
+        if(offset > size)
+        {
+            return;
+        }
+        if(offset + vectorSize > size)
+        {
+            return;
+        }
+
+        glNamedBufferSubData(ID, offset, vectorSize, buffer.data());
+    }
+
+    template<typename T, size_t Size>
+    void updateData(const std::array<T, Size>& buffer)
+    {
+        const size_t vectorSize = Size * sizeof(T);
+        if(vectorSize < size || vectorSize > size)
+        {
+            // SPARK_WARN("Trying to update SSBO with a vector with too large size! SSBO size: {}, vector size: {}. Buffer will be resized and update
+            // will be processed!", size, vectorSize);
+            size = static_cast<GLsizei>(vectorSize);
+            glNamedBufferData(ID, vectorSize, buffer.data(), GL_DYNAMIC_DRAW);
+        }
+        else
+        {
+            glNamedBufferSubData(ID, 0, vectorSize, buffer.data());
+        }
+    }
+
+    template<typename T, size_t Size>
+    void updateSubData(size_t offsetFromBeginning, const std::array<T, Size>& buffer)
+    {
+        const size_t vectorSize = Size * sizeof(T);
         const GLintptr offset = static_cast<GLintptr>(offsetFromBeginning);
 
         if(offset > size)

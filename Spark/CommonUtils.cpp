@@ -1,5 +1,7 @@
 #include "CommonUtils.h"
 
+#include <glm/gtc/matrix_transform.hpp>
+
 #include "ResourceLibrary.h"
 #include "Shader.h"
 #include "Spark.h"
@@ -157,6 +159,16 @@ namespace utils
         const glm::vec4 column3{0.0f, 0.0f, -(zFar * zNear) / (zNear - zFar), 0.0f};
 
         return glm::mat4(column0, column1, column2, column3);
+    }
+
+    std::array<glm::mat4, 6> getCubemapViewMatrices(glm::vec3 cameraPosition)
+    {
+        return {glm::lookAt(cameraPosition, cameraPosition + glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
+                glm::lookAt(cameraPosition, cameraPosition + glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
+                glm::lookAt(cameraPosition, cameraPosition + glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
+                glm::lookAt(cameraPosition, cameraPosition + glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f)),
+                glm::lookAt(cameraPosition, cameraPosition + glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
+                glm::lookAt(cameraPosition, cameraPosition + glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f))};
     }
 }  // namespace utils
 }  // namespace spark

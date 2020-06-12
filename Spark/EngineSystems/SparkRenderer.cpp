@@ -151,6 +151,8 @@ void SparkRenderer::setup()
     pointLightIndices.genBuffer(256 * (uint32_t)glm::ceil(Spark::HEIGHT / 16.0f) * (uint32_t)glm::ceil(Spark::WIDTH / 16.0f) * sizeof(uint32_t));
     spotLightIndices.genBuffer(256 * (uint32_t)glm::ceil(Spark::HEIGHT / 16.0f) * (uint32_t)glm::ceil(Spark::WIDTH / 16.0f) * sizeof(uint32_t));
     lightProbeIndices.genBuffer(256 * (uint32_t)glm::ceil(Spark::HEIGHT / 16.0f) * (uint32_t)glm::ceil(Spark::WIDTH / 16.0f) * sizeof(uint32_t));
+    cubemapViewMatrices.genBuffer(sizeof(glm::mat4) * 6);
+    cubemapViewMatrices.updateData(utils::getCubemapViewMatrices(glm::vec3(0)));
     brdfLookupTexture = utils::createBrdfLookupTexture(1024);
 
     initMembers();
@@ -178,6 +180,11 @@ void SparkRenderer::initMembers()
     bloomUpScaleShader = Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("bloomUpScale.glsl");
     tileBasedLightCullingShader = Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("tileBasedLightCulling.glsl");
     tileBasedLightingShader = Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("tileBasedLighting.glsl");
+    localLightProbesLightingShader = Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("localLightProbesLighting.glsl");
+    equirectangularToCubemapShader = Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("equirectangularToCubemap.glsl");
+    irradianceShader = Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("irradiance.glsl");
+    prefilterShader = Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("prefilter.glsl");
+    resampleCubemapShader = Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("resampleCubemap.glsl");
 
     dofPass = std::make_unique<DepthOfFieldPass>(Spark::WIDTH, Spark::HEIGHT);
     ssaoBlurPass = std::make_unique<BlurPass>(Spark::WIDTH / 2, Spark::HEIGHT / 2);
@@ -228,6 +235,27 @@ void SparkRenderer::updateBufferBindings() const
     tileBasedLightingShader->bindSSBO("PointLightIndices", pointLightIndices);
     tileBasedLightingShader->bindSSBO("SpotLightIndices", spotLightIndices);
     tileBasedLightingShader->bindSSBO("LightProbeIndices", lightProbeIndices);
+
+    localLightProbesLightingShader->bindSSBO("DirLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->dirLightSSBO);
+    localLightProbesLightingShader->bindSSBO("PointLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->pointLightSSBO);
+    localLightProbesLightingShader->bindSSBO("SpotLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->spotLightSSBO);
+
+    localLightProbesLightingShader->bindUniformBuffer("Camera", cameraUBO);
+
+    irradianceShader->bindSSBO("Views", cubemapViewMatrices);
+    prefilterShader->bindSSBO("Views", cubemapViewMatrices);
+    resampleCubemapShader->bindSSBO("Views", cubemapViewMatrices);
+    equirectangularToCubemapShader->bindSSBO("Views", cubemapViewMatrices);
+
+    const glm::mat4 cubemapProjection = utils::getProjectionReversedZ(sceneCubemapSize, sceneCubemapSize, 90.0f, 0.05f, 100.0f);
+    irradianceShader->use();
+    irradianceShader->setMat4("projection", cubemapProjection);
+    prefilterShader->use();
+    prefilterShader->setMat4("projection", cubemapProjection);
+    resampleCubemapShader->use();
+    resampleCubemapShader->setMat4("projection", cubemapProjection);
+    equirectangularToCubemapShader->use();
+    equirectangularToCubemapShader->setMat4("projection", cubemapProjection);
 }
 
 void SparkRenderer::renderPass()
@@ -242,6 +270,7 @@ void SparkRenderer::renderPass()
             camera->cleanDirty();
         }
     }
+
     fillGBuffer(gBuffer);
     ssaoComputing(gBuffer);
     // renderLights(lightFrameBuffer, gBuffer);
@@ -262,11 +291,23 @@ void SparkRenderer::renderPass()
         if(lightProbeWeakPtr.expired())
             continue;
 
+        utils::createCubemap(lightProbeSceneCubemap, sceneCubemapSize, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR, true);
+        localLightProbeGBuffer.setup(sceneCubemapSize, sceneCubemapSize);
+
+        utils::createFramebuffer(lightProbeLightFbo, {});
+        utils::createFramebuffer(lightProbeSkyboxFbo, {});
+        utils::bindDepthTexture(lightProbeSkyboxFbo, localLightProbeGBuffer.depthTexture);
+
         const auto lightProbe = lightProbeWeakPtr.lock();
         if(lightProbe->generateLightProbe)
         {
             generateLightProbe(lightProbe);
         }
+
+        localLightProbeGBuffer.cleanup();
+        glDeleteTextures(1, &lightProbeSceneCubemap);
+        glDeleteFramebuffers(1, &lightProbeLightFbo);
+        glDeleteFramebuffers(1, &lightProbeSkyboxFbo);
     }
 
     /*if(renderingToCubemap)
@@ -858,6 +899,7 @@ void SparkRenderer::cleanup()
     pointLightIndices.cleanup();
     spotLightIndices.cleanup();
     lightProbeIndices.cleanup();
+    cubemapViewMatrices.cleanup();
 
     deleteFrameBuffersAndTextures();
     glDeleteTextures(1, &randomNormalsTexture);
@@ -909,115 +951,71 @@ void SparkRenderer::generateLightProbe(const std::shared_ptr<LightProbe>& lightP
 
     auto t = Timer("Local Light Probe creation");
 
-    const glm::vec3 viewPos = lightProbe->getGameObject()->transform.world.getPosition();
-    const unsigned int cubemapSize = 512;
-    const auto projection = utils::getProjectionReversedZ(cubemapSize, cubemapSize, 90.0f, 0.05f, 100.0f);
-    const std::array<glm::mat4, 6> viewMatrices = {glm::lookAt(viewPos, viewPos + glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
-                                                   glm::lookAt(viewPos, viewPos + glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
-                                                   glm::lookAt(viewPos, viewPos + glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
-                                                   glm::lookAt(viewPos, viewPos + glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f)),
-                                                   glm::lookAt(viewPos, viewPos + glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
-                                                   glm::lookAt(viewPos, viewPos + glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f))};
+    const glm::vec3 localLightProbePosition = lightProbe->getGameObject()->transform.world.getPosition();
 
-    GLuint sceneCubemap{};
-    utils::createCubemap(sceneCubemap, cubemapSize, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR, true);
-    GBuffer geometryBuffer{};
-    geometryBuffer.setup(cubemapSize, cubemapSize);
+    const auto projection = utils::getProjectionReversedZ(sceneCubemapSize, sceneCubemapSize, 90.0f, 0.05f, 100.0f);
+    const std::array<glm::mat4, 6> viewMatrices = utils::getCubemapViewMatrices(localLightProbePosition);
 
-    GLuint lightFbo{}, skyboxFbo{};
-    utils::createFramebuffer(lightFbo, {});
-    utils::createFramebuffer(skyboxFbo, {});
-    utils::bindDepthTexture(skyboxFbo, geometryBuffer.depthTexture);
-
-    const auto localLightProbesLightingShader =
-        Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("localLightProbesLighting.glsl");
-    localLightProbesLightingShader->bindSSBO("DirLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->dirLightSSBO);
-    localLightProbesLightingShader->bindSSBO("PointLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->pointLightSSBO);
-    localLightProbesLightingShader->bindSSBO("SpotLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->spotLightSSBO);
-
-    localLightProbesLightingShader->bindUniformBuffer("Camera", cameraUBO);
-
-    glViewport(0, 0, cubemapSize, cubemapSize);
+    glViewport(0, 0, sceneCubemapSize, sceneCubemapSize);
     for(int i = 0; i < 6; ++i)
     {
         PUSH_DEBUG_GROUP(RENDER_TO_CUBEMAP_FACE)
 
-        updateCameraUBO(projection, viewMatrices[i], viewPos);
+        updateCameraUBO(projection, viewMatrices[i], localLightProbePosition);
 
-        glBindFramebuffer(GL_FRAMEBUFFER, lightFbo);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, sceneCubemap, 0);
-        glBindFramebuffer(GL_FRAMEBUFFER, skyboxFbo);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, sceneCubemap, 0);
+        glBindFramebuffer(GL_FRAMEBUFFER, lightProbeLightFbo);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, lightProbeSceneCubemap, 0);
+        glBindFramebuffer(GL_FRAMEBUFFER, lightProbeSkyboxFbo);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, lightProbeSceneCubemap, 0);
 
-        //renderSceneToCubemap(geometryBuffer, lightFbo, skyboxFbo);
-
-        fillGBuffer(geometryBuffer, [](const RenderingRequest& request) { return request.gameObject->isStatic() == true; });
-
-        {
-            PUSH_DEBUG_GROUP(PBR_LIGHT);
-
-            glBindFramebuffer(GL_FRAMEBUFFER, lightFbo);
-            glClearColor(0, 0, 0, 0);
-            glClear(GL_COLOR_BUFFER_BIT);
-
-            localLightProbesLightingShader->use();
-            std::array<GLuint, 4> textures{
-                geometryBuffer.depthTexture,
-                geometryBuffer.colorTexture,
-                geometryBuffer.normalsTexture,
-                geometryBuffer.roughnessMetalnessTexture,
-            };
-            glBindTextures(0, static_cast<GLsizei>(textures.size()), textures.data());
-            screenQuad.draw();
-            glBindTextures(0, static_cast<GLsizei>(textures.size()), nullptr);
-
-            POP_DEBUG_GROUP();
-        }
-
-        // renderLights(lightFbo, geometryBuffer);
-        renderCubemap(skyboxFbo);
+        renderSceneToCubemap(localLightProbeGBuffer, lightProbeLightFbo, lightProbeSkyboxFbo);
 
         POP_DEBUG_GROUP();
     }
 
-    glGenerateTextureMipmap(sceneCubemap);
+    // this mipmap chain for all faces is needed for filtered importance sampling in prefilter stage
+    glGenerateTextureMipmap(lightProbeSceneCubemap);
 
     // light probe generation
-    const auto irradianceShader = Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("irradiance.glsl");
-    const auto prefilterShader = Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("prefilter.glsl");
-
-    const std::array<glm::mat4, 6> cubemapViews = {glm::lookAt(glm::vec3(0.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
-                                                   glm::lookAt(glm::vec3(0.0f), glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
-                                                   glm::lookAt(glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
-                                                   glm::lookAt(glm::vec3(0.0f), glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f)),
-                                                   glm::lookAt(glm::vec3(0.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
-                                                   glm::lookAt(glm::vec3(0.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f))};
-
     GLuint lightProbeFramebuffer{};
     glGenFramebuffers(1, &lightProbeFramebuffer);
     glBindFramebuffer(GL_FRAMEBUFFER, lightProbeFramebuffer);
 
-    lightProbe->renderIntoIrradianceCubemap(lightProbeFramebuffer, sceneCubemap, cube, projection, cubemapViews, irradianceShader);
-    lightProbe->renderIntoPrefilterCubemap(lightProbeFramebuffer, sceneCubemap, cubemapSize, cube, projection, cubemapViews, prefilterShader);
-
-    geometryBuffer.cleanup();
-    glDeleteTextures(1, &sceneCubemap);
-    glDeleteFramebuffers(1, &lightFbo);
-    glDeleteFramebuffers(1, &skyboxFbo);
-    glDeleteFramebuffers(1, &lightProbeFramebuffer);
-
-    glViewport(0, 0, Spark::WIDTH, Spark::HEIGHT);
-
+    lightProbe->renderIntoIrradianceCubemap(lightProbeFramebuffer, lightProbeSceneCubemap, cube, irradianceShader);
+    lightProbe->renderIntoPrefilterCubemap(lightProbeFramebuffer, lightProbeSceneCubemap, sceneCubemapSize, cube, prefilterShader,
+                                           resampleCubemapShader);
     lightProbe->generateLightProbe = false;
 
+    glDeleteFramebuffers(1, &lightProbeFramebuffer);
+    glViewport(0, 0, Spark::WIDTH, Spark::HEIGHT);
     POP_DEBUG_GROUP();
 }
 
 void SparkRenderer::renderSceneToCubemap(const GBuffer& geometryBuffer, GLuint lightFbo, GLuint skyboxFbo)
 {
     fillGBuffer(geometryBuffer, [](const RenderingRequest& request) { return request.gameObject->isStatic() == true; });
-    ssaoComputing(geometryBuffer);
-    renderLights(lightFbo, geometryBuffer);
+
+    {
+        PUSH_DEBUG_GROUP(PBR_LIGHT);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, lightFbo);
+        glClearColor(0, 0, 0, 0);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        localLightProbesLightingShader->use();
+        std::array<GLuint, 4> textures{
+            geometryBuffer.depthTexture,
+            geometryBuffer.colorTexture,
+            geometryBuffer.normalsTexture,
+            geometryBuffer.roughnessMetalnessTexture,
+        };
+        glBindTextures(0, static_cast<GLsizei>(textures.size()), textures.data());
+        screenQuad.draw();
+        glBindTextures(0, static_cast<GLsizei>(textures.size()), nullptr);
+
+        POP_DEBUG_GROUP();
+    }
+
     renderCubemap(skyboxFbo);
 }
 }  // namespace spark
