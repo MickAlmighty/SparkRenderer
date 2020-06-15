@@ -985,7 +985,7 @@ void SparkRenderer::generateLightProbe(const std::shared_ptr<LightProbe>& lightP
     lightProbe->renderIntoPrefilterCubemap(lightProbeFramebuffer, lightProbeSceneCubemap, sceneCubemapSize, cube, prefilterShader,
                                            resampleCubemapShader);
     lightProbe->generateLightProbe = false;
-
+    
     glDeleteFramebuffers(1, &lightProbeFramebuffer);
     glViewport(0, 0, Spark::WIDTH, Spark::HEIGHT);
     POP_DEBUG_GROUP();

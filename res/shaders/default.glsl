@@ -154,7 +154,7 @@ void main()
 
     FragColor.rgb = accurateSRGBToLinear(texture(diffuseTexture, tex_coords).rgb);
 
-    vec3 normalFromTexture = texture(normalTexture, tex_coords).xyz;
+    vec3 normalFromTexture = vec3(texture(normalTexture, tex_coords).xy, 1.0f);
     normalFromTexture = normalize(normalFromTexture * 2.0 - 1.0);
     vec3 viewNormal = normalize(fs_in.viewTBN_matrix * normalFromTexture);
     vec2 encodedNormal = encodeViewSpaceNormal(viewNormal);

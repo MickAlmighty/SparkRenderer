@@ -47,17 +47,17 @@ void Spark::run()
         Clock::tick();
         glfwPollEvents();
 
-        static bool mouseDisabled = false;
+        static bool mouseEnabled = true;
 
-        if(HID::isKeyReleased(Key::LEFT_ALT) && mouseDisabled)
-        {
-            glfwSetInputMode(Spark::window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-            mouseDisabled = false;
-        }
-        else if(HID::isKeyReleased(Key::LEFT_ALT) && !mouseDisabled)
+        if(HID::isKeyReleased(Key::LEFT_ALT) && !mouseEnabled)
         {
             glfwSetInputMode(Spark::window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-            mouseDisabled = true;
+            mouseEnabled = true;
+        }
+        else if(HID::isKeyReleased(Key::LEFT_ALT) && mouseEnabled)
+        {
+            glfwSetInputMode(Spark::window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            mouseEnabled = false;
         }
 
         if(HID::isKeyPressed(Key::ESC))
@@ -98,8 +98,8 @@ void Spark::initOpenGL()
 #ifdef DEBUG
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
 #else
-    //glfwWindowHint(GLFW_CONTEXT_NO_ERROR, GL_TRUE);
-    //SPARK_INFO("Created context with disabled gl errors checking and reporting.");
+    glfwWindowHint(GLFW_CONTEXT_NO_ERROR, GL_TRUE);
+    SPARK_INFO("Created context with disabled gl errors checking and reporting.");
 #endif
 
     window = glfwCreateWindow(static_cast<int>(Spark::WIDTH), static_cast<int>(Spark::HEIGHT), "Spark", nullptr, nullptr);
@@ -134,6 +134,12 @@ void Spark::initOpenGL()
     glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
     glEnable(GL_CULL_FACE);
     glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);
+
+    const GLubyte* const vendorName = glGetString(GL_VENDOR);
+    const GLubyte* const deviceName = glGetString(GL_RENDERER);
+
+    SPARK_INFO("OpenGL Context initialized!");
+    SPARK_INFO("Device: {} {}", vendorName, deviceName);
 }
 
 void Spark::resizeWindow(GLuint width, GLuint height)
