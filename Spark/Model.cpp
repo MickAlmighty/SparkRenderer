@@ -93,7 +93,7 @@ std::map<TextureTarget, std::shared_ptr<resources::Texture>> findTextures(const 
     std::map<TextureTarget, std::shared_ptr<resources::Texture>> textures;
     for(auto& texture_path : std::filesystem::recursive_directory_iterator(modelDirectory))
     {
-        size_t size = texture_path.path().string().find("_Diffuse.DDS");
+        size_t size = texture_path.path().string().find("_Diffuse");
         if(size != std::string::npos)
         {
             std::shared_ptr<resources::Texture> texture = Spark::getResourceLibrary()->getResourceByPath<resources::Texture>(texture_path.path().string());
@@ -127,6 +127,14 @@ std::map<TextureTarget, std::shared_ptr<resources::Texture>> findTextures(const 
         {
             std::shared_ptr<resources::Texture> texture = Spark::getResourceLibrary()->getResourceByPath<resources::Texture>(texture_path.path().string());
             textures.emplace(TextureTarget::HEIGHT_TARGET, texture);
+        }
+
+        size = texture_path.path().string().find("_AO");
+        if(size != std::string::npos)
+        {
+            std::shared_ptr<resources::Texture> texture =
+                Spark::getResourceLibrary()->getResourceByPath<resources::Texture>(texture_path.path().string());
+            textures.emplace(TextureTarget::AO_TARGET, texture);
         }
     }
 

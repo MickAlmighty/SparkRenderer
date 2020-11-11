@@ -176,6 +176,11 @@ bool GameObject::isStatic() const
 void GameObject::setActive(bool active_)
 {
     active = active_;
+
+    for (const auto& child : children)
+    {
+        child->setActive(active);
+    }
 }
 
 void GameObject::setStatic(bool static_)

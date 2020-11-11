@@ -186,7 +186,7 @@ void LightProbe::renderIntoPrefilterCubemap(GLuint framebuffer, GLuint environme
     glBindTextureUnit(0, environmentCubemap);
     prefilterShader->setFloat("textureSize", static_cast<float>(envCubemapSize));
 
-    for(unsigned int mip = 1; mip < maxMipLevels; ++mip)
+    for(unsigned int mip = 0; mip < maxMipLevels; ++mip)
     {
         const auto mipSize = static_cast<unsigned int>(prefilterCubemapSize * std::pow(0.5, mip));
         glViewport(0, 0, mipSize, mipSize);

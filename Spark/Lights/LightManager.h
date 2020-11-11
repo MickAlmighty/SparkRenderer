@@ -59,11 +59,14 @@ class LightManager
     bool removeExpiredLightPointers(std::vector<std::weak_ptr<T>>& lightContainer);
 
     template<typename N, typename T>
-    std::optional<std::vector<N>> getLightDataBuffer(std::vector<std::weak_ptr<T>>& lightContainer);
+    std::optional<std::vector<N>> getLightDataBuffer(std::vector<std::weak_ptr<T>>& lightContainer, const SSBO& ssbo);
 
     bool removeExpiredLightPointers(std::multiset<std::weak_ptr<LightProbe>, compareLightProbes>& lightContainer);
     std::optional<std::vector<LightProbeData>> LightManager::getLightProbeDataBufer(
         std::multiset<std::weak_ptr<LightProbe>, compareLightProbes>& lightProbeContainer);
+
+    template<typename T>
+    bool checkChangeInQuantity(const SSBO& ssboSize, const uint32_t entitySize, const std::vector<std::weak_ptr<T>>& container);
 
     RTTR_REGISTRATION_FRIEND;
     RTTR_ENABLE();
@@ -103,22 +106,23 @@ inline bool LightManager::removeExpiredLightPointers(std::vector<std::weak_ptr<T
     return isBufferDirty;
 }
 
-template<typename N, typename T>
-std::optional<std::vector<N>> LightManager::getLightDataBuffer(std::vector<std::weak_ptr<T>>& lightContainer)
+template<typename DataTypeOfSSBO, typename T>
+std::optional<std::vector<DataTypeOfSSBO>> LightManager::getLightDataBuffer(std::vector<std::weak_ptr<T>>& lightContainer, const SSBO& ssbo)
 {
     const bool wasLightRemoved = removeExpiredLightPointers(lightContainer);
+    const bool isLightQuantityChanged = checkChangeInQuantity(ssbo, sizeof(DataTypeOfSSBO), lightContainer);
     const bool isAtLeastOneLightDirty =
         std::any_of(lightContainer.begin(), lightContainer.end(), [](const std::weak_ptr<T>& light) { return light.lock()->getDirty(); });
 
-    if(wasLightRemoved || isAtLeastOneLightDirty)
+    if(wasLightRemoved || isAtLeastOneLightDirty || isLightQuantityChanged)
     {
-        std::vector<N> bufferData;
+        std::vector<DataTypeOfSSBO> bufferData;
         bufferData.reserve(lightContainer.size());
 
         for(const auto& light : lightContainer)
         {
             light.lock()->resetDirty();
-            if(light.lock()->getActive())
+            if(light.lock()->getActive() && light.lock()->getGameObject()->isActive())
             {
                 bufferData.push_back(light.lock()->getLightData());
             }
@@ -128,6 +132,23 @@ std::optional<std::vector<N>> LightManager::getLightDataBuffer(std::vector<std::
     }
 
     return std::nullopt;
+}
+
+template<typename T>
+bool LightManager::checkChangeInQuantity(const SSBO& ssbo, const uint32_t entitySize, const std::vector<std::weak_ptr<T>>& container)
+{
+    const uint32_t lastNumberOfLightProbes = ssbo.size / entitySize;
+
+    size_t counter{0};
+    for(const auto& light : container)
+    {
+        if(light.lock()->getGameObject()->isActive())
+        {
+            ++counter;
+        }
+    }
+
+    return lastNumberOfLightProbes != counter;
 }
 
 }  // namespace spark

@@ -35,7 +35,8 @@ enum class TextureTarget : unsigned char
     NORMAL_TARGET = 2,
     ROUGHNESS_TARGET = 3,
     METALNESS_TARGET = 4,
-    HEIGHT_TARGET = 5
+    HEIGHT_TARGET = 5,
+    AO_TARGET = 6
 };
 
 }  // namespace spark

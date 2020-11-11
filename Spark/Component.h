@@ -36,7 +36,7 @@ class Component abstract : public std::enable_shared_from_this<Component>
     template<class T>
     void removeComponent()
     {
-        auto remove = [this]() { getGameObject()->removeComponent<T>(shared_from_base<T>()); };
+        auto remove = [component = shared_from_base<T>()]() { component->getGameObject()->removeComponent<T>(component); };
         getGameObject()->getScene()->toRemove.push_back(remove);
     }
     template<class T>

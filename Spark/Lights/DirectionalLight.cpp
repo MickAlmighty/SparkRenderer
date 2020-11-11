@@ -70,7 +70,7 @@ void DirectionalLight::update()
 {
     if(!addedToLightManager)
     {
-        SceneManager::getInstance()->getCurrentScene()->lightManager->addDirectionalLight(shared_from_base<DirectionalLight>());
+        getGameObject()->getScene()->lightManager->addDirectionalLight(shared_from_base<DirectionalLight>());
         addedToLightManager = true;
     }
 

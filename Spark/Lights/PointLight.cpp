@@ -105,7 +105,7 @@ void PointLight::update()
 {
     if(!addedToLightManager)
     {
-        SceneManager::getInstance()->getCurrentScene()->lightManager->addPointLight(shared_from_base<PointLight>());
+        getGameObject()->getScene()->lightManager->addPointLight(shared_from_base<PointLight>());
         addedToLightManager = true;
     }
 

@@ -1,6 +1,7 @@
 #include "LightManager.h"
 
 #include "DirectionalLight.h"
+#include "GameObject.h"
 #include "LightProbe.h"
 #include "PointLight.h"
 #include "SpotLight.h"
@@ -35,13 +36,13 @@ void LightManager::addSpotLight(const std::shared_ptr<SpotLight>& spotLight)
 
 void LightManager::updateLightBuffers()
 {
-    const auto dirLightDataBufferOpt = getLightDataBuffer<DirectionalLightData, DirectionalLight>(directionalLights);
+    const auto dirLightDataBufferOpt = getLightDataBuffer<DirectionalLightData, DirectionalLight>(directionalLights, dirLightSSBO);
     updateBufferIfNecessary(dirLightDataBufferOpt, dirLightSSBO);
 
-    const auto pointLightDataBufferOpt = getLightDataBuffer<PointLightData, PointLight>(pointLights);
+    const auto pointLightDataBufferOpt = getLightDataBuffer<PointLightData, PointLight>(pointLights, pointLightSSBO);
     updateBufferIfNecessary(pointLightDataBufferOpt, pointLightSSBO);
 
-    const auto spotLightDataBufferOpt = getLightDataBuffer<SpotLightData, SpotLight>(spotLights);
+    const auto spotLightDataBufferOpt = getLightDataBuffer<SpotLightData, SpotLight>(spotLights, spotLightSSBO);
     updateBufferIfNecessary(spotLightDataBufferOpt, spotLightSSBO);
 
     const auto lightProbesDataBufferOpt = getLightProbeDataBufer(lightProbes);
@@ -93,10 +94,25 @@ std::optional<std::vector<LightProbeData>> LightManager::getLightProbeDataBufer(
     std::multiset<std::weak_ptr<LightProbe>, compareLightProbes>& lightProbeContainer)
 {
     const bool wasLightRemoved = removeExpiredLightPointers(lightProbeContainer);
-    const bool isAtLeastOneLightDirty = std::any_of(lightProbeContainer.begin(), lightProbeContainer.end(),
-                                                    [](const std::weak_ptr<LightProbe>& light) { return light.lock()->getDirty(); });
 
-    if(wasLightRemoved || isAtLeastOneLightDirty)
+    size_t lightProbesCounter{0};
+    for(const auto& light : lightProbeContainer)
+    {
+        if(light.lock()->getGameObject()->isActive())
+        {
+            ++lightProbesCounter;
+        }
+    }
+
+    const uint32_t lastNumberOfLightProbes = lightProbeSSBO.size / sizeof(LightProbeData);
+    const bool isLightQuantityChanged = lastNumberOfLightProbes != lightProbesCounter;
+    const bool isAtLeastOneLightDirty =
+        std::any_of(lightProbeContainer.begin(), lightProbeContainer.end(), [](const std::weak_ptr<LightProbe>& light) {
+            const auto lightProbe = light.lock();
+            return lightProbe->getDirty() || !lightProbe->getGameObject()->isActive();
+        });
+
+    if(wasLightRemoved || isAtLeastOneLightDirty || isLightQuantityChanged)
     {
         auto lightProbeIt = lightProbeContainer.begin();
         while(lightProbeIt != lightProbeContainer.end())
@@ -123,9 +139,10 @@ std::optional<std::vector<LightProbeData>> LightManager::getLightProbeDataBufer(
 
         for(const auto& light : lightProbeContainer)
         {
-            if(light.lock()->getActive())
+            const auto lightProbe = light.lock();
+            if(lightProbe->getActive() && lightProbe->getGameObject()->isActive())
             {
-                bufferData.push_back(light.lock()->getLightData());
+                bufferData.push_back(lightProbe->getLightData());
             }
         }
 
