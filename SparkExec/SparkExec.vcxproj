@@ -119,9 +119,6 @@ if not exist "$(TargetDir)scene.json" (xcopy "$(ProjectDir)scene.json" "$(Target
     <None Include="settings.json" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="map.png" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\Spark\Spark.vcxproj">
       <Project>{d3a53a28-e28e-43f8-9929-e1389589344d}</Project>
     </ProjectReference>

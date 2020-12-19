@@ -4,6 +4,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#include "Buffer.hpp"
 #include "Enums.h"
 #include "GBuffer.h"
 #include "Structs.h"

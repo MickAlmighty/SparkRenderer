@@ -364,5 +364,8 @@
     <ClInclude Include="Lights\SpotLight.h">
       <Filter>Lights</Filter>
     </ClInclude>
+    <ClInclude Include="Buffer.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

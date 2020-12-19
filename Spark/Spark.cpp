@@ -47,27 +47,15 @@ void Spark::run()
         Clock::tick();
         glfwPollEvents();
 
-        static bool mouseEnabled = true;
-
-        if(HID::isKeyReleased(Key::LEFT_ALT) && !mouseEnabled)
-        {
-            glfwSetInputMode(Spark::window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-            mouseEnabled = true;
-        }
-        else if(HID::isKeyReleased(Key::LEFT_ALT) && mouseEnabled)
-        {
-            glfwSetInputMode(Spark::window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-            mouseEnabled = false;
-        }
-
-        if(HID::isKeyPressed(Key::ESC))
+        if (HID::isKeyPressed(Key::ESC))
             glfwSetWindowShouldClose(Spark::window, GLFW_TRUE);
 
         resourceLibrary.processGpuResources();
         SceneManager::getInstance()->update();
         sparkGui.drawGui();
         SparkRenderer::getInstance()->renderPass();
-        HID::processInputDevicesStates();
+
+        HID::updateStates();
     }
 }
 
@@ -93,8 +81,8 @@ void Spark::initOpenGL()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+    glfwWindowHint(GLFW_DECORATED, GLFW_TRUE);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 #ifdef DEBUG
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
 #else
@@ -127,6 +115,8 @@ void Spark::initOpenGL()
 
     glfwSetKeyCallback(window, HID::key_callback);
     glfwSetCursorPosCallback(window, HID::cursor_position_callback);
+    glfwSetMouseButtonCallback(window, HID::mouse_button_callback);
+    glfwSetScrollCallback(window, HID::scroll_callback);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     setVsync(vsync);
 

@@ -169,11 +169,28 @@ void Camera::processKeyboard()
 
 void Camera::processKeyboardFirstPerson()
 {
-    float velocity = MovementSpeed * static_cast<float>(Clock::getDeltaTime());
-    if(HID::isKeyPressedOrDown(Key::LEFT_SHIFT))
-        velocity *= 3.5f;
-    glm::vec3 front = glm::normalize(glm::vec3(Front.x, 0, Front.z));
-    glm::vec3 right = glm::normalize(glm::vec3(Right.x, 0, Right.z));
+    if(HID::isKeyPressedOrDown(Key::MOUSE_RIGHT))
+    {
+        if(HID::mouse.getScrollStatus() == ScrollStatus::POSITIVE)
+            MovementSpeed *= 1.2f;
+        else if(HID::mouse.getScrollStatus() == ScrollStatus::NEGATIVE)
+            MovementSpeed *= .8f;
+
+        if(MovementSpeed < 0.0f)
+            MovementSpeed = 0.0f;
+    }
+    else if(HID::getKeyState(Key::MOUSE_RIGHT) == State::NONE)
+    {
+        if(HID::mouse.getScrollStatus() == ScrollStatus::POSITIVE)
+            Position += Front;
+        else if(HID::mouse.getScrollStatus() == ScrollStatus::NEGATIVE)
+            Position -= Front;
+    }
+
+    const float velocity = MovementSpeed * static_cast<float>(Clock::getDeltaTime());
+
+    const glm::vec3 front = glm::normalize(glm::vec3(Front.x, 0, Front.z));
+    const glm::vec3 right = glm::normalize(glm::vec3(Right.x, 0, Right.z));
 
     glm::vec3 finalDirection(0);
 
@@ -205,7 +222,7 @@ void Camera::processKeyboardThirdPerson()
         velocity *= 3.5f;
 
     glm::vec3 finalDirection(0);
-    
+
     if(HID::isKeyPressedOrDown(Key::A))
         finalDirection += Right;
     if(HID::isKeyPressedOrDown(Key::D))
@@ -226,7 +243,7 @@ void Camera::processKeyboardThirdPerson()
 
         glm::vec3 newDirection = glm::normalize(cameraTarget - newPosition);
 
-        Position = newPosition + newDirection * diff; 
+        Position = newPosition + newDirection * diff;
         dirty = true;
     }
 
@@ -236,8 +253,7 @@ void Camera::processKeyboardThirdPerson()
     if(HID::isKeyPressedOrDown(Key::S))
         finalDirection += Front;
 
-
-    if (finalDirection != glm::vec3(0))
+    if(finalDirection != glm::vec3(0))
     {
         Position += finalDirection * velocity;
         dirty = true;
@@ -247,9 +263,16 @@ void Camera::processKeyboardThirdPerson()
 void Camera::processMouseMovement(float xoffset, float yoffset, bool constrainPitch)
 {
     static bool cameraRotation = false;
-    if(HID::isKeyPressed(Key::SPACE_BAR))
+
+    if(HID::isKeyReleased(Key::MOUSE_RIGHT) && cameraRotation)
     {
-        cameraRotation = !cameraRotation;
+        glfwSetInputMode(Spark::window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        cameraRotation = false;
+    }
+    else if(HID::isKeyPressedOrDown(Key::MOUSE_RIGHT) && !cameraRotation)
+    {
+        glfwSetInputMode(Spark::window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        cameraRotation = true;
     }
 
     if(!cameraRotation)
@@ -257,7 +280,7 @@ void Camera::processMouseMovement(float xoffset, float yoffset, bool constrainPi
     xoffset *= MouseSensitivity;
     yoffset *= MouseSensitivity;
 
-    if(xoffset != 0.0f || yoffset != 0)
+    if(xoffset != 0.0f || yoffset != 0.0f)
     {
         dirty = true;
     }
@@ -303,7 +326,7 @@ void Camera::processMouseMovementThirdPerson(float xoffset, float yoffset)
 
         const glm::vec3 newDirection = glm::normalize(cameraTarget - newPosition);
 
-        Position = newPosition + newDirection * diff; 
+        Position = newPosition + newDirection * diff;
         dirty = true;
     }
 }

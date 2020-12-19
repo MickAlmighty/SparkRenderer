@@ -10,13 +10,13 @@
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 
+#include "Buffer.hpp"
 #include "GPUResource.h"
 #include "Resource.h"
 #include "Structs.h"
 
 namespace spark::resources
 {
-
 class Shader : public resourceManagement::Resource, public resourceManagement::GPUResource
 {
     public:
@@ -44,6 +44,52 @@ class Shader : public resourceManagement::Resource, public resourceManagement::G
     void bindUniformBuffer(const std::string& name, const UniformBuffer& uniformBuffer) const;
 
     private:
+    struct Uniform final
+    {
+        std::string name{};
+        std::string type{};
+        GLint location{0};
+
+        bool operator!=(const Uniform& rhs) const
+        {
+            return this->name != rhs.name || this->type != rhs.type;
+        }
+        bool operator<(const Uniform& rhs) const
+        {
+            return this->name < rhs.name;
+        }
+    };
+
+    struct UniformBlock final
+    {
+        std::string name{};
+        GLint blockIndex{0};
+
+        bool operator!=(const UniformBlock& rhs) const
+        {
+            return this->name != rhs.name;
+        }
+        bool operator<(const UniformBlock& rhs) const
+        {
+            return this->name < rhs.name;
+        }
+    };
+
+    struct ShaderStorageBuffer final
+    {
+        std::string name{};
+        GLint blockIndex{0};
+
+        bool operator!=(const ShaderStorageBuffer& rhs) const
+        {
+            return this->name != rhs.name;
+        }
+        bool operator<(const ShaderStorageBuffer& rhs) const
+        {
+            return this->name < rhs.name;
+        }
+    };
+
     GLuint ID{0};
     std::map<GLenum, std::string> shaderSources{};
 
@@ -52,18 +98,18 @@ class Shader : public resourceManagement::Resource, public resourceManagement::G
     std::set<ShaderStorageBuffer> storageBuffers{};
 
     static inline std::string loadShader(const std::string& shaderPath);
-    static inline std::map<GLenum, std::string> preProcess(const std::string& shaderPath);
-    inline static GLenum shaderTypeFromString(const std::string& type);
+    static inline std::map<GLenum, std::string> preProcess(const std::string& shaderSource);
+    static inline GLenum shaderTypeFromString(const std::string& type);
     static inline std::vector<GLuint> compileShaders(const std::map<GLenum, std::string>& shaders);
-    inline void linkProgram(const std::vector<GLuint>& ids);
-    inline void acquireUniformNamesAndTypes();
-    inline GLint getUniformLocation(const std::string& name) const;
-    inline static std::string getUniformType(GLenum type);
-    inline void acquireUniformBlocks();
-    inline void acquireBuffers();
-    inline std::optional<ShaderStorageBuffer> getShaderBuffer(const std::string& storageBufferName) const;
-    inline std::optional<UniformBlock> getUniformBlock(const std::string& uniformBlockName) const;
+    void linkProgram(const std::vector<GLuint>& ids);
+    void acquireUniformNamesAndTypes();
+    GLint getUniformLocation(const std::string& name) const;
+    static std::string getUniformType(GLenum type);
+    void acquireUniformBlocks();
+    void acquireBuffers();
+    std::optional<ShaderStorageBuffer> getShaderBuffer(const std::string& storageBufferName) const;
+    std::optional<UniformBlock> getUniformBlock(const std::string& uniformBlockName) const;
 };
 
-}  // namespace spark
+}  // namespace spark::resources
 #endif

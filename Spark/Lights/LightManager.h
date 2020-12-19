@@ -12,6 +12,7 @@
 #include <rttr/registration_friend>
 #include <rttr/registration>
 
+#include "Buffer.hpp"
 #include "Structs.h"
 
 namespace spark
@@ -44,8 +45,8 @@ class LightManager
     void addSpotLight(const std::shared_ptr<SpotLight>& spotLight);
     void updateLightBuffers();
 
-    LightManager();
-    ~LightManager();
+    LightManager() = default;
+    ~LightManager() = default;
     LightManager(const LightManager& lightManager) = delete;
     LightManager(const LightManager&& lightManager) = delete;
     LightManager& operator=(const LightManager& lightManager) = delete;
@@ -62,7 +63,7 @@ class LightManager
     std::optional<std::vector<N>> getLightDataBuffer(std::vector<std::weak_ptr<T>>& lightContainer, const SSBO& ssbo);
 
     bool removeExpiredLightPointers(std::multiset<std::weak_ptr<LightProbe>, compareLightProbes>& lightContainer);
-    std::optional<std::vector<LightProbeData>> LightManager::getLightProbeDataBufer(
+    std::optional<std::vector<LightProbeData>> getLightProbeDataBufer(
         std::multiset<std::weak_ptr<LightProbe>, compareLightProbes>& lightProbeContainer);
 
     template<typename T>
@@ -137,7 +138,7 @@ std::optional<std::vector<DataTypeOfSSBO>> LightManager::getLightDataBuffer(std:
 template<typename T>
 bool LightManager::checkChangeInQuantity(const SSBO& ssbo, const uint32_t entitySize, const std::vector<std::weak_ptr<T>>& container)
 {
-    const uint32_t lastNumberOfLightProbes = ssbo.size / entitySize;
+    const uint32_t lastNumberOfLights = ssbo.size / entitySize;
 
     size_t counter{0};
     for(const auto& light : container)
@@ -148,7 +149,7 @@ bool LightManager::checkChangeInQuantity(const SSBO& ssbo, const uint32_t entity
         }
     }
 
-    return lastNumberOfLightProbes != counter;
+    return lastNumberOfLights != counter;
 }
 
 }  // namespace spark

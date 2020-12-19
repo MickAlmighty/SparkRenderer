@@ -106,7 +106,6 @@ void SparkRenderer::drawGui()
 
 void SparkRenderer::setup()
 {
-    cameraUBO.genBuffer();
     const std::uniform_real_distribution<float> randomFloats(0.0, 1.0);  // random floats between 0.0 - 1.0
     std::default_random_engine generator;
     const auto generateSsaoSamples = [this, &randomFloats, &generator] {
@@ -124,7 +123,7 @@ void SparkRenderer::setup()
 
             ssaoKernel.push_back(sample);
         }
-        sampleUniformBuffer.genBuffer(64 * sizeof(glm::vec4));
+        sampleUniformBuffer.resizeBuffer(64 * sizeof(glm::vec4));
         sampleUniformBuffer.updateData(ssaoKernel);
     };
 
@@ -147,11 +146,11 @@ void SparkRenderer::setup()
     utils::createTexture2D(ssaoDisabledTexture, 1, 1, GL_RED, GL_RED, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_NEAREST, false, &red);
     utils::createTexture2D(averageLuminanceTexture, 1, 1, GL_R16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
 
-    luminanceHistogram.genBuffer(256 * sizeof(uint32_t));
-    pointLightIndices.genBuffer(256 * (uint32_t)glm::ceil(Spark::HEIGHT / 16.0f) * (uint32_t)glm::ceil(Spark::WIDTH / 16.0f) * sizeof(uint32_t));
-    spotLightIndices.genBuffer(256 * (uint32_t)glm::ceil(Spark::HEIGHT / 16.0f) * (uint32_t)glm::ceil(Spark::WIDTH / 16.0f) * sizeof(uint32_t));
-    lightProbeIndices.genBuffer(256 * (uint32_t)glm::ceil(Spark::HEIGHT / 16.0f) * (uint32_t)glm::ceil(Spark::WIDTH / 16.0f) * sizeof(uint32_t));
-    cubemapViewMatrices.genBuffer(sizeof(glm::mat4) * 6);
+    luminanceHistogram.resizeBuffer(256 * sizeof(uint32_t));
+    pointLightIndices.resizeBuffer(256 * (uint32_t)glm::ceil(Spark::HEIGHT / 16.0f) * (uint32_t)glm::ceil(Spark::WIDTH / 16.0f) * sizeof(uint32_t));
+    spotLightIndices.resizeBuffer(256 * (uint32_t)glm::ceil(Spark::HEIGHT / 16.0f) * (uint32_t)glm::ceil(Spark::WIDTH / 16.0f) * sizeof(uint32_t));
+    lightProbeIndices.resizeBuffer(256 * (uint32_t)glm::ceil(Spark::HEIGHT / 16.0f) * (uint32_t)glm::ceil(Spark::WIDTH / 16.0f) * sizeof(uint32_t));
+    cubemapViewMatrices.resizeBuffer(sizeof(glm::mat4) * 6);
     cubemapViewMatrices.updateData(utils::getCubemapViewMatrices(glm::vec3(0)));
     brdfLookupTexture = utils::createBrdfLookupTexture(1024);
 
@@ -266,7 +265,7 @@ void SparkRenderer::renderPass()
         const auto camera = SceneManager::getInstance()->getCurrentScene()->getCamera();
         // if(camera->isDirty())
         {
-            updateCameraUBO(camera->getProjectionReversedZ(), camera->getViewMatrix(), camera->getPosition());
+            updateCameraUBO(camera->getProjectionReversedZInfiniteFarPlane(), camera->getViewMatrix(), camera->getPosition());
             camera->cleanDirty();
         }
     }
@@ -473,9 +472,9 @@ void SparkRenderer::renderLights(GLuint framebuffer, const GBuffer& geometryBuff
 void SparkRenderer::tileBasedLightCulling(const GBuffer& geometryBuffer) const
 {
     PUSH_DEBUG_GROUP(TILE_BASED_LIGHTS_CULLING);
-    pointLightIndices.clearBuffer();
-    spotLightIndices.clearBuffer();
-    lightProbeIndices.clearBuffer();
+    pointLightIndices.clearData();
+    spotLightIndices.clearData();
+    lightProbeIndices.clearData();
 
     tileBasedLightCullingShader->use();
 
@@ -718,7 +717,7 @@ void SparkRenderer::lightShafts()
 void SparkRenderer::motionBlur()
 {
     const auto camera = SceneManager::getInstance()->getCurrentScene()->getCamera();
-    const glm::mat4 projectionView = camera->getProjectionReversedZ() * camera->getViewMatrix();
+    const glm::mat4 projectionView = camera->getProjectionReversedZInfiniteFarPlane() * camera->getViewMatrix();
     static glm::mat4 prevProjectionView = projectionView;
     static bool initialized = false;
 
@@ -779,7 +778,7 @@ void SparkRenderer::calculateAverageLuminance()
     oneOverLogLuminanceRange = 1.0f / logLuminanceRange;
 
     // this buffer is attached to both shaders in method SparkRenderer::updateBufferBindings()
-    luminanceHistogram.clearBuffer();  // resetting histogram buffer
+    luminanceHistogram.clearData();  // resetting histogram buffer
 
     // first compute dispatch
     luminanceHistogramComputeShader->use();
@@ -864,7 +863,7 @@ void SparkRenderer::createFrameBuffersAndTextures()
     utils::createTexture2D(lightColorTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
     utils::createTexture2D(brightPassTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
     utils::createTexture2D(toneMappingTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::createTexture2D(motionBlurTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGB16F, GL_RGB, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::createTexture2D(motionBlurTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
     utils::createTexture2D(lightShaftTexture, Spark::WIDTH / 2, Spark::HEIGHT / 2, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
     utils::createTexture2D(ssaoTexture, Spark::WIDTH, Spark::HEIGHT, GL_RED, GL_RED, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
     utils::createTexture2D(fxaaTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
@@ -894,13 +893,6 @@ void SparkRenderer::createFrameBuffersAndTextures()
 
 void SparkRenderer::cleanup()
 {
-    cameraUBO.cleanup();
-    sampleUniformBuffer.cleanup();
-    pointLightIndices.cleanup();
-    spotLightIndices.cleanup();
-    lightProbeIndices.cleanup();
-    cubemapViewMatrices.cleanup();
-
     deleteFrameBuffersAndTextures();
     glDeleteTextures(1, &randomNormalsTexture);
     glDeleteTextures(1, &ssaoDisabledTexture);

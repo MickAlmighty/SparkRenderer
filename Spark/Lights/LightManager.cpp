@@ -49,22 +49,6 @@ void LightManager::updateLightBuffers()
     updateBufferIfNecessary(lightProbesDataBufferOpt, lightProbeSSBO);
 }
 
-LightManager::LightManager()
-{
-    dirLightSSBO.genBuffer();
-    pointLightSSBO.genBuffer();
-    spotLightSSBO.genBuffer();
-    lightProbeSSBO.genBuffer();
-}
-
-LightManager::~LightManager()
-{
-    dirLightSSBO.cleanup();
-    spotLightSSBO.cleanup();
-    pointLightSSBO.cleanup();
-    lightProbeSSBO.cleanup();
-}
-
 bool LightManager::removeExpiredLightPointers(std::multiset<std::weak_ptr<LightProbe>, compareLightProbes>& lightContainer)
 {
     bool isBufferDirty = false;

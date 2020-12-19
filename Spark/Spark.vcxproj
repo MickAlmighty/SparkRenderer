@@ -178,6 +178,7 @@
   <ItemGroup>
     <ClInclude Include="ActorAI.h" />
     <ClInclude Include="BlurPass.h" />
+    <ClInclude Include="Buffer.hpp" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Clock.h" />
     <ClInclude Include="CommonUtils.h" />

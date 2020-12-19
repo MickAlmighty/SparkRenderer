@@ -149,7 +149,7 @@ void main()
 
     float depthFloat = texelFetch(depthTexture, texCoords, 0).x;
 
-    if (depthFloat == 0)
+    if (depthFloat <= 0.00001)
         return;
 
 //light calculations in world space
