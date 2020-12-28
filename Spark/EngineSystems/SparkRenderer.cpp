@@ -290,6 +290,10 @@ void SparkRenderer::renderPass()
         if(lightProbeWeakPtr.expired())
             continue;
 
+        const auto lightProbe = lightProbeWeakPtr.lock();
+        if (!lightProbe->generateLightProbe)
+            continue;
+
         utils::createCubemap(lightProbeSceneCubemap, sceneCubemapSize, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR, true);
         localLightProbeGBuffer.setup(sceneCubemapSize, sceneCubemapSize);
 
@@ -297,11 +301,7 @@ void SparkRenderer::renderPass()
         utils::createFramebuffer(lightProbeSkyboxFbo, {});
         utils::bindDepthTexture(lightProbeSkyboxFbo, localLightProbeGBuffer.depthTexture);
 
-        const auto lightProbe = lightProbeWeakPtr.lock();
-        if(lightProbe->generateLightProbe)
-        {
-            generateLightProbe(lightProbe);
-        }
+        generateLightProbe(lightProbe);
 
         localLightProbeGBuffer.cleanup();
         glDeleteTextures(1, &lightProbeSceneCubemap);
