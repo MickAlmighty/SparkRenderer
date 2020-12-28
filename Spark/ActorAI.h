@@ -1,5 +1,4 @@
-#ifndef ACTOR_AI_H
-#define ACTOR_AI_H
+#pragma once
 
 #include "Component.h"
 #include "NodeAI.h"
@@ -54,4 +53,3 @@ class ActorAI final : public Component
     void setStartPosition(glm::vec3& startPosition);
 };
 }  // namespace spark
-#endif

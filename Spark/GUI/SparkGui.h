@@ -1,5 +1,4 @@
-#ifndef SPARK_GUI_H
-#define SPARK_GUI_H
+#pragma once
 
 #include "ActorAI.h"
 #include "Component.h"
@@ -123,4 +122,3 @@ const static std::map<std::string, std::function<std::shared_ptr<Component>()>> 
     {"SpotLight", [] { return std::make_shared<SpotLight>(); }},
     {"LightProbe", [] { return std::make_shared<LightProbe>(); }}};
 }  // namespace spark
-#endif

@@ -1,5 +1,4 @@
-#ifndef TERRAIN_GENERATOR_H
-#define TERRAIN_GENERATOR_H
+#pragma once
 
 #include <deque>
 
@@ -51,5 +50,3 @@ class TerrainGenerator final : public Component
 };
 
 }  // namespace spark
-
-#endif

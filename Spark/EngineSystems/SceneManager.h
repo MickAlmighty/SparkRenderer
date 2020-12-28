@@ -1,5 +1,4 @@
-#ifndef SCENE_MANAGER_H
-#define SCENE_MANAGER_H
+#pragma once
 
 #include <list>
 #include <memory>
@@ -37,5 +36,3 @@ class SceneManager final
 };
 
 }  // namespace spark
-
-#endif

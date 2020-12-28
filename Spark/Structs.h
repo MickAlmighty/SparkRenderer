@@ -1,5 +1,4 @@
-#ifndef STRUCTS_H
-#define STRUCTS_H
+#pragma once
 
 #include <array>
 #include <vector>
@@ -228,4 +227,3 @@ struct DrawArraysIndirectCommand final
 };
 
 }  // namespace spark
-#endif

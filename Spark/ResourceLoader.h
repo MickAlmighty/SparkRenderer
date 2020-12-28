@@ -1,5 +1,4 @@
-#ifndef RESOURCE_LOADER_H
-#define RESOURCE_LOADER_H
+#pragma once
 
 #include <filesystem>
 #include <map>
@@ -55,5 +54,3 @@ class ResourceLoader final
 };
 
 }  // namespace spark
-
-#endif

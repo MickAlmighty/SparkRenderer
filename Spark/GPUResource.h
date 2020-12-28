@@ -1,5 +1,5 @@
-#ifndef GPU_RESOURCE_H
-#define GPU_RESOURCE_H
+#pragma once
+
 #include <atomic>
 
 namespace spark::resourceManagement
@@ -20,5 +20,3 @@ class GPUResource abstract
     std::atomic_bool loadedIntoDeviceMemory{false};
 };
 }
-
-#endif

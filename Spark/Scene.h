@@ -1,5 +1,4 @@
-#ifndef SCENE_H
-#define SCENE_H
+#pragma once
 
 #include <memory>
 #include <list>
@@ -57,4 +56,3 @@ class Scene final : public std::enable_shared_from_this<Scene>
 };
 
 }  // namespace spark
-#endif

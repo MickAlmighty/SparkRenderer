@@ -1,5 +1,4 @@
-#ifndef COMPONENT_H
-#define COMPONENT_H
+#pragma once
 
 #include "EngineSystems/SceneManager.h"
 #include "Scene.h"
@@ -64,4 +63,3 @@ class Component abstract : public std::enable_shared_from_this<Component>
     RTTR_ENABLE();
 };
 }  // namespace spark
-#endif

@@ -1,5 +1,4 @@
-#ifndef COMMON_UTILS_H
-#define COMMON_UTILS_H
+#pragma once
 
 #include <array>
 #include <vector>
@@ -43,5 +42,3 @@ namespace utils
     std::array<glm::mat4, 6> getCubemapViewMatrices(glm::vec3 cameraPosition);
 }  // namespace utils
 }  // namespace spark
-
-#endif

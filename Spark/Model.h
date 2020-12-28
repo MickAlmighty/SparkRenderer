@@ -1,5 +1,5 @@
-#ifndef MODEL_H
-#define MODEL_H
+#pragma once
+
 #include "GPUResource.h"
 
 #include "Mesh.h"
@@ -30,5 +30,3 @@ class Model : public resourceManagement::Resource, public resourceManagement::GP
     std::shared_ptr<Mesh> loadMesh(aiMesh* assimpMesh, const std::filesystem::path& modelPath);
 };
 }
-
-#endif

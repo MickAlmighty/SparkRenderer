@@ -1,5 +1,4 @@
-#ifndef JSON_SERIALIZER_H
-#define JSON_SERIALIZER_H
+#pragma once
 
 #include <rttr/registration>
 #include <json/value.h>
@@ -136,4 +135,3 @@ T JsonSerializer::load(const std::filesystem::path& filePath)
     return loadJson<T>(root);
 }
 }  // namespace spark
-#endif

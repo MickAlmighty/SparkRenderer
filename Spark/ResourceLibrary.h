@@ -1,5 +1,4 @@
-#ifndef RESOURCE_LIBRARY_H
-#define RESOURCE_LIBRARY_H
+#pragma once
 
 #include <deque>
 #include <filesystem>
@@ -271,5 +270,3 @@ std::vector<typename std::iterator_traits<InputIterator>::value_type> ResourceLi
     return result;
 }
 }  // namespace spark::resourceManagement
-
-#endif

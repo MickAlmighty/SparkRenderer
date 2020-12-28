@@ -1,5 +1,4 @@
-#ifndef MESH_PLANE_H
-#define MESH_PLANE_H
+#pragma once
 
 #include "Component.h"
 
@@ -37,4 +36,3 @@ class MeshPlane final : public Component
 };
 
 }  // namespace spark
-#endif

@@ -1,9 +1,7 @@
-#ifndef BLURR_PASS_H
-#define BLURR_PASS_H
+#pragma once
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-
 
 #include "Shader.h"
 #include "Structs.h"
@@ -39,5 +37,3 @@ class BlurPass
     void deleteGlObjects();
 };
 }  // namespace spark
-
-#endif

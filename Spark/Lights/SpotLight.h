@@ -1,5 +1,4 @@
-#ifndef SPOT_LIGHT_H
-#define SPOT_LIGHT_H
+#pragma once
 
 #include <glm/vec3.hpp>
 
@@ -59,5 +58,3 @@ class SpotLight final : public Component
     RTTR_ENABLE(Component);
 };
 }  // namespace spark
-
-#endif

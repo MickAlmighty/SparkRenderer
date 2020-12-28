@@ -1,5 +1,4 @@
-#ifndef DIRECTIONAL_LIGHT_H
-#define DIRECTIONAL_LIGHT_H
+#pragma once
 
 #include "Component.h"
 
@@ -46,5 +45,3 @@ class DirectionalLight final : public Component
     RTTR_ENABLE(Component);
 };
 }  // namespace spark
-
-#endif

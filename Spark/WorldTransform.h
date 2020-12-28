@@ -1,5 +1,4 @@
-#ifndef WORLD_TRANSFORM_H
-#define WORLD_TRANSFORM_H
+#pragma once
 
 #include <rttr/registration_friend>
 #include <rttr/registration>
@@ -37,4 +36,3 @@ class WorldTransform final
 };
 
 }  // namespace spark
-#endif

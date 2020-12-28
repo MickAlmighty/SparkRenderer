@@ -1,5 +1,4 @@
-#ifndef SPARK_RENDERER_H
-#define SPARK_RENDERER_H
+#pragma once
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -177,4 +176,3 @@ class SparkRenderer
     void renderSceneToCubemap(const GBuffer& geometryBuffer, GLuint lightFbo, GLuint skyboxFbo);
 };
 }  // namespace spark
-#endif

@@ -1,5 +1,4 @@
-#ifndef LIGHT_MANAGER_H
-#define LIGHT_MANAGER_H
+#pragma once
 
 #include <algorithm>
 #include <memory>
@@ -153,5 +152,3 @@ bool LightManager::checkChangeInQuantity(const SSBO& ssbo, const uint32_t entity
 }
 
 }  // namespace spark
-
-#endif

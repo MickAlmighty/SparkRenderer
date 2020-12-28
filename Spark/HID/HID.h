@@ -1,5 +1,4 @@
-#ifndef HID_H
-#define HID_H
+#pragma once
 
 #include <map>
 
@@ -63,4 +62,3 @@ class HID
 };
 
 }  // namespace spark
-#endif

@@ -1,5 +1,4 @@
-#ifndef GAME_OBJECT_H
-#define GAME_OBJECT_H
+#pragma once
 
 #include <list>
 #include <memory>
@@ -154,4 +153,3 @@ bool GameObject::removeComponent(const std::shared_ptr<T>& c)
     return false;
 }
 }  // namespace spark
-#endif

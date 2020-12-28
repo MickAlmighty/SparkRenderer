@@ -1,5 +1,4 @@
-#ifndef ENUMS_H
-#define ENUMS_H
+#pragma once
 
 namespace spark
 {
@@ -40,4 +39,3 @@ enum class TextureTarget : unsigned char
 };
 
 }  // namespace spark
-#endif

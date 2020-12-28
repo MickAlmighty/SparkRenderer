@@ -1,5 +1,4 @@
-#ifndef SHADER_H
-#define SHADER_H
+#pragma once
 
 #include <map>
 #include <optional>
@@ -112,4 +111,3 @@ class Shader : public resourceManagement::Resource, public resourceManagement::G
 };
 
 }  // namespace spark::resources
-#endif

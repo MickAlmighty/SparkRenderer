@@ -1,5 +1,4 @@
-#ifndef DEPTH_OF_FIELD_PASS_H
-#define DEPTH_OF_FIELD_PASS_H
+#pragma once
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -57,4 +56,3 @@ class DepthOfFieldPass
     void deleteGlObjects();
 };
 }
-#endif

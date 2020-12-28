@@ -1,5 +1,4 @@
-#ifndef MESH_H
-#define MESH_H
+#pragma once
 
 #include <vector>
 #include <map>
@@ -44,4 +43,3 @@ class Mesh : public std::enable_shared_from_this<Mesh>, public resourceManagemen
 };
 
 }  // namespace spark
-#endif

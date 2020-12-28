@@ -1,5 +1,4 @@
-#ifndef SPARK_H
-#define SPARK_H
+#pragma once
 
 #include "GUI/SparkGui.h"
 #include "Structs.h"
@@ -49,4 +48,3 @@ class Spark
     static void createCustomCursor();
 };
 }  // namespace spark
-#endif

@@ -1,5 +1,4 @@
-#ifndef STATE_H
-#define STATE_H
+#pragma once
 
 namespace spark
 {
@@ -13,5 +12,3 @@ enum class State
 };
 
 }
-
-#endif
