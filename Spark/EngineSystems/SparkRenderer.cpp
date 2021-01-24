@@ -288,6 +288,8 @@ void SparkRenderer::renderPass()
         if (!lightProbe->generateLightProbe)
             continue;
 
+        auto t = Timer("Local Light Probe creation");
+
         utils::createCubemap(lightProbeSceneCubemap, sceneCubemapSize, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR, true);
         localLightProbeGBuffer.setup(sceneCubemapSize, sceneCubemapSize);
 
@@ -928,8 +930,6 @@ void SparkRenderer::updateCameraUBO(glm::mat4 projection, glm::mat4 view, glm::v
 void SparkRenderer::generateLightProbe(const std::shared_ptr<LightProbe>& lightProbe)
 {
     PUSH_DEBUG_GROUP(SCENE_TO_CUBEMAP);
-
-    auto t = Timer("Local Light Probe creation");
 
     const glm::vec3 localLightProbePosition = lightProbe->getGameObject()->transform.world.getPosition();
 

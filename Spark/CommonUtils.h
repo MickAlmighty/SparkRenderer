@@ -13,7 +13,7 @@
         glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, static_cast<GLsizei>(message.length()), message.data()); \
     }
 
-#define POP_DEBUG_GROUP() glPopDebugGroup()
+#define POP_DEBUG_GROUP() glPopDebugGroup();
 
 namespace spark
 {

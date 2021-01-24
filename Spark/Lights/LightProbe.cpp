@@ -148,8 +148,7 @@ GLuint LightProbe::getIrradianceCubemap() const
 void LightProbe::renderIntoIrradianceCubemap(GLuint framebuffer, GLuint environmentCubemap, Cube& cube,
                                              const std::shared_ptr<resources::Shader>& irradianceShader) const
 {
-    PUSH_DEBUG_GROUP(IRRADIANCE_CUBEMAP);
-    auto t = Timer("Local Light Probe Irradiance Cubemap creation");
+    PUSH_DEBUG_GROUP(IRRADIANCE_CUBEMAP)
 
     glViewport(0, 0, irradianceCubemapSize, irradianceCubemapSize);
 
@@ -168,8 +167,6 @@ void LightProbe::renderIntoPrefilterCubemap(GLuint framebuffer, GLuint environme
                                             const std::shared_ptr<resources::Shader>& resampleCubemapShader) const
 {
     PUSH_DEBUG_GROUP(PREFILTER_CUBEMAP);
-
-    auto t = Timer("Local Light Probe Prefiltered Cubemap creation");
 
     {
         resampleCubemapShader->use();

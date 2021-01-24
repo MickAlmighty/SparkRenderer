@@ -93,7 +93,7 @@ void GameObject::addChild(const std::shared_ptr<GameObject>& newChild, const std
     children.push_back(newChild);
 }
 
-void GameObject::addComponent(std::shared_ptr<Component> component)
+void GameObject::addComponent(const std::shared_ptr<Component>& component)
 {
     component->setGameObject(shared_from_this());
     components.push_back(component);
