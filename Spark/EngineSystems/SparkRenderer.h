@@ -93,7 +93,6 @@ class SparkRenderer
     std::shared_ptr<resources::Shader> luminanceHistogramComputeShader{nullptr};
     std::shared_ptr<resources::Shader> averageLuminanceComputeShader{nullptr};
     std::shared_ptr<resources::Shader> fxaaShader{nullptr};
-    std::shared_ptr<resources::Shader> medianFilterShader{nullptr};
     std::shared_ptr<resources::Shader> bloomDownScaleShader{nullptr};
     std::shared_ptr<resources::Shader> bloomUpScaleShader{nullptr};
     std::shared_ptr<resources::Shader> tileBasedLightCullingShader{nullptr};
@@ -141,7 +140,6 @@ class SparkRenderer
     float bloomIntensity = 0.1f;
 
     bool motionBlurEnable = true;
-    bool renderingToCubemap = false;
 
     SparkRenderer() = default;
     ~SparkRenderer() = default;

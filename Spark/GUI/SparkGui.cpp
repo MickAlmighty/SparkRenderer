@@ -59,7 +59,7 @@ void SparkGui::drawSparkSettings(bool* p_open)
     static char buf2[128];
     ImGui::InputTextWithHint("Path to Models", Spark::pathToModelMeshes.string().c_str(), buf1, 128);
     ImGui::InputTextWithHint("Path to Resources", Spark::pathToResources.string().c_str(), buf2, 128);*/
-
+    ImGui::Text("Framerate: %f", ImGui::GetIO().Framerate);
     ImGui::Text("Path to models:");
     ImGui::SameLine();
     ImGui::Text(Spark::pathToModelMeshes.string().c_str());
@@ -177,36 +177,6 @@ std::shared_ptr<resources::Model> SparkGui::getModel()
     return model;
 }
 
-std::shared_ptr<resources::Texture> SparkGui::getTexture()
-{
-    std::shared_ptr<resources::Texture> texture{nullptr};
-
-    if(ImGui::Button("Add Texture"))
-    {
-        ImGui::OpenPopup("Textures");
-    }
-
-    if(ImGui::BeginPopupModal("Textures", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
-    {
-        const auto textureIds = Spark::getResourceLibrary()->getResourceIdentifiers<resources::Texture>();
-        for(const auto& id : textureIds)
-        {
-            if(ImGui::Button(id.getFullPath().string().c_str()))
-            {
-                texture = Spark::getResourceLibrary()->getResourceByPathWithOptLoad<resources::Texture>(id.getFullPath().string());
-                ImGui::CloseCurrentPopup();
-            }
-        }
-        if(ImGui::Button("Close"))
-        {
-            ImGui::CloseCurrentPopup();
-        }
-        ImGui::EndPopup();
-    }
-
-    return texture;
-}
-
 std::tuple<bool, std::shared_ptr<PbrCubemapTexture>> SparkGui::getCubemapTexture()
 {
     std::shared_ptr<PbrCubemapTexture> ptr = nullptr;
@@ -266,35 +236,6 @@ std::tuple<bool, std::shared_ptr<PbrCubemapTexture>> SparkGui::getCubemapTexture
     }
 
     return {false, nullptr};
-}
-
-std::shared_ptr<resources::Shader> SparkGui::getShader()
-{
-    std::shared_ptr<resources::Shader> ptr = nullptr;
-    if(ImGui::Button("Get resources::Shader"))
-    {
-        ImGui::OpenPopup("Shaders");
-    }
-
-    if(ImGui::BeginPopupModal("Shaders", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
-    {
-        /*
-        for(const auto& shaderName : ResourceManager::getInstance()->getShaderNames())
-        {
-            if(ImGui::Button(shaderName.c_str()))
-            {
-                ptr = ResourceManager::getInstance()->getShader(shaderName);
-                ImGui::CloseCurrentPopup();
-            }
-        }
-        */
-        if(ImGui::Button("Close"))
-        {
-            ImGui::CloseCurrentPopup();
-        }
-        ImGui::EndPopup();
-    }
-    return ptr;
 }
 
 }  // namespace spark

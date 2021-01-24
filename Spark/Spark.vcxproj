@@ -121,7 +121,6 @@
     </PreLinkEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="ActorAI.cpp" />
     <ClCompile Include="BlurPass.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Clock.cpp" />
@@ -156,7 +155,6 @@
     <ClCompile Include="MeshPlane.cpp" />
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="ModelMesh.cpp" />
-    <ClCompile Include="NodeAI.cpp" />
     <ClCompile Include="Lights\PointLight.cpp" />
     <ClCompile Include="Resource.cpp" />
     <ClCompile Include="ResourceFactory.cpp" />
@@ -170,13 +168,11 @@
     <ClCompile Include="Lights\SpotLight.cpp" />
     <ClCompile Include="stb_image.cpp" />
     <ClCompile Include="Structs.cpp" />
-    <ClCompile Include="TerrainGenerator.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="Timer.cpp" />
     <ClCompile Include="WorldTransform.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ActorAI.h" />
     <ClInclude Include="BlurPass.h" />
     <ClInclude Include="Buffer.hpp" />
     <ClInclude Include="Camera.h" />
@@ -215,7 +211,6 @@
     <ClInclude Include="MeshPlane.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="ModelMesh.h" />
-    <ClInclude Include="NodeAI.h" />
     <ClInclude Include="Lights\PointLight.h" />
     <ClInclude Include="ReflectionUtils.h" />
     <ClInclude Include="RenderingRequest.h" />
@@ -230,7 +225,6 @@
     <ClInclude Include="Spark.h" />
     <ClInclude Include="Lights\SpotLight.h" />
     <ClInclude Include="Structs.h" />
-    <ClInclude Include="TerrainGenerator.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="WorldTransform.h" />

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "ActorAI.h"
 #include "Component.h"
 #include "Lights/DirectionalLight.h"
 #include "GameObject.h"
@@ -9,7 +8,6 @@
 #include "ModelMesh.h"
 #include "Lights/PointLight.h"
 #include "Lights/SpotLight.h"
-#include "TerrainGenerator.h"
 #include "Lights/LightProbe.h"
 #include <optional>
 
@@ -31,9 +29,7 @@ class SparkGui
 
     static std::shared_ptr<Component> addComponent();
     static std::shared_ptr<resources::Model> SparkGui::getModel();
-    static std::shared_ptr<resources::Texture> getTexture();
     static std::tuple<bool, std::shared_ptr<PbrCubemapTexture>> getCubemapTexture();
-    static std::shared_ptr<resources::Shader> getShader();
 
     template<typename T>
     static std::optional<T> getDraggedObject(std::string&& payloadName)
@@ -115,8 +111,6 @@ const static std::map<std::string, std::function<std::shared_ptr<Component>()>> 
     // TODO: replace with a reflection-based list
     {"ModelMesh", [] { return std::make_shared<ModelMesh>(); }},
     {"MeshPlane", [] { return std::make_shared<MeshPlane>(); }},
-    {"TerrainGenerator", [] { return std::make_shared<TerrainGenerator>(); }},
-    {"ActorAI", [] { return std::make_shared<ActorAI>(); }},
     {"DirectionalLight", [] { return std::make_shared<DirectionalLight>(); }},
     {"PointLight", [] { return std::make_shared<PointLight>(); }},
     {"SpotLight", [] { return std::make_shared<SpotLight>(); }},

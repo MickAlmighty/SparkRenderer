@@ -67,8 +67,6 @@ void ModelMesh::drawGUI()
         ImGui::Text("resources::Shader enum:");
         ImGui::SameLine();
         ImGui::Text(std::to_string(static_cast<int>(mesh->shaderType)).c_str());
-        SparkGui::getShader();
-        SparkGui::getTexture();
     }
 
     if(model != nullptr)

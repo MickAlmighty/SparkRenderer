@@ -93,12 +93,6 @@ void SparkRenderer::drawGui()
             ImGui::Checkbox("Motion Blur", &motionBlurEnable);
             ImGui::EndMenu();
         }
-        const std::string menuName7 = "Rendering Scene To Cubemap";
-        if(ImGui::BeginMenu(menuName7.c_str()))
-        {
-            ImGui::Checkbox("scene to cubemap rendering", &renderingToCubemap);
-            ImGui::EndMenu();
-        }
 
         ImGui::EndMenu();
     }
@@ -308,12 +302,6 @@ void SparkRenderer::renderPass()
         glDeleteFramebuffers(1, &lightProbeLightFbo);
         glDeleteFramebuffers(1, &lightProbeSkyboxFbo);
     }
-
-    /*if(renderingToCubemap)
-    {
-        renderSceneToCubemap();
-        renderingToCubemap = !renderingToCubemap;
-    }*/
 
     PUSH_DEBUG_GROUP(GUI);
     glDepthFunc(GL_LESS);
