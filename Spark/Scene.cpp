@@ -6,10 +6,10 @@
 
 #include <GUI/ImGui/imgui.h>
 
-#include <Camera.h>
-#include <HID.h>
-#include <GameObject.h>
-#include <JsonSerializer.h>
+#include "Camera.h"
+#include "GameObject.h"
+#include "HID/HID.h"
+#include "JsonSerializer.h"
 #include "Logging.h"
 #include "ResourceLoader.h"
 

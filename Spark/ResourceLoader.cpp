@@ -299,7 +299,7 @@ std::optional<std::shared_ptr<PbrCubemapTexture>> ResourceLoader::loadHdrTexture
 
     stbi_image_free(data);
 
-    auto tex = std::make_shared<PbrCubemapTexture>(hdrTexture, path, 512);
+    auto tex = std::make_shared<PbrCubemapTexture>(hdrTexture, path, 1024);
     glDeleteTextures(1, &hdrTexture);
     return tex;
 }
@@ -322,7 +322,7 @@ std::optional<Texture> ResourceLoader::loadTexture(const std::string& path, cons
     glTexParameteri(Target, GL_TEXTURE_SWIZZLE_G, Format.Swizzles[1]);
     glTexParameteri(Target, GL_TEXTURE_SWIZZLE_B, Format.Swizzles[2]);
     glTexParameteri(Target, GL_TEXTURE_SWIZZLE_A, Format.Swizzles[3]);
-    glTexParameterf(Target, GL_TEXTURE_MAX_ANISOTROPY_EXT, Spark::maxAnisotropicFiltering);
+    glTexParameterf(Target, GL_TEXTURE_MAX_ANISOTROPY, Spark::maxAnisotropicFiltering);
 
     glm::tvec3<GLsizei> const Extent(texture.extent());
     GLsizei const FaceTotal = static_cast<GLsizei>(texture.layers() * texture.faces());

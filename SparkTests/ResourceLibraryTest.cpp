@@ -43,7 +43,7 @@ inline void cleanupSpark()
 {
 	try
 	{
-		spark::Spark::clean();
+		spark::Spark::destroyOpenGLContext();
 	}
 	catch (std::exception & e)
 	{

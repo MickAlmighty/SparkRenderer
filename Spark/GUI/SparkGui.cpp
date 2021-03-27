@@ -59,7 +59,7 @@ void SparkGui::drawSparkSettings(bool* p_open)
     static char buf2[128];
     ImGui::InputTextWithHint("Path to Models", Spark::pathToModelMeshes.string().c_str(), buf1, 128);
     ImGui::InputTextWithHint("Path to Resources", Spark::pathToResources.string().c_str(), buf2, 128);*/
-
+    ImGui::Text("Framerate: %f", ImGui::GetIO().Framerate);
     ImGui::Text("Path to models:");
     ImGui::SameLine();
     ImGui::Text(Spark::pathToModelMeshes.string().c_str());
@@ -69,7 +69,7 @@ void SparkGui::drawSparkSettings(bool* p_open)
     bool vsync = Spark::vsync;
     ImGui::Checkbox("V-Sync", &vsync);
 
-    if (vsync != Spark::vsync)
+    if(vsync != Spark::vsync)
     {
         Spark::setVsync(vsync);
     }
@@ -158,7 +158,7 @@ std::shared_ptr<resources::Model> SparkGui::getModel()
 
     if(ImGui::BeginPopupModal("Models", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
     {
-         const auto modelIds = Spark::getResourceLibrary()->getResourceIdentifiers<resources::Model>();
+        const auto modelIds = Spark::getResourceLibrary()->getResourceIdentifiers<resources::Model>();
         for(const auto& id : modelIds)
         {
             if(ImGui::Button(id.getFullPath().string().c_str()))
@@ -177,39 +177,11 @@ std::shared_ptr<resources::Model> SparkGui::getModel()
     return model;
 }
 
-std::shared_ptr<resources::Texture> SparkGui::getTexture()
-{
-    std::shared_ptr<resources::Texture> texture{nullptr};
-
-    if(ImGui::Button("Add Texture"))
-    {
-        ImGui::OpenPopup("Textures");
-    }
-
-    if(ImGui::BeginPopupModal("Textures", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
-    {
-        const auto textureIds = Spark::getResourceLibrary()->getResourceIdentifiers<resources::Texture>();
-        for(const auto& id : textureIds)
-        {
-            if(ImGui::Button(id.getFullPath().string().c_str()))
-            {
-                texture = Spark::getResourceLibrary()->getResourceByPathWithOptLoad<resources::Texture>(id.getFullPath().string());
-                ImGui::CloseCurrentPopup();
-            }
-        }
-        if(ImGui::Button("Close"))
-        {
-            ImGui::CloseCurrentPopup();
-        }
-        ImGui::EndPopup();
-    }
-
-    return texture;
-}
-
-std::shared_ptr<PbrCubemapTexture> SparkGui::getCubemapTexture()
+std::tuple<bool, std::shared_ptr<PbrCubemapTexture>> SparkGui::getCubemapTexture()
 {
     std::shared_ptr<PbrCubemapTexture> ptr = nullptr;
+    bool hdrTexturePicked = false;
+
     if(ImGui::Button("Get CubemapTexture"))
     {
         ImGui::OpenPopup("Cubemap Textures");
@@ -217,7 +189,8 @@ std::shared_ptr<PbrCubemapTexture> SparkGui::getCubemapTexture()
 
     if(ImGui::BeginPopupModal("Cubemap Textures", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
     {
-        std::vector<std::string> cubemapTexturesPaths;
+        std::deque<std::string> cubemapTexturesPaths;
+
         auto directoryIt = std::filesystem::recursive_directory_iterator(Spark::pathToResources);
         for(const auto& directoryEntry : directoryIt)
         {
@@ -228,15 +201,24 @@ std::shared_ptr<PbrCubemapTexture> SparkGui::getCubemapTexture()
             }
         }
 
-        for(const auto& path : cubemapTexturesPaths)
+        cubemapTexturesPaths.push_front("none");
+        if(ImGui::Button(cubemapTexturesPaths[0].c_str()))
         {
-            if(ImGui::Button(path.c_str()))
+            ptr = nullptr;
+            hdrTexturePicked = true;
+            ImGui::CloseCurrentPopup();
+        }
+
+        for(size_t i = 1; i < cubemapTexturesPaths.size(); ++i)
+        {
+            if(ImGui::Button(cubemapTexturesPaths[i].c_str()))
             {
-                auto optional_ptr = ResourceLoader::loadHdrTexture(path);
+                auto optional_ptr = ResourceLoader::loadHdrTexture(cubemapTexturesPaths[i]);
                 if(optional_ptr)
                 {
                     ptr = optional_ptr.value();
                 }
+                hdrTexturePicked = true;
                 ImGui::CloseCurrentPopup();
             }
         }
@@ -247,36 +229,13 @@ std::shared_ptr<PbrCubemapTexture> SparkGui::getCubemapTexture()
         }
         ImGui::EndPopup();
     }
-    return ptr;
-}
 
-std::shared_ptr<resources::Shader> SparkGui::getShader()
-{
-    std::shared_ptr<resources::Shader> ptr = nullptr;
-    if(ImGui::Button("Get resources::Shader"))
+    if(hdrTexturePicked)
     {
-        ImGui::OpenPopup("Shaders");
+        return {hdrTexturePicked, ptr};
     }
 
-    if(ImGui::BeginPopupModal("Shaders", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
-    {
-        /*
-        for(const auto& shaderName : ResourceManager::getInstance()->getShaderNames())
-        {
-            if(ImGui::Button(shaderName.c_str()))
-            {
-                ptr = ResourceManager::getInstance()->getShader(shaderName);
-                ImGui::CloseCurrentPopup();
-            }
-        }
-        */
-        if(ImGui::Button("Close"))
-        {
-            ImGui::CloseCurrentPopup();
-        }
-        ImGui::EndPopup();
-    }
-    return ptr;
+    return {false, nullptr};
 }
 
 }  // namespace spark

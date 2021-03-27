@@ -31,50 +31,50 @@ void main()
     if (coc == 0)
         discard;
 
-	vec3 colorNeighs = vec3(0.0f);
-	colorNeighs += textureOffset(colorTexture, texCoords, ivec2(-2, -2), 0.0f).xyz;
-	colorNeighs += textureOffset(colorTexture, texCoords, ivec2(-2, -1), 0.0f).xyz;
-	colorNeighs += textureOffset(colorTexture, texCoords, ivec2(-2, 0), 0.0f).xyz;
-	colorNeighs += textureOffset(colorTexture, texCoords, ivec2(-2, 1), 0.0f).xyz;
-	colorNeighs += textureOffset(colorTexture, texCoords, ivec2(-2, 2), 0.0f).xyz;
+    vec3 colorNeighs = vec3(0.0f);
+    colorNeighs += textureOffset(colorTexture, texCoords, ivec2(-2, -2), 0.0f).xyz;
+    colorNeighs += textureOffset(colorTexture, texCoords, ivec2(-2, -1), 0.0f).xyz;
+    colorNeighs += textureOffset(colorTexture, texCoords, ivec2(-2, 0), 0.0f).xyz;
+    colorNeighs += textureOffset(colorTexture, texCoords, ivec2(-2, 1), 0.0f).xyz;
+    colorNeighs += textureOffset(colorTexture, texCoords, ivec2(-2, 2), 0.0f).xyz;
 
-	colorNeighs += textureOffset(colorTexture, texCoords, ivec2(-1, -2), 0.0f).xyz;
-	colorNeighs += textureOffset(colorTexture, texCoords, ivec2(-1, -1), 0.0f).xyz;
-	colorNeighs += textureOffset(colorTexture, texCoords, ivec2(-1, 0), 0.0f).xyz;
-	colorNeighs += textureOffset(colorTexture, texCoords, ivec2(-1, 1), 0.0f).xyz;
-	colorNeighs += textureOffset(colorTexture, texCoords, ivec2(-1, 2), 0.0f).xyz;
+    colorNeighs += textureOffset(colorTexture, texCoords, ivec2(-1, -2), 0.0f).xyz;
+    colorNeighs += textureOffset(colorTexture, texCoords, ivec2(-1, -1), 0.0f).xyz;
+    colorNeighs += textureOffset(colorTexture, texCoords, ivec2(-1, 0), 0.0f).xyz;
+    colorNeighs += textureOffset(colorTexture, texCoords, ivec2(-1, 1), 0.0f).xyz;
+    colorNeighs += textureOffset(colorTexture, texCoords, ivec2(-1, 2), 0.0f).xyz;
 
-	colorNeighs += textureOffset(colorTexture, texCoords, ivec2(0, -2), 0.0f).xyz;
-	colorNeighs += textureOffset(colorTexture, texCoords, ivec2(0, -1), 0.0f).xyz;
-	//without (0,0) -> center
-	colorNeighs += textureOffset(colorTexture, texCoords, ivec2(0, 1), 0.0f).xyz;
-	colorNeighs += textureOffset(colorTexture, texCoords, ivec2(0, 2), 0.0f).xyz;
+    colorNeighs += textureOffset(colorTexture, texCoords, ivec2(0, -2), 0.0f).xyz;
+    colorNeighs += textureOffset(colorTexture, texCoords, ivec2(0, -1), 0.0f).xyz;
+    //without (0,0) -> center
+    colorNeighs += textureOffset(colorTexture, texCoords, ivec2(0, 1), 0.0f).xyz;
+    colorNeighs += textureOffset(colorTexture, texCoords, ivec2(0, 2), 0.0f).xyz;
 
-	colorNeighs += textureOffset(colorTexture, texCoords, ivec2(1, -2), 0.0f).xyz;
-	colorNeighs += textureOffset(colorTexture, texCoords, ivec2(1, -1), 0.0f).xyz;
-	colorNeighs += textureOffset(colorTexture, texCoords, ivec2(1, 0), 0.0f).xyz;
-	colorNeighs += textureOffset(colorTexture, texCoords, ivec2(1, 1), 0.0f).xyz;
-	colorNeighs += textureOffset(colorTexture, texCoords, ivec2(1, 2), 0.0f).xyz;
+    colorNeighs += textureOffset(colorTexture, texCoords, ivec2(1, -2), 0.0f).xyz;
+    colorNeighs += textureOffset(colorTexture, texCoords, ivec2(1, -1), 0.0f).xyz;
+    colorNeighs += textureOffset(colorTexture, texCoords, ivec2(1, 0), 0.0f).xyz;
+    colorNeighs += textureOffset(colorTexture, texCoords, ivec2(1, 1), 0.0f).xyz;
+    colorNeighs += textureOffset(colorTexture, texCoords, ivec2(1, 2), 0.0f).xyz;
 
-	colorNeighs += textureOffset(colorTexture, texCoords, ivec2(2, -2), 0.0f).xyz;
-	colorNeighs += textureOffset(colorTexture, texCoords, ivec2(2, -1), 0.0f).xyz;
-	colorNeighs += textureOffset(colorTexture, texCoords, ivec2(2, 0), 0.0f).xyz;
-	colorNeighs += textureOffset(colorTexture, texCoords, ivec2(2, 1), 0.0f).xyz;
-	colorNeighs += textureOffset(colorTexture, texCoords, ivec2(2, 2), 0.0f).xyz;
+    colorNeighs += textureOffset(colorTexture, texCoords, ivec2(2, -2), 0.0f).xyz;
+    colorNeighs += textureOffset(colorTexture, texCoords, ivec2(2, -1), 0.0f).xyz;
+    colorNeighs += textureOffset(colorTexture, texCoords, ivec2(2, 0), 0.0f).xyz;
+    colorNeighs += textureOffset(colorTexture, texCoords, ivec2(2, 1), 0.0f).xyz;
+    colorNeighs += textureOffset(colorTexture, texCoords, ivec2(2, 2), 0.0f).xyz;
 
-	colorNeighs /= 24.0f;
-	vec3 colorCenter = texture(colorTexture, texCoords).xyz;
+    colorNeighs /= 24.0f;
+    vec3 colorCenter = texture(colorTexture, texCoords).xyz;
 
-	// Append pixel whose constrast is greater than the user's threshold
-	float lumNeighs = dot(colorNeighs , vec3 (0.299f, 0.587f, 0.114f));
-	float lumCenter = dot(colorCenter , vec3 (0.299f, 0.587f, 0.114f));
+    // Append pixel whose constrast is greater than the user's threshold
+    float lumNeighs = dot(colorNeighs , vec3 (0.299f, 0.587f, 0.114f));
+    float lumCenter = dot(colorCenter , vec3 (0.299f, 0.587f, 0.114f));
 
-	if((lumCenter - lumNeighs) > LumThreshold && coc > CoCThreshold)
-	{
-		int current = int(atomicCounterIncrement(BokehCounter));
+    if((lumCenter - lumNeighs) > LumThreshold && coc > CoCThreshold)
+    {
+        int current = int(atomicCounterIncrement(BokehCounter));
         if (current > 1023)
             return;
-		imageStore(BokehPositionTex, current, vec4(texCoords.x, texCoords.y, coc , coc));
-		imageStore(BokehColorTex, current, vec4(colorCenter, 1));
-	}
+        imageStore(BokehPositionTex, current, vec4(texCoords.x, texCoords.y, coc , coc));
+        imageStore(BokehColorTex, current, vec4(colorCenter, 1));
+    }
 }

@@ -10,32 +10,47 @@ uniform mat4 model;
 
 layout (std140) uniform Camera
 {
-	vec4 pos;
-	mat4 view;
-	mat4 projection;
-	mat4 invertedView;
-	mat4 invertedProjection;
+    vec4 pos;
+    mat4 view;
+    mat4 projection;
+    mat4 invertedView;
+    mat4 invertedProjection;
 } camera;
 
-out vec2 tex_coords;
-out mat3 viewTBN_matrix;
+layout(location = 0) out VS_OUT {
+    vec2 tex_coords;
+    mat3 viewTBN_matrix;
+    vec3 tangentFragPos;
+    vec3 tangentCamPos;
+} vs_out;
 
 void main()
 {
-	vec4 worldPosition = model * vec4(position, 1);
+    vec4 worldPosition = model * vec4(position, 1);
 
-	mat3 normalMatrix = transpose(inverse(mat3(model)));
-	vec3 T = normalize(normalMatrix * tangent);
-	vec3 N = normalize(normalMatrix * normal);
-	//T = normalize(T - dot(T, N) * N);
-	//vec3 B = cross(N, T);
-	vec3 B = normalize(normalMatrix * bitangent);
-	mat3 viewTBN = mat3(camera.view) * mat3(T, B, N);
-	viewTBN_matrix = viewTBN;
-   
-	tex_coords = texture_coords;
+    mat3 normalMatrix = transpose(inverse(mat3(model)));
+    vec3 T = normalize(normalMatrix * tangent);
+    vec3 N = normalize(normalMatrix * normal);
+    T = normalize(T - dot(T, N) * N);
+    vec3 B = cross(T, N);
+    //vec3 B = normalize(normalMatrix * bitangent);
+    mat3 TBN = mat3(T, B, N);
+    mat3 viewTBN = mat3(camera.view) * TBN;
+    mat3 inverseTBN = transpose(TBN);
 
-	gl_Position = camera.projection * camera.view * worldPosition;
+    // vec3 T1 = normalize(vec3(model * vec4(tangent, 0.0)));
+    // vec3 N1 = normalize(vec3(model * vec4(normal, 0.0)));
+    // T1 = normalize(T1 - dot(T1, N1) * N1);
+    // vec3 B1 = cross(T1, N1);
+    // //vec3 B1 = normalize(vec3(model * vec4(bitangent, 0.0)));
+    // mat3 TBN1 = mat3(T1, B1, N1);
+
+    vs_out.tangentFragPos = inverseTBN * worldPosition.xyz;
+    vs_out.tangentCamPos  = inverseTBN * camera.pos.xyz;
+    vs_out.tex_coords = texture_coords;
+    vs_out.viewTBN_matrix = viewTBN;
+
+    gl_Position = camera.projection * camera.view * worldPosition;
 }
 
 #type fragment
@@ -48,9 +63,56 @@ layout (binding = 1) uniform sampler2D diffuseTexture;
 layout (binding = 2) uniform sampler2D normalTexture;
 layout (binding = 3) uniform sampler2D roughnessTexture;
 layout (binding = 4) uniform sampler2D metalnessTexture;
+layout (binding = 5) uniform sampler2D heightTexture;
 
-in vec2 tex_coords;
-in mat3 viewTBN_matrix;
+layout(location = 0) in VS_OUT {
+    vec2 tex_coords;
+    mat3 viewTBN_matrix;
+    vec3 tangentFragPos;
+    vec3 tangentCamPos;
+} fs_in;
+
+const float heightScale = 0.05f;
+
+vec2 parallaxMapping(vec2 texCoords, vec3 viewDir)
+{
+    // number of depth layers
+    const float minLayers = 8.0;
+    const float maxLayers = 32.0;
+    float numLayers = mix(maxLayers, minLayers, abs(dot(vec3(0.0, 0.0, 1.0), viewDir)));
+    // calculate the size of each layer
+    float layerDepth = 1.0 / numLayers;
+    // depth of current layer
+    float currentLayerDepth = 0.0;
+    // the amount to shift the texture coordinates per layer (from vector P)
+    vec2 P = viewDir.xy * heightScale;
+    vec2 deltaTexCoords = P / numLayers;
+
+    vec2  currentTexCoords = texCoords;
+    float currentDepthMapValue = 1.0f - texture(heightTexture, currentTexCoords).r;
+
+    while (currentLayerDepth < currentDepthMapValue)
+    {
+        // shift texture coordinates along direction of P
+        currentTexCoords -= deltaTexCoords;
+        // get depthmap value at current texture coordinates
+        currentDepthMapValue = 1.0f - texture(heightTexture, currentTexCoords).r;
+        // get depth of next layer
+        currentLayerDepth += layerDepth;
+    }
+
+    vec2 prevTexCoords = currentTexCoords + deltaTexCoords;
+
+    // get depth after and before collision for linear interpolation
+    float afterDepth = currentDepthMapValue - currentLayerDepth;
+    float beforeDepth = (1.0f - texture(heightTexture, prevTexCoords).r) - currentLayerDepth + layerDepth;
+
+    // interpolation of texture coordinates
+    float weight = afterDepth / (afterDepth - beforeDepth);
+    vec2 finalTexCoords = prevTexCoords * weight + currentTexCoords * (1.0 - weight);
+
+    return finalTexCoords;
+}
 
 vec2 encodeViewSpaceNormal(vec3 n)
 {
@@ -80,11 +142,21 @@ vec3 accurateSRGBToLinear(vec3 sRGBColor)
 
 void main()
 {
+    vec2 tex_coords = fs_in.tex_coords;
+    if (texture(heightTexture, fs_in.tex_coords).r != 0.0) 
+    {
+        vec3 tangentViewDir = normalize(fs_in.tangentCamPos - fs_in.tangentFragPos);
+        tex_coords = parallaxMapping(fs_in.tex_coords, tangentViewDir);
+    }
+
+    if (tex_coords.x > 1.0 || tex_coords.x < 0.0 || tex_coords.y > 1.0 || tex_coords.y < 0.0)
+        discard;
+
     FragColor.rgb = accurateSRGBToLinear(texture(diffuseTexture, tex_coords).rgb);
 
-    vec3 normalFromTexture = texture(normalTexture, tex_coords).xyz;
+    vec3 normalFromTexture = vec3(texture(normalTexture, tex_coords).xy, 1.0f);
     normalFromTexture = normalize(normalFromTexture * 2.0 - 1.0);
-    vec3 viewNormal = normalize(viewTBN_matrix * normalFromTexture);
+    vec3 viewNormal = normalize(fs_in.viewTBN_matrix * normalFromTexture);
     vec2 encodedNormal = encodeViewSpaceNormal(viewNormal);
     Normal.rg = encodedNormal;
 

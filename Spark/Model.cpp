@@ -93,7 +93,7 @@ std::map<TextureTarget, std::shared_ptr<resources::Texture>> findTextures(const 
     std::map<TextureTarget, std::shared_ptr<resources::Texture>> textures;
     for(auto& texture_path : std::filesystem::recursive_directory_iterator(modelDirectory))
     {
-        size_t size = texture_path.path().string().find("_Diffuse.DDS");
+        size_t size = texture_path.path().string().find("_Diffuse");
         if(size != std::string::npos)
         {
             std::shared_ptr<resources::Texture> texture = Spark::getResourceLibrary()->getResourceByPath<resources::Texture>(texture_path.path().string());
@@ -101,25 +101,40 @@ std::map<TextureTarget, std::shared_ptr<resources::Texture>> findTextures(const 
             continue;
         }
 
-        size = texture_path.path().string().find("_Normal.DDS");
+        size = texture_path.path().string().find("_Normal");
         if(size != std::string::npos)
         {
             std::shared_ptr<resources::Texture> texture = Spark::getResourceLibrary()->getResourceByPath<resources::Texture>(texture_path.path().string());
             textures.emplace(TextureTarget::NORMAL_TARGET, texture);
         }
 
-        size = texture_path.path().string().find("_Roughness.DDS");
+        size = texture_path.path().string().find("_Roughness");
         if(size != std::string::npos)
         {
             std::shared_ptr<resources::Texture> texture = Spark::getResourceLibrary()->getResourceByPath<resources::Texture>(texture_path.path().string());
             textures.emplace(TextureTarget::ROUGHNESS_TARGET, texture);
         }
 
-        size = texture_path.path().string().find("_Metalness.DDS");
+        size = texture_path.path().string().find("_Metalness");
         if(size != std::string::npos)
         {
             std::shared_ptr<resources::Texture> texture = Spark::getResourceLibrary()->getResourceByPath<resources::Texture>(texture_path.path().string());
             textures.emplace(TextureTarget::METALNESS_TARGET, texture);
+        }
+
+        size = texture_path.path().string().find("_Height");
+        if(size != std::string::npos)
+        {
+            std::shared_ptr<resources::Texture> texture = Spark::getResourceLibrary()->getResourceByPath<resources::Texture>(texture_path.path().string());
+            textures.emplace(TextureTarget::HEIGHT_TARGET, texture);
+        }
+
+        size = texture_path.path().string().find("_AO");
+        if(size != std::string::npos)
+        {
+            std::shared_ptr<resources::Texture> texture =
+                Spark::getResourceLibrary()->getResourceByPath<resources::Texture>(texture_path.path().string());
+            textures.emplace(TextureTarget::AO_TARGET, texture);
         }
     }
 
@@ -157,13 +172,13 @@ std::shared_ptr<Mesh> Model::loadMesh(aiMesh* assimpMesh, const std::filesystem:
 
         if(assimpMesh->HasTangentsAndBitangents())
         {
-            tangent[i].x = assimpMesh->mTangents->x;
-            tangent[i].y = assimpMesh->mTangents->y;
-            tangent[i].z = assimpMesh->mTangents->z;
+            tangent[i].x = assimpMesh->mTangents[i].x;
+            tangent[i].y = assimpMesh->mTangents[i].y;
+            tangent[i].z = assimpMesh->mTangents[i].z;
 
-            biTangent[i].x = assimpMesh->mBitangents->x;
-            biTangent[i].y = assimpMesh->mBitangents->y;
-            biTangent[i].z = assimpMesh->mBitangents->z;
+            biTangent[i].x = assimpMesh->mBitangents[i].x;
+            biTangent[i].y = assimpMesh->mBitangents[i].y;
+            biTangent[i].z = assimpMesh->mBitangents[i].z;
         }
     }
 

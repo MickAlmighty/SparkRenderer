@@ -116,16 +116,22 @@ std::optional<ResourceProcessingInfo> ResourceLibrary::popFromGPUQueue()
 
     auto processingInfo = std::move(gpuQueue->front());
     gpuQueue->pop_front();
-    return processingInfo;
+    return {processingInfo};
 }
 
 void ResourceLibrary::processPendingResourcesLoop()
 {
-    while(joinLoaderThread.load() != true)
+    while(true)
     {
         findAndAddProperResourcesToPendingQueue();
 
         auto processingInfoOpt = popFromPendingQueue();
+
+        if (joinLoaderThread.load() == true && processingInfoOpt == std::nullopt)
+        {
+           break;
+        }
+
         if(processingInfoOpt == std::nullopt)
         {
             std::this_thread::sleep_for(std::chrono::microseconds(100));
@@ -207,10 +213,15 @@ void ResourceLibrary::addResourcesToPendingQueue(const std::vector<std::shared_p
 
 void ResourceLibrary::checkCpuResourceStatusLoop()
 {
-    while(joinLoaderThread.load() != true)
+    while(true)
     {
         auto processingProcessingStatusOpt = popFromCpuQueue();
 
+        if (joinLoaderThread.load() == true && processingProcessingStatusOpt == std::nullopt)
+        {
+           break;
+        }
+        
         if(processingProcessingStatusOpt == std::nullopt)
         {
             std::this_thread::sleep_for(std::chrono::microseconds(100));

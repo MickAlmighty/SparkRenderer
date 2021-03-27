@@ -67,7 +67,6 @@
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalOptions>"$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.lib" "$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.a" "$(SolutionDir)thirdparty\lib\CommonLib\*.lib" "$(SolutionDir)thirdparty\lib\CommonLib\*.a" /VERBOSE:UNUSEDLIBS %(AdditionalOptions)</AdditionalOptions>
       <AdditionalLibraryDirectories>$(SolutionDir)thirdparty\lib\CommonLib;$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
@@ -117,9 +116,6 @@ if not exist "$(TargetDir)scene.json" (xcopy "$(ProjectDir)scene.json" "$(Target
     <None Include="imgui.ini" />
     <None Include="scene.json" />
     <None Include="settings.json" />
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="map.png" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Spark\Spark.vcxproj">

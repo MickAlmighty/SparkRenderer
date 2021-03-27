@@ -1,5 +1,4 @@
-#ifndef SHAPE_CREATOR_H
-#define SHAPE_CREATOR_H
+#pragma once
 
 #include <glm/vec2.hpp>
 #include <vector>
@@ -18,4 +17,3 @@ namespace spark
         static void createTriangle(std::vector<glm::vec3>* vertices, const glm::vec3& up, const glm::vec3& right, const glm::vec3& left, glm::vec3 centerPoint);
     };
 }
-#endif

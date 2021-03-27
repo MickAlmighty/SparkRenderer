@@ -1,5 +1,4 @@
-#ifndef MODEL_MESH_H
-#define MODEL_MESH_H
+#pragma once
 
 #include <vector>
 
@@ -38,4 +37,3 @@ class ModelMesh final : public Component
 };
 
 }  // namespace spark
-#endif

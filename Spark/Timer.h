@@ -1,5 +1,4 @@
-#ifndef TIMER_H
-#define TIMER_H
+#pragma once
 
 #include <map>
 #include <chrono>
@@ -20,5 +19,3 @@ class Timer
     std::chrono::time_point<std::chrono::steady_clock> startTime;
 };
 }  // namespace spark
-
-#endif

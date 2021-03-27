@@ -174,7 +174,7 @@ void Texture::createGpuCompressedTexture()
     glTexParameteri(Target, GL_TEXTURE_SWIZZLE_G, Format.Swizzles[1]);
     glTexParameteri(Target, GL_TEXTURE_SWIZZLE_B, Format.Swizzles[2]);
     glTexParameteri(Target, GL_TEXTURE_SWIZZLE_A, Format.Swizzles[3]);
-    glTexParameterf(Target, GL_TEXTURE_MAX_ANISOTROPY_EXT, Spark::maxAnisotropicFiltering);
+    glTexParameterf(Target, GL_TEXTURE_MAX_ANISOTROPY, Spark::maxAnisotropicFiltering);
 
     glm::tvec3<GLsizei> const Extent(compressedTextureData.extent());
     GLsizei const FaceTotal = static_cast<GLsizei>(compressedTextureData.layers() * compressedTextureData.faces());

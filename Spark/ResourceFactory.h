@@ -1,5 +1,4 @@
-#ifndef RESOURCE_FACTORY_H
-#define RESOURCE_FACTORY_H
+#pragma once
 
 #include <filesystem>
 #include <map>
@@ -26,4 +25,3 @@ class ResourceFactory
     static std::map<std::filesystem::path, std::function<std::shared_ptr<Resource>(const ResourceIdentifier & id)>> resourceCreationFunctions;
 };
 }
-#endif

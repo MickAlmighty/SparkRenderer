@@ -1,5 +1,4 @@
-#ifndef RESOURCE_IDENTIFIER_H
-#define RESOURCE_IDENTIFIER_H
+#pragma once
 
 #include <filesystem>
 
@@ -35,5 +34,3 @@ namespace resourceManagement
     };
 }
 }
-
-#endif

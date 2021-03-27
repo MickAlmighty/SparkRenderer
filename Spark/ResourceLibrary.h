@@ -1,5 +1,4 @@
-#ifndef RESOURCE_LIBRARY_H
-#define RESOURCE_LIBRARY_H
+#pragma once
 
 #include <deque>
 #include <filesystem>
@@ -66,9 +65,6 @@ class ResourceLibrary
     std::shared_ptr<T> getResourceByPathWithOptLoad(const std::string& path);
 
     template<typename T>
-    std::shared_ptr<T> getResourceOptLoad(const std::function<bool(const std::shared_ptr<Resource>& resourcePtr)>& searchFunc);
-
-    template<typename T>
     std::vector<std::shared_ptr<T>> getResourcesOfType() const;
 
     private:
@@ -81,6 +77,9 @@ class ResourceLibrary
     sf::contfree_safe_ptr<std::deque<ResourceProcessingInfo>> pendingResources;
     sf::contfree_safe_ptr<std::deque<std::shared_future<ResourceProcessingInfo>>> cpuQueue;
     sf::contfree_safe_ptr<std::deque<ResourceProcessingInfo>> gpuQueue;
+
+    template<typename T>
+    std::shared_ptr<T> getResourceOptLoad(const std::function<bool(const std::shared_ptr<Resource>& resourcePtr)>& searchFunc);
 
     void pushToPendingQueue(const ResourceProcessingInfo&& processingInfo);
     std::optional<ResourceProcessingInfo> popFromPendingQueue();
@@ -190,9 +189,9 @@ std::shared_ptr<T> ResourceLibrary::getResourceByPathWithOptLoad(const std::stri
 }
 
 template<typename T>
-std::shared_ptr<T> ResourceLibrary::getResourceOptLoad(const std::function<bool(const std::shared_ptr<Resource>& resourcePtr)>& getResourceOptLoad)
+std::shared_ptr<T> ResourceLibrary::getResourceOptLoad(const std::function<bool(const std::shared_ptr<Resource>& resourcePtr)>& searchFunc)
 {
-    const auto it = std::find_if(resources->begin(), resources->end(), getResourceOptLoad);
+    const auto it = std::find_if(resources->begin(), resources->end(), searchFunc);
 
     if(it == resources->end())
     {
@@ -271,5 +270,3 @@ std::vector<typename std::iterator_traits<InputIterator>::value_type> ResourceLi
     return result;
 }
 }  // namespace spark::resourceManagement
-
-#endif

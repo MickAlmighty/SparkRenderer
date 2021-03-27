@@ -102,7 +102,7 @@ extern "C" {
 #ifdef _WIN32
     #ifndef APIENTRY
         #define APIENTRY
-    #elif
+    #else
         #define GLFW_APIENTRY_DEFINED
     #endif
 #endif

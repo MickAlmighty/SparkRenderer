@@ -1,5 +1,4 @@
-#ifndef STRUCTS_H
-#define STRUCTS_H
+#pragma once
 
 #include <array>
 #include <vector>
@@ -29,59 +28,13 @@ namespace resources
     class Shader;
 };
 
-struct Uniform final
-{
-    std::string name{};
-    std::string type{};
-    GLint location{0};
-
-    bool operator!=(const Uniform& rhs) const
-    {
-        return this->name != rhs.name || this->type != rhs.type;
-    }
-    bool operator<(const Uniform& rhs) const
-    {
-        return this->name < rhs.name;
-    }
-};
-
-struct UniformBlock final
-{
-    std::string name{};
-    GLint blockIndex{0};
-
-    bool operator!=(const UniformBlock& rhs) const
-    {
-        return this->name != rhs.name;
-    }
-    bool operator<(const UniformBlock& rhs) const
-    {
-        return this->name < rhs.name;
-    }
-};
-
-struct ShaderStorageBuffer final
-{
-    std::string name{};
-    GLint blockIndex{0};
-
-    bool operator!=(const ShaderStorageBuffer& rhs) const
-    {
-        return this->name != rhs.name;
-    }
-    bool operator<(const ShaderStorageBuffer& rhs) const
-    {
-        return this->name < rhs.name;
-    }
-};
-
 struct InitializationVariables final
 {
-    unsigned int width;
-    unsigned int height;
-    std::string pathToModels;
-    std::string pathToResources;
-    bool vsync;
+    unsigned int width{};
+    unsigned int height{};
+    std::string pathToModels{};
+    std::string pathToResources{};
+    bool vsync{true};
     RTTR_ENABLE();
 };
 
@@ -104,29 +57,26 @@ struct PbrCubemapTexture final
     GLuint cubemap{};
     GLuint irradianceCubemap{};
     GLuint prefilteredCubemap{};
-    GLuint brdfLUTTexture{};
 
     const std::string getPath();
 
     PbrCubemapTexture(GLuint hdrTexture, const std::string& path, unsigned int size = 1024);
     ~PbrCubemapTexture();
 
+    static GLuint createIrradianceCubemap(GLuint framebuffer, GLuint environmentCubemap, Cube& cube,
+                                          const std::shared_ptr<resources::Shader>& irradianceShader);
+    static GLuint createPreFilteredCubemap(GLuint framebuffer, GLuint environmentCubemap, unsigned int envCubemapSize, Cube& cube,
+                                           const std::shared_ptr<resources::Shader>& prefilterShader,
+                                           const std::shared_ptr<resources::Shader>& resampleCubemapShader);
+
     private:
     std::string path{};
-    std::array<glm::mat4, 6> viewMatrices{};
-    glm::mat4 projection{};
 
-    std::shared_ptr<resources::Shader> equirectangularToCubemapShader{nullptr};
-    std::shared_ptr<resources::Shader> irradianceShader{nullptr};
-    std::shared_ptr<resources::Shader> prefilterShader{nullptr};
-    std::shared_ptr<resources::Shader> brdfShader{nullptr};
-
-    void setup(GLuint hdrTexture, unsigned int size);
-    GLuint createEnvironmentCubemapWithMipmapChain(GLuint framebuffer, GLuint equirectangularTexture, unsigned int size, Cube& cube) const; 
-    GLuint createIrradianceCubemap(GLuint framebuffer, GLuint environmentCubemap, Cube& cube) const; 
-    GLuint createPreFilteredCubemap(GLuint framebuffer, GLuint environmentCubemap, unsigned int envCubemapSize, Cube& cube) const;
-    GLuint createBrdfLookupTexture(GLuint framebuffer, unsigned int envCubemapSize) const;
-    GLuint createCubemapAndCopyDataFromFirstLayerOf(GLuint cubemap, unsigned int cubemapSize) const;
+    void setup(GLuint hdrTexture, unsigned int cubemapSize);
+    static GLuint createEnvironmentCubemapWithMipmapChain(GLuint framebuffer, GLuint equirectangularTexture, unsigned int size, Cube& cube,
+                                                          const std::shared_ptr<resources::Shader>& equirectangularToCubemapShader);
+    static GLuint createBrdfLookupTexture(GLuint framebuffer, unsigned int envCubemapSize, const std::shared_ptr<resources::Shader>& brdfShader);
+    static GLuint createCubemapAndCopyDataFromFirstLayerOf(GLuint cubemap, unsigned int cubemapSize);
 };
 
 struct Vertex final
@@ -178,13 +128,9 @@ struct ScreenQuad final
     GLuint vbo{};
 
     std::vector<QuadVertex> vertices = {
-        {{-1.0f, 1.0f, 0.0f}, {0.0f, 1.0f}},
-        {{1.0f, -1.0f, 0.0f}, {1.0f, 0.0f}},
-        {{1.0f, 1.0f, 0.0f}, {1.0f, 1.0f}},
+        {{-1.0f, 1.0f, 0.0f}, {0.0f, 1.0f}}, {{1.0f, -1.0f, 0.0f}, {1.0f, 0.0f}},  {{1.0f, 1.0f, 0.0f}, {1.0f, 1.0f}},
 
-        {{-1.0f, 1.0f, 0.0f}, {0.0f, 1.0f}},
-        {{-1.0f, -1.0f, 0.0f}, {0.0f, 0.0f}},
-        {{1.0f, -1.0f, 0.0f}, {1.0f, 0.0f}}};
+        {{-1.0f, 1.0f, 0.0f}, {0.0f, 1.0f}}, {{-1.0f, -1.0f, 0.0f}, {0.0f, 0.0f}}, {{1.0f, -1.0f, 0.0f}, {1.0f, 0.0f}}};
 
     void setup()
     {
@@ -239,147 +185,6 @@ struct Cube final
     }
 };
 
-template<GLenum BUFFER_TYPE>
-struct Buffer
-{
-    static inline std::set<uint32_t> bindings{};
-    static inline std::set<uint32_t> freedBindings{};
-
-    GLuint ID{0};
-    GLint binding{-1};
-    GLsizei size{0};
-
-    Buffer() = default;
-    Buffer(const Buffer& buffer) = default;
-    Buffer& operator=(const Buffer& buffer) = default;
-    ~Buffer() = default;
-
-    void genBuffer(size_t sizeInBytes = 0)
-    {
-        size = static_cast<GLsizei>(sizeInBytes);
-        glGenBuffers(1, &ID);
-        glBindBuffer(BUFFER_TYPE, ID);
-        glBufferData(BUFFER_TYPE, size, nullptr, GL_DYNAMIC_DRAW);
-        glBindBuffer(BUFFER_TYPE, 0);
-        getBinding();
-    }
-
-    void bind() const
-    {
-        glBindBuffer(BUFFER_TYPE, ID);
-    }
-
-    void unbind() const
-    {
-        glBindBuffer(BUFFER_TYPE, 0);
-    }
-
-    template<typename T>
-    void updateData(const std::vector<T>& buffer)
-    {
-        const size_t vectorSize = buffer.size() * sizeof(T);
-        if(vectorSize < size || vectorSize > size)
-        {
-            // SPARK_WARN("Trying to update SSBO with a vector with too large size! SSBO size: {}, vector size: {}. Buffer will be resized and update
-            // will be processed!", size, vectorSize);
-            size = static_cast<GLsizei>(vectorSize);
-            glNamedBufferData(ID, vectorSize, buffer.data(), GL_DYNAMIC_DRAW);
-        }
-        else
-        {
-            glNamedBufferSubData(ID, 0, vectorSize, buffer.data());
-        }
-    }
-
-    template<typename T>
-    void updateSubData(size_t offsetFromBeginning, const std::vector<T>& buffer)
-    {
-        const size_t vectorSize = buffer.size() * sizeof(T);
-        const GLintptr offset = static_cast<GLintptr>(offsetFromBeginning);
-
-        if(offset > size)
-        {
-            return;
-        }
-        if(offset + vectorSize > size)
-        {
-            return;
-        }
-
-        glNamedBufferSubData(ID, offset, vectorSize, buffer.data());
-    }
-
-    void clearBuffer() const
-    {
-        glClearNamedBufferData(ID, GL_R32F, GL_RED, GL_FLOAT, nullptr);
-    }
-
-    void cleanup()
-    {
-        glDeleteBuffers(1, &ID);
-        ID = 0;
-        freeBinding();
-    }
-
-    private:
-    void getBinding()
-    {
-        if(!freedBindings.empty())
-        {
-            binding = *freedBindings.begin();
-            freedBindings.erase(freedBindings.begin());
-            return;
-        }
-        if(bindings.empty())
-        {
-            bindings.insert(0);
-            binding = 0;
-        }
-        else
-        {
-            binding = *std::prev(bindings.end()) + 1;
-            bindings.insert(binding);
-        }
-    };
-
-    void freeBinding()
-    {
-        const auto it = bindings.find(binding);
-        if(it != bindings.end())
-        {
-            freedBindings.insert(*it);
-            bindings.erase(it);
-            binding = -1;
-        }
-    }
-};
-using SSBO = Buffer<GL_SHADER_STORAGE_BUFFER>;
-using UniformBuffer = Buffer<GL_UNIFORM_BUFFER>;
-using ElementArrayBuffer = Buffer<GL_ELEMENT_ARRAY_BUFFER>;
-using VertexBuffer = Buffer<GL_ARRAY_BUFFER>;
-
-struct DirectionalLightData final
-{
-    alignas(16) glm::vec3 direction;
-    alignas(16) glm::vec3 color;  // strength baked into color
-};
-
-struct PointLightData final
-{
-    alignas(16) glm::vec4 positionAndRadius;
-    alignas(16) glm::vec3 color;  // strength baked into color
-    alignas(16) glm::mat4 modelMat;
-};
-
-struct SpotLightData final
-{
-    alignas(16) glm::vec3 position;
-    float cutOff;
-    glm::vec3 color;  // strength baked into color
-    float outerCutOff;
-    glm::vec3 direction;
-};
-
 struct DrawArraysIndirectCommand final
 {
     GLuint count;
@@ -389,4 +194,3 @@ struct DrawArraysIndirectCommand final
 };
 
 }  // namespace spark
-#endif

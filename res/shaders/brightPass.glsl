@@ -38,13 +38,13 @@ float linearDistance(float x, float near, float far)
 
 vec3 ACESFilm(vec3 x)
 {
-	float a = 2.51f;
+    float a = 2.51f;
     float b = 0.03f;
     float c = 2.43f;
     float d = 0.59f;
     float e = 0.14f;
-	vec3 color = clamp((x * (a * x + b)) / (x * (c * x + d) + e), 0.0f, 1.0f);
-	return color;
+    vec3 color = clamp((x * (a * x + b)) / (x * (c * x + d) + e), 0.0f, 1.0f);
+    return color;
 }
 
 const float power = 4.0f;
@@ -60,14 +60,14 @@ void main()
 {
     vec3 lightColor = texture(lightTexture, texCoords).xyz;
     BrightColor = brightPass(lightColor);
-	//float brightness = dot(lightColor, luminance);
+    //float brightness = dot(lightColor, luminance);
     vec3 col = ACESFilm(lightColor);
-	if (length(col) > 0.9f)
-	{
+    if (length(col) > 0.9f)
+    {
 
         BrightColor = col;//ACESFilm(lightColor);
         //BrightColor = vec3(distance);
-	}
-	else
-		BrightColor = vec3(0.0f);
+    }
+    else
+        BrightColor = vec3(0.0f);
 }

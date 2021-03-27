@@ -1,6 +1,6 @@
-#ifndef COMMON_UTILS_H
-#define COMMON_UTILS_H
+#pragma once
 
+#include <array>
 #include <vector>
 
 #include <glad/glad.h>
@@ -13,7 +13,7 @@
         glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, static_cast<GLsizei>(message.length()), message.data()); \
     }
 
-#define POP_DEBUG_GROUP() glPopDebugGroup()
+#define POP_DEBUG_GROUP() glPopDebugGroup();
 
 namespace spark
 {
@@ -38,7 +38,7 @@ namespace utils
 
     glm::mat4 getProjectionReversedZInfFar(uint32_t width, uint32_t height, float fovDegrees, float zNear);
     glm::mat4 getProjectionReversedZ(uint32_t width, uint32_t height, float fovDegrees, float zNear, float zFar);
+
+    std::array<glm::mat4, 6> getCubemapViewMatrices(glm::vec3 cameraPosition);
 }  // namespace utils
 }  // namespace spark
-
-#endif

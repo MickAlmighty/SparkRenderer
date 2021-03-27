@@ -1,5 +1,4 @@
-#ifndef LOCAL_TRANSFORM_H
-#define LOCAL_TRANSFORM_H
+#pragma once
 
 #include <rttr/registration_friend>
 #include <rttr/registration>
@@ -45,4 +44,3 @@ class LocalTransform final
 };
 
 }  // namespace spark
-#endif

@@ -24,9 +24,4 @@
     <None Include="imgui.ini" />
     <None Include="scene.json" />
   </ItemGroup>
-  <ItemGroup>
-    <Image Include="map.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-  </ItemGroup>
 </Project>

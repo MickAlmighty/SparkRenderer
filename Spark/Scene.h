@@ -1,15 +1,14 @@
-#ifndef SCENE_H
-#define SCENE_H
-
-#include "Structs.h"
-#include "LightManager.h"
-
-#include <rttr/registration_friend>
-#include <rttr/registration>
+#pragma once
 
 #include <memory>
 #include <list>
 #include <functional>
+
+#include <rttr/registration_friend>
+#include <rttr/registration>
+
+#include "Structs.h"
+#include "Lights/LightManager.h"
 
 namespace spark
 {
@@ -57,4 +56,3 @@ class Scene final : public std::enable_shared_from_this<Scene>
 };
 
 }  // namespace spark
-#endif

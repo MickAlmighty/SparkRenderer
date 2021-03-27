@@ -1,5 +1,4 @@
-#ifndef MESH_H
-#define MESH_H
+#pragma once
 
 #include <vector>
 #include <map>
@@ -31,7 +30,6 @@ class Mesh : public std::enable_shared_from_this<Mesh>, public resourceManagemen
          std::string&& newName_ = "Mesh", ShaderType shaderType = ShaderType::DEFAULT_SHADER);
     ~Mesh() = default;
 
-    void addToRenderQueue(glm::mat4 model);
     void draw(std::shared_ptr<resources::Shader>& shader, glm::mat4 model);
     void cleanup();
 
@@ -45,4 +43,3 @@ class Mesh : public std::enable_shared_from_this<Mesh>, public resourceManagemen
 };
 
 }  // namespace spark
-#endif

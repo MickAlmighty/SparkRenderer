@@ -15,11 +15,14 @@
 #include "CommonUtils.h"
 #include "DepthOfFieldPass.h"
 #include "EngineSystems/SceneManager.h"
+#include "Lights/LightProbe.h"
+#include "RenderingRequest.h"
 #include "ResourceLibrary.h"
 #include "Scene.h"
 #include "Spark.h"
 #include "Clock.h"
 #include "Logging.h"
+#include "Timer.h"
 
 namespace spark
 {
@@ -97,15 +100,14 @@ void SparkRenderer::drawGui()
 
 void SparkRenderer::setup()
 {
-    cameraUBO.genBuffer();
     const std::uniform_real_distribution<float> randomFloats(0.0, 1.0);  // random floats between 0.0 - 1.0
     std::default_random_engine generator;
     const auto generateSsaoSamples = [this, &randomFloats, &generator] {
-        std::vector<glm::vec3> ssaoKernel;
+        std::vector<glm::vec4> ssaoKernel;
         ssaoKernel.reserve(64);
         for(unsigned int i = 0; i < 64; ++i)
         {
-            glm::vec3 sample(randomFloats(generator) * 2.0f - 1.0f, randomFloats(generator) * 2.0f - 1.0f, randomFloats(generator));
+            glm::vec4 sample(randomFloats(generator) * 2.0f - 1.0f, randomFloats(generator) * 2.0f - 1.0f, randomFloats(generator), 0.0f);
             sample = glm::normalize(sample);
             sample *= randomFloats(generator);
 
@@ -115,7 +117,7 @@ void SparkRenderer::setup()
 
             ssaoKernel.push_back(sample);
         }
-        sampleUniformBuffer.genBuffer();
+        sampleUniformBuffer.resizeBuffer(64 * sizeof(glm::vec4));
         sampleUniformBuffer.updateData(ssaoKernel);
     };
 
@@ -136,9 +138,14 @@ void SparkRenderer::setup()
 
     unsigned char red = 255;
     utils::createTexture2D(ssaoDisabledTexture, 1, 1, GL_RED, GL_RED, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_NEAREST, false, &red);
-    utils::createTexture2D(averageLuminance, 1, 1, GL_R16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
+    utils::createTexture2D(averageLuminanceTexture, 1, 1, GL_R16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
 
-    luminanceHistogram.genBuffer(256 * sizeof(uint32_t));
+    luminanceHistogram.resizeBuffer(256 * sizeof(uint32_t));
+    pointLightIndices.resizeBuffer(256 * (uint32_t)glm::ceil(Spark::HEIGHT / 16.0f) * (uint32_t)glm::ceil(Spark::WIDTH / 16.0f) * sizeof(uint32_t));
+    spotLightIndices.resizeBuffer(256 * (uint32_t)glm::ceil(Spark::HEIGHT / 16.0f) * (uint32_t)glm::ceil(Spark::WIDTH / 16.0f) * sizeof(uint32_t));
+    lightProbeIndices.resizeBuffer(256 * (uint32_t)glm::ceil(Spark::HEIGHT / 16.0f) * (uint32_t)glm::ceil(Spark::WIDTH / 16.0f) * sizeof(uint32_t));
+    cubemapViewMatrices.resizeBuffer(sizeof(glm::mat4) * 6);
+    cubemapViewMatrices.updateData(utils::getCubemapViewMatrices(glm::vec3(0)));
     brdfLookupTexture = utils::createBrdfLookupTexture(1024);
 
     initMembers();
@@ -162,7 +169,15 @@ void SparkRenderer::initMembers()
     luminanceHistogramComputeShader = Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("luminanceHistogramCompute.glsl");
     averageLuminanceComputeShader = Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("averageLuminanceCompute.glsl");
     fxaaShader = Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("fxaa.glsl");
-    downscaleShader = Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("downScale.glsl");
+    bloomDownScaleShader = Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("bloomDownScale.glsl");
+    bloomUpScaleShader = Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("bloomUpScale.glsl");
+    tileBasedLightCullingShader = Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("tileBasedLightCulling.glsl");
+    tileBasedLightingShader = Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("tileBasedLighting.glsl");
+    localLightProbesLightingShader = Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("localLightProbesLighting.glsl");
+    equirectangularToCubemapShader = Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("equirectangularToCubemap.glsl");
+    irradianceShader = Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("irradiance.glsl");
+    prefilterShader = Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("prefilter.glsl");
+    resampleCubemapShader = Spark::getResourceLibrary()->getResourceByNameWithOptLoad<resources::Shader>("resampleCubemap.glsl");
 
     dofPass = std::make_unique<DepthOfFieldPass>(Spark::WIDTH, Spark::HEIGHT);
     ssaoBlurPass = std::make_unique<BlurPass>(Spark::WIDTH / 2, Spark::HEIGHT / 2);
@@ -177,10 +192,12 @@ void SparkRenderer::initMembers()
 
 void SparkRenderer::updateBufferBindings() const
 {
+    const auto& lightManager = SceneManager::getInstance()->getCurrentScene()->lightManager;
+
     lightShader->use();
-    lightShader->bindSSBO("DirLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->dirLightSSBO);
-    lightShader->bindSSBO("PointLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->pointLightSSBO);
-    lightShader->bindSSBO("SpotLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->spotLightSSBO);
+    lightShader->bindSSBO("DirLightData", lightManager->getDirLightSSBO());
+    lightShader->bindSSBO("PointLightData", lightManager->getPointLightSSBO());
+    lightShader->bindSSBO("SpotLightData", lightManager->getSpotLightSSBO());
 
     mainShader->bindUniformBuffer("Camera", cameraUBO);
     lightShader->bindUniformBuffer("Camera", cameraUBO);
@@ -193,6 +210,47 @@ void SparkRenderer::updateBufferBindings() const
 
     luminanceHistogramComputeShader->bindSSBO("LuminanceHistogram", luminanceHistogram);
     averageLuminanceComputeShader->bindSSBO("LuminanceHistogram", luminanceHistogram);
+
+    tileBasedLightCullingShader->bindUniformBuffer("Camera", cameraUBO);
+    tileBasedLightCullingShader->bindSSBO("DirLightData", lightManager->getDirLightSSBO());
+    tileBasedLightCullingShader->bindSSBO("PointLightData", lightManager->getPointLightSSBO());
+    tileBasedLightCullingShader->bindSSBO("SpotLightData", lightManager->getSpotLightSSBO());
+    tileBasedLightCullingShader->bindSSBO("LightProbeData", lightManager->getLightProbeSSBO());
+
+    tileBasedLightCullingShader->bindSSBO("PointLightIndices", pointLightIndices);
+    tileBasedLightCullingShader->bindSSBO("SpotLightIndices", spotLightIndices);
+    tileBasedLightCullingShader->bindSSBO("LightProbeIndices", lightProbeIndices);
+
+    tileBasedLightingShader->bindUniformBuffer("Camera", cameraUBO);
+    tileBasedLightingShader->bindSSBO("DirLightData", lightManager->getDirLightSSBO());
+    tileBasedLightingShader->bindSSBO("PointLightData", lightManager->getPointLightSSBO());
+    tileBasedLightingShader->bindSSBO("SpotLightData", lightManager->getSpotLightSSBO());
+    tileBasedLightingShader->bindSSBO("LightProbeData", lightManager->getLightProbeSSBO());
+
+    tileBasedLightingShader->bindSSBO("PointLightIndices", pointLightIndices);
+    tileBasedLightingShader->bindSSBO("SpotLightIndices", spotLightIndices);
+    tileBasedLightingShader->bindSSBO("LightProbeIndices", lightProbeIndices);
+
+    localLightProbesLightingShader->bindSSBO("DirLightData", lightManager->getDirLightSSBO());
+    localLightProbesLightingShader->bindSSBO("PointLightData", lightManager->getPointLightSSBO());
+    localLightProbesLightingShader->bindSSBO("SpotLightData", lightManager->getSpotLightSSBO());
+
+    localLightProbesLightingShader->bindUniformBuffer("Camera", cameraUBO);
+
+    irradianceShader->bindSSBO("Views", cubemapViewMatrices);
+    prefilterShader->bindSSBO("Views", cubemapViewMatrices);
+    resampleCubemapShader->bindSSBO("Views", cubemapViewMatrices);
+    equirectangularToCubemapShader->bindSSBO("Views", cubemapViewMatrices);
+
+    const glm::mat4 cubemapProjection = utils::getProjectionReversedZ(sceneCubemapSize, sceneCubemapSize, 90.0f, 0.05f, 100.0f);
+    irradianceShader->use();
+    irradianceShader->setMat4("projection", cubemapProjection);
+    prefilterShader->use();
+    prefilterShader->setMat4("projection", cubemapProjection);
+    resampleCubemapShader->use();
+    resampleCubemapShader->setMat4("projection", cubemapProjection);
+    equirectangularToCubemapShader->use();
+    equirectangularToCubemapShader->setMat4("projection", cubemapProjection);
 }
 
 void SparkRenderer::renderPass()
@@ -201,26 +259,18 @@ void SparkRenderer::renderPass()
 
     {
         const auto camera = SceneManager::getInstance()->getCurrentScene()->getCamera();
-        if(camera->isDirty())
+        // if(camera->isDirty())
         {
-            struct CamData
-            {
-                glm::vec4 camPos;
-                glm::mat4 matrices[4];
-            };
-            const glm::mat4 view = camera->getViewMatrix();
-            const glm::mat4 projection = camera->getProjectionReversedZInfiniteFarPlane();
-            const glm::mat4 invertedView = glm::inverse(view);
-            const glm::mat4 invertedProj = glm::inverse(projection);
-            const CamData camData{glm::vec4(camera->getPosition(), 1.0f), {view, projection, invertedView, invertedProj}};
-            cameraUBO.updateData<CamData>({camData});
+            updateCameraUBO(camera->getProjectionReversedZInfiniteFarPlane(), camera->getViewMatrix(), camera->getPosition());
             camera->cleanDirty();
         }
     }
-    fillGBuffer();
-    ssaoComputing();
-    renderLights();
-    renderCubemap();
+
+    fillGBuffer(gBuffer);
+    ssaoComputing(gBuffer);
+    // renderLights(lightFrameBuffer, gBuffer);
+    tileBasedLightRendering(gBuffer);
+    renderCubemap(cubemapFramebuffer);
     helperShapes();
     bloom();
     depthOfField();
@@ -231,6 +281,28 @@ void SparkRenderer::renderPass()
 
     renderToScreen();
 
+    for(const auto& lightProbe : SceneManager::getInstance()->getCurrentScene()->lightManager->getLightProbes())
+    {
+        if (!lightProbe->generateLightProbe)
+            continue;
+
+        auto t = Timer("Local Light Probe creation");
+
+        utils::createCubemap(lightProbeSceneCubemap, sceneCubemapSize, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR, true);
+        localLightProbeGBuffer.setup(sceneCubemapSize, sceneCubemapSize);
+
+        utils::createFramebuffer(lightProbeLightFbo, {});
+        utils::createFramebuffer(lightProbeSkyboxFbo, {});
+        utils::bindDepthTexture(lightProbeSkyboxFbo, localLightProbeGBuffer.depthTexture);
+
+        generateLightProbe(lightProbe);
+
+        localLightProbeGBuffer.cleanup();
+        glDeleteTextures(1, &lightProbeSceneCubemap);
+        glDeleteFramebuffers(1, &lightProbeLightFbo);
+        glDeleteFramebuffers(1, &lightProbeSkyboxFbo);
+    }
+
     PUSH_DEBUG_GROUP(GUI);
     glDepthFunc(GL_LESS);
     ImGui::Render();
@@ -239,6 +311,11 @@ void SparkRenderer::renderPass()
     glfwSwapBuffers(Spark::window);
 
     clearRenderQueues();
+}
+
+void SparkRenderer::addRenderingRequest(const RenderingRequest& request)
+{
+    renderQueue[request.shaderType].push_back(request);
 }
 
 void SparkRenderer::resizeWindowIfNecessary()
@@ -258,12 +335,12 @@ void SparkRenderer::resizeWindowIfNecessary()
     glViewport(0, 0, Spark::WIDTH, Spark::HEIGHT);
 }
 
-void SparkRenderer::fillGBuffer()
+void SparkRenderer::fillGBuffer(const GBuffer& geometryBuffer)
 {
     PUSH_DEBUG_GROUP(RENDER_TO_MAIN_FRAMEBUFFER);
 
-    glBindFramebuffer(GL_FRAMEBUFFER, mainFramebuffer);
-    glClearColor(1, 1, 1, 1);
+    glBindFramebuffer(GL_FRAMEBUFFER, geometryBuffer.framebuffer);
+    glClearColor(0, 0, 0, 0);
     glClearDepth(0.0f);
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
@@ -271,15 +348,39 @@ void SparkRenderer::fillGBuffer()
     glDepthFunc(GL_GREATER);
 
     mainShader->use();
-    for(auto& drawMesh : renderQueue[ShaderType::DEFAULT_SHADER])
+    for(auto& request : renderQueue[ShaderType::DEFAULT_SHADER])
     {
-        drawMesh(mainShader);
+        request.mesh->draw(mainShader, request.model);
     }
 
     POP_DEBUG_GROUP();
 }
 
-void SparkRenderer::ssaoComputing()
+void SparkRenderer::fillGBuffer(const GBuffer& geometryBuffer, const std::function<bool(const RenderingRequest& request)>& filter)
+{
+    PUSH_DEBUG_GROUP(RENDER_TO_MAIN_FRAMEBUFFER_FILTERED);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, geometryBuffer.framebuffer);
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    glClearDepth(0.0f);
+    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_GREATER);
+
+    mainShader->use();
+    for(auto& request : renderQueue[ShaderType::DEFAULT_SHADER])
+    {
+        if(filter(request))
+        {
+            request.mesh->draw(mainShader, request.model);
+        }
+    }
+
+    POP_DEBUG_GROUP();
+}
+
+void SparkRenderer::ssaoComputing(const GBuffer& geometryBuffer)
 {
     if(!ssaoEnable)
     {
@@ -290,10 +391,10 @@ void SparkRenderer::ssaoComputing()
     PUSH_DEBUG_GROUP(SSAO);
 
     glBindFramebuffer(GL_FRAMEBUFFER, ssaoFramebuffer);
-    glClearColor(1.0f, 1.0f, 1.0f, 0);
+    glClearColor(1.0f, 0.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    GLuint textures[3] = {depthTexture, normalsTexture, randomNormalsTexture};
+    GLuint textures[3] = {geometryBuffer.depthTexture, geometryBuffer.normalsTexture, randomNormalsTexture};
     glBindTextures(0, 3, textures);
     ssaoShader->use();
     ssaoShader->setInt("kernelSize", kernelSize);
@@ -311,44 +412,113 @@ void SparkRenderer::ssaoComputing()
     POP_DEBUG_GROUP();
 }
 
-void SparkRenderer::renderLights()
+void SparkRenderer::renderLights(GLuint framebuffer, const GBuffer& geometryBuffer)
 {
     PUSH_DEBUG_GROUP(PBR_LIGHT);
 
-    glBindFramebuffer(GL_FRAMEBUFFER, lightFrameBuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
     glClearColor(0, 0, 0, 1);
     glClear(GL_COLOR_BUFFER_BIT);
 
     const auto cubemap = SceneManager::getInstance()->getCurrentScene()->cubemap;
 
-    glDisable(GL_DEPTH_TEST);
     lightShader->use();
     if(cubemap)
     {
-        std::array<GLuint, 8> textures{
-            depthTexture,      colorTexture, normalsTexture, roughnessMetalnessTexture, cubemap->irradianceCubemap, cubemap->prefilteredCubemap,
-            brdfLookupTexture, textureHandle};
+        std::array<GLuint, 8> textures{geometryBuffer.depthTexture,
+                                       geometryBuffer.colorTexture,
+                                       geometryBuffer.normalsTexture,
+                                       geometryBuffer.roughnessMetalnessTexture,
+                                       cubemap->irradianceCubemap,
+                                       cubemap->prefilteredCubemap,
+                                       brdfLookupTexture,
+                                       textureHandle};  // ssao
         glBindTextures(0, static_cast<GLsizei>(textures.size()), textures.data());
         screenQuad.draw();
         glBindTextures(0, static_cast<GLsizei>(textures.size()), nullptr);
     }
     else
     {
-        std::array<GLuint, 8> textures{
-            depthTexture, colorTexture, normalsTexture, roughnessMetalnessTexture, 0, 0, 0, ssaoBlurPass->getBlurredTexture()};
+        std::array<GLuint, 8> textures{geometryBuffer.depthTexture,
+                                       geometryBuffer.colorTexture,
+                                       geometryBuffer.normalsTexture,
+                                       geometryBuffer.roughnessMetalnessTexture,
+                                       0,
+                                       0,
+                                       0,
+                                       textureHandle};  // ssao
         glBindTextures(0, static_cast<GLsizei>(textures.size()), textures.data());
         screenQuad.draw();
         glBindTextures(0, static_cast<GLsizei>(textures.size()), nullptr);
     }
-
-    glEnable(GL_DEPTH_TEST);
 
     textureHandle = lightColorTexture;
 
     POP_DEBUG_GROUP();
 }
 
-void SparkRenderer::renderCubemap() const
+void SparkRenderer::tileBasedLightCulling(const GBuffer& geometryBuffer) const
+{
+    PUSH_DEBUG_GROUP(TILE_BASED_LIGHTS_CULLING);
+    pointLightIndices.clearData();
+    spotLightIndices.clearData();
+    lightProbeIndices.clearData();
+
+    tileBasedLightCullingShader->use();
+
+    glBindTextureUnit(0, geometryBuffer.depthTexture);
+
+    // debug of light count per tile
+    /*uint8_t clear[]{0,0,0,0};
+    glClearTexImage(lightsPerTileTexture, 0, GL_RGBA, GL_UNSIGNED_BYTE, &clear);*/
+    glBindImageTexture(5, lightsPerTileTexture, 0, false, 0, GL_READ_WRITE, GL_RGBA16F);
+
+    tileBasedLightCullingShader->dispatchCompute(Spark::WIDTH / 16, Spark::HEIGHT / 16, 1);
+
+    POP_DEBUG_GROUP();
+}
+
+void SparkRenderer::tileBasedLightRendering(const GBuffer& geometryBuffer)
+{
+    tileBasedLightCulling(geometryBuffer);
+
+    PUSH_DEBUG_GROUP(TILE_BASED_DEFERRED)
+    float clearRgba[] = {0.0f, 0.0f, 0.0f, 0.0f};
+    glClearTexImage(lightColorTexture, 0, GL_RGBA, GL_FLOAT, &clearRgba);
+    glClearTexImage(brightPassTexture, 0, GL_RGBA, GL_FLOAT, &clearRgba);
+
+    const auto cubemap = SceneManager::getInstance()->getCurrentScene()->cubemap;
+
+    tileBasedLightingShader->use();
+
+    // depth texture as sampler2D
+    glBindTextureUnit(0, geometryBuffer.depthTexture);
+    if(cubemap)
+    {
+        glBindTextureUnit(1, cubemap->irradianceCubemap);
+        glBindTextureUnit(2, cubemap->prefilteredCubemap);
+    }
+    glBindTextureUnit(3, brdfLookupTexture);
+    glBindTextureUnit(4, textureHandle);
+
+    // textures as images
+    glBindImageTexture(0, geometryBuffer.colorTexture, 0, false, 0, GL_READ_ONLY, GL_RGBA8);
+    glBindImageTexture(1, geometryBuffer.normalsTexture, 0, false, 0, GL_READ_ONLY, GL_RG16F);
+    glBindImageTexture(2, geometryBuffer.roughnessMetalnessTexture, 0, false, 0, GL_READ_ONLY, GL_RG8);
+
+    // output image
+    glBindImageTexture(3, lightColorTexture, 0, false, 0, GL_WRITE_ONLY, GL_RGBA16F);
+    glBindImageTexture(4, brightPassTexture, 0, false, 0, GL_WRITE_ONLY, GL_RGBA16F);
+
+    tileBasedLightingShader->dispatchCompute(Spark::WIDTH / 16, Spark::HEIGHT / 16, 1);
+    glBindTextures(0, 0, nullptr);
+
+    textureHandle = lightColorTexture;
+
+    POP_DEBUG_GROUP();
+}
+
+void SparkRenderer::renderCubemap(GLuint framebuffer) const
 {
     const auto cubemap = SceneManager::getInstance()->getCurrentScene()->cubemap;
     if(!cubemap)
@@ -356,8 +526,9 @@ void SparkRenderer::renderCubemap() const
 
     PUSH_DEBUG_GROUP(RENDER_CUBEMAP);
 
-    glBindFramebuffer(GL_FRAMEBUFFER, cubemapFramebuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
 
+    glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_GEQUAL);
     cubemapShader->use();
 
@@ -365,6 +536,7 @@ void SparkRenderer::renderCubemap() const
     cube.draw();
     glBindTextures(0, 1, nullptr);
     glDepthFunc(GL_GREATER);
+    glDisable(GL_DEPTH_TEST);
 
     POP_DEBUG_GROUP();
 }
@@ -385,18 +557,22 @@ void SparkRenderer::bloom()
         // glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         // glClear(GL_COLOR_BUFFER_BIT);
 
-        downscaleShader->use();
-        downscaleShader->setBool("downscale", downscale);
-        downscaleShader->setFloat("intensity", intensity);
-        downscaleShader->setVec2("outputTextureSizeInversion",
-                                 glm::vec2(1.0f / static_cast<float>(viewportWidth), 1.0f / static_cast<float>(viewportHeight)));
+        bloomDownScaleShader->use();
+        bloomDownScaleShader->setVec2("outputTextureSizeInversion",
+                                      glm::vec2(1.0f / static_cast<float>(viewportWidth), 1.0f / static_cast<float>(viewportHeight)));
         glBindTextureUnit(0, texture);
         screenQuad.draw();
     };
 
-    const auto upsampleTexture = [&downsampleTexture](GLuint framebuffer, GLuint texture, GLuint viewportWidth, GLuint viewportHeight,
-                                                      float intensity = 1.0f) {
-        downsampleTexture(framebuffer, texture, viewportWidth, viewportHeight, false, intensity);
+    const auto upsampleTexture = [this](GLuint framebuffer, GLuint texture, GLuint viewportWidth, GLuint viewportHeight, float intensity = 1.0f) {
+        glViewport(0, 0, viewportWidth, viewportHeight);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+
+        bloomUpScaleShader->use();
+        bloomUpScaleShader->setFloat("intensity", intensity);
+        glBindTextureUnit(0, texture);
+        screenQuad.draw();
     };
 
     upsampleTexture(bloomFramebuffer, lightColorTexture, Spark::WIDTH, Spark::HEIGHT);
@@ -436,18 +612,23 @@ void SparkRenderer::helperShapes()
         return;
 
     PUSH_DEBUG_GROUP(HELPER_SHAPES);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, cubemapFramebuffer);
+
     glDisable(GL_CULL_FACE);
+    glEnable(GL_DEPTH_TEST);
 
     enableWireframeMode();
-    // light framebuffer is binded here
+    // light texture must be bound here
     solidColorShader->use();
 
-    for(auto& drawMesh : renderQueue[ShaderType::SOLID_COLOR_SHADER])
+    for(auto& request : renderQueue[ShaderType::SOLID_COLOR_SHADER])
     {
-        drawMesh(solidColorShader);
+        request.mesh->draw(solidColorShader, request.model);
     }
 
     glEnable(GL_CULL_FACE);
+    glDisable(GL_DEPTH_TEST);
     disableWireframeMode();
     POP_DEBUG_GROUP();
 }
@@ -458,13 +639,13 @@ void SparkRenderer::depthOfField()
         return;
 
     dofPass->setUniforms(nearStart, nearEnd, farStart, farEnd);
-    dofPass->render(lightColorTexture, depthTexture);
+    dofPass->render(lightColorTexture, gBuffer.depthTexture);
     textureHandle = dofPass->getOutputTexture();
 }
 
 void SparkRenderer::lightShafts()
 {
-    const auto& dirLights = SceneManager::getInstance()->getCurrentScene()->lightManager->directionalLights;
+    const auto& dirLights = SceneManager::getInstance()->getCurrentScene()->lightManager->getDirLights();
     if(dirLights.empty() || lightShaftsEnable != true)
         return;
 
@@ -475,7 +656,7 @@ void SparkRenderer::lightShafts()
 
     const glm::vec3 camPos = camera->getPosition();
 
-    glm::vec3 dirLightPosition = dirLights[0].lock()->getDirection() * -glm::vec3(100);
+    glm::vec3 dirLightPosition = dirLights[0]->getDirection() * -glm::vec3(100);
 
     glm::vec4 dirLightNDCpos = projection * view * glm::vec4(dirLightPosition, 1.0f);
     dirLightNDCpos /= dirLightNDCpos.w;
@@ -502,14 +683,14 @@ void SparkRenderer::lightShafts()
 
     lightShaftsShader->use();
     lightShaftsShader->setVec2("lightScreenPos", lightScreenPos);
-    lightShaftsShader->setVec3("lightColor", dirLights[0].lock()->getColor());
+    lightShaftsShader->setVec3("lightColor", dirLights[0]->getColor());
     lightShaftsShader->setInt("samples", samples);
     lightShaftsShader->setFloat("exposure", exposure);
     lightShaftsShader->setFloat("decay", decay);
     lightShaftsShader->setFloat("density", density);
     lightShaftsShader->setFloat("weight", weight);
 
-    glBindTextureUnit(0, depthTexture);
+    glBindTextureUnit(0, gBuffer.depthTexture);
     screenQuad.draw();
     glBindTextureUnit(0, 0);
 
@@ -524,11 +705,21 @@ void SparkRenderer::lightShafts()
 void SparkRenderer::motionBlur()
 {
     const auto camera = SceneManager::getInstance()->getCurrentScene()->getCamera();
-    const glm::mat4 projectionView = camera->getProjectionReversedZ() * camera->getViewMatrix();
+    const glm::mat4 projectionView = camera->getProjectionReversedZInfiniteFarPlane() * camera->getViewMatrix();
     static glm::mat4 prevProjectionView = projectionView;
+    static bool initialized = false;
 
     if(projectionView == prevProjectionView || !motionBlurEnable)
         return;
+
+    if(!initialized)
+    {
+        // it is necessary when the scene has been loaded and
+        // the difference between current VP and last frame VP matrices generates huge velocities for all pixels
+        // so it needs to be reset
+        prevProjectionView = projectionView;
+        initialized = true;
+    }
 
     PUSH_DEBUG_GROUP(MOTION_BLUR);
     glBindFramebuffer(GL_FRAMEBUFFER, motionBlurFramebuffer);
@@ -540,7 +731,7 @@ void SparkRenderer::motionBlur()
     motionBlurShader->setFloat("currentFPS", static_cast<float>(Clock::getFPS()));
     const glm::vec2 texelSize = {1.0f / static_cast<float>(Spark::WIDTH), 1.0f / static_cast<float>(Spark::HEIGHT)};
     motionBlurShader->setVec2("texelSize", texelSize);
-    std::array<GLuint, 2> textures2{textureHandle, depthTexture};
+    std::array<GLuint, 2> textures2{textureHandle, gBuffer.depthTexture};
     glBindTextures(0, static_cast<GLsizei>(textures2.size()), textures2.data());
     screenQuad.draw();
     glBindTextures(0, static_cast<GLsizei>(textures2.size()), nullptr);
@@ -557,13 +748,12 @@ void SparkRenderer::toneMapping()
     calculateAverageLuminance();
 
     glBindFramebuffer(GL_FRAMEBUFFER, toneMappingFramebuffer);
-    glDisable(GL_DEPTH_TEST);
 
     toneMappingShader->use();
     toneMappingShader->setVec2("inversedScreenSize", {1.0f / Spark::WIDTH, 1.0f / Spark::HEIGHT});
 
     glBindTextureUnit(0, textureHandle);
-    glBindTextureUnit(1, averageLuminance);
+    glBindTextureUnit(1, averageLuminanceTexture);
     screenQuad.draw();
     glBindTextures(0, 3, nullptr);
 
@@ -576,7 +766,7 @@ void SparkRenderer::calculateAverageLuminance()
     oneOverLogLuminanceRange = 1.0f / logLuminanceRange;
 
     // this buffer is attached to both shaders in method SparkRenderer::updateBufferBindings()
-    luminanceHistogram.clearBuffer();  // resetting histogram buffer
+    luminanceHistogram.clearData();  // resetting histogram buffer
 
     // first compute dispatch
     luminanceHistogramComputeShader->use();
@@ -598,7 +788,7 @@ void SparkRenderer::calculateAverageLuminance()
     averageLuminanceComputeShader->setFloat("deltaTime", static_cast<float>(Clock::getDeltaTime()));
     averageLuminanceComputeShader->setFloat("tau", tau);
 
-    glBindImageTexture(0, averageLuminance, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R16F);
+    glBindImageTexture(0, averageLuminanceTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R16F);
     averageLuminanceComputeShader->dispatchCompute(1, 1, 1);  // localWorkGroups has dimensions of x = 16, y = 16
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 }
@@ -608,10 +798,6 @@ void SparkRenderer::fxaa()
     PUSH_DEBUG_GROUP(FXAA);
 
     glBindFramebuffer(GL_FRAMEBUFFER, fxaaFramebuffer);
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    glDisable(GL_DEPTH_TEST);
 
     fxaaShader->use();
     fxaaShader->setVec2("inversedScreenSize", {1.0f / static_cast<float>(Spark::WIDTH), 1.0f / static_cast<float>(Spark::HEIGHT)});
@@ -628,6 +814,9 @@ void SparkRenderer::renderToScreen() const
 {
     PUSH_DEBUG_GROUP(RENDER_TO_SCREEN);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glClearColor(0, 0, 0, 0);
+    glClear(GL_COLOR_BUFFER_BIT);
+
     glDisable(GL_DEPTH_TEST);
 
     screenShader->use();
@@ -635,12 +824,14 @@ void SparkRenderer::renderToScreen() const
     glBindTextureUnit(0, textureHandle);
 
     screenQuad.draw();
+
+    glEnable(GL_DEPTH_TEST);
     POP_DEBUG_GROUP();
 }
 
 void SparkRenderer::clearRenderQueues()
 {
-    for (auto& [shaderType, shaderRenderList] : renderQueue)
+    for(auto& [shaderType, shaderRenderList] : renderQueue)
     {
         shaderRenderList.clear();
     }
@@ -651,16 +842,16 @@ void SparkRenderer::createFrameBuffersAndTextures()
     dofPass->recreateWithNewSize(Spark::WIDTH, Spark::HEIGHT);
     ssaoBlurPass->recreateWithNewSize(Spark::WIDTH / 2, Spark::HEIGHT / 2);
 
-    utils::createTexture2D(colorTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_NEAREST);
-    utils::createTexture2D(normalsTexture, Spark::WIDTH, Spark::HEIGHT, GL_RG16F, GL_RG, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
-    utils::createTexture2D(roughnessMetalnessTexture, Spark::WIDTH, Spark::HEIGHT, GL_RG, GL_RG, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_NEAREST);
-    utils::createTexture2D(depthTexture, Spark::WIDTH, Spark::HEIGHT, GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT, GL_FLOAT, GL_CLAMP_TO_EDGE,
-                           GL_NEAREST);
+    pointLightIndices.resizeBuffer(256 * (uint32_t)glm::ceil(Spark::HEIGHT / 16.0f) * (uint32_t)glm::ceil(Spark::WIDTH / 16.0f) * sizeof(uint32_t));
+    spotLightIndices.resizeBuffer(256 * (uint32_t)glm::ceil(Spark::HEIGHT / 16.0f) * (uint32_t)glm::ceil(Spark::WIDTH / 16.0f) * sizeof(uint32_t));
+    lightProbeIndices.resizeBuffer(256 * (uint32_t)glm::ceil(Spark::HEIGHT / 16.0f) * (uint32_t)glm::ceil(Spark::WIDTH / 16.0f) * sizeof(uint32_t));
+
+    gBuffer.setup(Spark::WIDTH, Spark::HEIGHT);
 
     utils::createTexture2D(lightColorTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
     utils::createTexture2D(brightPassTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
     utils::createTexture2D(toneMappingTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::createTexture2D(motionBlurTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGB16F, GL_RGB, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::createTexture2D(motionBlurTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
     utils::createTexture2D(lightShaftTexture, Spark::WIDTH / 2, Spark::HEIGHT / 2, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
     utils::createTexture2D(ssaoTexture, Spark::WIDTH, Spark::HEIGHT, GL_RED, GL_RED, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
     utils::createTexture2D(fxaaTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
@@ -670,13 +861,11 @@ void SparkRenderer::createFrameBuffersAndTextures()
     utils::createTexture2D(downsampleTexture16, Spark::WIDTH / 16, Spark::HEIGHT / 16, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE,
                            GL_LINEAR);
     utils::createTexture2D(bloomTexture, Spark::WIDTH, Spark::HEIGHT, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::createTexture2D(lightsPerTileTexture, Spark::WIDTH / 16, Spark::HEIGHT / 16, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
 
-    utils::createFramebuffer(mainFramebuffer, {colorTexture, normalsTexture, roughnessMetalnessTexture});
-    utils::bindDepthTexture(mainFramebuffer, depthTexture);
     utils::createFramebuffer(lightFrameBuffer, {lightColorTexture, brightPassTexture});
-    utils::bindDepthTexture(lightFrameBuffer, depthTexture);
     utils::createFramebuffer(cubemapFramebuffer, {lightColorTexture});
-    utils::bindDepthTexture(cubemapFramebuffer, depthTexture);
+    utils::bindDepthTexture(cubemapFramebuffer, gBuffer.depthTexture);
     utils::createFramebuffer(toneMappingFramebuffer, {toneMappingTexture});
     utils::createFramebuffer(motionBlurFramebuffer, {motionBlurTexture});
     utils::createFramebuffer(lightShaftFramebuffer, {lightShaftTexture});
@@ -692,28 +881,25 @@ void SparkRenderer::createFrameBuffersAndTextures()
 
 void SparkRenderer::cleanup()
 {
-    cameraUBO.cleanup();
-    sampleUniformBuffer.cleanup();
     deleteFrameBuffersAndTextures();
     glDeleteTextures(1, &randomNormalsTexture);
     glDeleteTextures(1, &ssaoDisabledTexture);
-    glDeleteTextures(1, &averageLuminance);
+    glDeleteTextures(1, &averageLuminanceTexture);
     glDeleteTextures(1, &brdfLookupTexture);
 }
 
-void SparkRenderer::deleteFrameBuffersAndTextures() const
+void SparkRenderer::deleteFrameBuffersAndTextures()
 {
-    GLuint textures[14] = {colorTexture,        normalsTexture,     roughnessMetalnessTexture, lightColorTexture,
-                           brightPassTexture,   downsampleTexture2, downsampleTexture4,        downsampleTexture8,
-                           downsampleTexture16, bloomTexture,       toneMappingTexture,        motionBlurTexture,
-                           depthTexture,        ssaoTexture};
-    glDeleteTextures(14, textures);
+    gBuffer.cleanup();
 
-    GLuint frameBuffers[11] = {mainFramebuffer,        lightFrameBuffer,        cubemapFramebuffer,     toneMappingFramebuffer,
-                               motionBlurFramebuffer,  ssaoFramebuffer,         downsampleFramebuffer2, downsampleFramebuffer4,
-                               downsampleFramebuffer8, downsampleFramebuffer16, bloomFramebuffer};
+    GLuint textures[11] = {lightColorTexture, brightPassTexture,  downsampleTexture2, downsampleTexture4, downsampleTexture8,  downsampleTexture16,
+                           bloomTexture,      toneMappingTexture, motionBlurTexture,  ssaoTexture,        lightsPerTileTexture};
+    glDeleteTextures(11, textures);
 
-    glDeleteFramebuffers(11, frameBuffers);
+    GLuint frameBuffers[10] = {lightFrameBuffer,       cubemapFramebuffer,     toneMappingFramebuffer, motionBlurFramebuffer,   ssaoFramebuffer,
+                               downsampleFramebuffer2, downsampleFramebuffer4, downsampleFramebuffer8, downsampleFramebuffer16, bloomFramebuffer};
+
+    glDeleteFramebuffers(10, frameBuffers);
 }
 
 void SparkRenderer::enableWireframeMode()
@@ -724,5 +910,90 @@ void SparkRenderer::enableWireframeMode()
 void SparkRenderer::disableWireframeMode()
 {
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+}
+
+void SparkRenderer::updateCameraUBO(glm::mat4 projection, glm::mat4 view, glm::vec3 pos)
+{
+    struct CamData
+    {
+        glm::vec4 camPos;
+        glm::mat4 matrices[4];
+    };
+    const glm::mat4 invertedView = glm::inverse(view);
+    const glm::mat4 invertedProj = glm::inverse(projection);
+    const CamData camData{glm::vec4(pos, 1.0f), {view, projection, invertedView, invertedProj}};
+    cameraUBO.updateData<CamData>({camData});
+}
+
+void SparkRenderer::generateLightProbe(LightProbe* lightProbe)
+{
+    PUSH_DEBUG_GROUP(SCENE_TO_CUBEMAP);
+
+    const glm::vec3 localLightProbePosition = lightProbe->getGameObject()->transform.world.getPosition();
+
+    const auto projection = utils::getProjectionReversedZ(sceneCubemapSize, sceneCubemapSize, 90.0f, 0.05f, 100.0f);
+    const std::array<glm::mat4, 6> viewMatrices = utils::getCubemapViewMatrices(localLightProbePosition);
+
+    glViewport(0, 0, sceneCubemapSize, sceneCubemapSize);
+    for(int i = 0; i < 6; ++i)
+    {
+        PUSH_DEBUG_GROUP(RENDER_TO_CUBEMAP_FACE)
+
+        updateCameraUBO(projection, viewMatrices[i], localLightProbePosition);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, lightProbeLightFbo);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, lightProbeSceneCubemap, 0);
+        glBindFramebuffer(GL_FRAMEBUFFER, lightProbeSkyboxFbo);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, lightProbeSceneCubemap, 0);
+
+        renderSceneToCubemap(localLightProbeGBuffer, lightProbeLightFbo, lightProbeSkyboxFbo);
+
+        POP_DEBUG_GROUP();
+    }
+
+    // this mipmap chain for all faces is needed for filtered importance sampling in prefilter stage
+    glGenerateTextureMipmap(lightProbeSceneCubemap);
+
+    // light probe generation
+    GLuint lightProbeFramebuffer{};
+    glGenFramebuffers(1, &lightProbeFramebuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, lightProbeFramebuffer);
+
+    lightProbe->renderIntoIrradianceCubemap(lightProbeFramebuffer, lightProbeSceneCubemap, cube, irradianceShader);
+    lightProbe->renderIntoPrefilterCubemap(lightProbeFramebuffer, lightProbeSceneCubemap, sceneCubemapSize, cube, prefilterShader,
+                                           resampleCubemapShader);
+    lightProbe->generateLightProbe = false;
+    
+    glDeleteFramebuffers(1, &lightProbeFramebuffer);
+    glViewport(0, 0, Spark::WIDTH, Spark::HEIGHT);
+    POP_DEBUG_GROUP();
+}
+
+void SparkRenderer::renderSceneToCubemap(const GBuffer& geometryBuffer, GLuint lightFbo, GLuint skyboxFbo)
+{
+    fillGBuffer(geometryBuffer, [](const RenderingRequest& request) { return request.gameObject->isStatic() == true; });
+
+    {
+        PUSH_DEBUG_GROUP(PBR_LIGHT);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, lightFbo);
+        glClearColor(0, 0, 0, 0);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        localLightProbesLightingShader->use();
+        std::array<GLuint, 4> textures{
+            geometryBuffer.depthTexture,
+            geometryBuffer.colorTexture,
+            geometryBuffer.normalsTexture,
+            geometryBuffer.roughnessMetalnessTexture,
+        };
+        glBindTextures(0, static_cast<GLsizei>(textures.size()), textures.data());
+        screenQuad.draw();
+        glBindTextures(0, static_cast<GLsizei>(textures.size()), nullptr);
+
+        POP_DEBUG_GROUP();
+    }
+
+    renderCubemap(skyboxFbo);
 }
 }  // namespace spark

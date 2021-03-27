@@ -73,8 +73,8 @@ void SceneManager::drawGui()
         if(ImGui::BeginMenu(menuName.c_str()))
         {
             ImGui::MenuItem("Camera Movement", NULL, &current_scene->cameraMovement);
-            const auto cubemapPtr = SparkGui::getCubemapTexture();
-            if(cubemapPtr)
+            const auto [cubemapPicked, cubemapPtr] = SparkGui::getCubemapTexture();
+            if(cubemapPicked)
             {
                 current_scene->cubemap = cubemapPtr;
             }

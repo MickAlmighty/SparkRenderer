@@ -18,11 +18,11 @@ layout (location = 0) out float CircleOfConfusion;
 layout (binding = 0) uniform sampler2D depthTexture;
 layout (std140) uniform Camera
 {
-	vec4 pos;
-	mat4 view;
-	mat4 projection;
-	mat4 invertedView;
-	mat4 invertedProjection;
+    vec4 pos;
+    mat4 view;
+    mat4 projection;
+    mat4 invertedView;
+    mat4 invertedProjection;
 } camera;
 
 in vec2 texCoords;
@@ -47,8 +47,8 @@ vec4 viewPosFromDepth(float depth, mat4 invProj, vec2 uv)
 
 vec3 getViewSpacePosition(vec2 uv)
 {
-	float depth = texture(depthTexture, uv).x;
-	return viewPosFromDepth(depth, camera.invertedProjection, uv).xyz;
+    float depth = texture(depthTexture, uv).x;
+    return viewPosFromDepth(depth, camera.invertedProjection, uv).xyz;
 }
 
 float getCircleOfConfusion(float pixelDepth, float nearDepth, float farDepth)

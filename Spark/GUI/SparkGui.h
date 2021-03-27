@@ -1,16 +1,14 @@
-#ifndef SPARK_GUI_H
-#define SPARK_GUI_H
+#pragma once
 
-#include "ActorAI.h"
 #include "Component.h"
-#include "DirectionalLight.h"
+#include "Lights/DirectionalLight.h"
 #include "GameObject.h"
 #include "Mesh.h"
 #include "MeshPlane.h"
 #include "ModelMesh.h"
-#include "PointLight.h"
-#include "SpotLight.h"
-#include "TerrainGenerator.h"
+#include "Lights/PointLight.h"
+#include "Lights/SpotLight.h"
+#include "Lights/LightProbe.h"
 #include <optional>
 
 namespace spark
@@ -31,9 +29,7 @@ class SparkGui
 
     static std::shared_ptr<Component> addComponent();
     static std::shared_ptr<resources::Model> SparkGui::getModel();
-    static std::shared_ptr<resources::Texture> getTexture();
-    static std::shared_ptr<PbrCubemapTexture> getCubemapTexture();
-    static std::shared_ptr<resources::Shader> getShader();
+    static std::tuple<bool, std::shared_ptr<PbrCubemapTexture>> getCubemapTexture();
 
     template<typename T>
     static std::optional<T> getDraggedObject(std::string&& payloadName)
@@ -115,10 +111,8 @@ const static std::map<std::string, std::function<std::shared_ptr<Component>()>> 
     // TODO: replace with a reflection-based list
     {"ModelMesh", [] { return std::make_shared<ModelMesh>(); }},
     {"MeshPlane", [] { return std::make_shared<MeshPlane>(); }},
-    {"TerrainGenerator", [] { return std::make_shared<TerrainGenerator>(); }},
-    {"ActorAI", [] { return std::make_shared<ActorAI>(); }},
     {"DirectionalLight", [] { return std::make_shared<DirectionalLight>(); }},
     {"PointLight", [] { return std::make_shared<PointLight>(); }},
-    {"SpotLight", [] { return std::make_shared<SpotLight>(); }}};
+    {"SpotLight", [] { return std::make_shared<SpotLight>(); }},
+    {"LightProbe", [] { return std::make_shared<LightProbe>(); }}};
 }  // namespace spark
-#endif

@@ -2,7 +2,7 @@
 
 #include "CommonUtils.h"
 #include "Clock.h"
-#include "HID.h"
+#include "HID/HID.h"
 #include "JsonSerializer.h"
 #include "Spark.h"
 
@@ -36,7 +36,7 @@ glm::mat4 Camera::getProjection() const
 
 glm::mat4 Camera::getProjectionReversedZInfiniteFarPlane() const
 {
-     return utils::getProjectionReversedZInfFar(Spark::WIDTH, Spark::HEIGHT, fov, zNear);
+    return utils::getProjectionReversedZInfFar(Spark::WIDTH, Spark::HEIGHT, fov, zNear);
 }
 
 glm::mat4 Camera::getProjectionReversedZ() const
@@ -169,25 +169,42 @@ void Camera::processKeyboard()
 
 void Camera::processKeyboardFirstPerson()
 {
-    float velocity = MovementSpeed * static_cast<float>(Clock::getDeltaTime());
-    if(HID::isKeyPressed(GLFW_KEY_LEFT_SHIFT))
-        velocity *= 1.5f;
-    glm::vec3 front = glm::normalize(glm::vec3(Front.x, 0, Front.z));
-    glm::vec3 right = glm::normalize(glm::vec3(Right.x, 0, Right.z));
+    if(HID::isKeyPressedOrDown(Key::MOUSE_RIGHT))
+    {
+        if(HID::mouse.getScrollStatus() == ScrollStatus::POSITIVE)
+            MovementSpeed *= 1.2f;
+        else if(HID::mouse.getScrollStatus() == ScrollStatus::NEGATIVE)
+            MovementSpeed *= .8f;
+
+        if(MovementSpeed < 0.0f)
+            MovementSpeed = 0.0f;
+    }
+    else if(HID::getKeyState(Key::MOUSE_RIGHT) == State::NONE)
+    {
+        if(HID::mouse.getScrollStatus() == ScrollStatus::POSITIVE)
+            Position += Front;
+        else if(HID::mouse.getScrollStatus() == ScrollStatus::NEGATIVE)
+            Position -= Front;
+    }
+
+    const float velocity = MovementSpeed * static_cast<float>(Clock::getDeltaTime());
+
+    const glm::vec3 front = glm::normalize(glm::vec3(Front.x, 0, Front.z));
+    const glm::vec3 right = glm::normalize(glm::vec3(Right.x, 0, Right.z));
 
     glm::vec3 finalDirection(0);
 
-    if(HID::isKeyPressed(GLFW_KEY_W))
+    if(HID::isKeyPressedOrDown(Key::W))
         finalDirection += front;
-    if(HID::isKeyPressed(GLFW_KEY_S))
+    if(HID::isKeyPressedOrDown(Key::S))
         finalDirection -= front;
-    if(HID::isKeyPressed(GLFW_KEY_A))
+    if(HID::isKeyPressedOrDown(Key::A))
         finalDirection -= right;
-    if(HID::isKeyPressed(GLFW_KEY_D))
+    if(HID::isKeyPressedOrDown(Key::D))
         finalDirection += right;
-    if(HID::isKeyPressed(GLFW_KEY_Q))
+    if(HID::isKeyPressedOrDown(Key::Q))
         finalDirection -= WORLD_UP;
-    if(HID::isKeyPressed(GLFW_KEY_E))
+    if(HID::isKeyPressedOrDown(Key::E))
         finalDirection += WORLD_UP;
 
     if(finalDirection != glm::vec3(0))
@@ -201,27 +218,43 @@ void Camera::processKeyboardFirstPerson()
 void Camera::processKeyboardThirdPerson()
 {
     float velocity = MovementSpeed * static_cast<float>(Clock::getDeltaTime());
-    if(HID::isKeyPressed(GLFW_KEY_LEFT_SHIFT))
-        velocity *= 1.5f;
+    if(HID::isKeyPressedOrDown(Key::LEFT_SHIFT))
+        velocity *= 3.5f;
 
     glm::vec3 finalDirection(0);
 
-    if(HID::isKeyPressed(GLFW_KEY_W))
-        finalDirection -= Front;
-    if(HID::isKeyPressed(GLFW_KEY_S))
-        finalDirection += Front;
-    if(HID::isKeyPressed(GLFW_KEY_A))
+    if(HID::isKeyPressedOrDown(Key::A))
         finalDirection += Right;
-    if(HID::isKeyPressed(GLFW_KEY_D))
+    if(HID::isKeyPressedOrDown(Key::D))
         finalDirection -= Right;
-    if(HID::isKeyPressed(GLFW_KEY_Q))
+    if(HID::isKeyPressedOrDown(Key::Q))
         finalDirection += Up;
-    if(HID::isKeyPressed(GLFW_KEY_E))
+    if(HID::isKeyPressedOrDown(Key::E))
         finalDirection -= Up;
 
     if(finalDirection != glm::vec3(0))
     {
         finalDirection = glm::normalize(finalDirection);
+        glm::vec3 newPosition = Position + finalDirection * velocity;
+
+        const float oldDistance = glm::length(cameraTarget - Position);
+        const float newDistance = glm::length(cameraTarget - newPosition);
+        const float diff = newDistance - oldDistance;
+
+        glm::vec3 newDirection = glm::normalize(cameraTarget - newPosition);
+
+        Position = newPosition + newDirection * diff;
+        dirty = true;
+    }
+
+    finalDirection = glm::vec3(0.0f);
+    if(HID::isKeyPressedOrDown(Key::W))
+        finalDirection -= Front;
+    if(HID::isKeyPressedOrDown(Key::S))
+        finalDirection += Front;
+
+    if(finalDirection != glm::vec3(0))
+    {
         Position += finalDirection * velocity;
         dirty = true;
     }
@@ -230,9 +263,16 @@ void Camera::processKeyboardThirdPerson()
 void Camera::processMouseMovement(float xoffset, float yoffset, bool constrainPitch)
 {
     static bool cameraRotation = false;
-    if(HID::isKeyPressed(GLFW_KEY_SPACE))
+
+    if(HID::isKeyReleased(Key::MOUSE_RIGHT) && cameraRotation)
     {
-        cameraRotation = !cameraRotation;
+        glfwSetInputMode(Spark::window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        cameraRotation = false;
+    }
+    else if(HID::isKeyPressedOrDown(Key::MOUSE_RIGHT) && !cameraRotation)
+    {
+        glfwSetInputMode(Spark::window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        cameraRotation = true;
     }
 
     if(!cameraRotation)
@@ -240,7 +280,7 @@ void Camera::processMouseMovement(float xoffset, float yoffset, bool constrainPi
     xoffset *= MouseSensitivity;
     yoffset *= MouseSensitivity;
 
-    if(xoffset != 0.0f || yoffset != 0)
+    if(xoffset != 0.0f || yoffset != 0.0f)
     {
         dirty = true;
     }
@@ -266,7 +306,7 @@ void Camera::processMouseMovement(float xoffset, float yoffset, bool constrainPi
 void Camera::processMouseMovementThirdPerson(float xoffset, float yoffset)
 {
     float velocity = MovementSpeed * static_cast<float>(Clock::getDeltaTime());
-    if(HID::isKeyPressed(GLFW_KEY_LEFT_SHIFT))
+    if(HID::isKeyPressedOrDown(Key::LEFT_SHIFT))
         velocity *= 1.5f;
 
     const float speed = 10;
@@ -276,8 +316,18 @@ void Camera::processMouseMovementThirdPerson(float xoffset, float yoffset)
 
     if(finalDirection != glm::vec3(0))
     {
-        finalDirection = glm::normalize(finalDirection) * speed;
-        Position += finalDirection * velocity;
+        finalDirection = glm::normalize(finalDirection);
+        const float oldDistance = glm::length(cameraTarget - Position);
+
+        const glm::vec3 newPosition = Position + finalDirection * velocity * oldDistance;
+
+        const float newDistance = glm::length(cameraTarget - newPosition);
+        const float diff = newDistance - oldDistance;
+
+        const glm::vec3 newDirection = glm::normalize(cameraTarget - newPosition);
+
+        Position = newPosition + newDirection * diff;
+        dirty = true;
     }
 }
 
@@ -330,9 +380,9 @@ void Camera::updateCameraVectorsThirdPerson()
 
 void Camera::update()
 {
-    if(HID::isKeyPressed(GLFW_KEY_1))
+    if(HID::isKeyPressed(Key::NUM_1))
         cameraMode = CameraMode::FirstPerson;
-    if(HID::isKeyPressed(GLFW_KEY_2))
+    if(HID::isKeyPressed(Key::NUM_2))
         cameraMode = CameraMode::ThirdPerson;
     // Update Front, Right and Up Vectors using the updated Euler angles
     updateCameraVectors();

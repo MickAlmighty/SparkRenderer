@@ -37,7 +37,10 @@ void GameObject::update()
 
     for(auto& child : children)
     {
-        child->update();
+        if(child->isActive())
+        {
+            child->update();
+        }
     }
 }
 
@@ -90,7 +93,7 @@ void GameObject::addChild(const std::shared_ptr<GameObject>& newChild, const std
     children.push_back(newChild);
 }
 
-void GameObject::addComponent(std::shared_ptr<Component> component)
+void GameObject::addComponent(const std::shared_ptr<Component>& component)
 {
     component->setGameObject(shared_from_this());
     components.push_back(component);
@@ -127,7 +130,9 @@ void GameObject::drawGUI()
     static char nameInput[64] = "";
     ImGui::InputTextWithHint("", name.c_str(), nameInput, 64, ImGuiInputTextFlags_CharsNoBlank);
     ImGui::SameLine();
-    if(ImGui::Button("Change Name") && nameInput[0] != '\0')
+
+    const std::string_view view(nameInput);
+    if(ImGui::Button("Change Name") && !view.empty())
     {
         name = nameInput;
         for(int i = 0; i < 64; i++)
@@ -135,6 +140,11 @@ void GameObject::drawGUI()
             nameInput[i] = '\0';
         }
     }
+
+    ImGui::Checkbox("active", &active);
+    ImGui::SameLine();
+    ImGui::Checkbox("static", &staticObject);
+
     transform.local.drawGUI();
     drawGizmos();
     for(auto& component : components)
@@ -153,10 +163,35 @@ std::string GameObject::getName() const
     return name;
 }
 
+bool GameObject::isActive() const
+{
+    return active;
+}
+
+bool GameObject::isStatic() const
+{
+    return staticObject;
+}
+
+void GameObject::setActive(bool active_)
+{
+    active = active_;
+
+    for (const auto& child : children)
+    {
+        child->setActive(active);
+    }
+}
+
+void GameObject::setStatic(bool static_)
+{
+    staticObject = static_;
+}
+
 void GameObject::drawGizmos()
 {
     static ImGuizmo::OPERATION mCurrentGizmoOperation(ImGuizmo::ROTATE);
-    static ImGuizmo::MODE mCurrentGizmoMode(ImGuizmo::LOCAL);
+    static ImGuizmo::MODE mCurrentGizmoMode(ImGuizmo::WORLD);
     if(ImGui::IsKeyPressed(GLFW_KEY_T))
         mCurrentGizmoOperation = ImGuizmo::TRANSLATE;
     if(ImGui::IsKeyPressed(GLFW_KEY_R))
@@ -228,6 +263,8 @@ RTTR_REGISTRATION
         .constructor()(rttr::policy::ctor::as_std_shared_ptr)
         .property("transform", &spark::GameObject::transform)
         .property("name", &spark::GameObject::name)
+        .property("active", &spark::GameObject::active)
+        .property("staticObject", &spark::GameObject::staticObject)
         .property("scene", &spark::GameObject::getScene, &spark::GameObject::setScene, rttr::registration::public_access)
         .property("parent", &spark::GameObject::getParent, &spark::GameObject::setParent, rttr::registration::public_access)
         .property("children", &spark::GameObject::children)

@@ -1,5 +1,4 @@
-#ifndef RESOURCE__H
-#define RESOURCE__H
+#pragma once
 
 #include <future>
 
@@ -36,4 +35,3 @@ class Resource abstract
     std::atomic_bool processing{ false };
 };
 }
-#endif

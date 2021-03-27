@@ -1,5 +1,4 @@
-#ifndef CLOCK_H
-#define CLOCK_H
+#pragma once
 
 namespace spark
 {
@@ -17,4 +16,3 @@ class Clock
 };
 
 }  // namespace spark
-#endif

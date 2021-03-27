@@ -1,5 +1,4 @@
-#ifndef RESOURCE_MANAGER_H
-#define RESOURCE_MANAGER_H
+#pragma once
 
 #include <map>
 
@@ -49,4 +48,3 @@ class ResourceManager
     ~ResourceManager() = default;
 };
 }
-#endif

@@ -1,5 +1,4 @@
-#ifndef SPARK_H
-#define SPARK_H
+#pragma once
 
 #include "GUI/SparkGui.h"
 #include "Structs.h"
@@ -9,10 +8,10 @@
 
 namespace spark
 {
-    namespace resourceManagement
-    {
-        class ResourceLibrary;
-    }
+namespace resourceManagement
+{
+    class ResourceLibrary;
+}
 class Spark
 {
     public:
@@ -38,10 +37,14 @@ class Spark
 
     private:
     inline static SparkGui sparkGui{};
-    static spark::resourceManagement::ResourceLibrary resourceLibrary; // initialized in Spark.cpp
+    static spark::resourceManagement::ResourceLibrary resourceLibrary;  // initialized in Spark.cpp
 
     ~Spark() = default;
     Spark() = default;
+
+    static void initImGui();
+    static void destroyImGui();
+
+    static void createCustomCursor();
 };
 }  // namespace spark
-#endif
