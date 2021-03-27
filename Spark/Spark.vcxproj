@@ -180,6 +180,9 @@
     <ClInclude Include="CommonUtils.h" />
     <ClInclude Include="Component.h" />
     <ClInclude Include="DepthOfFieldPass.h" />
+    <ClInclude Include="Lights\LightStatus.hpp" />
+    <ClInclude Include="Observable.hpp" />
+    <ClInclude Include="IObserver.hpp" />
     <ClInclude Include="Lights\DirectionalLight.h" />
     <ClInclude Include="EngineSystems\ResourceManager.h" />
     <ClInclude Include="EngineSystems\SceneManager.h" />

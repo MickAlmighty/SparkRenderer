@@ -17,7 +17,9 @@ class Buffer
 
     Buffer(std::size_t sizeInBytes = 0);
     Buffer(const Buffer& buffer) = delete;
+    Buffer(Buffer&& buffer) = delete;
     Buffer& operator=(const Buffer& buffer) = delete;
+    Buffer& operator=(Buffer&& buffer) = delete;
     ~Buffer();
 
     void bind() const;

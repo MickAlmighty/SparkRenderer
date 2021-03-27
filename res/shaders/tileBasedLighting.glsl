@@ -59,9 +59,11 @@ struct SpotLight {
 struct LightProbe {
     uvec2 irradianceCubemapHandle;
     uvec2 prefilterCubemapHandle;
-    vec3 position;
-    float radius;
+    vec4 positionAndRadius;
     float fadeDistance;
+    float padding1;
+    float padding2;
+    float padding3;
 };
 
 layout(std430) readonly buffer DirLightData
@@ -186,46 +188,26 @@ void main()
 
     float iblWeight = 0.0f;
 
-    for(int i = 0; i < lightProbes.length(); ++i)
+    for(uint i = 0; i < lightProbeIndices[numberOfLightsIndex]; ++i)
     {
-        LightProbe lightProbe = lightProbes[i];
+        LightProbe lightProbe = lightProbes[lightProbeIndices[lightBeginIndex + i]];
         samplerCube irradianceSampler = samplerCube(lightProbe.irradianceCubemapHandle);
         vec3 diffuseIBL = calculateDiffuseIBL(N, V, NdotV, material, irradianceSampler);
         vec4 specularIBL = calculateSpecularFromLightProbe(N, V, P, NdotV, material, lightProbe);
-        
-        //calculating the the smooth light fading at the border of light probe
-        float localDistance = length(P - lightProbe.position);
-        float alpha = clamp((lightProbe.radius - localDistance) / 
-                    max(lightProbe.fadeDistance, 0.0001f), 0.0f, 1.0f);
-        
-        float alphaAttenuation = smoothstep(0.0f, 1.0f, alpha);
-        iblWeight += alphaAttenuation;
 
-        ambient += (diffuseIBL + specularIBL.rgb) * alphaAttenuation;
+        //calculating the the smooth light fading at the border of light probe
+        float localDistance = length(P - lightProbe.positionAndRadius.xyz);
+        float alpha = clamp((lightProbe.positionAndRadius.w - localDistance) / 
+                    max(lightProbe.positionAndRadius.w, 0.0001f), 0.0f, 1.0f);
+
+        float alphaAttenuation = smoothstep(0.0f, 1.0f - iblWeight, alpha);
+        iblWeight += alphaAttenuation;// * specularIBL.a;
+
+        ambient += (diffuseIBL + specularIBL.rgb) * alphaAttenuation;// * specularIBL.a;
 
         if (iblWeight >= 1.0f)
             break;
     }
-//    for(int i = 0; i < lightProbeIndices[numberOfLightsIndex]; ++i)
-//    {
-//        LightProbe lightProbe = lightProbes[i];
-//        samplerCube irradianceSampler = samplerCube(lightProbe.irradianceCubemapHandle);
-//        vec3 diffuseIBL = calculateDiffuseIBL(N, V, NdotV, material, irradianceSampler);
-//        vec4 specularIBL = calculateSpecularFromLightProbe(N, V, P, NdotV, material, lightProbe);
-//        
-//        //calculating the the smooth light fading at the border of light probe
-//        float localDistance = length(P - lightProbe.position);
-//        float alpha = clamp((lightProbe.radius - localDistance) / 
-//                    max(lightProbe.fadeDistance, 0.0001f), 0.0f, 1.0f);
-//        
-//        float alphaAttenuation = smoothstep(0.0f, 1.0f, alpha);
-//        iblWeight += alphaAttenuation * specularIBL.a;
-//
-//        ambient += (diffuseIBL + specularIBL.rgb) * alphaAttenuation * specularIBL.a;
-//
-//        if (iblWeight >= 1.0f)
-//            break;
-//    }
 
     if (iblWeight < 1.0f)
     {
@@ -239,11 +221,11 @@ void main()
     bvec4 valid = isnan(color);
     if ( valid.x || valid.y || valid.z || valid.w )
     {
-        color = vec4(0.5f);
+        color = vec4(0.3f);
     }
 
     barrier();
-    //imageStore(lightOutput, texCoords, vec4(pointLightCount, spotLightCount, 0, 0));
+    //imageStore(lightOutput, texCoords, vec4(lightProbeIndices[numberOfLightsIndex]));
     imageStore(lightOutput, texCoords, color);
     imageStore(brightPassOutput, texCoords, vec4(getBrightPassColor(color.xyz), 1.0f));
 }
@@ -343,10 +325,8 @@ vec3 pointLightAddition(vec3 V, vec3 N, vec3 Pos, Material m)
 
     vec3 L0 = { 0, 0, 0 };
 
-    //for (int index = 0; index < pointLights.length(); ++index)
     for (int index = 0; index < pointLightIndices[numberOfLightsIndex]; ++index)
     {
-        //PointLight p = pointLights[index];
         PointLight p = pointLights[pointLightIndices[lightBeginIndex + index]];
 
         vec3 lightPos = p.positionAndRadius.xyz;
@@ -378,9 +358,8 @@ vec3 spotLightAddition(vec3 V, vec3 N, vec3 Pos, Material m)
     float NdotV = max(dot(N, V), 0.0f);
 
     vec3 L0 = { 0, 0, 0 };
-    for (int index = 0; index < pointLightIndices[numberOfLightsIndex]; ++index)
+    for (int index = 0; index < spotLightIndices[numberOfLightsIndex]; ++index)
     {
-        //PointLight p = pointLights[index];
         SpotLight s = spotLights[spotLightIndices[lightBeginIndex + index]];
         vec3 directionToLight = normalize(-s.direction);
         vec3 L = normalize(s.position - Pos);
@@ -505,12 +484,12 @@ vec4 calculateSpecularFromLightProbe(vec3 N, vec3 V, vec3 P, float NdotV, Materi
     vec3 R = reflect(-V, N);
     vec3 dominantR = getSpecularDominantDir(N, R, material.roughness);
 
-    float distToFarIntersection = raySphereIntersection(P, R, lightProbe.position, lightProbe.radius);
+    float distToFarIntersection = raySphereIntersection(P, R, lightProbe.positionAndRadius.xyz, lightProbe.positionAndRadius.w);
     if (distToFarIntersection != 0.0f)
     {
         // Compute the actual direction to sample , only consider far intersection
         // No need to normalize for fetching cubemap
-        vec3 localR = (P + distToFarIntersection * dominantR) - lightProbe.position;
+        vec3 localR = (P + distToFarIntersection * dominantR) - lightProbe.positionAndRadius.xyz;
 
         // We use normalized R to calc the intersection , thus intersections .y is
         // the distance between the intersection and the receiving pixel

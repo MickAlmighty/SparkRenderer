@@ -192,10 +192,12 @@ void SparkRenderer::initMembers()
 
 void SparkRenderer::updateBufferBindings() const
 {
+    const auto& lightManager = SceneManager::getInstance()->getCurrentScene()->lightManager;
+
     lightShader->use();
-    lightShader->bindSSBO("DirLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->dirLightSSBO);
-    lightShader->bindSSBO("PointLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->pointLightSSBO);
-    lightShader->bindSSBO("SpotLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->spotLightSSBO);
+    lightShader->bindSSBO("DirLightData", lightManager->getDirLightSSBO());
+    lightShader->bindSSBO("PointLightData", lightManager->getPointLightSSBO());
+    lightShader->bindSSBO("SpotLightData", lightManager->getSpotLightSSBO());
 
     mainShader->bindUniformBuffer("Camera", cameraUBO);
     lightShader->bindUniformBuffer("Camera", cameraUBO);
@@ -210,28 +212,28 @@ void SparkRenderer::updateBufferBindings() const
     averageLuminanceComputeShader->bindSSBO("LuminanceHistogram", luminanceHistogram);
 
     tileBasedLightCullingShader->bindUniformBuffer("Camera", cameraUBO);
-    tileBasedLightCullingShader->bindSSBO("DirLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->dirLightSSBO);
-    tileBasedLightCullingShader->bindSSBO("PointLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->pointLightSSBO);
-    tileBasedLightCullingShader->bindSSBO("SpotLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->spotLightSSBO);
-    tileBasedLightCullingShader->bindSSBO("LightProbeData", SceneManager::getInstance()->getCurrentScene()->lightManager->lightProbeSSBO);
+    tileBasedLightCullingShader->bindSSBO("DirLightData", lightManager->getDirLightSSBO());
+    tileBasedLightCullingShader->bindSSBO("PointLightData", lightManager->getPointLightSSBO());
+    tileBasedLightCullingShader->bindSSBO("SpotLightData", lightManager->getSpotLightSSBO());
+    tileBasedLightCullingShader->bindSSBO("LightProbeData", lightManager->getLightProbeSSBO());
 
     tileBasedLightCullingShader->bindSSBO("PointLightIndices", pointLightIndices);
     tileBasedLightCullingShader->bindSSBO("SpotLightIndices", spotLightIndices);
     tileBasedLightCullingShader->bindSSBO("LightProbeIndices", lightProbeIndices);
 
     tileBasedLightingShader->bindUniformBuffer("Camera", cameraUBO);
-    tileBasedLightingShader->bindSSBO("DirLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->dirLightSSBO);
-    tileBasedLightingShader->bindSSBO("PointLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->pointLightSSBO);
-    tileBasedLightingShader->bindSSBO("SpotLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->spotLightSSBO);
-    tileBasedLightingShader->bindSSBO("LightProbeData", SceneManager::getInstance()->getCurrentScene()->lightManager->lightProbeSSBO);
+    tileBasedLightingShader->bindSSBO("DirLightData", lightManager->getDirLightSSBO());
+    tileBasedLightingShader->bindSSBO("PointLightData", lightManager->getPointLightSSBO());
+    tileBasedLightingShader->bindSSBO("SpotLightData", lightManager->getSpotLightSSBO());
+    tileBasedLightingShader->bindSSBO("LightProbeData", lightManager->getLightProbeSSBO());
 
     tileBasedLightingShader->bindSSBO("PointLightIndices", pointLightIndices);
     tileBasedLightingShader->bindSSBO("SpotLightIndices", spotLightIndices);
     tileBasedLightingShader->bindSSBO("LightProbeIndices", lightProbeIndices);
 
-    localLightProbesLightingShader->bindSSBO("DirLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->dirLightSSBO);
-    localLightProbesLightingShader->bindSSBO("PointLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->pointLightSSBO);
-    localLightProbesLightingShader->bindSSBO("SpotLightData", SceneManager::getInstance()->getCurrentScene()->lightManager->spotLightSSBO);
+    localLightProbesLightingShader->bindSSBO("DirLightData", lightManager->getDirLightSSBO());
+    localLightProbesLightingShader->bindSSBO("PointLightData", lightManager->getPointLightSSBO());
+    localLightProbesLightingShader->bindSSBO("SpotLightData", lightManager->getSpotLightSSBO());
 
     localLightProbesLightingShader->bindUniformBuffer("Camera", cameraUBO);
 
@@ -279,12 +281,8 @@ void SparkRenderer::renderPass()
 
     renderToScreen();
 
-    for(const auto& lightProbeWeakPtr : SceneManager::getInstance()->getCurrentScene()->lightManager->lightProbes)
+    for(const auto& lightProbe : SceneManager::getInstance()->getCurrentScene()->lightManager->getLightProbes())
     {
-        if(lightProbeWeakPtr.expired())
-            continue;
-
-        const auto lightProbe = lightProbeWeakPtr.lock();
         if (!lightProbe->generateLightProbe)
             continue;
 
@@ -647,7 +645,7 @@ void SparkRenderer::depthOfField()
 
 void SparkRenderer::lightShafts()
 {
-    const auto& dirLights = SceneManager::getInstance()->getCurrentScene()->lightManager->directionalLights;
+    const auto& dirLights = SceneManager::getInstance()->getCurrentScene()->lightManager->getDirLights();
     if(dirLights.empty() || lightShaftsEnable != true)
         return;
 
@@ -658,7 +656,7 @@ void SparkRenderer::lightShafts()
 
     const glm::vec3 camPos = camera->getPosition();
 
-    glm::vec3 dirLightPosition = dirLights[0].lock()->getDirection() * -glm::vec3(100);
+    glm::vec3 dirLightPosition = dirLights[0]->getDirection() * -glm::vec3(100);
 
     glm::vec4 dirLightNDCpos = projection * view * glm::vec4(dirLightPosition, 1.0f);
     dirLightNDCpos /= dirLightNDCpos.w;
@@ -685,7 +683,7 @@ void SparkRenderer::lightShafts()
 
     lightShaftsShader->use();
     lightShaftsShader->setVec2("lightScreenPos", lightScreenPos);
-    lightShaftsShader->setVec3("lightColor", dirLights[0].lock()->getColor());
+    lightShaftsShader->setVec3("lightColor", dirLights[0]->getColor());
     lightShaftsShader->setInt("samples", samples);
     lightShaftsShader->setFloat("exposure", exposure);
     lightShaftsShader->setFloat("decay", decay);
@@ -927,7 +925,7 @@ void SparkRenderer::updateCameraUBO(glm::mat4 projection, glm::mat4 view, glm::v
     cameraUBO.updateData<CamData>({camData});
 }
 
-void SparkRenderer::generateLightProbe(const std::shared_ptr<LightProbe>& lightProbe)
+void SparkRenderer::generateLightProbe(LightProbe* lightProbe)
 {
     PUSH_DEBUG_GROUP(SCENE_TO_CUBEMAP);
 

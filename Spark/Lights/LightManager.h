@@ -4,15 +4,13 @@
 #include <memory>
 #include <vector>
 #include <optional>
-#include <set>
 
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
 #include <rttr/registration_friend>
 #include <rttr/registration>
 
 #include "Buffer.hpp"
-#include "Structs.h"
+#include "IObserver.hpp"
+#include "LightStatus.hpp"
 
 namespace spark
 {
@@ -21,134 +19,99 @@ class PointLight;
 class SpotLight;
 class LightProbe;
 
-class LightManager
+class LightManager : public IObserver<LightStatus<DirectionalLight>>,
+                     public IObserver<LightStatus<PointLight>>,
+                     public IObserver<LightStatus<SpotLight>>,
+                     public IObserver<LightStatus<LightProbe>>
 {
     public:
-    SSBO dirLightSSBO{}, pointLightSSBO{}, spotLightSSBO{}, lightProbeSSBO{};
-
-    std::vector<std::weak_ptr<DirectionalLight>> directionalLights;
-    std::vector<std::weak_ptr<PointLight>> pointLights;
-    std::vector<std::weak_ptr<SpotLight>> spotLights;
-
-    struct compareLightProbes
-    {
-        bool operator()(const std::weak_ptr<LightProbe>& l, const std::weak_ptr<LightProbe>& r) const;
-    };
-
-    std::multiset<std::weak_ptr<LightProbe>, compareLightProbes> lightProbes;
-
-    void addLightProbe(const std::shared_ptr<LightProbe>& lightProbe);
-
-    void addDirectionalLight(const std::shared_ptr<DirectionalLight>& directionalLight);
-    void addPointLight(const std::shared_ptr<PointLight>& pointLight);
-    void addSpotLight(const std::shared_ptr<SpotLight>& spotLight);
     void updateLightBuffers();
 
+    const SSBO& getDirLightSSBO() const;
+    const SSBO& getPointLightSSBO() const;
+    const SSBO& getSpotLightSSBO() const;
+    const SSBO& getLightProbeSSBO() const;
+    const std::vector<DirectionalLight*>& getDirLights() const;
+    const std::vector<PointLight*>& getPointLights() const;
+    const std::vector<SpotLight*>& getSpotLights() const;
+    const std::vector<LightProbe*>& getLightProbes() const;
+
     LightManager() = default;
-    ~LightManager() = default;
+    ~LightManager() override = default;
     LightManager(const LightManager& lightManager) = delete;
     LightManager(const LightManager&& lightManager) = delete;
     LightManager& operator=(const LightManager& lightManager) = delete;
     LightManager&& operator=(const LightManager&& lightManager) = delete;
 
     private:
-    template<typename T>
-    void updateBufferIfNecessary(const std::optional<std::vector<T>>& bufferLightDataOpt, SSBO& ssbo);
+    bool areDirLightsDirty{false};
+    bool arePointLightsDirty{false};
+    bool areSpotLightsDirty{false};
+    bool areLightProbesDirty{false};
 
-    template<typename T>
-    bool removeExpiredLightPointers(std::vector<std::weak_ptr<T>>& lightContainer);
+    SSBO dirLightSSBO{}, pointLightSSBO{}, spotLightSSBO{}, lightProbeSSBO{};
+    std::vector<DirectionalLight*> directionalLights;
+    std::vector<PointLight*> pointLights;
+    std::vector<SpotLight*> spotLights;
+    std::vector<LightProbe*> lightProbes;
 
-    template<typename N, typename T>
-    std::optional<std::vector<N>> getLightDataBuffer(std::vector<std::weak_ptr<T>>& lightContainer, const SSBO& ssbo);
+    void updateDirLightBuffer();
+    void updatePointLightBuffer();
+    void updateSpotLightBuffer();
+    void updateLightProbeBuffer();
 
-    bool removeExpiredLightPointers(std::multiset<std::weak_ptr<LightProbe>, compareLightProbes>& lightContainer);
-    std::optional<std::vector<LightProbeData>> getLightProbeDataBufer(
-        std::multiset<std::weak_ptr<LightProbe>, compareLightProbes>& lightProbeContainer);
+    void update(const LightStatus<DirectionalLight>* const dirLightStatus) override;
+    void update(const LightStatus<PointLight>* const pointLightStatus) override;
+    void update(const LightStatus<SpotLight>* const spotLightStatus) override;
+    void update(const LightStatus<LightProbe>* const lightProbeStatus) override;
 
-    template<typename T>
-    bool checkChangeInQuantity(const SSBO& ssboSize, const uint32_t entitySize, const std::vector<std::weak_ptr<T>>& container);
+    template<typename LightData, typename LightType>
+    std::vector<LightData> prepareLightDataBuffer(const std::vector<LightType*>& lights);
+
+    template<typename Light>
+    void processLightStatus(const LightStatus<Light>* const lightStatus, bool& areLightsDirty, std::vector<Light*>& lights);
 
     RTTR_REGISTRATION_FRIEND;
     RTTR_ENABLE();
 };
 
-template<typename T>
-void LightManager::updateBufferIfNecessary(const std::optional<std::vector<T>>& bufferLightDataOpt, SSBO& ssbo)
+template<typename LightData, typename LightType>
+inline std::vector<LightData> LightManager::prepareLightDataBuffer(const std::vector<LightType*>& lights)
 {
-    if(bufferLightDataOpt.has_value())
+    std::vector<LightData> bufferData;
+    bufferData.reserve(lights.size());
+
+    for(const auto& light : lights)
     {
-        ssbo.updateData(bufferLightDataOpt.value());
+        bufferData.push_back(light->getLightData());
     }
+
+    return bufferData;
 }
 
-template<typename T>
-inline bool LightManager::removeExpiredLightPointers(std::vector<std::weak_ptr<T>>& lightContainer)
+template<typename Light>
+void LightManager::processLightStatus(const LightStatus<Light>* const lightStatus, bool& areLightsDirty, std::vector<Light*>& lights)
 {
-    bool isBufferDirty = false;
-    bool atLeastOnExpiredPointerRemoved = false;
-    do
+    switch(lightStatus->command)
     {
-        const auto containerIt =
-            std::find_if(std::begin(lightContainer), std::end(lightContainer), [](const std::weak_ptr<T>& weakPtr) { return weakPtr.expired(); });
-
-        if(containerIt != std::end(lightContainer))
-        {
-            lightContainer.erase(containerIt);
-            atLeastOnExpiredPointerRemoved = true;
-            isBufferDirty = true;
-        }
-        else
-        {
-            break;
-        }
-    } while(atLeastOnExpiredPointerRemoved);
-
-    return isBufferDirty;
-}
-
-template<typename DataTypeOfSSBO, typename T>
-std::optional<std::vector<DataTypeOfSSBO>> LightManager::getLightDataBuffer(std::vector<std::weak_ptr<T>>& lightContainer, const SSBO& ssbo)
-{
-    const bool wasLightRemoved = removeExpiredLightPointers(lightContainer);
-    const bool isLightQuantityChanged = checkChangeInQuantity(ssbo, sizeof(DataTypeOfSSBO), lightContainer);
-    const bool isAtLeastOneLightDirty =
-        std::any_of(lightContainer.begin(), lightContainer.end(), [](const std::weak_ptr<T>& light) { return light.lock()->getDirty(); });
-
-    if(wasLightRemoved || isAtLeastOneLightDirty || isLightQuantityChanged)
-    {
-        std::vector<DataTypeOfSSBO> bufferData;
-        bufferData.reserve(lightContainer.size());
-
-        for(const auto& light : lightContainer)
-        {
-            light.lock()->resetDirty();
-            if(light.lock()->getActive() && light.lock()->getGameObject()->isActive())
+        case LightCommand::add:
+            if(std::none_of(lights.cbegin(), lights.cend(), [&lightStatus](const Light* lightPtr) { return lightPtr == lightStatus->light; }))
             {
-                bufferData.push_back(light.lock()->getLightData());
+                lights.push_back(lightStatus->light);
+                areLightsDirty = true;
             }
-        }
-
-        return bufferData;
+            break;
+        case LightCommand::update:
+            areLightsDirty = true;
+            break;
+        case LightCommand::remove:
+            const auto it = std::find(lights.begin(), lights.end(), lightStatus->light);
+            if(it != lights.end())
+            {
+                lights.erase(it);
+                areLightsDirty = true;
+            }
+            break;
     }
-
-    return std::nullopt;
 }
-
-template<typename T>
-bool LightManager::checkChangeInQuantity(const SSBO& ssbo, const uint32_t entitySize, const std::vector<std::weak_ptr<T>>& container)
-{
-    const uint32_t lastNumberOfLights = ssbo.size / entitySize;
-
-    size_t counter{0};
-    for(const auto& light : container)
-    {
-        if(light.lock()->getGameObject()->isActive())
-        {
-            ++counter;
-        }
-    }
-
-    return lastNumberOfLights != counter;
-}
-
 }  // namespace spark

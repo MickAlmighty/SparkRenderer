@@ -116,7 +116,7 @@ std::optional<ResourceProcessingInfo> ResourceLibrary::popFromGPUQueue()
 
     auto processingInfo = std::move(gpuQueue->front());
     gpuQueue->pop_front();
-    return processingInfo;
+    return {processingInfo};
 }
 
 void ResourceLibrary::processPendingResourcesLoop()

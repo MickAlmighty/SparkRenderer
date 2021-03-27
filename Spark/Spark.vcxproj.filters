@@ -346,7 +346,16 @@
     <ClInclude Include="Lights\SpotLight.h">
       <Filter>Lights</Filter>
     </ClInclude>
+    <ClInclude Include="Lights\LightStatus.hpp">
+      <Filter>Lights</Filter>
+    </ClInclude>
     <ClInclude Include="Buffer.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="IObserver.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Observable.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

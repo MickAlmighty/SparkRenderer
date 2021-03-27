@@ -53,9 +53,11 @@ struct SpotLight {
 struct LightProbe {
     uvec2 irradianceCubemapHandle; //int64_t handle
     uvec2 prefilterCubemapHandle; //int64_t handle
-    vec3 position;
-    float radius;
+    vec4 positionAndRadius;
     float fadeDistance;
+    float padding1;
+    float padding2;
+    float padding3;
 };
 
 layout(std430) readonly buffer PointLightData
@@ -90,8 +92,8 @@ layout(std430) buffer LightProbeIndices
 
 struct AABB 
 {
-    vec3 aabbCenter;
-    vec3 aabbHalfSize;
+    vec3 center;
+    vec3 halfSize;
 };
 
 struct Frustum
@@ -100,27 +102,27 @@ struct Frustum
 };
 
 //light culling functions
-AABB createTileAABB(float minDepthZ, float maxDepthZ, vec2 texSize);
-Frustum createTileFrustum(float minDepthZ, float maxDepthZ, vec2 texSize);
-bool testSphereVsAABB(vec3 sphereCenter, float sphereRadius, vec3 AABBCenter, vec3 AABBHalfSize);
+AABB createTileAABB(const float minDepthZ, const float maxDepthZ, const vec2 texSize);
+Frustum createTileFrustum(const float minDepthZ, const float maxDepthZ, const vec2 texSize);
+bool testSphereVsAABB(const vec3 sphereCenter, const float sphereRadius, const vec3 AABBCenter, const vec3 AABBHalfSize);
 vec3 fromNdcToViewSpace(vec4 ndcPoint);
 float pixToNDC(uint point, float dimSize);
 vec3 createPlane(vec3 p1, vec3 p2);
 vec4 createPlanePerpendicularToView(vec3 dir1, vec3 dir2, vec3 pointOnPlane);
 float getDistanceFromPlane(vec3 position, vec3 plane);
 float getDistanceFromPerpendicularPlane(vec3 position, vec4 perpendicularPlane);
-void cullPointLights(AABB tileAABB, float minDepthVS, float depthRangeRecip);
-void cullPointLights(Frustum tileFrustum, float minDepthVS, float depthRangeRecip);
-void cullSpotLights(AABB tileAABB);
-void cullLightProbes(AABB tileAABB, float minDepthVS, float depthRangeRecip);
+void cullPointLights(const AABB tileAABB, const float minDepthVS, const float depthRangeRecip);
+void cullPointLights(const Frustum tileFrustum, const float minDepthVS, const float depthRangeRecip);
+void cullSpotLights(const AABB tileAABB);
+void cullLightProbes(const AABB tileAABB, const float minDepthVS, const float depthRangeRecip);
 //
 
 vec3 worldPosFromDepth(float depth, vec2 texCoords);
 
 void main()
 {
-    vec2 texSize = vec2(textureSize(depthTexture, 0));
-    ivec2 texCoords = ivec2(gl_GlobalInvocationID.xy);
+    const vec2 texSize = vec2(textureSize(depthTexture, 0));
+    const ivec2 texCoords = ivec2(gl_GlobalInvocationID.xy);
 
     if (gl_LocalInvocationIndex == 0)
     {
@@ -143,7 +145,7 @@ void main()
 
     barrier();
 
-    float depthFloat = texelFetch(depthTexture, texCoords, 0).x;
+    const float depthFloat = texelFetch(depthTexture, texCoords, 0).x;
 
     if (depthFloat != 0.0f)
     {
@@ -168,23 +170,23 @@ void main()
     barrier();
 
     //convert min and max depth back to the float
-    float maxDepthZ = float(float(maxDepth) / float(0xffffffffu));
-    float minDepthZ = float(float(minDepth) / float(0xffffffffu));
+    const float maxDepthZ = float(float(maxDepth) / float(0xffffffffu));
+    const float minDepthZ = float(float(minDepth) / float(0xffffffffu));
 
-    float minDepthVS = fromNdcToViewSpace(vec4(0.0f, 0.0f, max(minDepthZ, 0.00001f), 1.0f)).z;
-    float maxDepthVS = fromNdcToViewSpace(vec4(0.0f, 0.0f, maxDepthZ, 1.0f)).z;
-    float pixelDepthVS = fromNdcToViewSpace(vec4(0.0f, 0.0f, depthFloat, 1.0f)).z;
+    const float minDepthVS = fromNdcToViewSpace(vec4(0.0f, 0.0f, max(minDepthZ, 0.00001f), 1.0f)).z;
+    const float maxDepthVS = fromNdcToViewSpace(vec4(0.0f, 0.0f, maxDepthZ, 1.0f)).z;
+    const float pixelDepthVS = fromNdcToViewSpace(vec4(0.0f, 0.0f, depthFloat, 1.0f)).z;
 
     //assigning linear depth [0,32] for each pixel from tile view space depth range
-    float depthRangeRecip = 32.0f / (maxDepthVS - minDepthVS); // positive result
+    const float depthRangeRecip = 32.0f / (maxDepthVS - minDepthVS); // positive result
     //calculating proper bit index  
-    uint depthMaskCellIndex = uint(max(0, min(32, floor((pixelDepthVS - minDepthVS) * depthRangeRecip))));
+    const uint depthMaskCellIndex = uint(max(0, min(32, floor((pixelDepthVS - minDepthVS) * depthRangeRecip))));
 
     atomicOr(tileDepthMask, 1 << depthMaskCellIndex);
 
     barrier();
 
-    AABB tileAABB = createTileAABB(minDepthZ, maxDepthZ, texSize);
+    const AABB tileAABB = createTileAABB(minDepthZ, maxDepthZ, texSize);
     //Frustum tileFrustum = createTileFrustum(minDepthZ, maxDepthZ, texSize);
     barrier();
 
@@ -204,7 +206,7 @@ void main()
 #endif
 }
 
-Frustum createTileFrustum(float minDepthZ, float maxDepthZ, vec2 texSize)
+Frustum createTileFrustum(const float minDepthZ, const float maxDepthZ, const vec2 texSize)
 {
     //calculate tile corners (2d points in pixels)
     uint minX = MAX_WORK_GROUP_SIZE * gl_WorkGroupID.x;
@@ -244,7 +246,7 @@ Frustum createTileFrustum(float minDepthZ, float maxDepthZ, vec2 texSize)
     return Frustum(planes);
 }
 
-AABB createTileAABB(float minDepthZ, float maxDepthZ, vec2 texSize)
+AABB createTileAABB(const float minDepthZ, const float maxDepthZ, const vec2 texSize)
 {
     //calculate tile corners (2d points in pixels)
     uint minX = MAX_WORK_GROUP_SIZE * gl_WorkGroupID.x;
@@ -275,7 +277,7 @@ AABB createTileAABB(float minDepthZ, float maxDepthZ, vec2 texSize)
     return AABB(aabbCenter, aabbHalfSize);
 }
 
-bool testSphereVsAABB(vec3 sphereCenter, float sphereRadius, vec3 AABBCenter, vec3 AABBHalfSize)
+bool testSphereVsAABB(const vec3 sphereCenter, const float sphereRadius, const vec3 AABBCenter, const vec3 AABBHalfSize)
 {
     vec3 delta = vec3(0);
     delta.x = max(0, abs(AABBCenter.x - sphereCenter.x) - AABBHalfSize.x);
@@ -324,7 +326,7 @@ float getDistanceFromPerpendicularPlane(vec3 position, vec4 perpendicularPlane)
     return dot(position, perpendicularPlane.xyz) + perpendicularPlane.w;
 }
 
-void cullPointLights(Frustum tileFrustum, float minDepthVS, float depthRangeRecip)
+void cullPointLights(const Frustum tileFrustum, const float minDepthVS, const float depthRangeRecip)
 {
     //Now check the lights against the frustum and append them to the list
 
@@ -368,14 +370,11 @@ void cullPointLights(Frustum tileFrustum, float minDepthVS, float depthRangeReci
     pointLightIndices[numberOfLightsIndex] = pointLightCount;
 }
 
-void cullPointLights(AABB tileAABB, float minDepthVS, float depthRangeRecip)
+void cullPointLights(const AABB tileAABB, const float minDepthVS, const float depthRangeRecip)
 {
-    //Now check the lights against the frustum and append them to the list
-
     for (uint i = gl_LocalInvocationIndex; i < pointLights.length(); i += THREADS_PER_TILE)
     {
-        uint il = i;
-        PointLight p = pointLights[il];
+        PointLight p = pointLights[i];
 
         vec3 lightViewPosition = (camera.view * vec4(p.positionAndRadius.xyz, 1.0f)).xyz;
         float r = p.positionAndRadius.w;
@@ -395,48 +394,69 @@ void cullPointLights(AABB tileAABB, float minDepthVS, float depthRangeRecip)
         if (!intersect2_5D)
             continue;
 
-        if( testSphereVsAABB(lightViewPosition, r, tileAABB.aabbCenter, tileAABB.aabbHalfSize) )
+        if(testSphereVsAABB(lightViewPosition, r, tileAABB.center, tileAABB.halfSize))
         {
             uint id = atomicAdd(pointLightCount, 1);
-            pointLightIndices[lightBeginIndex + id] = il;
+            pointLightIndices[lightBeginIndex + id] = i;
         }
     }
 
     pointLightIndices[numberOfLightsIndex] = pointLightCount;
 }
 
-void cullSpotLights(AABB tileAABB)
-{
-    //Now check the lights against the frustum and append them to the list
+struct ReducedSpotLight {
+    vec3 position;
+    vec3 direction;
+    float radius;
+    float angle;
+    float range;
+};
 
+bool spotLightConeVsAABB(const ReducedSpotLight spotLight, const vec3 aabbCenter, const float aabbSphereRadius)
+{
+    vec3 v = aabbCenter - spotLight.position;
+    float lenSq = dot(v, v);
+    float v1Len = dot(v, spotLight.direction);
+    float distanceClosestPoint = cos(spotLight.angle) * sqrt(lenSq - v1Len * v1Len) - v1Len * sin(spotLight.angle);
+    bool angleCull = distanceClosestPoint > aabbSphereRadius;
+    bool frontCull = v1Len > aabbSphereRadius + spotLight.range;
+    bool backCull = v1Len < -aabbSphereRadius;
+    return !(angleCull || frontCull || backCull);
+}
+
+void cullSpotLights(const AABB tileAABB)
+{
+    const float aabbSphereRadius = length(tileAABB.halfSize);
     for (uint i = gl_LocalInvocationIndex; i < spotLights.length(); i += THREADS_PER_TILE)
     {
-        uint il = i;
-        SpotLight s = spotLights[il];
+        const SpotLight s = spotLights[i];
 
-        vec3 lightViewPosition = (camera.view * vec4(s.boundingSphere.xyz, 1.0f)).xyz;
-        float r = s.boundingSphere.w;
+        ReducedSpotLight spotLight;
+        spotLight.position = (camera.view * vec4(s.boundingSphere.xyz, 1.0f)).xyz;
+        spotLight.direction = normalize((camera.view * vec4(s.direction.xyz, 0.0f)).xyz);
+        spotLight.radius = s.boundingSphere.w;
+        spotLight.angle = acos(s.outerCutOff);
+        spotLight.range = s.maxDistance;
 
-        if( testSphereVsAABB(lightViewPosition, r, tileAABB.aabbCenter, tileAABB.aabbHalfSize) )
+        if(spotLightConeVsAABB(spotLight, tileAABB.center, aabbSphereRadius))
         {
             uint id = atomicAdd(spotLightCount, 1);
-            spotLightIndices[lightBeginIndex + id] = il;
+            spotLightIndices[lightBeginIndex + id] = i;
         }
+
     }
 
     spotLightIndices[numberOfLightsIndex] = spotLightCount;
 }
 
-void cullLightProbes(AABB tileAABB, float minDepthVS, float depthRangeRecip)
+void cullLightProbes(const AABB tileAABB, const float minDepthVS, const float depthRangeRecip)
 {
-    //Now check the lights against the frustum and append them to the list
-
     for (uint i = gl_LocalInvocationIndex; i < lightProbes.length(); i += THREADS_PER_TILE)
     {
-        LightProbe lightProbe = lightProbes[i];
+        const LightProbe lightProbe = lightProbes[i];
 
-        vec3 lightViewPosition = (camera.view * vec4(lightProbe.position, 1.0f)).xyz;
-        float r = lightProbe.radius;
+        vec3 lightViewPosition = (camera.view * vec4(lightProbe.positionAndRadius.xyz, 1.0f)).xyz;
+        float r = lightProbe.positionAndRadius.w;
 
         float zMin = lightViewPosition.z - r;
         float zMax = lightViewPosition.z + r;
@@ -453,7 +473,7 @@ void cullLightProbes(AABB tileAABB, float minDepthVS, float depthRangeRecip)
         if (!intersect2_5D)
             continue;
 
-        if( testSphereVsAABB(lightViewPosition, r, tileAABB.aabbCenter, tileAABB.aabbHalfSize) )
+        if(testSphereVsAABB(lightViewPosition, r, tileAABB.center, tileAABB.halfSize))
         {
             uint id = atomicAdd(lightProbesCount, 1);
             lightProbeIndices[lightBeginIndex + id] = i;

@@ -18,14 +18,10 @@
 
 namespace spark
 {
+using Status = LightStatus<PointLight>;
 PointLightData PointLight::getLightData() const
 {
     return {glm::vec4(getPosition(), getRadius()), getColor() * getColorStrength(), getLightModel()};
-}
-
-bool PointLight::getDirty() const
-{
-    return dirty;
 }
 
 glm::vec3 PointLight::getPosition() const
@@ -53,33 +49,28 @@ glm::mat4 PointLight::getLightModel() const
     return lightModel;
 }
 
-void PointLight::resetDirty()
-{
-    dirty = false;
-}
-
 void PointLight::setRadius(float radius)
 {
     this->radius = radius;
-    dirty = true;
+    notifyAbout(LightCommand::update);
 }
 
 void PointLight::setColor(glm::vec3 color_)
 {
-    dirty = true;
     color = color_;
+    notifyAbout(LightCommand::update);
 }
 
 void PointLight::setColorStrength(float strength)
 {
-    dirty = true;
     colorStrength = strength;
+    notifyAbout(LightCommand::update);
 }
 
 void PointLight::setLightModel(glm::mat4 model)
 {
-    dirty = true;
     lightModel = model;
+    notifyAbout(LightCommand::update);
 }
 
 PointLight::PointLight() : Component("PointLight")
@@ -92,21 +83,32 @@ PointLight::PointLight() : Component("PointLight")
 
 PointLight::~PointLight()
 {
+    notifyAbout(LightCommand::remove);
+
     sphere->gpuUnload();
 }
 
 void PointLight::setActive(bool active_)
 {
-    dirty = true;
     active = active_;
+    if (active)
+    {
+        notifyAbout(LightCommand::add);
+    }
+    else
+    {
+        notifyAbout(LightCommand::remove);
+    }
 }
 
 void PointLight::update()
 {
-    if(!addedToLightManager)
+    if(!lightManager)
     {
-        getGameObject()->getScene()->lightManager->addPointLight(shared_from_base<PointLight>());
-        addedToLightManager = true;
+        lightManager = getGameObject()->getScene()->lightManager;
+        add(lightManager);
+
+        notifyAbout(LightCommand::add);
     }
 
     glm::mat4 sphereModel(1);
@@ -163,14 +165,18 @@ void PointLight::drawGUI()
     }
     removeComponentGUI<PointLight>();
 }
+
+void PointLight::notifyAbout(LightCommand command)
+{
+    const LightStatus<PointLight> status{command, this};
+    notify(&status);
+}
 }  // namespace spark
 
 RTTR_REGISTRATION
 {
     rttr::registration::class_<spark::PointLight>("PointLight")
         .constructor()(rttr::policy::ctor::as_std_shared_ptr)
-        //.property("dirty", &spark::PointLight::dirty) //FIXME: shouldn't it always be dirty when loaded? maybe not
-        //.property("addedToLightManager", &spark::PointLight::addedToLightManager)
         .property("color", &spark::PointLight::color)
         .property("colorStrength", &spark::PointLight::colorStrength)
         .property("radius", &spark::PointLight::radius);

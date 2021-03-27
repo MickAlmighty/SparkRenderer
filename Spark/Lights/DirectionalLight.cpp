@@ -2,7 +2,7 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
-#include "EngineSystems/SceneManager.h"
+#include "Scene.h"
 #include "GameObject.h"
 #include "JsonSerializer.h"
 #include "ReflectionUtils.h"
@@ -10,14 +10,11 @@
 
 namespace spark
 {
+using Status = LightStatus<DirectionalLight>;
+
 DirectionalLightData DirectionalLight::getLightData() const
 {
     return {direction, color * colorStrength};
-}
-
-bool DirectionalLight::getDirty() const
-{
-    return dirty;
 }
 
 glm::vec3 DirectionalLight::getDirection() const
@@ -35,43 +32,52 @@ float DirectionalLight::getColorStrength() const
     return colorStrength;
 }
 
-void DirectionalLight::resetDirty()
-{
-    dirty = false;
-}
-
 void DirectionalLight::setDirection(glm::vec3 direction_)
 {
-    dirty = true;
     direction = direction_;
+    notifyAbout(LightCommand::update);
 }
 
 void DirectionalLight::setColor(glm::vec3 color_)
 {
-    dirty = true;
     color = color_;
+    notifyAbout(LightCommand::update);
 }
 
 void DirectionalLight::setColorStrength(float strength)
 {
-    dirty = true;
     colorStrength = strength;
+    notifyAbout(LightCommand::update);
 }
 
 DirectionalLight::DirectionalLight() : Component("DirectionalLight") {}
 
+DirectionalLight::~DirectionalLight()
+{
+    notifyAbout(LightCommand::remove);
+}
+
 void DirectionalLight::setActive(bool active_)
 {
-    dirty = true;
     active = active_;
+    if(active)
+    {
+        notifyAbout(LightCommand::add);
+    }
+    else
+    {
+        notifyAbout(LightCommand::remove);
+    }
 }
 
 void DirectionalLight::update()
 {
-    if(!addedToLightManager)
+    if(!lightManager)
     {
-        getGameObject()->getScene()->lightManager->addDirectionalLight(shared_from_base<DirectionalLight>());
-        addedToLightManager = true;
+        lightManager = getGameObject()->getScene()->lightManager;
+        add(lightManager);
+
+        notifyAbout(LightCommand::add);
     }
 
     glm::vec3 lightDirection = getGameObject()->transform.local.getMatrix() * glm::vec4(dirLightFront, 0.0f);
@@ -113,17 +119,19 @@ void DirectionalLight::drawGUI()
     removeComponentGUI<DirectionalLight>();
 }
 
+void DirectionalLight::notifyAbout(LightCommand command)
+{
+    const LightStatus<DirectionalLight> status{ command, this };
+    notify(&status);
+}
 }  // namespace spark
 
 RTTR_REGISTRATION
 {
     rttr::registration::class_<spark::DirectionalLight>("DirectionalLight")
         .constructor()(rttr::policy::ctor::as_std_shared_ptr)
-        //.property("dirty", &spark::DirectionalLight::dirty) //FIXME: shouldn't it always be dirty when loaded? maybe not
-        //.property("addedToLightManager", &spark::DirectionalLight::addedToLightManager)
         .property("color", &spark::DirectionalLight::color)
         .property("colorStrength", &spark::DirectionalLight::colorStrength)
-        .property("dirLightFront", &spark::DirectionalLight::dirLightFront)
-        (rttr::detail::metadata(spark::SerializerMeta::Serializable, false))
+        .property("dirLightFront", &spark::DirectionalLight::dirLightFront)(rttr::detail::metadata(spark::SerializerMeta::Serializable, false))
         .property("direction", &spark::DirectionalLight::direction);
 }

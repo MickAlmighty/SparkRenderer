@@ -4,6 +4,7 @@
 #include "EngineSystems/SparkRenderer.h"
 #include "Enums.h"
 #include "GameObject.h"
+#include "LightManager.h"
 #include "Mesh.h"
 #include "ReflectionUtils.h"
 #include "RenderingRequest.h"
@@ -17,6 +18,8 @@
 
 namespace spark
 {
+using Status = LightStatus<LightProbe>;
+
 LightProbe::LightProbe() : Component("LightProbe")
 {
     utils::createCubemap(prefilterCubemap, prefilterCubemapSize, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR, true);
@@ -40,24 +43,29 @@ LightProbe::~LightProbe()
     irradianceCubemap = prefilterCubemap = 0;
 
     sphere->gpuUnload();
-}
-
-bool LightProbe::operator<(const LightProbe& lightProbe) const
-{
-    return radius < lightProbe.radius;
+    notifyAbout(LightCommand::remove);
 }
 
 void LightProbe::update()
 {
-    if(!addedToLightManager)
+    if(!lightManager)
     {
-        SceneManager::getInstance()->getCurrentScene()->lightManager->addLightProbe(shared_from_base<LightProbe>());
-        addedToLightManager = true;
+        lightManager = SceneManager::getInstance()->getCurrentScene()->lightManager;
+        add(lightManager);
+
+        notifyAbout(LightCommand::add);
+    }
+
+    const glm::vec3 gameObjPosition = getGameObject()->transform.world.getPosition();
+    if(position != gameObjPosition)
+    {
+        position = gameObjPosition;
+        notifyAbout(LightCommand::update);
     }
 
     glm::mat4 sphereModel(1);
     sphereModel = glm::scale(sphereModel, glm::vec3(radius));
-    sphereModel[3] = glm::vec4(getGameObject()->transform.world.getPosition(), 1.0f);
+    sphereModel[3] = glm::vec4(position, 1.0f);
 
     if(getGameObject() == getGameObject()->getScene()->getGameObjectToPreview())
     {
@@ -81,7 +89,6 @@ void LightProbe::drawGUI()
     if(ImGui::Button("Generate Light Probe"))
     {
         generateLightProbe = true;
-        dirty = true;
     }
 
     float r = getRadius();
@@ -109,15 +116,9 @@ LightProbeData LightProbe::getLightData() const
     LightProbeData data{};
     data.irradianceCubemapHandle = irradianceCubemapHandle;
     data.prefilterCubemapHandle = prefilterCubemapHandle;
-    data.position = getGameObject()->transform.world.getPosition();
-    data.radius = getRadius();
+    data.positionAndRadius = glm::vec4(position, getRadius());
     data.fadeDistance = getFadeDistance();
     return data;
-}
-
-bool LightProbe::getDirty() const
-{
-    return dirty;
 }
 
 float LightProbe::getRadius() const
@@ -128,11 +129,6 @@ float LightProbe::getRadius() const
 float LightProbe::getFadeDistance() const
 {
     return fadeDistance;
-}
-
-void LightProbe::resetDirty()
-{
-    dirty = false;
 }
 
 GLuint LightProbe::getPrefilterCubemap() const
@@ -201,52 +197,40 @@ void LightProbe::renderIntoPrefilterCubemap(GLuint framebuffer, GLuint environme
 
 void LightProbe::setActive(bool active_)
 {
-    dirty = true;
     active = active_;
+    if(active)
+    {
+        notifyAbout(LightCommand::add);
+    }
+    else
+    {
+        notifyAbout(LightCommand::remove);
+    }
 }
 
 void LightProbe::setRadius(float radius_)
 {
-    dirty = true;
     radius = radius_;
+    notifyAbout(LightCommand::update);
 }
 
 void LightProbe::setFadeDistance(float fadeDistance_)
 {
-    dirty = true;
     fadeDistance = fadeDistance_;
+    notifyAbout(LightCommand::update);
 }
 
-// void LightProbe::setIrradianceCubemap(GLuint irradianceCubemap_)
-//{
-//    irradianceCubemap = irradianceCubemap_;
-//}
-//
-// void LightProbe::setPrefilterCubemap(GLuint prefilterCubemap_)
-//{
-//    prefilterCubemap = prefilterCubemap_;
-//}
+void LightProbe::notifyAbout(LightCommand command)
+{
+    const LightStatus<LightProbe> status{ command, this };
+    notify(&status);
+}
 }  // namespace spark
 
 RTTR_REGISTRATION
 {
     rttr::registration::class_<spark::LightProbe>("LightProbe")
         .constructor()(rttr::policy::ctor::as_std_shared_ptr)
-        //.property("dirty", &spark::DirectionalLight::dirty) //FIXME: shouldn't it always be dirty when loaded? maybe not
-        //.property("addedToLightManager", &spark::DirectionalLight::addedToLightManager)
         .property("radius", &spark::LightProbe::radius)
-        .property("fadeDistance", &spark::LightProbe::fadeDistance)
-        .property("generateLightProbe", &spark::LightProbe::generateLightProbe)(rttr::detail::metadata(spark::SerializerMeta::Serializable, false))
-        .property("irradianceCubemap", &spark::LightProbe::irradianceCubemap)(rttr::detail::metadata(spark::SerializerMeta::Serializable, false))
-        .property("prefilterCubemap", &spark::LightProbe::prefilterCubemap)(rttr::detail::metadata(spark::SerializerMeta::Serializable, false))
-        .property("addedToLightManager", &spark::LightProbe::addedToLightManager)(rttr::detail::metadata(spark::SerializerMeta::Serializable, false))
-        .property("irradianceCubemapHandle",
-                  &spark::LightProbe::irradianceCubemapHandle)(rttr::detail::metadata(spark::SerializerMeta::Serializable, false))
-        .property("prefilterCubemapHandle",
-                  &spark::LightProbe::prefilterCubemapHandle)(rttr::detail::metadata(spark::SerializerMeta::Serializable, false))
-        .property("dirty", &spark::LightProbe::dirty)(rttr::detail::metadata(spark::SerializerMeta::Serializable, false))
-        .property("irradianceCubemapSize",
-                  &spark::LightProbe::irradianceCubemapSize)(rttr::detail::metadata(spark::SerializerMeta::Serializable, false))
-        .property("prefilterCubemapSize",
-                  &spark::LightProbe::prefilterCubemapSize)(rttr::detail::metadata(spark::SerializerMeta::Serializable, false));
+        .property("fadeDistance", &spark::LightProbe::fadeDistance);
 }

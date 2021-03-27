@@ -4,24 +4,33 @@
 
 #include "Component.h"
 #include "ISerializable.h"
+#include "LightStatus.hpp"
+#include "Observable.hpp"
 
 namespace spark
 {
-struct SpotLightData;
+struct SpotLightData final
+{
+    alignas(16) glm::vec3 position;
+    float cutOff;
+    glm::vec3 color;  // strength baked into color
+    float outerCutOff;
+    glm::vec3 direction;
+    float maxDistance;
+    glm::vec4 boundingSphere;  // for cone culling approximation
+};
 
-class SpotLight final : public Component
+class SpotLight final : public Component, public Observable<LightStatus<SpotLight>>
 {
     public:
     SpotLight();
-    ~SpotLight() = default;
+    ~SpotLight();
     SpotLight(const SpotLight&) = delete;
     SpotLight(const SpotLight&&) = delete;
     SpotLight& operator=(const SpotLight&) = delete;
     SpotLight& operator=(const SpotLight&&) = delete;
 
     SpotLightData getLightData() const;
-    bool getDirty() const;
-    void resetDirty();
     glm::vec3 getPosition() const;
     glm::vec3 getDirection() const;
     glm::vec3 getColor() const;
@@ -42,8 +51,8 @@ class SpotLight final : public Component
     void drawGUI() override;
 
     private:
-    bool dirty = true;
-    bool addedToLightManager = false;
+    void notifyAbout(LightCommand command);
+
     glm::vec3 color{1};
     float colorStrength{1};
     glm::vec3 direction{0.0f, -1.0f, 0.0f};
@@ -51,8 +60,7 @@ class SpotLight final : public Component
     float outerCutOff{45.0f};
     float maxDistance{1.0f};
     glm::vec3 lastPos{0};
-
-    glm::vec4 calculateCullingSphereProperties() const;
+    std::shared_ptr<LightManager> lightManager{nullptr};
 
     RTTR_REGISTRATION_FRIEND;
     RTTR_ENABLE(Component);

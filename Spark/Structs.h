@@ -185,39 +185,6 @@ struct Cube final
     }
 };
 
-struct DirectionalLightData final
-{
-    alignas(16) glm::vec3 direction;
-    alignas(16) glm::vec3 color;  // strength baked into color
-};
-
-struct PointLightData final
-{
-    alignas(16) glm::vec4 positionAndRadius;
-    alignas(16) glm::vec3 color;  // strength baked into color
-    alignas(16) glm::mat4 modelMat;
-};
-
-struct SpotLightData final
-{
-    alignas(16) glm::vec3 position;
-    float cutOff;
-    glm::vec3 color;  // strength baked into color
-    float outerCutOff;
-    glm::vec3 direction;
-    float maxDistance;
-    glm::vec4 boundingSphere;  // for cone culling approximation
-};
-
-struct LightProbeData final
-{
-    GLint64 irradianceCubemapHandle{0};
-    GLint64 prefilterCubemapHandle{0};
-    alignas(16) glm::vec3 position{0};
-    float radius{0};
-    float fadeDistance{0};
-};
-
 struct DrawArraysIndirectCommand final
 {
     GLuint count;

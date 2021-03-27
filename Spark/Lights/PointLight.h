@@ -3,14 +3,22 @@
 #include <glm/glm.hpp>
 
 #include "Component.h"
-
+#include "LightStatus.hpp"
+#include "Observable.hpp"
 
 namespace spark
 {
-struct PointLightData;
+class LightManager;
 class Mesh;
 
-class PointLight final : public Component
+struct PointLightData final
+{
+    alignas(16) glm::vec4 positionAndRadius;
+    alignas(16) glm::vec3 color;  // strength baked into color
+    alignas(16) glm::mat4 modelMat;
+};
+
+class PointLight final : public Component, public Observable<LightStatus<PointLight>>
 {
     public:
     PointLight();
@@ -21,13 +29,11 @@ class PointLight final : public Component
     PointLight& operator=(const PointLight&&) = delete;
 
     PointLightData getLightData() const;
-    bool getDirty() const;
     glm::vec3 getPosition() const;
     glm::vec3 getColor() const;
     float getColorStrength() const;
     float getRadius() const;
     glm::mat4 getLightModel() const;
-    void resetDirty();
     void setRadius(float radius);
     void setColor(glm::vec3 color_);
     void setColorStrength(float strength);
@@ -38,9 +44,10 @@ class PointLight final : public Component
     void drawGUI() override;
 
     private:
+    void notifyAbout(LightCommand command);
+
     std::shared_ptr<Mesh> sphere{nullptr};
-    bool dirty = true;
-    bool addedToLightManager = false;
+    std::shared_ptr<LightManager> lightManager{nullptr};
 
     glm::vec3 color{1};
     float radius{1.0f};

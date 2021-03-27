@@ -170,7 +170,7 @@ class SparkRenderer
     static void disableWireframeMode();
 
     void updateCameraUBO(glm::mat4 projection, glm::mat4 view, glm::vec3 pos);
-    void generateLightProbe(const std::shared_ptr<LightProbe>& lightProbe);
+    void generateLightProbe(LightProbe* lightProbe);
     void renderSceneToCubemap(const GBuffer& geometryBuffer, GLuint lightFbo, GLuint skyboxFbo);
 };
 }  // namespace spark
