@@ -3,7 +3,6 @@
 #include <list>
 #include <memory>
 
-#include "ISerializable.h"
 #include "Structs.h"
 #include "Component.h"
 

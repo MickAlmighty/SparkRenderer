@@ -3,7 +3,6 @@
 #include <glm/vec3.hpp>
 
 #include "Component.h"
-#include "ISerializable.h"
 #include "LightStatus.hpp"
 #include "Observable.hpp"
 

@@ -76,7 +76,7 @@
 xcopy "$(SolutionDir)thirdparty\lib\CommonLib\*.pdb" "$(TargetDir)" /D /Y
 xcopy "$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.dll" "$(TargetDir)" /D /Y
 xcopy "$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.pdb" "$(TargetDir)" /D /Y
-if not exist "$(TargetDir)settings.json" (xcopy "$(ProjectDir)settings.json" "$(TargetDir)" /D /Y)
+xcopy "$(ProjectDir)settings.json" "$(TargetDir)" /D /Y
 if not exist "$(TargetDir)scene.json" (xcopy "$(ProjectDir)scene.json" "$(TargetDir)" /D /Y)</Command>
     </PostBuildEvent>
     <PreBuildEvent>
@@ -105,7 +105,7 @@ if not exist "$(TargetDir)scene.json" (xcopy "$(ProjectDir)scene.json" "$(Target
 xcopy "$(SolutionDir)thirdparty\lib\CommonLib\*.pdb" "$(TargetDir)" /D /Y
 xcopy "$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.dll" "$(TargetDir)" /D /Y
 xcopy "$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.pdb" "$(TargetDir)" /D /Y
-if not exist "$(TargetDir)settings.json" (xcopy "$(ProjectDir)settings.json" "$(TargetDir)" /D /Y)
+xcopy "$(ProjectDir)settings.json" "$(TargetDir)" /D /Y
 if not exist "$(TargetDir)scene.json" (xcopy "$(ProjectDir)scene.json" "$(TargetDir)" /D /Y)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>

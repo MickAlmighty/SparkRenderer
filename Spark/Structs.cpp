@@ -271,14 +271,6 @@ Cube::Cube()
 
 RTTR_REGISTRATION
 {
-    rttr::registration::class_<spark::InitializationVariables>("InitializationVariables")
-        .constructor()(rttr::policy::ctor::as_object)
-        .property("width", &spark::InitializationVariables::width)
-        .property("height", &spark::InitializationVariables::height)
-        .property("pathToModels", &spark::InitializationVariables::pathToModels)
-        .property("pathToResources", &spark::InitializationVariables::pathToResources)
-        .property("vsync", &spark::InitializationVariables::vsync);
-
     rttr::registration::class_<spark::Transform>("Transform")
         .constructor()(rttr::policy::ctor::as_object)
         .property("local", &spark::Transform::local)

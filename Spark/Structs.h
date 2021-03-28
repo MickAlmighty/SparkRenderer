@@ -28,16 +28,6 @@ namespace resources
     class Shader;
 };
 
-struct InitializationVariables final
-{
-    unsigned int width{};
-    unsigned int height{};
-    std::string pathToModels{};
-    std::string pathToResources{};
-    bool vsync{true};
-    RTTR_ENABLE();
-};
-
 struct Texture
 {
     Texture(GLuint id, const std::string& path);

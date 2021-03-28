@@ -358,5 +358,8 @@
     <ClInclude Include="Observable.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SparkConfig.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

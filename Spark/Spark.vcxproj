@@ -227,6 +227,7 @@
     <ClInclude Include="ShapeCreator.h" />
     <ClInclude Include="Spark.h" />
     <ClInclude Include="Lights\SpotLight.h" />
+    <ClInclude Include="SparkConfig.hpp" />
     <ClInclude Include="Structs.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="Timer.h" />

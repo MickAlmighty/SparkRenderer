@@ -82,12 +82,14 @@
       <SubSystem>Console</SubSystem>
       <AdditionalLibraryDirectories>$(SolutionDir)thirdparty\lib\CommonLib;$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>"$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.lib" "$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.a" "$(SolutionDir)thirdparty\lib\CommonLib\*.lib" "$(SolutionDir)thirdparty\lib\CommonLib\*.a" /VERBOSE:UNUSEDLIBS</AdditionalOptions>
+      <LinkStatus>true</LinkStatus>
     </Link>
     <PostBuildEvent>
       <Command>xcopy "$(SolutionDir)thirdparty\lib\CommonLib\*.dll" "$(TargetDir)" /D /Y
 xcopy "$(SolutionDir)thirdparty\lib\CommonLib\*.pdb" "$(TargetDir)" /D /Y
 xcopy "$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.dll" "$(TargetDir)" /D /Y
-xcopy "$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.pdb" "$(TargetDir)" /D /Y</Command>
+xcopy "$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.pdb" "$(TargetDir)" /D /Y
+xcopy "$(ProjectDir)settings.json" "$(TargetDir)" /D /Y</Command>
       <Message>Copying library files to target directory...</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -111,12 +113,14 @@ xcopy "$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.pdb" "$(TargetDir)
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <AdditionalLibraryDirectories>$(SolutionDir)thirdparty\lib\CommonLib;$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>"$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.lib" "$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.a" "$(SolutionDir)thirdparty\lib\CommonLib\*.lib" "$(SolutionDir)thirdparty\lib\CommonLib\*.a" /VERBOSE:UNUSEDLIBS</AdditionalOptions>
+      <LinkStatus>true</LinkStatus>
     </Link>
     <PostBuildEvent>
       <Command>xcopy "$(SolutionDir)thirdparty\lib\CommonLib\*.dll" "$(TargetDir)" /D /Y
 xcopy "$(SolutionDir)thirdparty\lib\CommonLib\*.pdb" "$(TargetDir)" /D /Y
 xcopy "$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.dll" "$(TargetDir)" /D /Y
-xcopy "$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.pdb" "$(TargetDir)" /D /Y</Command>
+xcopy "$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.pdb" "$(TargetDir)" /D /Y
+xcopy "$(ProjectDir)settings.json" "$(TargetDir)" /D /Y</Command>
       <Message>Copying library files to target directory...</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>

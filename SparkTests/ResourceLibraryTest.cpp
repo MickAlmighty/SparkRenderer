@@ -7,33 +7,29 @@
 #include "ResourceLibrary.h"
 #include "Shader.h"
 #include "Spark.h"
+#include "SparkConfig.hpp"
 #include "Texture.h"
 #include "Timer.h"
 
 
 inline void initSparkAndOpenGL()
 {
-	spark::InitializationVariables variables;
+	spark::SparkConfig config{};
 	try
 	{
-		variables = spark::JsonSerializer::getInstance()->load<spark::InitializationVariables>("settings.json");
+		config = spark::JsonSerializer::getInstance()->load<spark::SparkConfig>("settings.json");
 	}
 	catch (std::exception&)
 	{
-		variables.width = 1280;
-		variables.height = 720;
-		variables.pathToResources = R"(..\..\..\res)";
-		variables.pathToModels = R"(..\..\..\res\models)";
-		spark::JsonSerializer::getInstance()->save(variables, "settings.json");
+		spark::JsonSerializer::getInstance()->save(config, "settings.json");
 	}
 
 	try
 	{
-		spark::Spark::setInitVariables(variables);
+		spark::Spark::loadConfig(config);
 		spark::Spark::initOpenGL();
-
 	}
-	catch (std::exception & e)
+	catch (std::exception& e)
 	{
 		SPARK_ERROR("{}", e.what());
 	}

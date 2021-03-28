@@ -1,13 +1,14 @@
 #pragma once
 
 #include "GUI/SparkGui.h"
-#include "Structs.h"
 
 #include <filesystem>
 #include <GLFW/glfw3.h>
 
 namespace spark
 {
+struct SparkConfig;
+
 namespace resourceManagement
 {
     class ResourceLibrary;
@@ -24,7 +25,7 @@ class Spark
     inline static bool runProgram = true;
     inline static float maxAnisotropicFiltering = 1.0f;
 
-    static void setInitVariables(const InitializationVariables& variables);
+    static void loadConfig(const SparkConfig& config);
     static void setup();
     static void run();
     static void resizeWindow(GLuint width, GLuint height);

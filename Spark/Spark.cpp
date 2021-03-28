@@ -14,18 +14,19 @@
 #include "JsonSerializer.h"
 #include "Logging.h"
 #include "ResourceLibrary.h"
+#include "SparkConfig.hpp"
 
 namespace spark
 {
 spark::resourceManagement::ResourceLibrary Spark::resourceLibrary = resourceManagement::ResourceLibrary();
 
-void Spark::setInitVariables(const InitializationVariables& variables)
+void Spark::loadConfig(const SparkConfig& config)
 {
-    WIDTH = variables.width;
-    HEIGHT = variables.height;
-    pathToModelMeshes = variables.pathToModels;
-    pathToResources = variables.pathToResources;
-    vsync = variables.vsync;
+    WIDTH = config.width;
+    HEIGHT = config.height;
+    pathToModelMeshes = config.pathToModels;
+    pathToResources = config.pathToResources;
+    vsync = config.vsync;
 }
 
 void Spark::setup()
