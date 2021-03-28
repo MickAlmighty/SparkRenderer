@@ -2,7 +2,6 @@
 
 #include "BlurPass.h"
 #include "CommonUtils.h"
-#include "EngineSystems/ResourceManager.h"
 #include "ResourceLibrary.h"
 #include "Shader.h"
 #include "Spark.h"

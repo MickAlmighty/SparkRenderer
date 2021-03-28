@@ -12,14 +12,16 @@ using Status = LightStatus<SpotLight>;
 
 SpotLightData SpotLight::getLightData() const
 {
+    const auto getSoftCutOffAngleInRadians = [this] { return glm::radians((getOuterCutOff() - getOuterCutOff() * getSoftCutOffRatio()) * 0.5f); };
+
     SpotLightData data{};
     data.direction = getDirection();
     data.position = getPosition();
     data.color = getColor() * getColorStrength();
-    data.cutOff = glm::cos(glm::radians(getCutOff()));
-    data.outerCutOff = glm::cos(glm::radians(getOuterCutOff()));
+    data.cutOff = glm::cos(getSoftCutOffAngleInRadians());
+    data.outerCutOff = glm::cos(glm::radians(getOuterCutOff() * 0.5f));
     data.maxDistance = getMaxDistance();
-    data.boundingSphere = { getGameObject()->transform.world.getPosition(), maxDistance };
+    data.boundingSphere = {getGameObject()->transform.world.getPosition(), maxDistance};
     return data;
 }
 
@@ -43,9 +45,9 @@ float SpotLight::getColorStrength() const
     return colorStrength;
 }
 
-float SpotLight::getCutOff() const
+float SpotLight::getSoftCutOffRatio() const
 {
-    return cutOff;
+    return softCutOffRatio;
 }
 
 float SpotLight::getOuterCutOff() const
@@ -76,19 +78,19 @@ void SpotLight::setDirection(glm::vec3 direction_)
     notifyAbout(LightCommand::update);
 }
 
-void SpotLight::setCutOff(float cutOff_)
+void SpotLight::setSoftCutOffRatio(float softCutOffRatio_)
 {
-    if (cutOff_ < 0.0f)
+    if(softCutOffRatio < 0.0f)
     {
-        cutOff = 0.0f;
+        softCutOffRatio = 0.0f;
     }
-    else if (cutOff_ > 90.0f)
+    else if(softCutOffRatio > 1.0f)
     {
-        cutOff = 90.0f;
+        softCutOffRatio = 1.0f;
     }
     else
     {
-        cutOff = cutOff_;
+        softCutOffRatio = softCutOffRatio_;
     }
 
     notifyAbout(LightCommand::update);
@@ -100,9 +102,9 @@ void SpotLight::setOuterCutOff(float outerCutOff_)
     {
         outerCutOff = 0.0f;
     }
-    else if(outerCutOff_ > 90.0f)
+    else if(outerCutOff_ > 180.0f)
     {
-        outerCutOff = 90.0f;
+        outerCutOff = 180.0f;
     }
     else
     {
@@ -162,14 +164,14 @@ void SpotLight::drawGUI()
 {
     glm::vec3 colorToEdit = getColor();
     float colorStrengthToEdit = getColorStrength();
-    float cutOffToEdit = getCutOff();
+    float softCutOffRatioToEdit = getSoftCutOffRatio();
     float outerCutOffToEdit = getOuterCutOff();
     glm::vec3 directionToEdit = getDirection();
     float maxDistanceToEdit = getMaxDistance();
     ImGui::ColorEdit3("color", glm::value_ptr(colorToEdit));
     ImGui::DragFloat("colorStrength", &colorStrengthToEdit, 0.01f);
-    ImGui::DragFloat("cutOff", &cutOffToEdit, 1.0f, 0.0f, 90.0f);
-    ImGui::DragFloat("outerCutOff", &outerCutOffToEdit, 1.0f, 0.0f, 90.0f);
+    ImGui::DragFloat("softCutOffRatio", &softCutOffRatioToEdit, 0.01f, 0.0f, 1.0f);
+    ImGui::DragFloat("outerCutOff", &outerCutOffToEdit, 1.0f, 0.0f, 180.0f);
     ImGui::SliderFloat3("direction", glm::value_ptr(directionToEdit), -1.0f, 1.0f);
     ImGui::DragFloat("maxDistance", &maxDistanceToEdit, 0.1f, 0.0f);
 
@@ -188,9 +190,9 @@ void SpotLight::drawGUI()
         setColorStrength(colorStrengthToEdit);
     }
 
-    if(cutOffToEdit != getCutOff())
+    if(softCutOffRatioToEdit != getSoftCutOffRatio())
     {
-        setCutOff(cutOffToEdit);
+        setSoftCutOffRatio(softCutOffRatioToEdit);
     }
 
     if(outerCutOffToEdit != getOuterCutOff())
@@ -230,7 +232,7 @@ RTTR_REGISTRATION
         .property("color", &spark::SpotLight::color)
         .property("colorStrength", &spark::SpotLight::colorStrength)
         .property("direction", &spark::SpotLight::direction)
-        .property("cutOff", &spark::SpotLight::cutOff)
+        .property("softCutOffRatio", &spark::SpotLight::softCutOffRatio)
         .property("outerCutOff", &spark::SpotLight::outerCutOff)
         .property("lastPos", &spark::SpotLight::lastPos)
         .property("maxDistance", &spark::SpotLight::maxDistance);

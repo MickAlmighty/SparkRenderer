@@ -1,6 +1,5 @@
 #include "MeshPlane.h"
 
-#include "EngineSystems/ResourceManager.h"
 #include "EngineSystems/SparkRenderer.h"
 #include "GameObject.h"
 #include "GUI/SparkGui.h"
