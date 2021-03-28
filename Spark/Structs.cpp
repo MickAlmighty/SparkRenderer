@@ -20,7 +20,6 @@ Texture::Texture(GLuint id, const std::string& path)
 void Texture::setPath(const std::string path)
 {
     this->path = path;
-    // this->ID = ResourceManager::getInstance()->getTextureId(path);
 }
 
 std::string Texture::getPath() const

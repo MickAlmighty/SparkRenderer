@@ -74,9 +74,6 @@
     <ClCompile Include="EngineSystems\SceneManager.cpp">
       <Filter>EngineSystems</Filter>
     </ClCompile>
-    <ClCompile Include="EngineSystems\ResourceManager.cpp">
-      <Filter>EngineSystems</Filter>
-    </ClCompile>
     <ClCompile Include="GUI\ImGui\imgui.cpp">
       <Filter>GUI\ImGui</Filter>
     </ClCompile>
@@ -224,9 +221,6 @@
       <Filter>EngineSystems</Filter>
     </ClInclude>
     <ClInclude Include="EngineSystems\SceneManager.h">
-      <Filter>EngineSystems</Filter>
-    </ClInclude>
-    <ClInclude Include="EngineSystems\ResourceManager.h">
       <Filter>EngineSystems</Filter>
     </ClInclude>
     <ClInclude Include="GUI\ImGui\imconfig.h">

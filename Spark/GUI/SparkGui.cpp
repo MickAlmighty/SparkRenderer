@@ -24,7 +24,6 @@ void SparkGui::drawGui()
     {
         drawMainMenuGui();
         SceneManager::getInstance()->drawGui();
-        // ResourceManager::getInstance()->drawGui();
         SparkRenderer::getInstance()->drawGui();
         ImGui::EndMainMenuBar();
     }
