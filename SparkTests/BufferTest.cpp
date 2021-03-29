@@ -1,64 +1,37 @@
 #include "pch.h"
 
-#include "JsonSerializer.h"
-#include "Spark.h"
-#include "SparkConfig.hpp"
+#include "Buffer.hpp"
+#include "OGLContext.hpp"
 
-inline void initSparkAndOpenGL()
+class BufferTest : public ::testing::Test
 {
-    spark::SparkConfig config;
-    try
+    void SetUp() override
     {
-        config = spark::JsonSerializer::getInstance()->load<spark::SparkConfig>("settings.json");
-    }
-    catch(std::exception&)
-    {
-        config.width = 1280;
-        config.height = 720;
-        config.pathToResources = R"(..\..\..\res)";
-        config.pathToModels = R"(..\..\..\res\models)";
-        spark::JsonSerializer::getInstance()->save(config, "settings.json");
+        oglContext.init(1280, 720, true, true);
     }
 
-    try
-    {
-        spark::Spark::loadConfig(config);
-        spark::Spark::initOpenGL();
-    }
-    catch(std::exception& e)
-    {
-        SPARK_ERROR("{}", e.what());
-    }
-}
+    spark::OGLContext oglContext;
 
-inline void cleanupSpark()
-{
-    try
+    protected:
+    void TearDown() override
     {
-        spark::Spark::destroyOpenGLContext();
+        oglContext.destroy();
     }
-    catch(std::exception& e)
-    {
-        SPARK_ERROR("{}", e.what());
-    }
-}
+};
 
-TEST(BufferBindingsTest, BufferTest)
-{
-    initSparkAndOpenGL();
-
+TEST_F(BufferTest, testProperBindingAsignment) {
     SSBO ssbo1{};
     SSBO ssbo2{};
     SSBO ssbo3{};
     SSBO ssbo4{};
 
-    std::set<std::uint32_t> bindings{0, 1, 2, 3};
+    std::set<std::uint32_t> bindings{ 0, 1, 2, 3 };
     ASSERT_EQ(bindings, SSBO::bindings);
 
     ssbo2.~SSBO();
     ssbo3.~SSBO();
 
-    bindings = {0, 3};
+    bindings = { 0, 3 };
     ASSERT_EQ(bindings, SSBO::bindings);
 
     SSBO ssbo5{};
@@ -72,6 +45,4 @@ TEST(BufferBindingsTest, BufferTest)
     SSBO ssbo7{};
     bindings = { 0, 1, 2, 3, 4 };
     ASSERT_EQ(bindings, SSBO::bindings);
-
-    cleanupSpark();
 }

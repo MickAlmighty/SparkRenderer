@@ -2,249 +2,129 @@
 
 #include <filesystem>
 
-#include "JsonSerializer.h"
 #include "Model.h"
 #include "ResourceLibrary.h"
 #include "Shader.h"
-#include "Spark.h"
-#include "SparkConfig.hpp"
 #include "Texture.h"
 #include "Timer.h"
 
+constexpr auto pathToResources{R"(..\..\..\res)"};
 
-inline void initSparkAndOpenGL()
+using namespace spark::resources;
+
+class ResourceLibraryTest : public ::testing::Test
 {
-	spark::SparkConfig config{};
-	try
-	{
-		config = spark::JsonSerializer::getInstance()->load<spark::SparkConfig>("settings.json");
-	}
-	catch (std::exception&)
-	{
-		spark::JsonSerializer::getInstance()->save(config, "settings.json");
-	}
+    public:
+    void SetUp() override
+    {
+        oglContext.init(1280, 720, true, true);
+        resourceLibrary.createResources(pathToResources);
+        resourceLibrary.setup();
+    }
 
-	try
-	{
-		spark::Spark::loadConfig(config);
-		spark::Spark::initOpenGL();
-	}
-	catch (std::exception& e)
-	{
-		SPARK_ERROR("{}", e.what());
-	}
+    spark::OGLContext oglContext;
+    spark::resourceManagement::ResourceLibrary resourceLibrary;
+
+    protected:
+    void TearDown() override
+    {
+        oglContext.destroy();
+        resourceLibrary.cleanup();
+    }
+
+    template<typename T>
+    static void resourcesLoading(const std::vector<T>& resources, spark::resourceManagement::ResourceLibrary& resourceLibrary)
+    {
+        ASSERT_TRUE(!resources.empty());
+        ASSERT_TRUE(resources[0] != nullptr);
+        ASSERT_TRUE(resources[0]->isResourceReady() == false);
+
+        bool resourcesLoaded = false;
+        while(!resourcesLoaded)
+        {
+            resourceLibrary.processGpuResources();
+            resourcesLoaded =
+                std::all_of(resources.begin(), resources.end(),
+                            [](const std::shared_ptr<spark::resourceManagement::Resource>& resource) { return resource->isResourceReady(); });
+        }
+        ASSERT_TRUE(resourcesLoaded);
+    }
+
+    static void resourcesUnloading(spark::resourceManagement::ResourceLibrary& resourceLibrary)
+    {
+        bool resourcesUnloaded = false;
+        while(!resourcesUnloaded)
+        {
+            resourceLibrary.processGpuResources();
+            if(resourceLibrary.getLoadedResourcesCount() == 0)
+                resourcesUnloaded = true;
+        }
+
+        ASSERT_TRUE(resourcesUnloaded);
+    }
+
+    template<typename Resource>
+    void loadInPlace(std::string resourceName)
+    {
+        std::shared_ptr<Resource> resource = nullptr;
+
+        ASSERT_TRUE(resource == nullptr);
+        resource = resourceLibrary.getResourceByNameWithOptLoad<Resource>(resourceName);
+        ASSERT_TRUE(resource->isResourceReady());
+
+        const auto resource2 = resourceLibrary.getResourceByNameWithOptLoad<Resource>(resourceName);
+        ASSERT_TRUE(resource2->isResourceReady());
+    }
+
+    template<typename Resource>
+    void loadingAndUnloading()
+    {
+        for(int i = 0; i < 2; ++i)
+        {
+            SPARK_INFO("Loading and unloading loop iteration: {}", i);
+
+            std::vector<std::shared_ptr<Resource>> resources{};
+            {
+                spark::Timer timer("Loading time:");
+                resources = resourceLibrary.getResourcesOfType<Resource>();
+                resourcesLoading(resources, resourceLibrary);
+            }
+
+            {
+                spark::Timer timer("Unloading time:");
+                resources.clear();
+                resourcesUnloading(resourceLibrary);
+            }
+        }
+    }
+};
+
+TEST_F(ResourceLibraryTest, ModelsLoadingAndUnloading)
+{
+    loadingAndUnloading<Model>();
 }
 
-inline void cleanupSpark()
+TEST_F(ResourceLibraryTest, TexturesLoadingAndUnloading)
 {
-	try
-	{
-		spark::Spark::destroyOpenGLContext();
-	}
-	catch (std::exception & e)
-	{
-		SPARK_ERROR("{}", e.what());
-	}
+    loadingAndUnloading<Texture>();
 }
 
-template <typename T>
-inline void resourcesLoading(const std::vector<T>& resources, spark::resourceManagement::ResourceLibrary& resourceLibrary)
+TEST_F(ResourceLibraryTest, ShadersLoadingAndUnloading)
 {
-	ASSERT_TRUE(!resources.empty());
-	ASSERT_TRUE(resources[0] != nullptr);
-	ASSERT_TRUE(resources[0]->isResourceReady() == false);
-
-	bool resourcesLoaded = false;
-	while (!resourcesLoaded)
-	{
-		resourceLibrary.processGpuResources();
-		resourcesLoaded = std::all_of(resources.begin(), resources.end(), [](const std::shared_ptr<spark::resourceManagement::Resource>& resource)
-			{
-				return resource->isResourceReady();
-			});
-	}
-	ASSERT_TRUE(resourcesLoaded);
+    loadingAndUnloading<Shader>();
 }
 
-inline void resourcesUnloading(spark::resourceManagement::ResourceLibrary& resourceLibrary)
+TEST_F(ResourceLibraryTest, LoadingModelInPlace)
 {
-	bool resourcesUnloaded = false;
-	while (!resourcesUnloaded)
-	{
-		resourceLibrary.processGpuResources();
-		if (resourceLibrary.getLoadedResourcesCount() == 0)
-			resourcesUnloaded = true;
-	}
-
-	ASSERT_TRUE(resourcesUnloaded);
+    loadInPlace<spark::resources::Model>("box.obj");
 }
 
-TEST(ResourceLibraryTest, ModelsLoadingAndUnloading)
+TEST_F(ResourceLibraryTest, LoadingTextureInPlace)
 {
-	initSparkAndOpenGL();
-
-	using namespace spark::resourceManagement;
-
-	ResourceLibrary resourceLibrary = ResourceLibrary();
-	resourceLibrary.createResources(spark::Spark::pathToResources);
-	resourceLibrary.setup();
-
-	for (int i = 0; i < 5; ++i)
-	{
-		SPARK_INFO("Loading and unloading loop iteration: {}", i);
-        
-		std::vector<std::shared_ptr<spark::resources::Model>> resources;
-		{
-			spark::Timer timer("Loading models time:");
-			resources = resourceLibrary.getResourcesOfType<spark::resources::Model>();
-			resourcesLoading(resources, resourceLibrary);
-		}
-		
-		{
-			spark::Timer timer("Unloading models time:");
-			resources.clear();
-			resourcesUnloading(resourceLibrary);
-		}
-	}
-
-	resourceLibrary.cleanup();
-
-	cleanupSpark();
+    loadInPlace<spark::resources::Texture>("Spaceship_Diffuse.DDS");
 }
 
-TEST(ResourceLibraryTest, TexturesLoadingAndUnloading)
+TEST_F(ResourceLibraryTest, LoadingShaderInPlace)
 {
-	initSparkAndOpenGL();
-
-	using namespace spark::resourceManagement;
-
-	ResourceLibrary resourceLibrary = ResourceLibrary();
-	resourceLibrary.createResources(spark::Spark::pathToResources);
-	resourceLibrary.setup();
-
-	for (int i = 0; i < 5; ++i)
-	{
-		SPARK_INFO("Loading and unloading loop iteration: {}", i);
-		std::vector<std::shared_ptr<spark::resources::Texture>> resources;
-		{
-			spark::Timer timer("Loading textures time:");
-			resources = resourceLibrary.getResourcesOfType<spark::resources::Texture>();
-			resourcesLoading(resources, resourceLibrary);
-		}
-
-		{
-			spark::Timer timer("Unloading textures time:");
-			resources.clear();
-			resourcesUnloading(resourceLibrary);
-		}
-	}
-	
-	resourceLibrary.cleanup();
-
-	cleanupSpark();
-}
-
-TEST(ResourceLibraryTest, ShadersLoadingAndUnloading)
-{
-	initSparkAndOpenGL();
-
-	using namespace spark::resourceManagement;
-
-	ResourceLibrary resourceLibrary = ResourceLibrary();
-	resourceLibrary.createResources(spark::Spark::pathToResources);
-	resourceLibrary.setup();
-
-	for (int i = 0; i < 5; ++i)
-	{
-		SPARK_INFO("Loading and unloading loop iteration: {}", i);
-
-		std::vector<std::shared_ptr<spark::resources::Shader>> resources;
-		{
-			spark::Timer timer("Loading shaders time:");
-			resources = resourceLibrary.getResourcesOfType<spark::resources::Shader>();
-			resourcesLoading(resources, resourceLibrary);
-		}
-
-		{
-			spark::Timer timer("Unloading shaders time:");
-			resources.clear();
-			resourcesUnloading(resourceLibrary);
-		}
-	}
-
-	resourceLibrary.cleanup();
-
-	cleanupSpark();
-}
-
-TEST(ResourceLibraryTest, LoadingModelInPlace)
-{
-	initSparkAndOpenGL();
-
-	using namespace spark::resourceManagement;
-
-	ResourceLibrary resourceLibrary = ResourceLibrary();
-	resourceLibrary.createResources(spark::Spark::pathToResources);
-	resourceLibrary.setup();
-
-	std::shared_ptr<spark::resources::Model> model = nullptr;
-
-	ASSERT_TRUE(model == nullptr);
-	model = resourceLibrary.getResourceByNameWithOptLoad<spark::resources::Model>("box.obj");
-	ASSERT_TRUE(model->isResourceReady());
-
-	const auto model2 = resourceLibrary.getResourceByNameWithOptLoad<spark::resources::Model>("box.obj");
-	ASSERT_TRUE(model2->isResourceReady());
-
-	resourceLibrary.cleanup();
-
-	cleanupSpark();
-}
-
-TEST(ResourceLibraryTest, LoadingTextureInPlace)
-{
-	initSparkAndOpenGL();
-
-	using namespace spark::resourceManagement;
-
-	ResourceLibrary resourceLibrary = ResourceLibrary();
-	resourceLibrary.createResources(spark::Spark::pathToResources);
-	resourceLibrary.setup();
-
-	std::shared_ptr<spark::resources::Texture> texture = nullptr;
-
-	ASSERT_TRUE(texture == nullptr);
-	texture = resourceLibrary.getResourceByNameWithOptLoad<spark::resources::Texture>("Spaceship_Diffuse.DDS");
-	ASSERT_TRUE(texture->isResourceReady());
-
-	const auto texture2 = resourceLibrary.getResourceByNameWithOptLoad<spark::resources::Texture>("Spaceship_Diffuse.DDS");
-	ASSERT_TRUE(texture2->isResourceReady());
-
-	resourceLibrary.cleanup();
-
-	cleanupSpark();
-}
-
-TEST(ResourceLibraryTest, LoadingShaderInPlace)
-{
-	initSparkAndOpenGL();
-
-	using namespace spark::resourceManagement;
-
-	ResourceLibrary resourceLibrary = ResourceLibrary();
-	resourceLibrary.createResources(spark::Spark::pathToResources);
-	resourceLibrary.setup();
-
-	std::shared_ptr<spark::resources::Shader> shader = nullptr;
-
-	ASSERT_TRUE(shader == nullptr);
-	shader = resourceLibrary.getResourceByNameWithOptLoad<spark::resources::Shader>("default.glsl");
-	ASSERT_TRUE(shader->isResourceReady());
-
-    const auto shader2 = resourceLibrary.getResourceByNameWithOptLoad<spark::resources::Shader>("default.glsl");
-	ASSERT_TRUE(shader2->isResourceReady());
-
-	resourceLibrary.cleanup();
-
-	cleanupSpark();
+    loadInPlace<Shader>("default.glsl");
 }

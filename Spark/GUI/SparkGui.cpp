@@ -70,7 +70,7 @@ void SparkGui::drawSparkSettings(bool* p_open)
 
     if(vsync != Spark::vsync)
     {
-        Spark::setVsync(vsync);
+        Spark::oglContext.setVsync(vsync);
     }
 
     static const char* items[4] = {"1280x720", "1600x900", "1920x1080", "1920x1055"};
@@ -79,19 +79,19 @@ void SparkGui::drawSparkSettings(bool* p_open)
     {
         if(current_item == 0)
         {
-            Spark::resizeWindow(1280, 720);
+            Spark::oglContext.resizeWindow(1280, 720);
         }
         else if(current_item == 1)
         {
-            Spark::resizeWindow(1600, 900);
+            Spark::oglContext.resizeWindow(1600, 900);
         }
         else if(current_item == 2)
         {
-            Spark::resizeWindow(1920, 1080);
+            Spark::oglContext.resizeWindow(1920, 1080);
         }
         else if(current_item == 3)
         {
-            Spark::resizeWindow(1920, 1055);
+            Spark::oglContext.resizeWindow(1920, 1055);
         }
     }
 

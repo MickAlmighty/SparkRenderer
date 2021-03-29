@@ -179,6 +179,9 @@
     <ClCompile Include="Lights\SpotLight.cpp">
       <Filter>Lights</Filter>
     </ClCompile>
+    <ClCompile Include="OGLContext.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Spark.h">
@@ -353,6 +356,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="SparkConfig.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="OGLContext.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

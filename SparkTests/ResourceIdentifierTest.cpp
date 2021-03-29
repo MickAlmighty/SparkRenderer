@@ -8,11 +8,10 @@
 
 const auto currentPath = std::filesystem::current_path();
 
-
 TEST(ResourceIdentifierTest, ResourceIdentifierConstruction)
 {
     using namespace spark::resourceManagement;
-    std::ofstream file{ currentPath / "tmp.txt" };
+    std::ofstream file{currentPath / "tmp.txt"};
     file.close();
     try
     {
@@ -25,7 +24,7 @@ TEST(ResourceIdentifierTest, ResourceIdentifierConstruction)
         ASSERT_STREQ("tmp", identifier.getResourceName(false).string().c_str());
         ASSERT_TRUE(".txt" == identifier.getResourceExtension());
     }
-    catch (std::exception& e)
+    catch(std::exception& e)
     {
         SPARK_ERROR("ResourceIdentifier construction failed: ", e.what());
     }
@@ -34,20 +33,20 @@ TEST(ResourceIdentifierTest, ResourceIdentifierConstruction)
 TEST(ResourceIdentifierTest, ResourceIdentifierChanges)
 {
     using namespace spark::resourceManagement;
-    std::ofstream file{ currentPath / "tmp.txt" };
+    std::ofstream file{currentPath / "tmp.txt"};
     file.close();
     try
     {
         ResourceIdentifier identifier(currentPath / "tmp.txt");
         ASSERT_TRUE(currentPath == identifier.getDirectoryPath());
         ASSERT_TRUE("tmp.txt" == identifier.getResourceName());
-        
-        if (identifier.changeResourceName("tmp2.txt"))
+
+        if(identifier.changeResourceName("tmp2.txt"))
         {
             ASSERT_STREQ("tmp2.txt", identifier.getResourceName().string().c_str());
         }
 
-        if (identifier.changeResourceName("tmp.json"))
+        if(identifier.changeResourceName("tmp.json"))
         {
             ASSERT_STREQ("tmp.json", identifier.getResourceName().string().c_str());
         }
@@ -62,7 +61,7 @@ TEST(ResourceIdentifierTest, ResourceIdentifierChanges)
 
         std::filesystem::remove(currentPath / "tmp.txt");
     }
-    catch (std::exception & e)
+    catch(std::exception& e)
     {
         SPARK_ERROR("ResourceIdentifier construction failed: ", e.what());
     }
@@ -71,8 +70,8 @@ TEST(ResourceIdentifierTest, ResourceIdentifierChanges)
 TEST(ResourceIdentifierTest, ResourceIdentifierOperatorsOverload)
 {
     using namespace spark::resourceManagement;
-    std::ofstream file{ currentPath / "a.txt" };
-    std::ofstream file2{ currentPath / "b.txt" };
+    std::ofstream file{currentPath / "a.txt"};
+    std::ofstream file2{currentPath / "b.txt"};
     file.close();
     file2.close();
     try
@@ -86,10 +85,8 @@ TEST(ResourceIdentifierTest, ResourceIdentifierOperatorsOverload)
         std::filesystem::remove(identifier.getFullPath());
         std::filesystem::remove(identifier2.getFullPath());
     }
-    catch (std::exception & e)
+    catch(std::exception& e)
     {
         SPARK_ERROR("ResourceIdentifier construction failed: ", e.what());
     }
-
-    
 }

@@ -266,12 +266,12 @@ void Camera::processMouseMovement(float xoffset, float yoffset, bool constrainPi
 
     if(HID::isKeyReleased(Key::MOUSE_RIGHT) && cameraRotation)
     {
-        glfwSetInputMode(Spark::window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        glfwSetInputMode(Spark::oglContext.window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
         cameraRotation = false;
     }
     else if(HID::isKeyPressedOrDown(Key::MOUSE_RIGHT) && !cameraRotation)
     {
-        glfwSetInputMode(Spark::window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        glfwSetInputMode(Spark::oglContext.window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         cameraRotation = true;
     }
 

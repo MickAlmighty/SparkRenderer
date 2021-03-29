@@ -10,8 +10,6 @@
 
 namespace spark
 {
-using Status = LightStatus<DirectionalLight>;
-
 DirectionalLightData DirectionalLight::getLightData() const
 {
     return {direction, color * colorStrength};
@@ -121,7 +119,7 @@ void DirectionalLight::drawGUI()
 
 void DirectionalLight::notifyAbout(LightCommand command)
 {
-    const LightStatus<DirectionalLight> status{ command, this };
+    const LightStatus<DirectionalLight> status{command, this};
     notify(&status);
 }
 }  // namespace spark

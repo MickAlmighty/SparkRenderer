@@ -308,7 +308,7 @@ void SparkRenderer::renderPass()
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     POP_DEBUG_GROUP();
-    glfwSwapBuffers(Spark::window);
+    glfwSwapBuffers(Spark::oglContext.window);
 
     clearRenderQueues();
 }
@@ -321,7 +321,7 @@ void SparkRenderer::addRenderingRequest(const RenderingRequest& request)
 void SparkRenderer::resizeWindowIfNecessary()
 {
     int width, height;
-    glfwGetWindowSize(Spark::window, &width, &height);
+    glfwGetWindowSize(Spark::oglContext.window, &width, &height);
     if(Spark::WIDTH != static_cast<unsigned int>(width) || Spark::HEIGHT != static_cast<unsigned int>(height))
     {
         if(width != 0 && height != 0)

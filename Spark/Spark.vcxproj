@@ -155,6 +155,7 @@
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="ModelMesh.cpp" />
     <ClCompile Include="Lights\PointLight.cpp" />
+    <ClCompile Include="OGLContext.cpp" />
     <ClCompile Include="Resource.cpp" />
     <ClCompile Include="ResourceFactory.cpp" />
     <ClCompile Include="ResourceIdentifier.cpp" />
@@ -213,6 +214,7 @@
     <ClInclude Include="Model.h" />
     <ClInclude Include="ModelMesh.h" />
     <ClInclude Include="Lights\PointLight.h" />
+    <ClInclude Include="OGLContext.hpp" />
     <ClInclude Include="ReflectionUtils.h" />
     <ClInclude Include="RenderingRequest.h" />
     <ClInclude Include="Resource.h" />

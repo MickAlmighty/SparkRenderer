@@ -7,7 +7,7 @@ namespace spark
 {
 Mouse HID::mouse{};
 
-void HID::scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+void HID::scroll_callback(double xoffset, double yoffset)
 {
     if (yoffset < 0.0)
         mouse.scroll = ScrollStatus::NEGATIVE;
@@ -15,17 +15,17 @@ void HID::scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
         mouse.scroll = ScrollStatus::POSITIVE;
 }
 
-void HID::key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+void HID::key_callback(int key, int scancode, int action, int mods)
 {
     processKeys(key, action);
 }
 
-void HID::mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
+void HID::mouse_button_callback(int button, int action, int mods)
 {
     processKeys(button, action);
 }
 
-void HID::cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
+void HID::cursor_position_callback(double xpos, double ypos)
 {
     static double lastXpos = static_cast<double>(Spark::WIDTH) * 0.5, lastYPos = static_cast<double>(Spark::HEIGHT) * 0.5;
 

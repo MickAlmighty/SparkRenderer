@@ -2,10 +2,7 @@
 
 #include <filesystem>
 
-#include "JsonSerializer.h"
 #include "ResourceFactory.h"
-#include "Spark.h"
-#include "SparkConfig.hpp"
 
 TEST(ResourceFactoryTest, ResourceCreation)
 {

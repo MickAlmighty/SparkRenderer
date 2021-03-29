@@ -1,9 +1,9 @@
 #pragma once
 
 #include "GUI/SparkGui.h"
+#include "OGLContext.hpp"
 
 #include <filesystem>
-#include <GLFW/glfw3.h>
 
 namespace spark
 {
@@ -16,24 +16,25 @@ namespace resourceManagement
 class Spark
 {
     public:
+    Spark(const Spark&) = delete;
+    Spark(Spark&&) = delete;
+    Spark& operator=(const Spark&) = delete;
+    Spark& operator=(Spark&&) = delete;
+
     inline static unsigned int WIDTH{1280};
     inline static unsigned int HEIGHT{720};
-    inline static std::filesystem::path pathToModelMeshes;
-    inline static std::filesystem::path pathToResources;
+    inline static std::filesystem::path pathToModelMeshes{};
+    inline static std::filesystem::path pathToResources{};
     inline static bool vsync = true;
-    inline static GLFWwindow* window = nullptr;
     inline static bool runProgram = true;
-    inline static float maxAnisotropicFiltering = 1.0f;
+
+    inline static OGLContext oglContext{};
 
     static void loadConfig(const SparkConfig& config);
     static void setup();
     static void run();
-    static void resizeWindow(GLuint width, GLuint height);
-    static void setVsync(bool state);
     static void clean();
 
-    static void initOpenGL();
-    static void destroyOpenGLContext();
     static spark::resourceManagement::ResourceLibrary* getResourceLibrary();
 
     private:

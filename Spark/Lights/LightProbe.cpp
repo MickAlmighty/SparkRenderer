@@ -18,8 +18,6 @@
 
 namespace spark
 {
-using Status = LightStatus<LightProbe>;
-
 LightProbe::LightProbe() : Component("LightProbe")
 {
     utils::createCubemap(prefilterCubemap, prefilterCubemapSize, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR, true);
@@ -222,7 +220,7 @@ void LightProbe::setFadeDistance(float fadeDistance_)
 
 void LightProbe::notifyAbout(LightCommand command)
 {
-    const LightStatus<LightProbe> status{ command, this };
+    const LightStatus<LightProbe> status{command, this};
     notify(&status);
 }
 }  // namespace spark

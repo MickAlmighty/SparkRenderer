@@ -8,8 +8,6 @@
 
 namespace spark
 {
-using Status = LightStatus<SpotLight>;
-
 SpotLightData SpotLight::getLightData() const
 {
     const auto getSoftCutOffAngleInRadians = [this] { return glm::radians((getOuterCutOff() - getOuterCutOff() * getSoftCutOffRatio()) * 0.5f); };

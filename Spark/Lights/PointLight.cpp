@@ -4,7 +4,6 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
-
 #include "EngineSystems/SparkRenderer.h"
 #include "Enums.h"
 #include "GameObject.h"
@@ -18,7 +17,6 @@
 
 namespace spark
 {
-using Status = LightStatus<PointLight>;
 PointLightData PointLight::getLightData() const
 {
     return {glm::vec4(getPosition(), getRadius()), getColor() * getColorStrength(), getLightModel()};
@@ -91,7 +89,7 @@ PointLight::~PointLight()
 void PointLight::setActive(bool active_)
 {
     active = active_;
-    if (active)
+    if(active)
     {
         notifyAbout(LightCommand::add);
     }
