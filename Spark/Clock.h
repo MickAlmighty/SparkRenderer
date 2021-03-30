@@ -12,7 +12,7 @@ class Clock
     public:
     static void tick();
     static double getDeltaTime();
-    static int getFPS();
+    static double getFPS();
 };
 
 }  // namespace spark

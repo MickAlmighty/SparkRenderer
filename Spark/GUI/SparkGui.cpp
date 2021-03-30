@@ -70,6 +70,7 @@ void SparkGui::drawSparkSettings(bool* p_open)
 
     if(vsync != Spark::vsync)
     {
+        Spark::vsync = vsync;
         Spark::oglContext.setVsync(vsync);
     }
 
