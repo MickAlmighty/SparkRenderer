@@ -3,9 +3,6 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#include "Logging.h"
-#include "HID/HID.h"
-
 namespace spark
 {
 class OGLContext
@@ -25,7 +22,7 @@ class OGLContext
     void closeWindow() const;
     void setVsync(bool vsyncEnabled);
     void resizeWindow(GLuint width, GLuint height) const;
-    float maxAnisotropicFiltering() const;
+    void swapBuffers() const;
     void setupInputCallbacks() const;
 
     GLFWwindow* window = nullptr;

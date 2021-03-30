@@ -2,7 +2,9 @@
 
 #include <filesystem>
 
+#include "Logging.h"
 #include "Model.h"
+#include "OGLContext.hpp"
 #include "ResourceLibrary.h"
 #include "Shader.h"
 #include "Texture.h"

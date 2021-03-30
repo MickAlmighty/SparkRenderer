@@ -11,6 +11,7 @@
 #include "Model.h"
 #include "RenderingRequest.h"
 #include "ResourceLibrary.h"
+#include "Spark.h"
 #include "EngineSystems/SparkRenderer.h"
 
 namespace spark
@@ -97,7 +98,7 @@ std::string ModelMesh::getModelPath() const
 
 void ModelMesh::setModelPath(const std::string modelPath)
 {
-    setModel(Spark::getResourceLibrary()->getResourceByPathWithOptLoad<resources::Model>(modelPath));
+    setModel(Spark::resourceLibrary.getResourceByPathWithOptLoad<resources::Model>(modelPath));
 }
 }  // namespace spark
 

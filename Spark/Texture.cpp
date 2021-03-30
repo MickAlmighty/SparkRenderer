@@ -4,8 +4,6 @@
 #include <stb_image/stb_image.h>
 
 #include "Logging.h"
-#include "Spark.h"
-#include "Timer.h"
 
 namespace spark::resources
 {
@@ -15,11 +13,11 @@ Texture::Texture(const resourceManagement::ResourceIdentifier& identifier)
     const std::string ext = id.getResourceExtension().string();
     if (ext == ".png" || ext == ".jpg" || ext == "tga")
     {
-        compressedTexture = false;
+        isTextureCompressed = false;
     }
     if (ext == ".dds" || ext == ".DDS" || ext == ".ktx" || ext == ".KTX")
     {
-        compressedTexture = true;
+        isTextureCompressed = true;
     }
 }
 
@@ -32,7 +30,7 @@ bool Texture::gpuLoad()
 {
     //Timer timer("Allocating gpu memory for texture: " + id.getFullPath().string());
     const std::string ext = id.getResourceExtension().string();
-    if (compressedTexture)
+    if (isTextureCompressed)
     {
         createGpuCompressedTexture();
     }
@@ -58,7 +56,7 @@ bool Texture::load()
 {
     //Timer timer("Loading texture from file: " + id.getFullPath().string());
     const std::string ext = id.getResourceExtension().string();
-    if (compressedTexture)
+    if (isTextureCompressed)
     {
         compressedTextureData = loadCompressedTextureData(id.getFullPath());
     }
@@ -174,7 +172,9 @@ void Texture::createGpuCompressedTexture()
     glTexParameteri(Target, GL_TEXTURE_SWIZZLE_G, Format.Swizzles[1]);
     glTexParameteri(Target, GL_TEXTURE_SWIZZLE_B, Format.Swizzles[2]);
     glTexParameteri(Target, GL_TEXTURE_SWIZZLE_A, Format.Swizzles[3]);
-    glTexParameterf(Target, GL_TEXTURE_MAX_ANISOTROPY, Spark::oglContext.maxAnisotropicFiltering());
+    float maxAnisotropicFiltering{ 1.0f };
+    glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &maxAnisotropicFiltering);
+    glTexParameterf(Target, GL_TEXTURE_MAX_ANISOTROPY, maxAnisotropicFiltering);
 
     glm::tvec3<GLsizei> const Extent(compressedTextureData.extent());
     GLsizei const FaceTotal = static_cast<GLsizei>(compressedTextureData.layers() * compressedTextureData.faces());

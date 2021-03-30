@@ -8,7 +8,6 @@
 #include <object_threadsafe/safe_ptr.h>
 
 #include "Resource.h"
-#include "Spark.h"
 
 namespace spark::resourceManagement
 {

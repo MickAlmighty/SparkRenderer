@@ -9,6 +9,7 @@
 #include "ResourceLoader.h"
 #include "Spark.h"
 #include "Texture.h"
+#include "ImGui/imgui_impl_opengl3.h"
 
 namespace spark
 {
@@ -27,6 +28,9 @@ void SparkGui::drawGui()
         SparkRenderer::getInstance()->drawGui();
         ImGui::EndMainMenuBar();
     }
+
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
 void SparkGui::drawMainMenuGui()
@@ -38,7 +42,7 @@ void SparkGui::drawMainMenuGui()
         ImGui::Separator();
         if(ImGui::MenuItem("Exit", "Esc"))
         {
-            Spark::runProgram = false;
+            Spark::oglContext.closeWindow();
         }
         ImGui::EndMenu();
     }
@@ -158,12 +162,12 @@ std::shared_ptr<resources::Model> SparkGui::getModel()
 
     if(ImGui::BeginPopupModal("Models", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
     {
-        const auto modelIds = Spark::getResourceLibrary()->getResourceIdentifiers<resources::Model>();
+        const auto modelIds = Spark::resourceLibrary.getResourceIdentifiers<resources::Model>();
         for(const auto& id : modelIds)
         {
             if(ImGui::Button(id.getFullPath().string().c_str()))
             {
-                model = Spark::getResourceLibrary()->getResourceByPathWithOptLoad<resources::Model>(id.getFullPath().string());
+                model = Spark::resourceLibrary.getResourceByPathWithOptLoad<resources::Model>(id.getFullPath().string());
                 ImGui::CloseCurrentPopup();
             }
         }

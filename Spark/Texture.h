@@ -24,7 +24,7 @@ class Texture : public resourceManagement::Resource, public resourceManagement::
 
     private:
     GLuint ID{0};
-    bool compressedTexture{ false };
+    bool isTextureCompressed{ false };
     int width{ 0 }, height{ 0 }, channels{ 0 };
     unsigned char* texturePixelArray{nullptr};
     gli::texture compressedTextureData{};

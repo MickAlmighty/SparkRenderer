@@ -1,7 +1,6 @@
 #pragma once
 
 #include <glad/glad.h>
-#include <GLFW/glfw3.h>
 
 #include "Buffer.hpp"
 #include "Enums.h"
@@ -22,8 +21,8 @@ class SparkRenderer
     SparkRenderer(const SparkRenderer&) = delete;
     SparkRenderer operator=(const SparkRenderer&) = delete;
 
-    void setup();
-    void renderPass();
+    void setup(unsigned int windowWidth, unsigned int windowHeight);
+    void renderPass(unsigned int windowWidth, unsigned int windowHeight);
     void cleanup();
 
     static SparkRenderer* getInstance();
@@ -32,7 +31,41 @@ class SparkRenderer
     void addRenderingRequest(const RenderingRequest& request);
 
     private:
-    std::map<ShaderType, std::deque<RenderingRequest>> renderQueue;
+    SparkRenderer() = default;
+    ~SparkRenderer() = default;
+
+    void resizeWindowIfNecessary(unsigned int windowWidth, unsigned int windowHeight);
+    void fillGBuffer(const GBuffer& geometryBuffer);
+    void fillGBuffer(const GBuffer& geometryBuffer, const std::function<bool(const RenderingRequest& request)>& filter);
+    void ssaoComputing(const GBuffer& geometryBuffer);
+    void renderLights(GLuint framebuffer, const GBuffer& geometryBuffer);
+    void renderCubemap(GLuint framebuffer) const;
+    void tileBasedLightCulling(const GBuffer& geometryBuffer) const;
+    void tileBasedLightRendering(const GBuffer& geometryBuffer);
+    void bloom();
+    void lightShafts();
+    void helperShapes();
+    void depthOfField();
+    void fxaa();
+    void motionBlur();
+    void toneMapping();
+    void calculateAverageLuminance();
+    void renderToScreen() const;
+    void clearRenderQueues();
+    void initMembers();
+    void createFrameBuffersAndTextures();
+    void deleteFrameBuffersAndTextures();
+
+    static void enableWireframeMode();
+    static void disableWireframeMode();
+
+    void updateCameraUBO(glm::mat4 projection, glm::mat4 view, glm::vec3 pos);
+    void generateLightProbe(LightProbe* lightProbe);
+    void renderSceneToCubemap(const GBuffer& geometryBuffer, GLuint lightFbo, GLuint skyboxFbo);
+
+    std::map<ShaderType, std::deque<RenderingRequest>> renderQueue{};
+
+    unsigned int width{}, height{};
 
     ScreenQuad screenQuad{};
     std::unique_ptr<DepthOfFieldPass> dofPass;
@@ -140,37 +173,5 @@ class SparkRenderer
     float bloomIntensity = 0.1f;
 
     bool motionBlurEnable = true;
-
-    SparkRenderer() = default;
-    ~SparkRenderer() = default;
-
-    void resizeWindowIfNecessary();
-    void fillGBuffer(const GBuffer& geometryBuffer);
-    void fillGBuffer(const GBuffer& geometryBuffer, const std::function<bool(const RenderingRequest& request)>& filter);
-    void ssaoComputing(const GBuffer& geometryBuffer);
-    void renderLights(GLuint framebuffer, const GBuffer& geometryBuffer);
-    void renderCubemap(GLuint framebuffer) const;
-    void tileBasedLightCulling(const GBuffer& geometryBuffer) const;
-    void tileBasedLightRendering(const GBuffer& geometryBuffer);
-    void bloom();
-    void lightShafts();
-    void helperShapes();
-    void depthOfField();
-    void fxaa();
-    void motionBlur();
-    void toneMapping();
-    void calculateAverageLuminance();
-    void renderToScreen() const;
-    void clearRenderQueues();
-    void initMembers();
-    void createFrameBuffersAndTextures();
-    void deleteFrameBuffersAndTextures();
-
-    static void enableWireframeMode();
-    static void disableWireframeMode();
-
-    void updateCameraUBO(glm::mat4 projection, glm::mat4 view, glm::vec3 pos);
-    void generateLightProbe(LightProbe* lightProbe);
-    void renderSceneToCubemap(const GBuffer& geometryBuffer, GLuint lightFbo, GLuint skyboxFbo);
 };
 }  // namespace spark

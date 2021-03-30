@@ -2,17 +2,12 @@
 
 #include "GUI/SparkGui.h"
 #include "OGLContext.hpp"
-
-#include <filesystem>
+#include "ResourceLibrary.h"
 
 namespace spark
 {
 struct SparkConfig;
 
-namespace resourceManagement
-{
-    class ResourceLibrary;
-}
 class Spark
 {
     public:
@@ -26,20 +21,17 @@ class Spark
     inline static std::filesystem::path pathToModelMeshes{};
     inline static std::filesystem::path pathToResources{};
     inline static bool vsync = true;
-    inline static bool runProgram = true;
 
     inline static OGLContext oglContext{};
+    inline static resourceManagement::ResourceLibrary resourceLibrary{};
 
     static void loadConfig(const SparkConfig& config);
     static void setup();
     static void run();
     static void clean();
 
-    static spark::resourceManagement::ResourceLibrary* getResourceLibrary();
-
     private:
     inline static SparkGui sparkGui{};
-    static spark::resourceManagement::ResourceLibrary resourceLibrary;  // initialized in Spark.cpp
 
     ~Spark() = default;
     Spark() = default;

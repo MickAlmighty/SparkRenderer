@@ -1,7 +1,5 @@
 #include "Spark.h"
 
-#include <iostream>
-
 #include <GUI/ImGui/imgui.h>
 #include <GUI/ImGui/imgui_impl_glfw.h>
 #include <GUI/ImGui/imgui_impl_opengl3.h>
@@ -13,13 +11,10 @@
 #include "HID/HID.h"
 #include "JsonSerializer.h"
 #include "Logging.h"
-#include "ResourceLibrary.h"
 #include "SparkConfig.hpp"
 
 namespace spark
 {
-spark::resourceManagement::ResourceLibrary Spark::resourceLibrary{};
-
 void Spark::loadConfig(const SparkConfig& config)
 {
     WIDTH = config.width;
@@ -31,7 +26,7 @@ void Spark::loadConfig(const SparkConfig& config)
 
 void Spark::setup()
 {
-    if (!oglContext.init(WIDTH, HEIGHT, vsync, false))
+    if(!oglContext.init(WIDTH, HEIGHT, vsync, false))
     {
         SPARK_CRITICAL("oglContext init failed");
         throw std::exception("oglContext init failed");
@@ -45,12 +40,12 @@ void Spark::setup()
     resourceLibrary.createResources(pathToResources);
     SceneManager::getInstance()->setup();
 
-    SparkRenderer::getInstance()->setup();
+    SparkRenderer::getInstance()->setup(WIDTH, HEIGHT);
 }
 
 void Spark::run()
 {
-    while(!oglContext.shouldWindowClose() && runProgram)
+    while(!oglContext.shouldWindowClose())
     {
         Clock::tick();
         glfwPollEvents();
@@ -58,10 +53,24 @@ void Spark::run()
         if(HID::isKeyPressed(Key::ESC))
             oglContext.closeWindow();
 
+        int width{}, height{};
+        glfwGetWindowSize(oglContext.window, &width, &height);
+        if(WIDTH != static_cast<unsigned int>(width) || HEIGHT != static_cast<unsigned int>(height))
+        {
+            if(width != 0 && height != 0)
+            {
+                WIDTH = width;
+                HEIGHT = height;
+            }
+        }
+        glViewport(0, 0, WIDTH,  HEIGHT);
+
         resourceLibrary.processGpuResources();
         SceneManager::getInstance()->update();
+
+        SparkRenderer::getInstance()->renderPass(WIDTH, HEIGHT);
         sparkGui.drawGui();
-        SparkRenderer::getInstance()->renderPass();
+        oglContext.swapBuffers();
 
         HID::updateStates();
     }
@@ -74,11 +83,6 @@ void Spark::clean()
     resourceLibrary.cleanup();
     destroyImGui();
     oglContext.destroy();
-}
-
-spark::resourceManagement::ResourceLibrary* Spark::getResourceLibrary()
-{
-    return &resourceLibrary;
 }
 
 void Spark::initImGui()

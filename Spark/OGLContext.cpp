@@ -1,5 +1,8 @@
 #include "OGLContext.hpp"
 
+#include "Logging.h"
+#include "HID/HID.h"
+
 namespace spark
 {
 bool OGLContext::init(unsigned width, unsigned height, bool vsyncEnabled, bool isContextOffscreen)
@@ -96,11 +99,9 @@ void OGLContext::resizeWindow(GLuint width, GLuint height) const
     glfwSetWindowSize(window, width, height);
 }
 
-float OGLContext::maxAnisotropicFiltering() const
+void OGLContext::swapBuffers() const
 {
-    float maxAnisotropicFiltering{1.0f};
-    glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &maxAnisotropicFiltering);
-    return maxAnisotropicFiltering;
+    glfwSwapBuffers(window);
 }
 
 void OGLContext::setupInputCallbacks() const

@@ -1,5 +1,8 @@
 #include "Clock.h"
+
+#ifdef DEBUG
 #include "Logging.h"
+#endif
 
 #include <chrono>
 
@@ -33,7 +36,7 @@ double Clock::getDeltaTime()
 
 double Clock::getFPS()
 {
-    return static_cast<int>(1 / deltaTime);
+    return 1.0 / deltaTime;
 }
 
 }  // namespace spark
