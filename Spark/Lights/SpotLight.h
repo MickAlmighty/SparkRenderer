@@ -58,7 +58,6 @@ class SpotLight final : public Component, public Observable<LightStatus<SpotLigh
     float softCutOffRatio{0.2f};
     float outerCutOff{45.0f};
     float maxDistance{1.0f};
-    glm::vec3 lastPos{0};
     std::shared_ptr<LightManager> lightManager{nullptr};
 
     RTTR_REGISTRATION_FRIEND;

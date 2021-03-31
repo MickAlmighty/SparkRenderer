@@ -148,12 +148,18 @@ void SpotLight::update()
         notifyAbout(LightCommand::add);
     }
 
-    const glm::vec3 newPos = getPosition();
-    if(newPos != lastPos)
+    static glm::vec3 pos{};
+    if(pos != getPosition())
     {
         notifyAbout(LightCommand::update);
+        pos = getPosition();
     }
-    lastPos = newPos;
+
+    const glm::vec3 dir = glm::normalize(getGameObject()->transform.world.getMatrix() * glm::vec4(0.0f, -1.0f, 0.0f, 0.0f));
+    if(dir != getDirection())
+    {
+        setDirection(dir);
+    }
 }
 
 void SpotLight::fixedUpdate() {}
@@ -232,6 +238,5 @@ RTTR_REGISTRATION
         .property("direction", &spark::SpotLight::direction)
         .property("softCutOffRatio", &spark::SpotLight::softCutOffRatio)
         .property("outerCutOff", &spark::SpotLight::outerCutOff)
-        .property("lastPos", &spark::SpotLight::lastPos)
         .property("maxDistance", &spark::SpotLight::maxDistance);
 }

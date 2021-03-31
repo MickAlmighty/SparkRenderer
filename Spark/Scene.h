@@ -45,7 +45,7 @@ class Scene final : public std::enable_shared_from_this<Scene>
     explicit Scene(std::string&& sceneName);
     void drawTreeNode(std::shared_ptr<GameObject> node, bool isRootNode);
     void setGameObjectToPreview(const std::shared_ptr<GameObject> node);
-    std::shared_ptr<PbrCubemapTexture> cubemap;
+    std::shared_ptr<PbrCubemapTexture> skybox;
     std::string name{"New Scene"};
     std::shared_ptr<GameObject> root{};
     std::weak_ptr<GameObject> gameObjectToPreview;

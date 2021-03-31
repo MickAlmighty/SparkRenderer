@@ -60,6 +60,8 @@ class SparkRenderer
     static void disableWireframeMode();
 
     void updateCameraUBO(glm::mat4 projection, glm::mat4 view, glm::vec3 pos);
+    bool checkIfSkyboxChanged() const;
+    void lightProbesRenderPass();
     void generateLightProbe(LightProbe* lightProbe);
     void renderSceneToCubemap(const GBuffer& geometryBuffer, GLuint lightFbo, GLuint skyboxFbo);
 

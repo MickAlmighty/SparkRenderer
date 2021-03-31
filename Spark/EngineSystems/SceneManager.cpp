@@ -76,7 +76,7 @@ void SceneManager::drawGui()
             const auto [cubemapPicked, cubemapPtr] = SparkGui::getCubemapTexture();
             if(cubemapPicked)
             {
-                current_scene->cubemap = cubemapPtr;
+                current_scene->skybox = cubemapPtr;
             }
             ImGui::EndMenu();
         }

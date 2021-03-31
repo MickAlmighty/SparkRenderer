@@ -113,23 +113,23 @@ void Scene::setCubemapPath(const std::string path)
 {
     if(path.empty())
     {
-        cubemap = nullptr;
+        skybox = nullptr;
         return;
     }
     const auto cbmap = ResourceLoader::loadHdrTexture(path);
     if(cbmap.has_value())
     {
-        cubemap = cbmap.value();
+        skybox = cbmap.value();
     }
     else
     {
-        cubemap = nullptr;
+        skybox = nullptr;
     }
 }
 
 std::string Scene::getCubemapPath() const
 {
-    return cubemap ? cubemap->getPath() : "";
+    return skybox ? skybox->getPath() : "";
 }
 
 void Scene::drawTreeNode(std::shared_ptr<GameObject> node, bool isRootNode)

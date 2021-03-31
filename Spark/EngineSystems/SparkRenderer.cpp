@@ -97,9 +97,9 @@ void SparkRenderer::setup(unsigned int windowWidth, unsigned int windowHeight)
     width = windowWidth;
     height = windowHeight;
 
-    const std::uniform_real_distribution<float> randomFloats(0.0, 1.0);  // random floats between 0.0 - 1.0
-    std::default_random_engine generator;
-    const auto generateSsaoSamples = [this, &randomFloats, &generator] {
+    const auto generateSsaoSamples = [this] {
+        const std::uniform_real_distribution<float> randomFloats(0.0, 1.0);
+        std::default_random_engine generator{};
         std::vector<glm::vec4> ssaoKernel;
         ssaoKernel.reserve(64);
         for(unsigned int i = 0; i < 64; ++i)
@@ -118,12 +118,15 @@ void SparkRenderer::setup(unsigned int windowWidth, unsigned int windowHeight)
         sampleUniformBuffer.updateData(ssaoKernel);
     };
 
-    const auto generateSsaoNoiseTexture = [this, &randomFloats, &generator] {
+    const auto generateSsaoNoiseTexture = [this] {
+        const std::uniform_real_distribution<float> randomFloats(0.0, 1.0);
+        std::default_random_engine generator{};
+
         std::vector<glm::vec3> ssaoNoise;
         ssaoNoise.reserve(16);
         for(unsigned int i = 0; i < 16; i++)
         {
-            glm::vec3 noise(randomFloats(generator) * 2.0 - 1.0, randomFloats(generator) * 2.0 - 1.0, 0.0f);
+            glm::vec3 noise(randomFloats(generator) * 2.0f - 1.0f, randomFloats(generator) * 2.0f - 1.0f, 0.0f);
             ssaoNoise.push_back(noise);
         }
 
@@ -260,6 +263,8 @@ void SparkRenderer::renderPass(unsigned int windowWidth, unsigned int windowHeig
         }
     }
 
+    lightProbesRenderPass();
+
     fillGBuffer(gBuffer);
     ssaoComputing(gBuffer);
     // renderLights(lightFrameBuffer, gBuffer);
@@ -272,31 +277,7 @@ void SparkRenderer::renderPass(unsigned int windowWidth, unsigned int windowHeig
     motionBlur();
     toneMapping();
     fxaa();
-
     renderToScreen();
-
-    for(const auto& lightProbe : SceneManager::getInstance()->getCurrentScene()->lightManager->getLightProbes())
-    {
-        if (!lightProbe->generateLightProbe)
-            continue;
-
-        auto t = Timer("Local Light Probe creation");
-
-        utils::createCubemap(lightProbeSceneCubemap, sceneCubemapSize, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR, true);
-        localLightProbeGBuffer.setup(sceneCubemapSize, sceneCubemapSize);
-
-        utils::createFramebuffer(lightProbeLightFbo, {});
-        utils::createFramebuffer(lightProbeSkyboxFbo, {});
-        utils::bindDepthTexture(lightProbeSkyboxFbo, localLightProbeGBuffer.depthTexture);
-
-        generateLightProbe(lightProbe);
-
-        localLightProbeGBuffer.cleanup();
-        glDeleteTextures(1, &lightProbeSceneCubemap);
-        glDeleteFramebuffers(1, &lightProbeLightFbo);
-        glDeleteFramebuffers(1, &lightProbeSkyboxFbo);
-    }
-
     glDepthFunc(GL_LESS);
 
     clearRenderQueues();
@@ -407,7 +388,7 @@ void SparkRenderer::renderLights(GLuint framebuffer, const GBuffer& geometryBuff
     glClearColor(0, 0, 0, 1);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    const auto cubemap = SceneManager::getInstance()->getCurrentScene()->cubemap;
+    const auto cubemap = SceneManager::getInstance()->getCurrentScene()->skybox;
 
     lightShader->use();
     if(cubemap)
@@ -474,7 +455,7 @@ void SparkRenderer::tileBasedLightRendering(const GBuffer& geometryBuffer)
     glClearTexImage(lightColorTexture, 0, GL_RGBA, GL_FLOAT, &clearRgba);
     glClearTexImage(brightPassTexture, 0, GL_RGBA, GL_FLOAT, &clearRgba);
 
-    const auto cubemap = SceneManager::getInstance()->getCurrentScene()->cubemap;
+    const auto cubemap = SceneManager::getInstance()->getCurrentScene()->skybox;
 
     tileBasedLightingShader->use();
 
@@ -507,7 +488,7 @@ void SparkRenderer::tileBasedLightRendering(const GBuffer& geometryBuffer)
 
 void SparkRenderer::renderCubemap(GLuint framebuffer) const
 {
-    const auto cubemap = SceneManager::getInstance()->getCurrentScene()->cubemap;
+    const auto cubemap = SceneManager::getInstance()->getCurrentScene()->skybox;
     if(!cubemap)
         return;
 
@@ -845,8 +826,7 @@ void SparkRenderer::createFrameBuffersAndTextures()
     utils::createTexture2D(downsampleTexture2, width / 2, height / 2, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
     utils::createTexture2D(downsampleTexture4, width / 4, height / 4, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
     utils::createTexture2D(downsampleTexture8, width / 8, height / 8, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::createTexture2D(downsampleTexture16, width / 16, height / 16, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE,
-                           GL_LINEAR);
+    utils::createTexture2D(downsampleTexture16, width / 16, height / 16, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
     utils::createTexture2D(bloomTexture, width, height, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
     utils::createTexture2D(lightsPerTileTexture, width / 16, height / 16, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
 
@@ -912,6 +892,58 @@ void SparkRenderer::updateCameraUBO(glm::mat4 projection, glm::mat4 view, glm::v
     cameraUBO.updateData<CamData>({camData});
 }
 
+bool SparkRenderer::checkIfSkyboxChanged() const
+{
+    static GLuint cubemapId{0};
+    if(SceneManager::getInstance()->getCurrentScene()->skybox)
+    {
+        if(cubemapId != SceneManager::getInstance()->getCurrentScene()->skybox->cubemap)
+        {
+            cubemapId = SceneManager::getInstance()->getCurrentScene()->skybox->cubemap;
+            return true;
+        }
+    }
+    else if(cubemapId > 0 && SceneManager::getInstance()->getCurrentScene()->skybox == nullptr)
+    {
+        cubemapId = 0;
+        return true;
+    }
+
+    return false;
+}
+
+void SparkRenderer::lightProbesRenderPass()
+{
+    const auto& lightProbes = SceneManager::getInstance()->getCurrentScene()->lightManager->getLightProbes();
+    const bool renderingNeeded = std::any_of(lightProbes.cbegin(), lightProbes.cend(), [](LightProbe* lp) { return lp->generateLightProbe; });
+
+    const bool lightProbesRebuildNeeded = checkIfSkyboxChanged();
+
+    if(const auto skipRendering = !renderingNeeded && !lightProbesRebuildNeeded; skipRendering)
+        return;
+
+    auto t = Timer("Local Light Probe creation");
+    utils::createCubemap(lightProbeSceneCubemap, sceneCubemapSize, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR, true);
+    localLightProbeGBuffer.setup(sceneCubemapSize, sceneCubemapSize);
+
+    utils::createFramebuffer(lightProbeLightFbo, {});
+    utils::createFramebuffer(lightProbeSkyboxFbo, {});
+    utils::bindDepthTexture(lightProbeSkyboxFbo, localLightProbeGBuffer.depthTexture);
+
+    for(const auto& lightProbe : lightProbes)
+    {
+        if(const auto skipRendering = !renderingNeeded && !lightProbesRebuildNeeded; skipRendering)
+            continue;
+
+        generateLightProbe(lightProbe);
+    }
+
+    localLightProbeGBuffer.cleanup();
+    glDeleteTextures(1, &lightProbeSceneCubemap);
+    glDeleteFramebuffers(1, &lightProbeLightFbo);
+    glDeleteFramebuffers(1, &lightProbeSkyboxFbo);
+}
+
 void SparkRenderer::generateLightProbe(LightProbe* lightProbe)
 {
     PUSH_DEBUG_GROUP(SCENE_TO_CUBEMAP);
@@ -950,7 +982,7 @@ void SparkRenderer::generateLightProbe(LightProbe* lightProbe)
     lightProbe->renderIntoPrefilterCubemap(lightProbeFramebuffer, lightProbeSceneCubemap, sceneCubemapSize, cube, prefilterShader,
                                            resampleCubemapShader);
     lightProbe->generateLightProbe = false;
-    
+
     glDeleteFramebuffers(1, &lightProbeFramebuffer);
     glViewport(0, 0, width, height);
     POP_DEBUG_GROUP();
