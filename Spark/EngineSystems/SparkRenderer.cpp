@@ -10,7 +10,6 @@
 #include "Camera.h"
 #include "CommonUtils.h"
 #include "DepthOfFieldPass.h"
-#include "EngineSystems/SceneManager.h"
 #include "Lights/LightProbe.h"
 #include "RenderingRequest.h"
 #include "ResourceLibrary.h"
@@ -146,6 +145,8 @@ void SparkRenderer::setup(unsigned int windowWidth, unsigned int windowHeight)
     brdfLookupTexture = utils::createBrdfLookupTexture(1024);
 
     initMembers();
+    createFrameBuffersAndTextures();
+    updateBufferBindings();
 }
 
 void SparkRenderer::initMembers()
@@ -182,20 +183,10 @@ void SparkRenderer::initMembers()
     upsampleBloomBlurPass4 = std::make_unique<BlurPass>(width / 4, height / 4);
     upsampleBloomBlurPass8 = std::make_unique<BlurPass>(width / 8, height / 8);
     upsampleBloomBlurPass16 = std::make_unique<BlurPass>(width / 16, height / 16);
-
-    updateBufferBindings();
-    createFrameBuffersAndTextures();
 }
 
 void SparkRenderer::updateBufferBindings() const
 {
-    const auto& lightManager = SceneManager::getInstance()->getCurrentScene()->lightManager;
-
-    lightShader->use();
-    lightShader->bindSSBO("DirLightData", lightManager->getDirLightSSBO());
-    lightShader->bindSSBO("PointLightData", lightManager->getPointLightSSBO());
-    lightShader->bindSSBO("SpotLightData", lightManager->getSpotLightSSBO());
-
     mainShader->bindUniformBuffer("Camera", cameraUBO);
     lightShader->bindUniformBuffer("Camera", cameraUBO);
     motionBlurShader->bindUniformBuffer("Camera", cameraUBO);
@@ -209,28 +200,16 @@ void SparkRenderer::updateBufferBindings() const
     averageLuminanceComputeShader->bindSSBO("LuminanceHistogram", luminanceHistogram);
 
     tileBasedLightCullingShader->bindUniformBuffer("Camera", cameraUBO);
-    tileBasedLightCullingShader->bindSSBO("DirLightData", lightManager->getDirLightSSBO());
-    tileBasedLightCullingShader->bindSSBO("PointLightData", lightManager->getPointLightSSBO());
-    tileBasedLightCullingShader->bindSSBO("SpotLightData", lightManager->getSpotLightSSBO());
-    tileBasedLightCullingShader->bindSSBO("LightProbeData", lightManager->getLightProbeSSBO());
 
     tileBasedLightCullingShader->bindSSBO("PointLightIndices", pointLightIndices);
     tileBasedLightCullingShader->bindSSBO("SpotLightIndices", spotLightIndices);
     tileBasedLightCullingShader->bindSSBO("LightProbeIndices", lightProbeIndices);
 
     tileBasedLightingShader->bindUniformBuffer("Camera", cameraUBO);
-    tileBasedLightingShader->bindSSBO("DirLightData", lightManager->getDirLightSSBO());
-    tileBasedLightingShader->bindSSBO("PointLightData", lightManager->getPointLightSSBO());
-    tileBasedLightingShader->bindSSBO("SpotLightData", lightManager->getSpotLightSSBO());
-    tileBasedLightingShader->bindSSBO("LightProbeData", lightManager->getLightProbeSSBO());
 
     tileBasedLightingShader->bindSSBO("PointLightIndices", pointLightIndices);
     tileBasedLightingShader->bindSSBO("SpotLightIndices", spotLightIndices);
     tileBasedLightingShader->bindSSBO("LightProbeIndices", lightProbeIndices);
-
-    localLightProbesLightingShader->bindSSBO("DirLightData", lightManager->getDirLightSSBO());
-    localLightProbesLightingShader->bindSSBO("PointLightData", lightManager->getPointLightSSBO());
-    localLightProbesLightingShader->bindSSBO("SpotLightData", lightManager->getSpotLightSSBO());
 
     localLightProbesLightingShader->bindUniformBuffer("Camera", cameraUBO);
 
@@ -250,12 +229,33 @@ void SparkRenderer::updateBufferBindings() const
     equirectangularToCubemapShader->setMat4("projection", cubemapProjection);
 }
 
+void SparkRenderer::updateLightBuffersBindings() const
+{
+    const auto& lightManager = scene->lightManager;
+    lightShader->bindSSBO("DirLightData", lightManager->getDirLightSSBO());
+    lightShader->bindSSBO("PointLightData", lightManager->getPointLightSSBO());
+    lightShader->bindSSBO("SpotLightData", lightManager->getSpotLightSSBO());
+
+    tileBasedLightCullingShader->bindSSBO("DirLightData", lightManager->getDirLightSSBO());
+    tileBasedLightCullingShader->bindSSBO("PointLightData", lightManager->getPointLightSSBO());
+    tileBasedLightCullingShader->bindSSBO("SpotLightData", lightManager->getSpotLightSSBO());
+    tileBasedLightCullingShader->bindSSBO("LightProbeData", lightManager->getLightProbeSSBO());
+
+    tileBasedLightingShader->bindSSBO("DirLightData", lightManager->getDirLightSSBO());
+    tileBasedLightingShader->bindSSBO("PointLightData", lightManager->getPointLightSSBO());
+    tileBasedLightingShader->bindSSBO("SpotLightData", lightManager->getSpotLightSSBO());
+    tileBasedLightingShader->bindSSBO("LightProbeData", lightManager->getLightProbeSSBO());
+    localLightProbesLightingShader->bindSSBO("DirLightData", lightManager->getDirLightSSBO());
+    localLightProbesLightingShader->bindSSBO("PointLightData", lightManager->getPointLightSSBO());
+    localLightProbesLightingShader->bindSSBO("SpotLightData", lightManager->getSpotLightSSBO());
+}
+
 void SparkRenderer::renderPass(unsigned int windowWidth, unsigned int windowHeight)
 {
     resizeWindowIfNecessary(windowWidth, windowHeight);
 
     {
-        const auto camera = SceneManager::getInstance()->getCurrentScene()->getCamera();
+        const auto camera = scene->getCamera();
         // if(camera->isDirty())
         {
             updateCameraUBO(camera->getProjectionReversedZInfiniteFarPlane(), camera->getViewMatrix(), camera->getPosition());
@@ -286,6 +286,12 @@ void SparkRenderer::renderPass(unsigned int windowWidth, unsigned int windowHeig
 void SparkRenderer::addRenderingRequest(const RenderingRequest& request)
 {
     renderQueue[request.shaderType].push_back(request);
+}
+
+void SparkRenderer::setScene(const std::shared_ptr<Scene>& scene_)
+{
+    scene = scene_;
+    updateLightBuffersBindings();
 }
 
 void SparkRenderer::resizeWindowIfNecessary(unsigned int windowWidth, unsigned int windowHeight)
@@ -388,7 +394,7 @@ void SparkRenderer::renderLights(GLuint framebuffer, const GBuffer& geometryBuff
     glClearColor(0, 0, 0, 1);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    const auto cubemap = SceneManager::getInstance()->getCurrentScene()->skybox;
+    const auto cubemap = scene->skybox;
 
     lightShader->use();
     if(cubemap)
@@ -455,7 +461,7 @@ void SparkRenderer::tileBasedLightRendering(const GBuffer& geometryBuffer)
     glClearTexImage(lightColorTexture, 0, GL_RGBA, GL_FLOAT, &clearRgba);
     glClearTexImage(brightPassTexture, 0, GL_RGBA, GL_FLOAT, &clearRgba);
 
-    const auto cubemap = SceneManager::getInstance()->getCurrentScene()->skybox;
+    const auto cubemap = scene->skybox;
 
     tileBasedLightingShader->use();
 
@@ -488,7 +494,7 @@ void SparkRenderer::tileBasedLightRendering(const GBuffer& geometryBuffer)
 
 void SparkRenderer::renderCubemap(GLuint framebuffer) const
 {
-    const auto cubemap = SceneManager::getInstance()->getCurrentScene()->skybox;
+    const auto cubemap = scene->skybox;
     if(!cubemap)
         return;
 
@@ -613,11 +619,11 @@ void SparkRenderer::depthOfField()
 
 void SparkRenderer::lightShafts()
 {
-    const auto& dirLights = SceneManager::getInstance()->getCurrentScene()->lightManager->getDirLights();
+    const auto& dirLights = scene->lightManager->getDirLights();
     if(dirLights.empty() || lightShaftsEnable != true)
         return;
 
-    const auto camera = SceneManager::getInstance()->getCurrentScene()->getCamera();
+    const auto camera = scene->getCamera();
 
     const glm::mat4 view = camera->getViewMatrix();
     const glm::mat4 projection = camera->getProjectionReversedZ();
@@ -672,7 +678,7 @@ void SparkRenderer::lightShafts()
 
 void SparkRenderer::motionBlur()
 {
-    const auto camera = SceneManager::getInstance()->getCurrentScene()->getCamera();
+    const auto camera = scene->getCamera();
     const glm::mat4 projectionView = camera->getProjectionReversedZInfiniteFarPlane() * camera->getViewMatrix();
     static glm::mat4 prevProjectionView = projectionView;
     static bool initialized = false;
@@ -895,15 +901,15 @@ void SparkRenderer::updateCameraUBO(glm::mat4 projection, glm::mat4 view, glm::v
 bool SparkRenderer::checkIfSkyboxChanged() const
 {
     static GLuint cubemapId{0};
-    if(SceneManager::getInstance()->getCurrentScene()->skybox)
+    if(scene->skybox)
     {
-        if(cubemapId != SceneManager::getInstance()->getCurrentScene()->skybox->cubemap)
+        if(cubemapId != scene->skybox->cubemap)
         {
-            cubemapId = SceneManager::getInstance()->getCurrentScene()->skybox->cubemap;
+            cubemapId = scene->skybox->cubemap;
             return true;
         }
     }
-    else if(cubemapId > 0 && SceneManager::getInstance()->getCurrentScene()->skybox == nullptr)
+    else if(cubemapId > 0 && scene->skybox == nullptr)
     {
         cubemapId = 0;
         return true;
@@ -914,7 +920,7 @@ bool SparkRenderer::checkIfSkyboxChanged() const
 
 void SparkRenderer::lightProbesRenderPass()
 {
-    const auto& lightProbes = SceneManager::getInstance()->getCurrentScene()->lightManager->getLightProbes();
+    const auto& lightProbes = scene->lightManager->getLightProbes();
     const bool renderingNeeded = std::any_of(lightProbes.cbegin(), lightProbes.cend(), [](LightProbe* lp) { return lp->generateLightProbe; });
 
     const bool lightProbesRebuildNeeded = checkIfSkyboxChanged();

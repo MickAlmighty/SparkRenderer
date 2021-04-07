@@ -82,7 +82,6 @@
       <SubSystem>Console</SubSystem>
       <AdditionalLibraryDirectories>$(SolutionDir)thirdparty\lib\CommonLib;$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>"$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.lib" "$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.a" "$(SolutionDir)thirdparty\lib\CommonLib\*.lib" "$(SolutionDir)thirdparty\lib\CommonLib\*.a" /VERBOSE:UNUSEDLIBS</AdditionalOptions>
-      <LinkStatus>true</LinkStatus>
     </Link>
     <PostBuildEvent>
       <Command>xcopy "$(SolutionDir)thirdparty\lib\CommonLib\*.dll" "$(TargetDir)" /D /Y
@@ -113,7 +112,6 @@ xcopy "$(ProjectDir)settings.json" "$(TargetDir)" /D /Y</Command>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <AdditionalLibraryDirectories>$(SolutionDir)thirdparty\lib\CommonLib;$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>"$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.lib" "$(SolutionDir)thirdparty\lib\$(ConfigurationName)Lib\*.a" "$(SolutionDir)thirdparty\lib\CommonLib\*.lib" "$(SolutionDir)thirdparty\lib\CommonLib\*.a" /VERBOSE:UNUSEDLIBS</AdditionalOptions>
-      <LinkStatus>true</LinkStatus>
     </Link>
     <PostBuildEvent>
       <Command>xcopy "$(SolutionDir)thirdparty\lib\CommonLib\*.dll" "$(TargetDir)" /D /Y

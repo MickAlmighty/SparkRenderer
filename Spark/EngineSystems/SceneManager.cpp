@@ -54,7 +54,7 @@ bool SceneManager::setCurrentScene(const std::string& sceneName)
     if(scene_it != std::end(scenes))
     {
         current_scene = *scene_it;
-        SparkRenderer::getInstance()->updateBufferBindings();
+        SparkRenderer::getInstance()->setScene(current_scene);
         return true;
     }
     return false;
@@ -69,7 +69,7 @@ void SceneManager::drawGui()
 {
     if(ImGui::BeginMenu("SceneManager"))
     {
-        std::string menuName = "Current Scene: " + current_scene->name;
+        const std::string menuName = "Current Scene: " + current_scene->name;
         if(ImGui::BeginMenu(menuName.c_str()))
         {
             ImGui::MenuItem("Camera Movement", NULL, &current_scene->cameraMovement);
@@ -89,7 +89,7 @@ void SceneManager::drawGui()
         }
         if(ImGui::MenuItem("Load main scene"))
         {
-            std::shared_ptr<Scene> scene{JsonSerializer::getInstance()->loadSceneFromFile("scene.json")};
+            const std::shared_ptr<Scene> scene{JsonSerializer::getInstance()->loadSceneFromFile("scene.json")};
             if(scene != nullptr)
             {
                 if(scene->name == current_scene->name)

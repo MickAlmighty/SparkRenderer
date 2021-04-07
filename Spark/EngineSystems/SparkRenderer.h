@@ -5,6 +5,7 @@
 #include "Buffer.hpp"
 #include "Enums.h"
 #include "GBuffer.h"
+#include "Scene.h"
 #include "Structs.h"
 #include "Shader.h"
 
@@ -20,20 +21,22 @@ class SparkRenderer
     public:
     SparkRenderer(const SparkRenderer&) = delete;
     SparkRenderer operator=(const SparkRenderer&) = delete;
+    static SparkRenderer* getInstance();
 
     void setup(unsigned int windowWidth, unsigned int windowHeight);
     void renderPass(unsigned int windowWidth, unsigned int windowHeight);
     void cleanup();
 
-    static SparkRenderer* getInstance();
-    void updateBufferBindings() const;
     void drawGui();
     void addRenderingRequest(const RenderingRequest& request);
+    void setScene(const std::shared_ptr<Scene>& scene_);
 
     private:
     SparkRenderer() = default;
     ~SparkRenderer() = default;
 
+    void updateBufferBindings() const;
+    void updateLightBuffersBindings() const;
     void resizeWindowIfNecessary(unsigned int windowWidth, unsigned int windowHeight);
     void fillGBuffer(const GBuffer& geometryBuffer);
     void fillGBuffer(const GBuffer& geometryBuffer, const std::function<bool(const RenderingRequest& request)>& filter);
@@ -66,6 +69,7 @@ class SparkRenderer
     void renderSceneToCubemap(const GBuffer& geometryBuffer, GLuint lightFbo, GLuint skyboxFbo);
 
     std::map<ShaderType, std::deque<RenderingRequest>> renderQueue{};
+    std::shared_ptr<Scene> scene{nullptr};
 
     unsigned int width{}, height{};
 

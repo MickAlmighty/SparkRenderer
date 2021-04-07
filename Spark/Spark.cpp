@@ -41,6 +41,7 @@ void Spark::setup()
     SceneManager::getInstance()->setup();
 
     SparkRenderer::getInstance()->setup(WIDTH, HEIGHT);
+    SparkRenderer::getInstance()->setScene(SceneManager::getInstance()->getCurrentScene());
 }
 
 void Spark::run()
