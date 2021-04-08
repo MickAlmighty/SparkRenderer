@@ -1,5 +1,5 @@
 # SparkRenderer
-Attempt to develop game engine using OpenGL 4.5
+An attempt to develop game engine using OpenGL 4.5
 
 <img src="https://i.stack.imgur.com/bvnj3.jpg"/>
 <img src="https://i.stack.imgur.com/gW6hR.jpg"/>
@@ -43,7 +43,6 @@ Attempt to develop game engine using OpenGL 4.5
 <li>glad</li>
 <li>assimp</li>
 <li>json</li>
-<li>object_threadsafe</li>
 <li>spdlog</li>
 <li>stb_image</li>
 </ul>
