@@ -6,15 +6,21 @@
 
 namespace spark::resourceManagement
 {
-void ResourceLibrary::setup() {}
+void ResourceLibrary::setup(const std::filesystem::path& pathToResources)
+{
+    createResources(pathToResources);
+}
 
-void ResourceLibrary::cleanup() {}
+void ResourceLibrary::cleanup()
+{
+    resourceIdentifiers.clear();
+}
 
 void ResourceLibrary::createResources(const std::filesystem::path& pathToResources)
 {
     for(const auto& path : std::filesystem::recursive_directory_iterator(pathToResources))
     {
-        if (ResourceFactory::isExtensionSupported(path))
+        if(ResourceFactory::isExtensionSupported(path))
         {
             resourceIdentifiers.insert(std::make_shared<ResourceIdentifier>(path));
         }
@@ -26,7 +32,7 @@ std::vector<std::shared_ptr<ResourceIdentifier>> ResourceLibrary::getResourceIde
     std::vector<std::shared_ptr<ResourceIdentifier>> resIds;
     resIds.reserve(resourceIdentifiers.size());
 
-    for (auto resourceIt = resourceIdentifiers.begin(); resourceIt != resourceIdentifiers.end(); ++resourceIt)
+    for(auto resourceIt = resourceIdentifiers.begin(); resourceIt != resourceIdentifiers.end(); ++resourceIt)
     {
         resIds.push_back(*resourceIt);
     }
@@ -34,7 +40,8 @@ std::vector<std::shared_ptr<ResourceIdentifier>> ResourceLibrary::getResourceIde
     return resIds;
 }
 
-std::vector<std::shared_ptr<ResourceIdentifier>> ResourceLibrary::getResourceIdentifiers(const std::function<bool(const std::shared_ptr<ResourceIdentifier>&)>& comp) const
+std::vector<std::shared_ptr<ResourceIdentifier>> ResourceLibrary::getResourceIdentifiers(
+    const std::function<bool(const std::shared_ptr<ResourceIdentifier>&)>& comp) const
 {
     return filter(resourceIdentifiers.begin(), resourceIdentifiers.end(), comp);
 }

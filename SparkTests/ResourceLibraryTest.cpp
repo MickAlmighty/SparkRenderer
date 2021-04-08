@@ -8,7 +8,6 @@
 #include "ResourceLibrary.h"
 #include "Shader.h"
 #include "Texture.h"
-#include "Timer.h"
 
 constexpr auto pathToResources{R"(..\..\..\res)"};
 
@@ -20,8 +19,7 @@ class ResourceLibraryTest : public ::testing::Test
     void SetUp() override
     {
         oglContext.init(1280, 720, true, true);
-        resourceLibrary.createResources(pathToResources);
-        resourceLibrary.setup();
+        resourceLibrary.setup(pathToResources);
     }
 
     spark::OGLContext oglContext;
@@ -34,77 +32,16 @@ class ResourceLibraryTest : public ::testing::Test
         resourceLibrary.cleanup();
     }
 
-    template<typename T>
-    static void resourcesLoading(const std::vector<T>& resources, spark::resourceManagement::ResourceLibrary& resourceLibrary)
-    {
-        ASSERT_TRUE(!resources.empty());
-        ASSERT_TRUE(resources[0] != nullptr);
-
-        bool resourcesLoaded = false;
-        ASSERT_TRUE(resourcesLoaded);
-    }
-
-    static void resourcesUnloading(spark::resourceManagement::ResourceLibrary& resourceLibrary)
-    {
-        bool resourcesUnloaded = false;
-        while(!resourcesUnloaded)
-        {
-            /*resourceLibrary.processGpuResources();
-            if(resourceLibrary.getLoadedResourcesCount() == 0)*/
-                resourcesUnloaded = true;
-        }
-
-        ASSERT_TRUE(resourcesUnloaded);
-    }
-
     template<typename Resource>
     void loadInPlace(std::string resourceName)
     {
-        std::shared_ptr<Resource> resource = nullptr;
-
-        resource = resourceLibrary.getResourceByName<Resource>(resourceName);
+        std::shared_ptr<Resource> resource = resourceLibrary.getResourceByName<Resource>(resourceName);
         ASSERT_TRUE(resource != nullptr);
         const auto resource2 = resourceLibrary.getResourceByName<Resource>(resourceName);
         ASSERT_TRUE(resource2 != nullptr);
-    }
-
-    template<typename Resource>
-    void loadingAndUnloading()
-    {
-        for(int i = 0; i < 2; ++i)
-        {
-            SPARK_INFO("Loading and unloading loop iteration: {}", i);
-
-            std::vector<std::shared_ptr<Resource>> resources{};
-            {
-                spark::Timer timer("Loading time:");
-                /*resources = resourceLibrary.getResourcesOfType<Resource>();
-                resourcesLoading(resources, resourceLibrary);*/
-            }
-
-            {
-                spark::Timer timer("Unloading time:");
-                resources.clear();
-                resourcesUnloading(resourceLibrary);
-            }
-        }
+        ASSERT_TRUE(resource2.use_count() == 2);
     }
 };
-
-TEST_F(ResourceLibraryTest, ModelsLoadingAndUnloading)
-{
-    loadingAndUnloading<Model>();
-}
-
-TEST_F(ResourceLibraryTest, TexturesLoadingAndUnloading)
-{
-    loadingAndUnloading<Texture>();
-}
-
-TEST_F(ResourceLibraryTest, ShadersLoadingAndUnloading)
-{
-    loadingAndUnloading<Shader>();
-}
 
 TEST_F(ResourceLibraryTest, LoadingModelInPlace)
 {

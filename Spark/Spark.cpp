@@ -36,8 +36,7 @@ void Spark::setup()
 
     initImGui();
     createCustomCursor();
-    resourceLibrary.setup();
-    resourceLibrary.createResources(pathToResources);
+    resourceLibrary.setup(pathToResources);
     SceneManager::getInstance()->setup();
 
     SparkRenderer::getInstance()->setup(WIDTH, HEIGHT);
