@@ -16,12 +16,9 @@ class ResourceFactory
 {
     public:
     static std::optional<std::shared_ptr<Resource>> createResource(const std::filesystem::path& filePath);
+    static bool isExtensionSupported(const std::filesystem::path& filePath);
 
     private:
-    static inline std::set<std::filesystem::path> supportedExtensions = {
-        ".obj", ".dds", ".ktx", ".DDS", ".KTX", ".png", ".jpg", ".tga", "glsl"
-    };
-
-    static std::map<std::filesystem::path, std::function<std::shared_ptr<Resource>(const ResourceIdentifier & id)>> resourceCreationFunctions;
+    static std::map<std::filesystem::path, std::function<std::shared_ptr<Resource>(const std::filesystem::path& path)>> resourceCreationFunctions;
 };
 }

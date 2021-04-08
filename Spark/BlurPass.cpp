@@ -56,7 +56,7 @@ void BlurPass::recreateWithNewSize(unsigned width, unsigned height)
 
 BlurPass::BlurPass(unsigned width_, unsigned height_) : width(width_), height(height_)
 {
-    gaussianBlurShader = Spark::resourceLibrary.getResourceByNameWithOptLoad<resources::Shader>("gaussianBlur.glsl");
+    gaussianBlurShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("gaussianBlur.glsl");
     screenQuad.setup();
     createGlObjects();
 }

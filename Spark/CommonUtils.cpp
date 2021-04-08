@@ -124,7 +124,7 @@ namespace utils
         GLuint brdfLUTTexture{};
         utils::createTexture2D(brdfLUTTexture, size, size, GL_RG16F, GL_RG, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
 
-        const auto brdfComputeShader = Spark::resourceLibrary.getResourceByNameWithOptLoad<resources::Shader>("brdfCompute.glsl");
+        const auto brdfComputeShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("brdfCompute.glsl");
         brdfComputeShader->use();
         glBindImageTexture(0, brdfLUTTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RG16F);
         brdfComputeShader->dispatchCompute(size / 32, size / 32, 1);

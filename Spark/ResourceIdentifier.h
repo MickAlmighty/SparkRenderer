@@ -2,6 +2,8 @@
 
 #include <filesystem>
 
+#include "Resource.h"
+
 namespace spark
 {
 namespace resourceManagement
@@ -28,9 +30,11 @@ namespace resourceManagement
 
         bool changeResourceDirectory(const std::filesystem::path& path);
         bool changeResourceName(const std::filesystem::path& name);
+        std::shared_ptr<Resource> getResource();
 
         private:
         std::filesystem::path resourcePath{};
+        std::weak_ptr<Resource> resource;
     };
-}
-}
+}  // namespace resourceManagement
+}  // namespace spark

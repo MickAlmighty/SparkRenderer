@@ -11,66 +11,23 @@
 
 namespace spark::resources
 {
-
-Shader::Shader(const resourceManagement::ResourceIdentifier& identifier)
-    : Resource(identifier) {}
-
-Shader::~Shader()
+Shader::Shader(const std::filesystem::path& path_) : Resource(path_)
 {
-    //SPARK_INFO("Shader deleted!");
-}
-
-bool Shader::isResourceReady()
-{
-    return isLoadedIntoDeviceMemory() && isLoadedIntoRAM();
-}
-
-bool Shader::gpuLoad()
-{
-    //SPARK_INFO("Shader::gpuLoad() {}", id.getFullPath().string());
+    const auto shaderSource = loadShader(path.string());
+    const auto shaderSources = preProcess(shaderSource);
     const auto shaderIds = compileShaders(shaderSources);
     linkProgram(shaderIds);
 
     acquireUniformNamesAndTypes();
     acquireUniformBlocks();
     acquireBuffers();
-
-    setLoadedIntoDeviceMemory(true);
-    return true;
 }
 
-bool Shader::gpuUnload()
+Shader::~Shader()
 {
-    //SPARK_INFO("Shader::gpuUnload() {}", id.getFullPath().string());
     glDeleteProgram(ID);
     ID = 0;
-
-    setLoadedIntoDeviceMemory(false);
-    return true;
 }
-
-bool Shader::load()
-{
-    //SPARK_INFO("Shader::load() {}", id.getFullPath().string());
-    const auto shaderSource = loadShader(id.getFullPath().string());
-    shaderSources = preProcess(shaderSource);
-    
-    setLoadedIntoRam(true);
-    return true;
-}
-
-bool Shader::unload()
-{
-    //SPARK_INFO("Shader::unload() {}", id.getFullPath().string());
-    shaderSources.clear();
-    uniforms.clear();
-    uniformBlocks.clear();
-    storageBuffers.clear();
-
-    setLoadedIntoRam(false);
-    return true;
-}
-
 
 std::string Shader::loadShader(const std::string& shaderPath)
 {
@@ -86,7 +43,7 @@ std::string Shader::loadShader(const std::string& shaderPath)
 
         codeString = shaderStream.str();
     }
-    catch (const std::ifstream::failure & e)
+    catch(const std::ifstream::failure& e)
     {
         SPARK_ERROR("SHADER::FILE_NOT_SUCCESSFULLY_READ: {}, {}", e.what(), shaderPath);
     }
@@ -100,7 +57,7 @@ std::map<GLenum, std::string> Shader::preProcess(const std::string& shaderSource
     const char* typeToken = "#type";
     const size_t typeTokenLength = strlen(typeToken);
     size_t pos = shaderSource.find(typeToken, 0);
-    while (pos != std::string::npos)
+    while(pos != std::string::npos)
     {
         const size_t eol = shaderSource.find_first_of("\r\n", pos);
         const size_t begin = pos + typeTokenLength + 1;
@@ -117,19 +74,19 @@ std::map<GLenum, std::string> Shader::preProcess(const std::string& shaderSource
 
 GLenum Shader::shaderTypeFromString(const std::string& type)
 {
-    if (type == "vertex")
+    if(type == "vertex")
     {
         return GL_VERTEX_SHADER;
     }
-    if (type == "fragment" || type == "pixel")
+    if(type == "fragment" || type == "pixel")
     {
         return GL_FRAGMENT_SHADER;
     }
-    if (type == "geometry")
+    if(type == "geometry")
     {
         return GL_GEOMETRY_SHADER;
     }
-    if (type == "compute")
+    if(type == "compute")
     {
         return GL_COMPUTE_SHADER;
     }
@@ -141,7 +98,7 @@ std::vector<GLuint> Shader::compileShaders(const std::map<GLenum, std::string>& 
 {
     std::vector<GLuint> shaderIds;
     shaderIds.reserve(shaders.size());
-    for (const auto& [shaderType, shaderCode] : shaders)
+    for(const auto& [shaderType, shaderCode] : shaders)
     {
         const GLuint shader = glCreateShader(shaderType);
         const char* shaderSource = shaderCode.c_str();
@@ -151,7 +108,7 @@ std::vector<GLuint> Shader::compileShaders(const std::map<GLenum, std::string>& 
         GLchar infoLog[512];
         glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
 
-        if (!success)
+        if(!success)
         {
             glGetShaderInfoLog(shader, 512, nullptr, infoLog);
             std::string fullInfo = "ERROR::SHADER::COMPILATION_FAILED, cause: ";
@@ -361,7 +318,7 @@ void Shader::setInt(const std::string& name, int value) const
 void Shader::setUInt(const std::string& name, unsigned value) const
 {
     const GLint location = getUniformLocation(name);
-    if (location < 0)
+    if(location < 0)
         return;
     glUniform1ui(location, value);
 }
@@ -385,7 +342,7 @@ void Shader::setVec2(const std::string& name, glm::vec2 value) const
 void Shader::setIVec2(const std::string& name, glm::ivec2 value) const
 {
     const GLint location = getUniformLocation(name);
-    if (location < 0)
+    if(location < 0)
         return;
     glUniform2iv(location, 1, glm::value_ptr(value));
 }
@@ -425,4 +382,4 @@ void Shader::bindUniformBuffer(const std::string& name, const UniformBuffer& uni
         glBindBufferBase(GL_UNIFORM_BUFFER, uniformBuffer.binding, uniformBuffer.ID);
     }
 }
-}
+}  // namespace spark::resources

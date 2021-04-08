@@ -1,12 +1,12 @@
 #include "LightProbe.h"
 
+#include <glm/gtx/transform.hpp>
+
 #include "CommonUtils.h"
 #include "EngineSystems/SparkRenderer.h"
 #include "Enums.h"
 #include "GameObject.h"
-#include "LightManager.h"
 #include "Mesh.h"
-#include "ReflectionUtils.h"
 #include "RenderingRequest.h"
 #include "ResourceLibrary.h"
 #include "Shader.h"
@@ -31,7 +31,6 @@ LightProbe::LightProbe() : Component("LightProbe")
     const auto attribute = VertexShaderAttribute::createVertexShaderAttributeInfo(0, 3, ShapeCreator::createSphere(1.0f, 10));
     sphere = std::make_shared<Mesh>(std::vector<VertexShaderAttribute>{attribute}, std::vector<unsigned int>{},
                                     std::map<TextureTarget, std::shared_ptr<resources::Texture>>{}, "Mesh", ShaderType::SOLID_COLOR_SHADER);
-    sphere->gpuLoad();
 }
 
 LightProbe::~LightProbe()
@@ -40,7 +39,6 @@ LightProbe::~LightProbe()
     glDeleteTextures(1, &irradianceCubemap);
     irradianceCubemap = prefilterCubemap = 0;
 
-    sphere->gpuUnload();
     notifyAbout(LightCommand::remove);
 }
 

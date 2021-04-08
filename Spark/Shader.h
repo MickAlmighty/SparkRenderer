@@ -10,23 +10,16 @@
 #include <glm/glm.hpp>
 
 #include "Buffer.hpp"
-#include "GPUResource.h"
 #include "Resource.h"
 #include "Structs.h"
 
 namespace spark::resources
 {
-class Shader : public resourceManagement::Resource, public resourceManagement::GPUResource
+class Shader : public resourceManagement::Resource
 {
     public:
-    Shader(const resourceManagement::ResourceIdentifier& identifier);
+    Shader(const std::filesystem::path& path_);
     ~Shader();
-
-    bool isResourceReady() override;
-    bool gpuLoad() override;
-    bool gpuUnload() override;
-    bool load() override;
-    bool unload() override;
 
     void use() const;
     void dispatchCompute(GLuint x, GLuint y, GLuint z) const;
@@ -90,7 +83,6 @@ class Shader : public resourceManagement::Resource, public resourceManagement::G
     };
 
     GLuint ID{0};
-    std::map<GLenum, std::string> shaderSources{};
 
     std::set<Uniform> uniforms{};
     std::set<UniformBlock> uniformBlocks{};

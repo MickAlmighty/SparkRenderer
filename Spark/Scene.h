@@ -7,6 +7,7 @@
 #include <rttr/registration_friend>
 #include <rttr/registration>
 
+#include "Resource.h"
 #include "Structs.h"
 #include "Lights/LightManager.h"
 
@@ -32,7 +33,7 @@ class Scene final : public std::enable_shared_from_this<Scene>
     void drawGUI();
     void drawSceneGraph();
     std::list<std::function<void()>> toRemove;
-    std::shared_ptr<LightManager> lightManager;  // FIXME: switch back to unique_ptr
+    std::shared_ptr<LightManager> lightManager;
     void setCubemapPath(const std::string path);
     std::string getCubemapPath() const;
     std::shared_ptr<GameObject> getGameObjectToPreview() const;
@@ -52,7 +53,7 @@ class Scene final : public std::enable_shared_from_this<Scene>
     std::shared_ptr<Camera> camera{};
     bool cameraMovement{false};
     RTTR_REGISTRATION_FRIEND;
-    RTTR_ENABLE();
+    RTTR_ENABLE()
 };
 
 }  // namespace spark

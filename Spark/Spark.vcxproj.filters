@@ -143,9 +143,6 @@
     <ClCompile Include="Model.cpp">
       <Filter>ResourceManagement\Resources</Filter>
     </ClCompile>
-    <ClCompile Include="GPUResource.cpp">
-      <Filter>ResourceManagement</Filter>
-    </ClCompile>
     <ClCompile Include="ResourceLibrary.cpp">
       <Filter>ResourceManagement</Filter>
     </ClCompile>
@@ -298,14 +295,8 @@
     <ClInclude Include="Model.h">
       <Filter>ResourceManagement\Resources</Filter>
     </ClInclude>
-    <ClInclude Include="GPUResource.h">
-      <Filter>ResourceManagement</Filter>
-    </ClInclude>
     <ClInclude Include="ResourceLibrary.h">
       <Filter>ResourceManagement</Filter>
-    </ClInclude>
-    <ClInclude Include="Texture.h">
-      <Filter>ResourceManagement\Resources</Filter>
     </ClInclude>
     <ClInclude Include="Shader.h">
       <Filter>ResourceManagement\Resources</Filter>
@@ -360,6 +351,9 @@
     </ClInclude>
     <ClInclude Include="OGLContext.hpp">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Texture.h">
+      <Filter>ResourceManagement\Resources</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

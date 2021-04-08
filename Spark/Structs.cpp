@@ -54,11 +54,11 @@ void PbrCubemapTexture::setup(GLuint hdrTexture, unsigned cubemapSize)
 
     // these shaders are created in SparkRenderer with uniforms and buffers already bound
     const std::shared_ptr<resources::Shader> resampleCubemapShader =
-        Spark::resourceLibrary.getResourceByNameWithOptLoad<resources::Shader>("resampleCubemap.glsl");
+        Spark::resourceLibrary.getResourceByName<resources::Shader>("resampleCubemap.glsl");
     const auto equirectangularToCubemapShader =
-        Spark::resourceLibrary.getResourceByNameWithOptLoad<resources::Shader>("equirectangularToCubemap.glsl");
-    const auto irradianceShader = Spark::resourceLibrary.getResourceByNameWithOptLoad<resources::Shader>("irradiance.glsl");
-    const auto prefilterShader = Spark::resourceLibrary.getResourceByNameWithOptLoad<resources::Shader>("prefilter.glsl");
+        Spark::resourceLibrary.getResourceByName<resources::Shader>("equirectangularToCubemap.glsl");
+    const auto irradianceShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("irradiance.glsl");
+    const auto prefilterShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("prefilter.glsl");
 
     const GLuint envCubemap = createEnvironmentCubemapWithMipmapChain(captureFBO, hdrTexture, cubemapSize, cube, equirectangularToCubemapShader);
     this->irradianceCubemap = createIrradianceCubemap(captureFBO, envCubemap, cube, irradianceShader);

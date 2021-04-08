@@ -39,16 +39,8 @@ class ResourceLibraryTest : public ::testing::Test
     {
         ASSERT_TRUE(!resources.empty());
         ASSERT_TRUE(resources[0] != nullptr);
-        ASSERT_TRUE(resources[0]->isResourceReady() == false);
 
         bool resourcesLoaded = false;
-        while(!resourcesLoaded)
-        {
-            resourceLibrary.processGpuResources();
-            resourcesLoaded =
-                std::all_of(resources.begin(), resources.end(),
-                            [](const std::shared_ptr<spark::resourceManagement::Resource>& resource) { return resource->isResourceReady(); });
-        }
         ASSERT_TRUE(resourcesLoaded);
     }
 
@@ -57,8 +49,8 @@ class ResourceLibraryTest : public ::testing::Test
         bool resourcesUnloaded = false;
         while(!resourcesUnloaded)
         {
-            resourceLibrary.processGpuResources();
-            if(resourceLibrary.getLoadedResourcesCount() == 0)
+            /*resourceLibrary.processGpuResources();
+            if(resourceLibrary.getLoadedResourcesCount() == 0)*/
                 resourcesUnloaded = true;
         }
 
@@ -70,12 +62,10 @@ class ResourceLibraryTest : public ::testing::Test
     {
         std::shared_ptr<Resource> resource = nullptr;
 
-        ASSERT_TRUE(resource == nullptr);
-        resource = resourceLibrary.getResourceByNameWithOptLoad<Resource>(resourceName);
-        ASSERT_TRUE(resource->isResourceReady());
-
-        const auto resource2 = resourceLibrary.getResourceByNameWithOptLoad<Resource>(resourceName);
-        ASSERT_TRUE(resource2->isResourceReady());
+        resource = resourceLibrary.getResourceByName<Resource>(resourceName);
+        ASSERT_TRUE(resource != nullptr);
+        const auto resource2 = resourceLibrary.getResourceByName<Resource>(resourceName);
+        ASSERT_TRUE(resource2 != nullptr);
     }
 
     template<typename Resource>
@@ -88,8 +78,8 @@ class ResourceLibraryTest : public ::testing::Test
             std::vector<std::shared_ptr<Resource>> resources{};
             {
                 spark::Timer timer("Loading time:");
-                resources = resourceLibrary.getResourcesOfType<Resource>();
-                resourcesLoading(resources, resourceLibrary);
+                /*resources = resourceLibrary.getResourcesOfType<Resource>();
+                resourcesLoading(resources, resourceLibrary);*/
             }
 
             {

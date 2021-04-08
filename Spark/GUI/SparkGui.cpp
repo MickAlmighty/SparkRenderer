@@ -162,12 +162,17 @@ std::shared_ptr<resources::Model> SparkGui::getModel()
 
     if(ImGui::BeginPopupModal("Models", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
     {
-        const auto modelIds = Spark::resourceLibrary.getResourceIdentifiers<resources::Model>();
+        constexpr auto filterModels = [] (const std::shared_ptr<resourceManagement::ResourceIdentifier>& resId)
+        {
+            return resId->getResourceExtension() == ".obj" || resId->getResourceExtension() == ".fbx" || resId->getResourceExtension() == ".FBX";
+        };
+
+        const auto modelIds = Spark::resourceLibrary.getResourceIdentifiers(filterModels);
         for(const auto& id : modelIds)
         {
-            if(ImGui::Button(id.getFullPath().string().c_str()))
+            if(ImGui::Button(id->getFullPath().string().c_str()))
             {
-                model = Spark::resourceLibrary.getResourceByPathWithOptLoad<resources::Model>(id.getFullPath().string());
+                model = Spark::resourceLibrary.getResourceByPath<resources::Model>(id->getFullPath().string());
                 ImGui::CloseCurrentPopup();
             }
         }

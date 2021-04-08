@@ -66,7 +66,6 @@ void Spark::run()
         }
         glViewport(0, 0, WIDTH,  HEIGHT);
 
-        resourceLibrary.processGpuResources();
         SceneManager::getInstance()->update();
 
         SparkRenderer::getInstance()->renderPass(WIDTH, HEIGHT);

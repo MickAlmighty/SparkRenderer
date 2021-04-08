@@ -1,42 +1,44 @@
 #include "ResourceFactory.h"
 
-#include "Model.h"
 #include "Resource.h"
-#include "ResourceIdentifier.h"
+#include "ResourceLoader.h"
 #include "Shader.h"
-#include "Texture.h"
 
 namespace spark::resourceManagement
 {
-std::map<std::filesystem::path, std::function<std::shared_ptr<Resource>(const ResourceIdentifier& id)>> ResourceFactory::resourceCreationFunctions{
-    // TODO: replace with a reflection-based list
-    {".obj", [](const ResourceIdentifier& id) { return std::make_shared<resources::Model>(id); }},
-    {".fbx", [](const ResourceIdentifier& id) { return std::make_shared<resources::Model>(id); }},
-    {".FBX", [](const ResourceIdentifier& id) { return std::make_shared<resources::Model>(id); }},
+std::map<std::filesystem::path, std::function<std::shared_ptr<Resource>(const std::filesystem::path& path)>>
+    ResourceFactory::resourceCreationFunctions{
+        // TODO: replace with a reflection-based list
+        {".obj", [](const std::filesystem::path& path) { return ResourceLoader::createModel(path); }},
+        {".fbx", [](const std::filesystem::path& path) { return ResourceLoader::createModel(path); }},
+        {".FBX", [](const std::filesystem::path& path) { return ResourceLoader::createModel(path); }},
 
-    {".dds", [](const ResourceIdentifier& id) { return std::make_shared<resources::Texture>(id); }},
-    {".DDS", [](const ResourceIdentifier& id) { return std::make_shared<resources::Texture>(id); }},
-    {".ktx", [](const ResourceIdentifier& id) { return std::make_shared<resources::Texture>(id); }},
-    {".KTX", [](const ResourceIdentifier& id) { return std::make_shared<resources::Texture>(id); }},
-    {".KTX", [](const ResourceIdentifier& id) { return std::make_shared<resources::Texture>(id); }},
-    {".png", [](const ResourceIdentifier& id) { return std::make_shared<resources::Texture>(id); }},
-    {".jpg", [](const ResourceIdentifier& id) { return std::make_shared<resources::Texture>(id); }},
-    {".tga", [](const ResourceIdentifier& id) { return std::make_shared<resources::Texture>(id); }},
+        {".dds", [](const std::filesystem::path& path) { return ResourceLoader::createCompressedTexture(path); }},
+        {".DDS", [](const std::filesystem::path& path) { return ResourceLoader::createCompressedTexture(path); }},
+        {".ktx", [](const std::filesystem::path& path) { return ResourceLoader::createCompressedTexture(path); }},
+        {".KTX", [](const std::filesystem::path& path) { return ResourceLoader::createCompressedTexture(path); }},
 
-    {".glsl", [](const ResourceIdentifier& id) { return std::make_shared<resources::Shader>(id); }},
-};
+        {".png", [](const std::filesystem::path& path) { return ResourceLoader::createUncompressedTexture(path); }},
+        {".jpg", [](const std::filesystem::path& path) { return ResourceLoader::createUncompressedTexture(path); }},
+        {".tga", [](const std::filesystem::path& path) { return ResourceLoader::createUncompressedTexture(path); }},
+
+        {".glsl", [](const std::filesystem::path& path) { return std::make_shared<resources::Shader>(path); }},
+    };
 
 std::optional<std::shared_ptr<Resource>> ResourceFactory::createResource(const std::filesystem::path& filePath)
 {
     const auto it = resourceCreationFunctions.find(filePath.extension());
     if(it != resourceCreationFunctions.end())
     {
-        const ResourceIdentifier id(filePath);
         const auto [extension, resourceCreationFunction] = *it;
-        return resourceCreationFunction(id);
+        return resourceCreationFunction(filePath);
     }
 
     return std::nullopt;
 }
 
+bool ResourceFactory::isExtensionSupported(const std::filesystem::path& filePath)
+{
+    return resourceCreationFunctions.find(filePath.extension()) != resourceCreationFunctions.end();
+}
 }  // namespace spark::resourceManagement

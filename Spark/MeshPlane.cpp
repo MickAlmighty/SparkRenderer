@@ -31,7 +31,6 @@ void MeshPlane::setup()
     const auto texCoordsAttribute = VertexShaderAttribute::createVertexShaderAttributeInfo(1, 2, texCoords);
     planeMesh = std::make_shared<Mesh>(std::vector<VertexShaderAttribute>{positionAttribute, texCoordsAttribute}, indices,
                                     std::map<TextureTarget, std::shared_ptr<resources::Texture>>{}, "Mesh", ShaderType::SOLID_COLOR_SHADER);
-    planeMesh->gpuLoad();
 }
 
 MeshPlane::MeshPlane() : Component("MeshPlane")
@@ -46,7 +45,6 @@ MeshPlane::MeshPlane(std::string&& name) : Component(std::move(name))
 
 MeshPlane::~MeshPlane()
 {
-    planeMesh->gpuUnload();
 }
 
 

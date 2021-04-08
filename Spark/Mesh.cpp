@@ -21,7 +21,8 @@ Mesh::Mesh(std::vector<VertexShaderAttribute>& verticesAttributes, std::vector<u
     {
         attributesAndVbos.emplace_back(verticesAttribute, 0);
     }
-    // Mesh::gpuLoad();
+
+    load();
 }
 
 Mesh::Mesh(std::vector<VertexShaderAttribute>& verticesAttributes, std::vector<unsigned>& indices, std::string&& newName_, ShaderType shaderType)
@@ -32,6 +33,21 @@ Mesh::Mesh(std::vector<VertexShaderAttribute>& verticesAttributes, std::vector<u
     for(auto& verticesAttribute : verticesAttributes)
     {
         attributesAndVbos.emplace_back(verticesAttribute, 0);
+    }
+
+    load();
+}
+
+Mesh::~Mesh()
+{
+    glDeleteBuffers(1, &vbo);
+    glDeleteBuffers(1, &ebo);
+    glDeleteVertexArrays(1, &vao);
+
+    for(auto& [attribute, vbo] : attributesAndVbos)
+    {
+        glDeleteBuffers(1, &vbo);
+        vbo = 0;
     }
 }
 
@@ -66,13 +82,7 @@ void Mesh::draw(std::shared_ptr<resources::Shader>& shader, glm::mat4 model)
         glBindTextures(static_cast<GLuint>(TextureTarget::DIFFUSE_TARGET), static_cast<GLsizei>(texturesToBind.size()), nullptr);
 }
 
-void Mesh::cleanup()
-{
-    gpuUnload();
-    SPARK_TRACE("Mesh deleted!");
-}
-
-bool Mesh::gpuLoad()
+void Mesh::load()
 {
     glCreateVertexArrays(1, &vao);
     glBindVertexArray(vao);
@@ -109,22 +119,5 @@ bool Mesh::gpuLoad()
     }
 
     glBindVertexArray(0);
-
-    return true;
-}
-
-bool Mesh::gpuUnload()
-{
-    glDeleteBuffers(1, &vbo);
-    glDeleteBuffers(1, &ebo);
-    glDeleteVertexArrays(1, &vao);
-
-    for(auto& [attribute, vbo] : attributesAndVbos)
-    {
-        glDeleteBuffers(1, &vbo);
-        vbo = 0;
-    }
-
-    return true;
 }
 }  // namespace spark

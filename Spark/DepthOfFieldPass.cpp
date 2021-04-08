@@ -54,8 +54,8 @@ void DepthOfFieldPass::setUniforms(float nearStart, float nearEnd, float farStar
 DepthOfFieldPass::DepthOfFieldPass(unsigned width_, unsigned height_) : width(width_), height(height_)
 {
     screenQuad.setup();
-    cocShader = Spark::resourceLibrary.getResourceByNameWithOptLoad<resources::Shader>("circleOfConfusion.glsl");
-    blendShader = Spark::resourceLibrary.getResourceByNameWithOptLoad<resources::Shader>("blendDof.glsl");
+    cocShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("circleOfConfusion.glsl");
+    blendShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("blendDof.glsl");
     blurPass = std::make_unique<BlurPass>(width / 2, height / 2);
     createGlObjects();
 

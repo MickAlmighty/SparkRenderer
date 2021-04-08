@@ -20,7 +20,7 @@ ModelMesh::ModelMesh() : Component("ModelMesh") {}
 
 void ModelMesh::setModel(const std::shared_ptr<resources::Model>& model_)
 {
-    modelPath = model_->id.getFullPath().string();
+    modelPath = model_->getPath().string();
     model = model_;
 }
 
@@ -98,7 +98,7 @@ std::string ModelMesh::getModelPath() const
 
 void ModelMesh::setModelPath(const std::string modelPath)
 {
-    setModel(Spark::resourceLibrary.getResourceByPathWithOptLoad<resources::Model>(modelPath));
+    setModel(Spark::resourceLibrary.getResourceByPath<resources::Model>(modelPath));
 }
 }  // namespace spark
 

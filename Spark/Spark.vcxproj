@@ -135,7 +135,6 @@
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="GBuffer.cpp" />
     <ClCompile Include="glad.c" />
-    <ClCompile Include="GPUResource.cpp" />
     <ClCompile Include="GUI\ImGuizmo.cpp" />
     <ClCompile Include="GUI\ImGui\imgui.cpp" />
     <ClCompile Include="GUI\ImGui\imgui_demo.cpp" />
@@ -190,7 +189,6 @@
     <ClInclude Include="Factory.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="GBuffer.h" />
-    <ClInclude Include="GPUResource.h" />
     <ClInclude Include="GUI\ImGuizmo.h" />
     <ClInclude Include="GUI\ImGui\imconfig.h" />
     <ClInclude Include="GUI\ImGui\imgui.h" />

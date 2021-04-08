@@ -8,7 +8,6 @@
 
 namespace spark
 {
-// class Scene;
 class SceneManager final
 {
     public:
