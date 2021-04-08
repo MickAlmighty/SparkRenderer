@@ -25,7 +25,7 @@ std::map<std::filesystem::path, std::function<std::shared_ptr<Resource>(const st
         {".glsl", [](const std::filesystem::path& path) { return std::make_shared<resources::Shader>(path); }},
     };
 
-std::optional<std::shared_ptr<Resource>> ResourceFactory::createResource(const std::filesystem::path& filePath)
+std::shared_ptr<Resource> ResourceFactory::createResource(const std::filesystem::path& filePath)
 {
     const auto it = resourceCreationFunctions.find(filePath.extension());
     if(it != resourceCreationFunctions.end())
@@ -34,7 +34,7 @@ std::optional<std::shared_ptr<Resource>> ResourceFactory::createResource(const s
         return resourceCreationFunction(filePath);
     }
 
-    return std::nullopt;
+    return nullptr;
 }
 
 bool ResourceFactory::isExtensionSupported(const std::filesystem::path& filePath)

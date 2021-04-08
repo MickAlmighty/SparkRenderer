@@ -3,8 +3,6 @@
 #include <filesystem>
 #include <map>
 #include <memory>
-#include <optional>
-#include <set>
 #include <functional>
 
 namespace spark::resourceManagement
@@ -15,7 +13,7 @@ class ResourceIdentifier;
 class ResourceFactory
 {
     public:
-    static std::optional<std::shared_ptr<Resource>> createResource(const std::filesystem::path& filePath);
+    static std::shared_ptr<Resource> createResource(const std::filesystem::path& filePath);
     static bool isExtensionSupported(const std::filesystem::path& filePath);
 
     private:

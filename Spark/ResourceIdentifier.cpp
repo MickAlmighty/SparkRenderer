@@ -37,7 +37,7 @@ ResourceIdentifier::ResourceIdentifier(const std::filesystem::path& fullResource
     resourcePath = fullResourcePath;
 }
 
-ResourceIdentifier::ResourceIdentifier(const ResourceIdentifier&& identifier) noexcept : resourcePath(std::move(identifier.resourcePath)) {}
+ResourceIdentifier::ResourceIdentifier(ResourceIdentifier&& identifier) noexcept : resourcePath(std::move(identifier.resourcePath)) {}
 
 bool ResourceIdentifier::operator==(const ResourceIdentifier& identifier) const
 {
@@ -147,10 +147,10 @@ std::shared_ptr<Resource> ResourceIdentifier::getResource()
 {
     if(resource.expired())
     {
-        const auto resourceOpt = ResourceFactory::createResource(getFullPath());
-        if(resourceOpt.has_value())
+        const auto resourcePtr = ResourceFactory::createResource(getFullPath());
+        if(resourcePtr)
         {
-            resource = resourceOpt.value();
+            resource = resourcePtr;
             return resource.lock();
         }
     }

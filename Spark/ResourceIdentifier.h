@@ -15,10 +15,10 @@ namespace resourceManagement
         ~ResourceIdentifier() = default;
 
         ResourceIdentifier(const ResourceIdentifier& identifier) = default;
-        ResourceIdentifier(const ResourceIdentifier&& identifier) noexcept;
+        ResourceIdentifier(ResourceIdentifier&& identifier) noexcept;
 
         ResourceIdentifier operator=(const ResourceIdentifier& identifier) = delete;
-        ResourceIdentifier operator=(const ResourceIdentifier&& identifier) = delete;
+        ResourceIdentifier operator=(ResourceIdentifier&& identifier) = delete;
 
         bool operator==(const ResourceIdentifier& identifier) const;
         bool operator<(const ResourceIdentifier& identifier) const;

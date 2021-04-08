@@ -206,7 +206,7 @@ std::shared_ptr<resourceManagement::Resource> ResourceLoader::createModel(const 
     if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
     {
         SPARK_ERROR("{}", importer.GetErrorString());
-        throw std::exception(importer.GetErrorString());
+        return nullptr;
     }
 
     std::vector<std::shared_ptr<Mesh>> meshes;
