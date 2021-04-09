@@ -73,11 +73,6 @@ void SceneManager::drawGui()
         if(ImGui::BeginMenu(menuName.c_str()))
         {
             ImGui::MenuItem("Camera Movement", NULL, &current_scene->cameraMovement);
-            const auto [cubemapPicked, cubemapPtr] = SparkGui::getCubemapTexture();
-            if(cubemapPicked)
-            {
-                current_scene->skybox = cubemapPtr;
-            }
             ImGui::EndMenu();
         }
         if(ImGui::MenuItem("Save Current Scene"))

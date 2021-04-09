@@ -28,29 +28,13 @@ namespace resources
     class Shader;
 };
 
-struct Texture
-{
-    Texture(GLuint id, const std::string& path);
-    void setPath(const std::string path);
-    std::string getPath() const;
-    Texture() = default;
-    GLuint ID{0};
-
-    private:
-    std::string path;
-    RTTR_REGISTRATION_FRIEND;
-    RTTR_ENABLE();
-};
-
 struct PbrCubemapTexture final
 {
     GLuint cubemap{};
     GLuint irradianceCubemap{};
     GLuint prefilteredCubemap{};
 
-    const std::string getPath();
-
-    PbrCubemapTexture(GLuint hdrTexture, const std::string& path, unsigned int size = 1024);
+    PbrCubemapTexture(GLuint hdrTexture, unsigned int size = 1024);
     ~PbrCubemapTexture();
 
     static GLuint createIrradianceCubemap(GLuint framebuffer, GLuint environmentCubemap, Cube& cube,
@@ -60,8 +44,6 @@ struct PbrCubemapTexture final
                                            const std::shared_ptr<resources::Shader>& resampleCubemapShader);
 
     private:
-    std::string path{};
-
     void setup(GLuint hdrTexture, unsigned int cubemapSize);
     static GLuint createEnvironmentCubemapWithMipmapChain(GLuint framebuffer, GLuint equirectangularTexture, unsigned int size, Cube& cube,
                                                           const std::shared_ptr<resources::Shader>& equirectangularToCubemapShader);

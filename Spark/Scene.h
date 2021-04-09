@@ -34,8 +34,6 @@ class Scene final : public std::enable_shared_from_this<Scene>
     void drawSceneGraph();
     std::list<std::function<void()>> toRemove;
     std::shared_ptr<LightManager> lightManager;
-    void setCubemapPath(const std::string path);
-    std::string getCubemapPath() const;
     std::shared_ptr<GameObject> getGameObjectToPreview() const;
 
     private:
@@ -46,7 +44,6 @@ class Scene final : public std::enable_shared_from_this<Scene>
     explicit Scene(std::string&& sceneName);
     void drawTreeNode(std::shared_ptr<GameObject> node, bool isRootNode);
     void setGameObjectToPreview(const std::shared_ptr<GameObject> node);
-    std::shared_ptr<PbrCubemapTexture> skybox;
     std::string name{"New Scene"};
     std::shared_ptr<GameObject> root{};
     std::weak_ptr<GameObject> gameObjectToPreview;

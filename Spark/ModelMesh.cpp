@@ -70,22 +70,10 @@ void ModelMesh::drawGUI()
         ImGui::Text(std::to_string(static_cast<int>(mesh->shaderType)).c_str());
     }
 
-    if(model != nullptr)
+    const auto modelOpt = SparkGui::getModel();
+    if(modelOpt)
     {
-        if(model->getMeshes().empty())
-        {
-            const auto model = SparkGui::getModel();
-            setModel(model);
-        }
-    }
-
-    if(model == nullptr)
-    {
-        const auto model_ = SparkGui::getModel();
-        if (model_ != nullptr)
-        {
-            setModel(model_);
-        }
+        setModel(modelOpt.value());
     }
 
     removeComponentGUI<ModelMesh>();

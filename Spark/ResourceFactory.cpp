@@ -21,6 +21,8 @@ std::map<std::string, std::function<std::shared_ptr<Resource>(const std::filesys
     {".jpg", [](const std::filesystem::path& path) { return ResourceLoader::createUncompressedTexture(path); }},
     {".tga", [](const std::filesystem::path& path) { return ResourceLoader::createUncompressedTexture(path); }},
 
+    {".hdr", [](const std::filesystem::path& path) { return ResourceLoader::createHdrTexture(path); }},
+
     {".glsl", [](const std::filesystem::path& path) { return std::make_shared<resources::Shader>(path); }},
 };
 
@@ -48,7 +50,7 @@ std::vector<std::string> ResourceFactory::supportedModelExtensions()
 
 std::vector<std::string> ResourceFactory::supportedTextureExtensions()
 {
-    return std::vector<std::string>{".dds", ".DDS", ".ktx", ".KTX", ".png", ".jpg", ".tga"};
+    return std::vector<std::string>{".dds", ".DDS", ".ktx", ".KTX", ".png", ".jpg", ".tga", ".hdr"};
 }
 
 std::vector<std::string> ResourceFactory::supportedShaderExtensions()

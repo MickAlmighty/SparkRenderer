@@ -2,19 +2,19 @@
 
 #include <glad/glad.h>
 
-#include "Buffer.hpp"
 #include "Enums.h"
 #include "GBuffer.h"
 #include "Scene.h"
 #include "Structs.h"
-#include "Shader.h"
 
 namespace spark
 {
 class BlurPass;
 class DepthOfFieldPass;
 class LightProbe;
+class Shader;
 struct RenderingRequest;
+struct PbrCubemapTexture;
 
 class SparkRenderer
 {
@@ -30,6 +30,7 @@ class SparkRenderer
     void drawGui();
     void addRenderingRequest(const RenderingRequest& request);
     void setScene(const std::shared_ptr<Scene>& scene_);
+    void setCubemap(const std::shared_ptr<PbrCubemapTexture>& cubemap);
 
     private:
     SparkRenderer() = default;
@@ -72,6 +73,8 @@ class SparkRenderer
     std::shared_ptr<Scene> scene{nullptr};
 
     unsigned int width{}, height{};
+
+    std::weak_ptr<PbrCubemapTexture> pbrCubemap;
 
     ScreenQuad screenQuad{};
     std::unique_ptr<DepthOfFieldPass> dofPass;

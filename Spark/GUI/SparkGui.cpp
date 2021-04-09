@@ -3,16 +3,34 @@
 #include "EngineSystems/SparkRenderer.h"
 #include "ImGuizmo.h"
 #include "ImGui/imgui_impl_glfw.h"
+#include "ImGui/imgui_impl_opengl3.h"
 #include "JsonSerializer.h"
+#include "Lights/DirectionalLight.h"
+#include "Lights/LightProbe.h"
+#include "Lights/PointLight.h"
+#include "Lights/SpotLight.h"
+#include "Mesh.h"
+#include "MeshPlane.h"
 #include "Model.h"
+#include "ModelMesh.h"
 #include "ResourceLibrary.h"
 #include "ResourceLoader.h"
+#include "Skybox.h"
 #include "Spark.h"
 #include "Texture.h"
-#include "ImGui/imgui_impl_opengl3.h"
 
 namespace spark
 {
+const std::map<std::string, std::function<std::shared_ptr<Component>()>> SparkGui::componentCreation{
+    // TODO: replace with a reflection-based list
+    {"ModelMesh", [] { return std::make_shared<ModelMesh>(); }},
+    {"MeshPlane", [] { return std::make_shared<MeshPlane>(); }},
+    {"DirectionalLight", [] { return std::make_shared<DirectionalLight>(); }},
+    {"PointLight", [] { return std::make_shared<PointLight>(); }},
+    {"SpotLight", [] { return std::make_shared<SpotLight>(); }},
+    {"LightProbe", [] { return std::make_shared<LightProbe>(); }},
+    {"Skybox", [] { return std::make_shared<Skybox>(); }}};
+
 void SparkGui::drawGui()
 {
     ImGui_ImplGlfw_NewFrame();
@@ -152,8 +170,9 @@ std::shared_ptr<Component> SparkGui::addComponent()
     return component;
 }
 
-std::shared_ptr<resources::Model> SparkGui::getModel()
+std::optional<std::shared_ptr<resources::Model>> SparkGui::getModel()
 {
+    bool objectPicked{false};
     std::shared_ptr<resources::Model> model{nullptr};
     if(ImGui::Button("Add Model"))
     {
@@ -168,6 +187,7 @@ std::shared_ptr<resources::Model> SparkGui::getModel()
             if(ImGui::Button(id->getFullPath().string().c_str()))
             {
                 model = std::static_pointer_cast<resources::Model>(id->getResource());
+                objectPicked = true;
                 ImGui::CloseCurrentPopup();
             }
         }
@@ -178,11 +198,15 @@ std::shared_ptr<resources::Model> SparkGui::getModel()
         ImGui::EndPopup();
     }
 
-    return model;
+    if(objectPicked)
+        return {model};
+
+    return std::nullopt;
 }
 
-std::shared_ptr<resources::Texture> SparkGui::getTexture()
+std::optional<std::shared_ptr<resources::Texture>> SparkGui::getTexture()
 {
+    bool objectPicked{false};
     std::shared_ptr<resources::Texture> texture{nullptr};
     if(ImGui::Button("Add Texture"))
     {
@@ -192,11 +216,12 @@ std::shared_ptr<resources::Texture> SparkGui::getTexture()
     if(ImGui::BeginPopupModal("Textures", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
     {
         const auto textureIds = Spark::resourceLibrary.getTextureResourceIdentifiers();
-        for (const auto& id : textureIds)
+        for(const auto& id : textureIds)
         {
-            if (ImGui::Button(id->getFullPath().string().c_str()))
+            if(ImGui::Button(id->getFullPath().string().c_str()))
             {
                 texture = std::static_pointer_cast<resources::Texture>(id->getResource());
+                objectPicked = true;
                 ImGui::CloseCurrentPopup();
             }
         }
@@ -208,68 +233,9 @@ std::shared_ptr<resources::Texture> SparkGui::getTexture()
         ImGui::EndPopup();
     }
 
-    return texture;
+    if(objectPicked)
+        return {texture};
+
+    return std::nullopt;
 }
-
-std::tuple<bool, std::shared_ptr<PbrCubemapTexture>> SparkGui::getCubemapTexture()
-{
-    std::shared_ptr<PbrCubemapTexture> ptr = nullptr;
-    bool hdrTexturePicked = false;
-
-    if(ImGui::Button("Get CubemapTexture"))
-    {
-        ImGui::OpenPopup("Cubemap Textures");
-    }
-
-    if(ImGui::BeginPopupModal("Cubemap Textures", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
-    {
-        std::deque<std::string> cubemapTexturesPaths;
-
-        auto directoryIt = std::filesystem::recursive_directory_iterator(Spark::pathToResources);
-        for(const auto& directoryEntry : directoryIt)
-        {
-            std::string extension = directoryEntry.path().extension().string();
-            if(extension == ".hdr")
-            {
-                cubemapTexturesPaths.push_back(directoryEntry.path().string());
-            }
-        }
-
-        cubemapTexturesPaths.push_front("none");
-        if(ImGui::Button(cubemapTexturesPaths[0].c_str()))
-        {
-            ptr = nullptr;
-            hdrTexturePicked = true;
-            ImGui::CloseCurrentPopup();
-        }
-
-        for(size_t i = 1; i < cubemapTexturesPaths.size(); ++i)
-        {
-            if(ImGui::Button(cubemapTexturesPaths[i].c_str()))
-            {
-                auto optional_ptr = ResourceLoader::loadHdrTexture(cubemapTexturesPaths[i]);
-                if(optional_ptr)
-                {
-                    ptr = optional_ptr.value();
-                }
-                hdrTexturePicked = true;
-                ImGui::CloseCurrentPopup();
-            }
-        }
-
-        if(ImGui::Button("Close"))
-        {
-            ImGui::CloseCurrentPopup();
-        }
-        ImGui::EndPopup();
-    }
-
-    if(hdrTexturePicked)
-    {
-        return {hdrTexturePicked, ptr};
-    }
-
-    return {false, nullptr};
-}
-
 }  // namespace spark

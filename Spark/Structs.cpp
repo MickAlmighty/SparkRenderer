@@ -11,36 +11,15 @@
 
 namespace spark
 {
-Texture::Texture(GLuint id, const std::string& path)
-{
-    this->path = path;
-    this->ID = id;
-}
-
-void Texture::setPath(const std::string path)
-{
-    this->path = path;
-}
-
-std::string Texture::getPath() const
-{
-    return path;
-}
-
-const std::string PbrCubemapTexture::getPath()
-{
-    return path;
-}
-
-PbrCubemapTexture::PbrCubemapTexture(GLuint hdrTexture, const std::string& path, unsigned size) : path(path)
+PbrCubemapTexture::PbrCubemapTexture(GLuint hdrTexture, unsigned size)
 {
     setup(hdrTexture, size);
 }
 
 PbrCubemapTexture::~PbrCubemapTexture()
 {
-    GLuint textures[] = {cubemap, irradianceCubemap, prefilteredCubemap};
-    glDeleteTextures(4, textures);
+    std::array<GLuint, 3> textures = {cubemap, irradianceCubemap, prefilteredCubemap};
+    glDeleteTextures(3, textures.data());
 }
 
 void PbrCubemapTexture::setup(GLuint hdrTexture, unsigned cubemapSize)
@@ -55,8 +34,7 @@ void PbrCubemapTexture::setup(GLuint hdrTexture, unsigned cubemapSize)
     // these shaders are created in SparkRenderer with uniforms and buffers already bound
     const std::shared_ptr<resources::Shader> resampleCubemapShader =
         Spark::resourceLibrary.getResourceByName<resources::Shader>("resampleCubemap.glsl");
-    const auto equirectangularToCubemapShader =
-        Spark::resourceLibrary.getResourceByName<resources::Shader>("equirectangularToCubemap.glsl");
+    const auto equirectangularToCubemapShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("equirectangularToCubemap.glsl");
     const auto irradianceShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("irradiance.glsl");
     const auto prefilterShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("prefilter.glsl");
 
@@ -274,8 +252,4 @@ RTTR_REGISTRATION
         .constructor()(rttr::policy::ctor::as_object)
         .property("local", &spark::Transform::local)
         .property("world", &spark::Transform::world);
-
-    rttr::registration::class_<spark::Texture>("Texture")
-        .constructor()(rttr::policy::ctor::as_object)
-        .property("path", &spark::Texture::getPath, &spark::Texture::setPath, rttr::registration::public_access);
 }

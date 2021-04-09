@@ -1,14 +1,7 @@
 #pragma once
 
 #include "Component.h"
-#include "Lights/DirectionalLight.h"
 #include "GameObject.h"
-#include "Mesh.h"
-#include "MeshPlane.h"
-#include "ModelMesh.h"
-#include "Lights/PointLight.h"
-#include "Lights/SpotLight.h"
-#include "Lights/LightProbe.h"
 #include <optional>
 
 namespace spark
@@ -28,9 +21,8 @@ class SparkGui
     ~SparkGui() = default;
 
     static std::shared_ptr<Component> addComponent();
-    static std::shared_ptr<resources::Model> getModel();
-    static std::shared_ptr<resources::Texture> SparkGui::getTexture();
-    static std::tuple<bool, std::shared_ptr<PbrCubemapTexture>> getCubemapTexture();
+    static std::optional<std::shared_ptr<resources::Model>> getModel();
+    static std::optional<std::shared_ptr<resources::Texture>> getTexture();
 
     template<typename T>
     static std::optional<T> getDraggedObject(std::string&& payloadName)
@@ -106,14 +98,8 @@ class SparkGui
     void drawMainMenuGui();
     void drawSparkSettings(bool* p_open);
     int checkCurrentItem(const char** items) const;
+
+    const static std::map<std::string, std::function<std::shared_ptr<Component>()>> componentCreation;
 };
 
-const static std::map<std::string, std::function<std::shared_ptr<Component>()>> componentCreation{
-    // TODO: replace with a reflection-based list
-    {"ModelMesh", [] { return std::make_shared<ModelMesh>(); }},
-    {"MeshPlane", [] { return std::make_shared<MeshPlane>(); }},
-    {"DirectionalLight", [] { return std::make_shared<DirectionalLight>(); }},
-    {"PointLight", [] { return std::make_shared<PointLight>(); }},
-    {"SpotLight", [] { return std::make_shared<SpotLight>(); }},
-    {"LightProbe", [] { return std::make_shared<LightProbe>(); }}};
-}  // namespace spark
+}// namespace spark

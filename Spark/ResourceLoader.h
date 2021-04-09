@@ -15,7 +15,7 @@ class Mesh;
 class ResourceLoader final
 {
     public:
-    static std::optional<std::shared_ptr<PbrCubemapTexture>> loadHdrTexture(const std::string& path);
+    static std::shared_ptr<resourceManagement::Resource> createHdrTexture(const std::filesystem::path& path);
     static std::shared_ptr<resourceManagement::Resource> createCompressedTexture(const std::filesystem::path& path);
     static std::shared_ptr<resourceManagement::Resource> createUncompressedTexture(const std::filesystem::path& path);
     static std::shared_ptr<resourceManagement::Resource> createModel(const std::filesystem::path& path);

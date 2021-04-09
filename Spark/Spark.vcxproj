@@ -163,6 +163,7 @@
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="ShapeCreator.cpp" />
+    <ClCompile Include="Skybox.cpp" />
     <ClCompile Include="Spark.cpp" />
     <ClCompile Include="Lights\SpotLight.cpp" />
     <ClCompile Include="stb_image.cpp" />
@@ -223,6 +224,7 @@
     <ClInclude Include="Scene.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="ShapeCreator.h" />
+    <ClInclude Include="Skybox.h" />
     <ClInclude Include="Spark.h" />
     <ClInclude Include="Lights\SpotLight.h" />
     <ClInclude Include="SparkConfig.hpp" />

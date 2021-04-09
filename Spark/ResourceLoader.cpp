@@ -19,16 +19,15 @@ namespace spark
 {
 using Path = std::filesystem::path;
 
-std::optional<std::shared_ptr<PbrCubemapTexture>> ResourceLoader::loadHdrTexture(const std::string& path)
+std::shared_ptr<resourceManagement::Resource> ResourceLoader::createHdrTexture(const std::filesystem::path& path)
 {
-    stbi_set_flip_vertically_on_load(true);
     int width, height, nrComponents;
-    float* data = stbi_loadf(path.c_str(), &width, &height, &nrComponents, 0);
+    float* data = stbi_loadf(path.string().c_str(), &width, &height, &nrComponents, 0);
 
     if(!data)
     {
-        SPARK_ERROR("Failed to load HDR image '{}'.", path);
-        return std::nullopt;
+        SPARK_ERROR("Failed to load HDR image '{}'.", path.string());
+        return nullptr;
     }
 
     GLuint hdrTexture{0};
@@ -36,9 +35,7 @@ std::optional<std::shared_ptr<PbrCubemapTexture>> ResourceLoader::loadHdrTexture
 
     stbi_image_free(data);
 
-    auto tex = std::make_shared<PbrCubemapTexture>(hdrTexture, path, 1024);
-    glDeleteTextures(1, &hdrTexture);
-    return {tex};
+    return std::make_shared<resources::Texture>(path, hdrTexture, width, height);
 }
 
 std::shared_ptr<resourceManagement::Resource> ResourceLoader::createCompressedTexture(const std::filesystem::path& path)

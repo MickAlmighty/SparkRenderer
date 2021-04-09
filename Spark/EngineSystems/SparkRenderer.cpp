@@ -10,6 +10,7 @@
 #include "Camera.h"
 #include "CommonUtils.h"
 #include "DepthOfFieldPass.h"
+#include "Lights/DirectionalLight.h"
 #include "Lights/LightProbe.h"
 #include "RenderingRequest.h"
 #include "ResourceLibrary.h"
@@ -294,6 +295,11 @@ void SparkRenderer::setScene(const std::shared_ptr<Scene>& scene_)
     updateLightBuffersBindings();
 }
 
+void SparkRenderer::setCubemap(const std::shared_ptr<PbrCubemapTexture>& cubemap)
+{
+    pbrCubemap = cubemap;
+}
+
 void SparkRenderer::resizeWindowIfNecessary(unsigned int windowWidth, unsigned int windowHeight)
 {
     if(width != static_cast<unsigned int>(windowWidth) || height != static_cast<unsigned int>(windowHeight))
@@ -394,7 +400,7 @@ void SparkRenderer::renderLights(GLuint framebuffer, const GBuffer& geometryBuff
     glClearColor(0, 0, 0, 1);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    const auto cubemap = scene->skybox;
+    const auto cubemap = pbrCubemap.lock();
 
     lightShader->use();
     if(cubemap)
@@ -461,7 +467,7 @@ void SparkRenderer::tileBasedLightRendering(const GBuffer& geometryBuffer)
     glClearTexImage(lightColorTexture, 0, GL_RGBA, GL_FLOAT, &clearRgba);
     glClearTexImage(brightPassTexture, 0, GL_RGBA, GL_FLOAT, &clearRgba);
 
-    const auto cubemap = scene->skybox;
+    const auto cubemap = pbrCubemap.lock();
 
     tileBasedLightingShader->use();
 
@@ -494,7 +500,7 @@ void SparkRenderer::tileBasedLightRendering(const GBuffer& geometryBuffer)
 
 void SparkRenderer::renderCubemap(GLuint framebuffer) const
 {
-    const auto cubemap = scene->skybox;
+    const auto cubemap = pbrCubemap.lock();
     if(!cubemap)
         return;
 
@@ -901,15 +907,15 @@ void SparkRenderer::updateCameraUBO(glm::mat4 projection, glm::mat4 view, glm::v
 bool SparkRenderer::checkIfSkyboxChanged() const
 {
     static GLuint cubemapId{0};
-    if(scene->skybox)
+    if(pbrCubemap.lock())
     {
-        if(cubemapId != scene->skybox->cubemap)
+        if(cubemapId != pbrCubemap.lock()->cubemap)
         {
-            cubemapId = scene->skybox->cubemap;
+            cubemapId = pbrCubemap.lock()->cubemap;
             return true;
         }
     }
-    else if(cubemapId > 0 && scene->skybox == nullptr)
+    else if(cubemapId > 0 && pbrCubemap.lock() == nullptr)
     {
         cubemapId = 0;
         return true;
