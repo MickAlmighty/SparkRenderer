@@ -5,6 +5,8 @@
 #include "OGLContext.hpp"
 #include "ResourceFactory.h"
 
+namespace spark::resourceManagement
+{
 class ResourceFactoryTest : public ::testing::Test
 {
     void SetUp() override
@@ -22,16 +24,23 @@ class ResourceFactoryTest : public ::testing::Test
 };
 TEST_F(ResourceFactoryTest, AllCreatedResourcesAreValid)
 {
-    using namespace spark::resourceManagement;
     std::vector<std::shared_ptr<Resource>> createdResources;
 
     const std::filesystem::path resPath(R"(..\..\..\res)");
-    for(const auto& path : std::filesystem::recursive_directory_iterator(resPath))
+    for(const auto& pathMaybeInvalid : std::filesystem::recursive_directory_iterator(resPath))
     {
-        const std::shared_ptr<Resource> resource = ResourceFactory::createResource(path);
-        if(resource != nullptr)
+        const bool fileWithValidExtension = ResourceFactory::isExtensionSupported(pathMaybeInvalid.path());
+        if(fileWithValidExtension)
         {
-            createdResources.push_back(resource);
+            const std::shared_ptr<Resource> resource = ResourceFactory::createResource(pathMaybeInvalid);
+            if(resource != nullptr)
+            {
+                createdResources.push_back(resource);
+            }
+            else
+            {
+                ASSERT_TRUE(false);
+            }
         }
     }
 
@@ -43,30 +52,38 @@ TEST_F(ResourceFactoryTest, AllCreatedResourcesAreValid)
 
 TEST_F(ResourceFactoryTest, CreatingResourceFromNonexistentFileReturnsNullptr)
 {
-    using namespace spark::resourceManagement;
     const std::shared_ptr<Resource> resource = ResourceFactory::createResource("tmp123.obj");
     ASSERT_TRUE(resource == nullptr);
 }
 
 TEST_F(ResourceFactoryTest, CreatingResourceFromFileWithUnsuportedExtensionReturnsNullptr)
 {
-    using namespace spark::resourceManagement;
-
     const std::shared_ptr<Resource> resource = ResourceFactory::createResource("tmp123.zip");
     ASSERT_TRUE(resource == nullptr);
 }
 
 TEST_F(ResourceFactoryTest, ValidFilenameHasSupportedExtension)
 {
-    ASSERT_TRUE(spark::resourceManagement::ResourceFactory::isExtensionSupported("tmp.obj"));
+    ASSERT_TRUE(ResourceFactory::isExtensionSupported("tmp.obj"));
 }
 
 TEST_F(ResourceFactoryTest, InvalidFilenameHasUnsupportedExtension)
 {
-    ASSERT_FALSE(spark::resourceManagement::ResourceFactory::isExtensionSupported("tmp.gif"));
+    ASSERT_FALSE(ResourceFactory::isExtensionSupported("tmp.gif"));
 }
 
 TEST_F(ResourceFactoryTest, InvalidFilenameWithoutExtensionReturnsFalse)
 {
-    ASSERT_FALSE(spark::resourceManagement::ResourceFactory::isExtensionSupported("tmp"));
+    ASSERT_FALSE(ResourceFactory::isExtensionSupported("tmp"));
 }
+
+TEST_F(ResourceFactoryTest, NumberOfSupportedExtensionsForDistinctResourcesAreSummingToNumberOfAllSupportedExtensions)
+{
+    const auto numberOfAllSupportedExtensions = ResourceFactory::supportedExtensions().size();
+    const auto summedNumberOfSupportedExtensions = ResourceFactory::supportedModelExtensions().size() +
+                                                   ResourceFactory::supportedTextureExtensions().size() +
+                                                   ResourceFactory::supportedShaderExtensions().size();
+    ASSERT_EQ(numberOfAllSupportedExtensions, summedNumberOfSupportedExtensions);
+}
+
+}  // namespace spark::resourceManagement

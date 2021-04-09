@@ -16,6 +16,28 @@ void ResourceLibrary::cleanup()
     resourceIdentifiers.clear();
 }
 
+std::function<bool(const std::shared_ptr<ResourceIdentifier>&)> findWithinExtensions(const std::vector<std::string>& extensions)
+{
+    return [&extensions](const std::shared_ptr<resourceManagement::ResourceIdentifier>& resId) {
+        return std::find(extensions.cbegin(), extensions.cend(), resId->getResourceExtension().string()) != extensions.end();
+    };
+}
+
+std::vector<std::shared_ptr<ResourceIdentifier>> ResourceLibrary::getModelResourceIdentifiers() const
+{
+    return getResourceIdentifiers(findWithinExtensions(ResourceFactory::supportedModelExtensions()));
+}
+
+std::vector<std::shared_ptr<ResourceIdentifier>> ResourceLibrary::getTextureResourceIdentifiers() const
+{
+    return getResourceIdentifiers(findWithinExtensions(ResourceFactory::supportedTextureExtensions()));
+}
+
+std::vector<std::shared_ptr<ResourceIdentifier>> ResourceLibrary::getShaderResourceIdentifiers() const
+{
+    return getResourceIdentifiers(findWithinExtensions(ResourceFactory::supportedShaderExtensions()));
+}
+
 void ResourceLibrary::createResources(const std::filesystem::path& pathToResources)
 {
     for(const auto& path : std::filesystem::recursive_directory_iterator(pathToResources))
@@ -32,9 +54,9 @@ std::vector<std::shared_ptr<ResourceIdentifier>> ResourceLibrary::getResourceIde
     std::vector<std::shared_ptr<ResourceIdentifier>> resIds;
     resIds.reserve(resourceIdentifiers.size());
 
-    for(auto resourceIt = resourceIdentifiers.begin(); resourceIt != resourceIdentifiers.end(); ++resourceIt)
+    for(const auto& resourceIdentifier : resourceIdentifiers)
     {
-        resIds.push_back(*resourceIt);
+        resIds.push_back(resourceIdentifier);
     }
 
     return resIds;

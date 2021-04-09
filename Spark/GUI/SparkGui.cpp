@@ -162,17 +162,12 @@ std::shared_ptr<resources::Model> SparkGui::getModel()
 
     if(ImGui::BeginPopupModal("Models", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
     {
-        constexpr auto filterModels = [] (const std::shared_ptr<resourceManagement::ResourceIdentifier>& resId)
-        {
-            return resId->getResourceExtension() == ".obj" || resId->getResourceExtension() == ".fbx" || resId->getResourceExtension() == ".FBX";
-        };
-
-        const auto modelIds = Spark::resourceLibrary.getResourceIdentifiers(filterModels);
+        const auto modelIds = Spark::resourceLibrary.getModelResourceIdentifiers();
         for(const auto& id : modelIds)
         {
             if(ImGui::Button(id->getFullPath().string().c_str()))
             {
-                model = Spark::resourceLibrary.getResourceByPath<resources::Model>(id->getFullPath().string());
+                model = std::static_pointer_cast<resources::Model>(id->getResource());
                 ImGui::CloseCurrentPopup();
             }
         }
@@ -184,6 +179,36 @@ std::shared_ptr<resources::Model> SparkGui::getModel()
     }
 
     return model;
+}
+
+std::shared_ptr<resources::Texture> SparkGui::getTexture()
+{
+    std::shared_ptr<resources::Texture> texture{nullptr};
+    if(ImGui::Button("Add Texture"))
+    {
+        ImGui::OpenPopup("Textures");
+    }
+
+    if(ImGui::BeginPopupModal("Textures", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        const auto textureIds = Spark::resourceLibrary.getTextureResourceIdentifiers();
+        for (const auto& id : textureIds)
+        {
+            if (ImGui::Button(id->getFullPath().string().c_str()))
+            {
+                texture = std::static_pointer_cast<resources::Texture>(id->getResource());
+                ImGui::CloseCurrentPopup();
+            }
+        }
+
+        if(ImGui::Button("Close"))
+        {
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
+    }
+
+    return texture;
 }
 
 std::tuple<bool, std::shared_ptr<PbrCubemapTexture>> SparkGui::getCubemapTexture()
