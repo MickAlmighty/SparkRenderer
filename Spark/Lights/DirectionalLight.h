@@ -6,7 +6,6 @@
 #include "LightStatus.hpp"
 #include "Observable.hpp"
 
-
 namespace spark
 {
 class LightManager;
@@ -34,12 +33,13 @@ class DirectionalLight final : public Component, public Observable<LightStatus<D
     void setDirection(glm::vec3 direction_);
     void setColor(glm::vec3 color_);
     void setColorStrength(float strength);
-    void setActive(bool active_) override;
     void update() override;
     void fixedUpdate() override;
     void drawGUI() override;
 
     private:
+    void onActive() override;
+    void onInactive() override;
     void notifyAbout(LightCommand command);
 
     std::shared_ptr<LightManager> lightManager{nullptr};
@@ -47,7 +47,6 @@ class DirectionalLight final : public Component, public Observable<LightStatus<D
     glm::vec3 direction{0.0f, -1.0f, 0.0f};
     glm::vec3 color{1};
     float colorStrength{1};
-    RTTR_REGISTRATION_FRIEND;
     RTTR_ENABLE(Component)
 };
 }  // namespace spark

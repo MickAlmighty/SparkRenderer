@@ -55,19 +55,6 @@ DirectionalLight::~DirectionalLight()
     notifyAbout(LightCommand::remove);
 }
 
-void DirectionalLight::setActive(bool active_)
-{
-    active = active_;
-    if(active)
-    {
-        notifyAbout(LightCommand::add);
-    }
-    else
-    {
-        notifyAbout(LightCommand::remove);
-    }
-}
-
 void DirectionalLight::update()
 {
     if(!lightManager)
@@ -117,6 +104,16 @@ void DirectionalLight::drawGUI()
     removeComponentGUI<DirectionalLight>();
 }
 
+void DirectionalLight::onActive()
+{
+    notifyAbout(LightCommand::add);
+}
+
+void DirectionalLight::onInactive()
+{
+    notifyAbout(LightCommand::remove);
+}
+
 void DirectionalLight::notifyAbout(LightCommand command)
 {
     const LightStatus<DirectionalLight> status{command, this};
@@ -128,8 +125,7 @@ RTTR_REGISTRATION
 {
     rttr::registration::class_<spark::DirectionalLight>("DirectionalLight")
         .constructor()(rttr::policy::ctor::as_std_shared_ptr)
-        .property("color", &spark::DirectionalLight::color)
-        .property("colorStrength", &spark::DirectionalLight::colorStrength)
-        .property("dirLightFront", &spark::DirectionalLight::dirLightFront)(rttr::detail::metadata(spark::SerializerMeta::Serializable, false))
-        .property("direction", &spark::DirectionalLight::direction);
+        .property("color", &spark::DirectionalLight::getColor, &spark::DirectionalLight::setColor)
+        .property("colorStrength", &spark::DirectionalLight::getColorStrength, &spark::DirectionalLight::setColorStrength)
+        .property("direction", &spark::DirectionalLight::getDirection, &spark::DirectionalLight::setDirection);
 }

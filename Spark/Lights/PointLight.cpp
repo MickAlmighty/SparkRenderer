@@ -83,19 +83,6 @@ PointLight::~PointLight()
     notifyAbout(LightCommand::remove);
 }
 
-void PointLight::setActive(bool active_)
-{
-    active = active_;
-    if(active)
-    {
-        notifyAbout(LightCommand::add);
-    }
-    else
-    {
-        notifyAbout(LightCommand::remove);
-    }
-}
-
 void PointLight::update()
 {
     if(!lightManager)
@@ -161,6 +148,16 @@ void PointLight::drawGUI()
     removeComponentGUI<PointLight>();
 }
 
+void PointLight::onActive()
+{
+    notifyAbout(LightCommand::add);
+}
+
+void PointLight::onInactive()
+{
+    notifyAbout(LightCommand::remove);
+}
+
 void PointLight::notifyAbout(LightCommand command)
 {
     const LightStatus<PointLight> status{command, this};
@@ -172,7 +169,7 @@ RTTR_REGISTRATION
 {
     rttr::registration::class_<spark::PointLight>("PointLight")
         .constructor()(rttr::policy::ctor::as_std_shared_ptr)
-        .property("color", &spark::PointLight::color)
-        .property("colorStrength", &spark::PointLight::colorStrength)
-        .property("radius", &spark::PointLight::radius);
+        .property("color", &spark::PointLight::getColor, &spark::PointLight::setColor)
+        .property("colorStrength", &spark::PointLight::getColorStrength, &spark::PointLight::setColorStrength)
+        .property("radius", &spark::PointLight::getRadius, &spark::PointLight::setRadius);
 }

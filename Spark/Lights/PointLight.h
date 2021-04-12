@@ -38,12 +38,13 @@ class PointLight final : public Component, public Observable<LightStatus<PointLi
     void setColor(glm::vec3 color_);
     void setColorStrength(float strength);
     void setLightModel(glm::mat4 model);
-    void setActive(bool active_) override;
     void update() override;
     void fixedUpdate() override;
     void drawGUI() override;
 
     private:
+    void onActive() override;
+    void onInactive() override;
     void notifyAbout(LightCommand command);
 
     std::shared_ptr<Mesh> sphere{nullptr};
@@ -54,7 +55,6 @@ class PointLight final : public Component, public Observable<LightStatus<PointLi
     float colorStrength{1};
     glm::mat4 lightModel{1};
 
-    RTTR_REGISTRATION_FRIEND;
-    RTTR_ENABLE(Component);
+    RTTR_ENABLE(Component)
 };
 }  // namespace spark

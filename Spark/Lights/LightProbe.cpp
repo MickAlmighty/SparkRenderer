@@ -191,19 +191,6 @@ void LightProbe::renderIntoPrefilterCubemap(GLuint framebuffer, GLuint environme
     POP_DEBUG_GROUP();
 }
 
-void LightProbe::setActive(bool active_)
-{
-    active = active_;
-    if(active)
-    {
-        notifyAbout(LightCommand::add);
-    }
-    else
-    {
-        notifyAbout(LightCommand::remove);
-    }
-}
-
 void LightProbe::setRadius(float radius_)
 {
     radius = radius_;
@@ -214,6 +201,16 @@ void LightProbe::setFadeDistance(float fadeDistance_)
 {
     fadeDistance = fadeDistance_;
     notifyAbout(LightCommand::update);
+}
+
+void LightProbe::onActive()
+{
+    notifyAbout(LightCommand::add);
+}
+
+void LightProbe::onInactive()
+{
+    notifyAbout(LightCommand::remove);
 }
 
 void LightProbe::notifyAbout(LightCommand command)
@@ -227,6 +224,6 @@ RTTR_REGISTRATION
 {
     rttr::registration::class_<spark::LightProbe>("LightProbe")
         .constructor()(rttr::policy::ctor::as_std_shared_ptr)
-        .property("radius", &spark::LightProbe::radius)
-        .property("fadeDistance", &spark::LightProbe::fadeDistance);
+        .property("radius", &spark::LightProbe::getRadius, &spark::LightProbe::setRadius)
+        .property("fadeDistance", &spark::LightProbe::getFadeDistance, &spark::LightProbe::setFadeDistance);
 }

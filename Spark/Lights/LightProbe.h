@@ -49,12 +49,12 @@ class LightProbe : public Component, public Observable<LightStatus<LightProbe>>
     void renderIntoPrefilterCubemap(GLuint framebuffer, GLuint environmentCubemap, unsigned envCubemapSize, Cube& cube,
                                     const std::shared_ptr<resources::Shader>& prefilterShader,
                                     const std::shared_ptr<resources::Shader>& resampleCubemapShader) const;
-
-    void setActive(bool active_) override;
     void setRadius(float radius_);
     void setFadeDistance(float fadeDistance_);
 
     private:
+    void onActive() override;
+    void onInactive() override;
     void notifyAbout(LightCommand command);
 
     GLuint irradianceCubemap{};
@@ -71,8 +71,7 @@ class LightProbe : public Component, public Observable<LightStatus<LightProbe>>
 
     std::shared_ptr<Mesh> sphere{nullptr};
 
-    RTTR_REGISTRATION_FRIEND;
-    RTTR_ENABLE(Component);
+    RTTR_ENABLE(Component)
 };
 
 }  // namespace spark

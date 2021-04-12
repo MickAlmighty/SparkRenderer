@@ -125,19 +125,6 @@ SpotLight::~SpotLight()
     notifyAbout(LightCommand::remove);
 }
 
-void SpotLight::setActive(bool active_)
-{
-    active = active_;
-    if(active)
-    {
-        notifyAbout(LightCommand::add);
-    }
-    else
-    {
-        notifyAbout(LightCommand::remove);
-    }
-}
-
 void SpotLight::update()
 {
     if(!lightManager)
@@ -222,6 +209,16 @@ void SpotLight::drawGUI()
     removeComponentGUI<SpotLight>();
 }
 
+void SpotLight::onActive()
+{
+    notifyAbout(LightCommand::add);
+}
+
+void SpotLight::onInactive()
+{
+    notifyAbout(LightCommand::remove);
+}
+
 void SpotLight::notifyAbout(LightCommand command)
 {
     const LightStatus<SpotLight> status{command, this};
@@ -233,10 +230,10 @@ RTTR_REGISTRATION
 {
     rttr::registration::class_<spark::SpotLight>("SpotLight")
         .constructor()(rttr::policy::ctor::as_std_shared_ptr)
-        .property("color", &spark::SpotLight::color)
-        .property("colorStrength", &spark::SpotLight::colorStrength)
-        .property("direction", &spark::SpotLight::direction)
-        .property("softCutOffRatio", &spark::SpotLight::softCutOffRatio)
-        .property("outerCutOff", &spark::SpotLight::outerCutOff)
-        .property("maxDistance", &spark::SpotLight::maxDistance);
+        .property("color", &spark::SpotLight::getColor, &spark::SpotLight::setColor)
+        .property("colorStrength",&spark::SpotLight::getColorStrength, &spark::SpotLight::setColorStrength)
+        .property("direction", &spark::SpotLight::getDirection, &spark::SpotLight::setDirection)
+        .property("softCutOffRatio", &spark::SpotLight::getSoftCutOffRatio, &spark::SpotLight::setSoftCutOffRatio)
+        .property("outerCutOff", &spark::SpotLight::getOuterCutOff, &spark::SpotLight::setOuterCutOff)
+        .property("maxDistance", &spark::SpotLight::getMaxDistance, &spark::SpotLight::setMaxDistance);
 }

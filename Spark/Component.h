@@ -31,7 +31,8 @@ class Component abstract : public std::enable_shared_from_this<Component>
     std::shared_ptr<GameObject> getGameObject() const;
     std::string getName() const;
     bool getActive() const;
-    virtual void setActive(bool active_);
+    void setActive(bool active_);
+
     template<class T>
     void removeComponent()
     {
@@ -48,7 +49,6 @@ class Component abstract : public std::enable_shared_from_this<Component>
     }
 
     protected:
-    bool active{true};
     template<typename Derived>
     std::shared_ptr<Derived> shared_from_base()
     {
@@ -57,6 +57,10 @@ class Component abstract : public std::enable_shared_from_this<Component>
     std::shared_ptr<Component> getComponentPtr();
 
     private:
+    virtual void onActive(){};
+    virtual void onInactive(){};
+
+    bool active{true};
     std::string name{"Component"};
     std::weak_ptr<GameObject> gameObject;
     RTTR_REGISTRATION_FRIEND;

@@ -75,6 +75,14 @@ void Component::setGameObject(const std::shared_ptr<GameObject> game_object)
 void Component::setActive(bool active_)
 {
     active = active_;
+    if (active)
+    {
+        onActive();
+    }
+    else
+    {
+        onInactive();
+    }
 }
 
 std::shared_ptr<Component> Component::getComponentPtr()

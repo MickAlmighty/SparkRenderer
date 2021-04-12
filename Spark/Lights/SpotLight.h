@@ -44,12 +44,13 @@ class SpotLight final : public Component, public Observable<LightStatus<SpotLigh
     void setSoftCutOffRatio(float softCutOffRatio_);
     void setOuterCutOff(float outerCutOff_);
     void setMaxDistance(float maxDistance_);
-    void setActive(bool active_) override;
     void update() override;
     void fixedUpdate() override;
     void drawGUI() override;
 
     private:
+    void onActive() override;
+    void onInactive() override;
     void notifyAbout(LightCommand command);
 
     glm::vec3 color{1};
@@ -60,7 +61,6 @@ class SpotLight final : public Component, public Observable<LightStatus<SpotLigh
     float maxDistance{1.0f};
     std::shared_ptr<LightManager> lightManager{nullptr};
 
-    RTTR_REGISTRATION_FRIEND;
-    RTTR_ENABLE(Component);
+    RTTR_ENABLE(Component)
 };
 }  // namespace spark
