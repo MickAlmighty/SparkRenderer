@@ -307,6 +307,7 @@ TEST(SerializationTest, GameObjectWithComponentSerializedProperly)
     {
         ASSERT_FALSE("Unable to deserialize gameobject!");
     }
+    ASSERT_NE(nullptr, obj2);
     ASSERT_EQ(obj->getName(), obj2->getName());
     ASSERT_EQ(nullptr, obj2->getScene());
     ASSERT_NE(nullptr, obj->getComponent<spark::Camera>());
@@ -334,6 +335,7 @@ TEST(SerializationTest, ComponentNullSmartPointersInjectedProperly)
     {
         ASSERT_FALSE("Unable to deserialize component!");
     }
+    ASSERT_NE(nullptr, target);
     ASSERT_EQ(nullptr, target->shared.get());
     ASSERT_EQ(nullptr, target->sharedComp.get());
 }
@@ -356,6 +358,7 @@ TEST(SerializationTest, SerializableMetadataUsedProperly)
     {
         ASSERT_FALSE("Unable to deserialize component!");
     }
+    ASSERT_NE(nullptr, target);
     ASSERT_EQ(source->unspecifiedInt, target->unspecifiedInt);
     ASSERT_EQ(source->serializableInt, target->serializableInt);
     ASSERT_NE(source->unserializableInt, target->unserializableInt);
