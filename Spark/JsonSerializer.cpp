@@ -181,6 +181,11 @@ rttr::variant JsonSerializer::tryConvertVar(rttr::variant& variant, const rttr::
         }
         SPARK_WARN("Failed to use custom converter!");
     }
+    if(variant.get_type() == rttr::type::get(nullptr) && type.is_pointer())
+    {
+        SPARK_TRACE("Target type is a pointer and variant is a nullptr");
+        return type.create();
+    }
     if(isWrappedPtr(variant.get_type()) && !isWrappedPtr(type))
     {
         SPARK_TRACE("Using unwrapped pointer...");
