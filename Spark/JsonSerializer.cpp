@@ -21,7 +21,7 @@ bool JsonSerializer::writeToFile(const std::filesystem::path& filePath, Json::Va
         writer->write(root, &file);
         return true;
     }
-    catch(std::exception e)
+    catch(std::exception& e)
     {
         SPARK_ERROR("{}", e.what());
         return false;
@@ -286,7 +286,7 @@ void JsonSerializer::writePropertyToJson(Json::Value& root, const rttr::type& ty
         {
             SPARK_TRACE("Prop is a sequential container");
             rttr::variant_sequential_view seq{var.create_sequential_view()};
-            for(int i = 0; i < seq.get_size(); ++i)
+            for(int i = 0; i < static_cast<int>(seq.get_size()); ++i)
             {
                 SPARK_TRACE("Writing prop[{}]...", i);
                 writePropertyToJson(root[i], seq.get_value_type(), seq.get_value(i).extract_wrapped_value());
@@ -634,9 +634,10 @@ rttr::variant JsonSerializer::readPropertyFromJson(const Json::Value& root, cons
                     SPARK_TRACE("Container is dynamic");
                     for(uint32_t i = 0; i < static_cast<uint32_t>(root.size()); ++i)
                     {
-                        bool ok;
-                        rttr::variant val{readPropertyFromJson(root[i], view.get_value_type(), rttr::variant(), ok)};
-                        if(ok)
+                        bool isOk;
+                        rttr::variant defVal{rttr::variant()};
+                        rttr::variant val{readPropertyFromJson(root[i], view.get_value_type(), defVal, isOk)};
+                        if(isOk)
                         {
                             view.insert(view.begin() + i, val);
                         }
@@ -656,10 +657,10 @@ rttr::variant JsonSerializer::readPropertyFromJson(const Json::Value& root, cons
                     }
                     for(uint32_t i = 0; i < std::min(static_cast<unsigned int>(view.get_size()), root.size()); ++i)
                     {
-                        bool ok;
+                        bool isOk;
                         rttr::variant currVal{view.get_value(i).extract_wrapped_value()};
-                        rttr::variant val{readPropertyFromJson(root[i], view.get_value_type(), currVal, ok)};
-                        if(ok)
+                        rttr::variant val{readPropertyFromJson(root[i], view.get_value_type(), currVal, isOk)};
+                        if(isOk)
                         {
                             view.set_value(i, val);
                         }
@@ -699,9 +700,10 @@ rttr::variant JsonSerializer::readPropertyFromJson(const Json::Value& root, cons
                             status = 2;
                             break;
                         }
-                        bool ok;
-                        rttr::variant key{readPropertyFromJson(root[i], view.get_key_type(), rttr::variant(), ok)};
-                        if(!ok)
+                        bool isOk;
+                        rttr::variant defVal{rttr::variant()};
+                        rttr::variant key{readPropertyFromJson(root[i], view.get_key_type(), defVal, isOk)};
+                        if(!isOk)
                         {
                             status = 2;
                             break;
@@ -725,15 +727,17 @@ rttr::variant JsonSerializer::readPropertyFromJson(const Json::Value& root, cons
                             status = 2;
                             break;
                         }
-                        bool ok = true;
-                        rttr::variant key{readPropertyFromJson(root[i][0], view.get_key_type(), rttr::variant(), ok)};
-                        if(!ok)
+                        bool isOk = true;
+                        rttr::variant defVal{rttr::variant()};
+                        rttr::variant key{readPropertyFromJson(root[i][0], view.get_key_type(), defVal, isOk)};
+                        if(!isOk)
                         {
                             status = 2;
                             break;
                         }
-                        rttr::variant value{readPropertyFromJson(root[i][1], view.get_value_type(), rttr::variant(), ok)};
-                        if(!ok)
+                        defVal = rttr::variant();
+                        rttr::variant value{readPropertyFromJson(root[i][1], view.get_value_type(), defVal, isOk)};
+                        if(!isOk)
                         {
                             status = 2;
                             break;
@@ -1130,8 +1134,8 @@ rttr::variant JsonSerializer::deserialize(const Json::Value& root)
                     SPARK_TRACE("Reading prop with name '{}'...", prop.get_name().cbegin());
                     const Json::Value& obj{content[prop.get_name().cbegin()]};
                     bool ok = true;
-                    unsigned int code{0};
-                    rttr::variant propVar{readPropertyFromJson(obj, propType, prop.get_value(wrapped), ok)};
+                    rttr::variant propValue{prop.get_value(wrapped)};
+                    rttr::variant propVar{readPropertyFromJson(obj, propType, propValue, ok)};
                     if(ok)
                     {
                         SPARK_TRACE("Acquired variant of type '{}'. Setting value...", propVar.get_type().get_name().cbegin());
@@ -1209,7 +1213,8 @@ rttr::variant JsonSerializer::deserialize(const Json::Value& root)
                 SPARK_TRACE("Reading prop with name '{}'...", prop.get_name().cbegin());
                 const Json::Value& obj{content[prop.get_name().cbegin()]};
                 bool ok = true;
-                rttr::variant propVar{readPropertyFromJson(obj, propType, prop.get_value(var), ok)};
+                rttr::variant propValue{prop.get_value(var)};
+                rttr::variant propVar{readPropertyFromJson(obj, propType, propValue, ok)};
                 if(ok && !prop.set_value(var, propVar))
                 {
                     SPARK_ERROR("Unable to set value for property '{}'!", prop.get_name().cbegin());
