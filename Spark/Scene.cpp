@@ -11,27 +11,26 @@
 #include "JsonSerializer.h"
 #include "Logging.h"
 #include "ResourceLoader.h"
+#include "Spark.h"
 
 namespace spark
 {
-Scene::Scene() : Resource("NewScene.scene")
+Scene::Scene() : Resource(Spark::pathToResources / "NewScene.scene")
 {
-    root = std::make_shared<GameObject>("Root");
-    camera = std::make_shared<Camera>(glm::vec3(0, 0, 5));
-    lightManager = std::make_unique<LightManager>();
+    Init();
 }
 
 Scene::Scene(const std::filesystem::path& path_) : Resource(path_)
 {
-    root = std::make_shared<GameObject>("Root");
-    camera = std::make_shared<Camera>(glm::vec3(0, 0, 5));
-    lightManager = std::make_unique<LightManager>();
+    Init();
 }
 
 Scene::Scene(const std::filesystem::path& path_, const std::shared_ptr<Scene>&& scene_) : Resource(path_)
 {
     camera = std::move(scene_->camera);
     root = std::move(scene_->root);
+    lightManager = std::move(scene_->lightManager);
+    root->setSceneRecursive(this);
 }
 
 Scene::~Scene()
@@ -102,6 +101,14 @@ void Scene::drawGUI()
             ImGui::End();
         }
     }
+}
+
+void Scene::Init()
+{
+    root = std::make_shared<GameObject>("Root");
+    root->setScene(this);
+    camera = std::make_shared<Camera>(glm::vec3(0, 0, 5));
+    lightManager = std::make_unique<LightManager>();
 }
 
 void Scene::drawSceneGraph()

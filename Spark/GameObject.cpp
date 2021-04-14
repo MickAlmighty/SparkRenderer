@@ -249,6 +249,14 @@ void GameObject::drawGizmos()
     }
 }
 
+void GameObject::setSceneRecursive(Scene* newScene)
+{
+    scene = newScene;
+
+    for(auto& child : children)
+        child->setSceneRecursive(newScene);
+}
+
 GameObject::GameObject(std::string&& name) : name(std::move(name)) {}
 
 GameObject::~GameObject()
@@ -267,7 +275,7 @@ RTTR_REGISTRATION
         .property("active", &spark::GameObject::active)
         .property("staticObject", &spark::GameObject::staticObject)
         .property("scene", &spark::GameObject::getScene, &spark::GameObject::setScene,
-                  rttr::registration::public_access)//(rttr::detail::metadata(spark::SerializerMeta::Serializable, false))
+                  rttr::registration::public_access)  //(rttr::detail::metadata(spark::SerializerMeta::Serializable, false))
         .property("parent", &spark::GameObject::getParent, &spark::GameObject::setParent, rttr::registration::public_access)
         .property("children", &spark::GameObject::children)
         .property("components", &spark::GameObject::components);

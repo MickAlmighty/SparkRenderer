@@ -21,15 +21,13 @@ class SceneManager final
     void update() const;
     void fixedUpdate() const;
     void cleanup();
-    void addScene(const std::shared_ptr<Scene>& scene);
-    bool setCurrentScene(const std::string& sceneName);
+    bool setCurrentScene(const std::shared_ptr<Scene>& scene);
     std::shared_ptr<Scene> getCurrentScene() const;
     void drawGui();
 
     private:
     SceneManager() = default;
     ~SceneManager() = default;
-    std::list<std::shared_ptr<Scene>> scenes;
     std::shared_ptr<Scene> current_scene = std::make_shared<Scene>();
 };
 

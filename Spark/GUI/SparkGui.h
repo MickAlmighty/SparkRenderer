@@ -23,6 +23,7 @@ class SparkGui
     static std::shared_ptr<Component> addComponent();
     static std::optional<std::shared_ptr<resources::Model>> getModel();
     static std::optional<std::shared_ptr<resources::Texture>> getTexture();
+    static std::optional<std::shared_ptr<Scene>> getScene();
 
     template<typename T>
     static std::optional<T> getDraggedObject(std::string&& payloadName)

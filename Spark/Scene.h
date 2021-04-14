@@ -41,6 +41,7 @@ class Scene final : public std::enable_shared_from_this<Scene>, public resourceM
     std::string getName() const;
 
     private:
+    void Init();
     void drawTreeNode(std::shared_ptr<GameObject> node, bool isRootNode);
     void setGameObjectToPreview(const std::shared_ptr<GameObject> node);
     std::shared_ptr<GameObject> root{};

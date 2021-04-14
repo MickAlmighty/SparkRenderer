@@ -238,4 +238,39 @@ std::optional<std::shared_ptr<resources::Texture>> SparkGui::getTexture()
 
     return std::nullopt;
 }
+
+std::optional<std::shared_ptr<Scene>> SparkGui::getScene()
+{
+    bool objectPicked{false};
+    std::shared_ptr<Scene> scene{nullptr};
+    if(ImGui::Button("Add Scene"))
+    {
+        ImGui::OpenPopup("Scenes");
+    }
+
+    if(ImGui::BeginPopupModal("Scenes", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        const auto sceneIds = Spark::resourceLibrary.getSceneResourceIdentifiers();
+        for(const auto& id : sceneIds)
+        {
+            if(ImGui::Button(id->getFullPath().string().c_str()))
+            {
+                scene = std::static_pointer_cast<Scene>(id->getResource());
+                objectPicked = true;
+                ImGui::CloseCurrentPopup();
+            }
+        }
+
+        if(ImGui::Button("Close"))
+        {
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
+    }
+
+    if(objectPicked)
+        return {scene};
+
+    return std::nullopt;
+}
 }  // namespace spark

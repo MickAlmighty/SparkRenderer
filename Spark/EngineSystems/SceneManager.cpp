@@ -17,12 +17,7 @@ SceneManager* SceneManager::getInstance()
     return &sceneManager;
 }
 
-void SceneManager::setup()
-{
-    // const auto scene = Factory::createScene("MainScene");
-    addScene(current_scene);
-    // setCurrentScene("MainScene");
-}
+void SceneManager::setup() {}
 
 void SceneManager::update() const
 {
@@ -37,26 +32,19 @@ void SceneManager::fixedUpdate() const
 void SceneManager::cleanup()
 {
     current_scene = nullptr;
-    scenes.clear();
 }
 
-void SceneManager::addScene(const std::shared_ptr<Scene>& scene)
+bool SceneManager::setCurrentScene(const std::shared_ptr<Scene>& scene)
 {
-    scenes.push_back(scene);
-}
-
-bool SceneManager::setCurrentScene(const std::string& sceneName)
-{
-    const auto searchingFunction = [&sceneName](const std::shared_ptr<Scene>& scene) { return scene->getName() == sceneName; };
-
-    const auto scene_it = std::find_if(std::begin(scenes), std::end(scenes), searchingFunction);
-
-    if(scene_it != std::end(scenes))
+    if(scene)
     {
-        current_scene = *scene_it;
+        current_scene = scene;
         SparkRenderer::getInstance()->setScene(current_scene);
         return true;
     }
+
+    current_scene = std::make_shared<Scene>();
+    SparkRenderer::getInstance()->setScene(current_scene);
     return false;
 }
 
@@ -65,30 +53,62 @@ std::shared_ptr<Scene> SceneManager::getCurrentScene() const
     return current_scene;
 }
 
+std::optional<std::shared_ptr<Scene>> getScene()
+{
+    bool objectPicked{false};
+    std::shared_ptr<Scene> scene{nullptr};
+
+    if(ImGui::BeginPopupModal("Scenes", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        const auto sceneIds = Spark::resourceLibrary.getSceneResourceIdentifiers();
+        for(const auto& id : sceneIds)
+        {
+            if(ImGui::Button(id->getFullPath().string().c_str()))
+            {
+                scene = std::static_pointer_cast<Scene>(id->getResource());
+                objectPicked = true;
+                ImGui::CloseCurrentPopup();
+            }
+        }
+
+        if(ImGui::Button("Close"))
+        {
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
+    }
+
+    if(objectPicked)
+        return {scene};
+
+    return std::nullopt;
+}
+
 void SceneManager::drawGui()
 {
     if(ImGui::BeginMenu("SceneManager"))
     {
-        /*if(ImGui::MenuItem("Save Current Scene"))
+        if(ImGui::MenuItem("Save Current Scene"))
         {
-            if(!JsonSerializer::getInstance()->saveSceneToFile(current_scene, "scene.json"))
+            if(!JsonSerializer::getInstance()->saveSceneToFile(current_scene, current_scene->getPath()))
             {
                 SPARK_ERROR("Scene serialization failed!");
             }
-        }*/
-        if(ImGui::MenuItem("Load main scene"))
+        }
+        if(ImGui::Button("Load main scene"))
         {
-            const std::shared_ptr<Scene> scene{JsonSerializer::getInstance()->loadSceneFromFile("scene.json")};
-            if(scene != nullptr)
+            ImGui::OpenPopup("Scenes");
+        }
+
+        const auto sceneOpt = getScene();
+        if(sceneOpt.has_value())
+        {
+            if(sceneOpt.value() != nullptr)
             {
-                if(scene->getName() == current_scene->getName())
-                {
-                    scenes.remove(current_scene);
-                    scenes.push_back(scene);
-                    setCurrentScene(scene->getName());
-                }
+                setCurrentScene(sceneOpt.value());
             }
         }
+
         ImGui::EndMenu();
     }
 
