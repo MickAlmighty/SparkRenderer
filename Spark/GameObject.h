@@ -20,9 +20,9 @@ class GameObject final : public std::enable_shared_from_this<GameObject>
     GameObject& operator=(GameObject&&) = delete;
 
     std::shared_ptr<GameObject> getParent() const;
-    std::shared_ptr<Scene> getScene() const;
+    Scene* getScene() const;
     void setParent(const std::shared_ptr<GameObject> newParent);
-    void setScene(const std::shared_ptr<Scene> newScene);
+    void setScene(Scene* newScene);
     void addChild(const std::shared_ptr<GameObject>& newChild, const std::shared_ptr<GameObject>& parent);
     void addComponent(const std::shared_ptr<Component>& component);
     bool removeChild(std::string&& gameObjectName);
@@ -61,7 +61,7 @@ class GameObject final : public std::enable_shared_from_this<GameObject>
     std::string name{"GameObject"};
     bool active{true};
     bool staticObject{false};
-    std::weak_ptr<Scene> scene;
+    Scene* scene{nullptr};
     std::weak_ptr<GameObject> parent;
     std::vector<std::shared_ptr<GameObject>> children;
     std::vector<std::shared_ptr<Component>> components;
@@ -95,7 +95,7 @@ std::shared_ptr<T> GameObject::getAllComponentsOfType()
     for(const auto& component : components)
     {
         const auto componentOfTypeT = std::dynamic_pointer_cast<T>(component);
-        if (componentOfTypeT != nullptr)
+        if(componentOfTypeT != nullptr)
         {
             components.push_back(componentOfTypeT);
         }

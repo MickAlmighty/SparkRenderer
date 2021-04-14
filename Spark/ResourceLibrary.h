@@ -26,6 +26,7 @@ class ResourceLibrary
     std::vector< std::shared_ptr<ResourceIdentifier>> getModelResourceIdentifiers() const;
     std::vector< std::shared_ptr<ResourceIdentifier>> getTextureResourceIdentifiers() const;
     std::vector< std::shared_ptr<ResourceIdentifier>> getShaderResourceIdentifiers() const;
+    std::vector< std::shared_ptr<ResourceIdentifier>> getSceneResourceIdentifiers() const;
     std::vector<std::shared_ptr<ResourceIdentifier>> getResourceIdentifiers() const;
     std::vector<std::shared_ptr<ResourceIdentifier>> getResourceIdentifiers(
         const std::function<bool(const std::shared_ptr<ResourceIdentifier>&)>& comp) const;

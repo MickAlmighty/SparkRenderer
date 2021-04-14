@@ -4,7 +4,6 @@
 #include <memory>
 
 #include "Scene.h"
-#include "Factory.h"
 
 namespace spark
 {
@@ -31,7 +30,7 @@ class SceneManager final
     SceneManager() = default;
     ~SceneManager() = default;
     std::list<std::shared_ptr<Scene>> scenes;
-    std::shared_ptr<Scene> current_scene{Factory::createScene("MainScene")};
+    std::shared_ptr<Scene> current_scene = std::make_shared<Scene>();
 };
 
 }  // namespace spark

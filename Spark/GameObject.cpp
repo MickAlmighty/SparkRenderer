@@ -13,6 +13,7 @@
 #include "Scene.h"
 #include "GUI/SparkGui.h"
 #include "Logging.h"
+#include "ReflectionUtils.h"
 
 namespace spark
 {
@@ -66,9 +67,9 @@ std::shared_ptr<GameObject> GameObject::getParent() const
     return parent.lock();
 }
 
-std::shared_ptr<Scene> GameObject::getScene() const
+Scene* GameObject::getScene() const
 {
-    return scene.lock();
+    return scene;
 }
 
 void GameObject::setParent(const std::shared_ptr<GameObject> newParent)
@@ -81,7 +82,7 @@ void GameObject::setParent(const std::shared_ptr<GameObject> newParent)
     parent = newParent;
 }
 
-void GameObject::setScene(const std::shared_ptr<Scene> newScene)
+void GameObject::setScene(Scene* newScene)
 {
     this->scene = newScene;
 }
@@ -177,7 +178,7 @@ void GameObject::setActive(bool active_)
 {
     active = active_;
 
-    for (const auto& child : children)
+    for(const auto& child : children)
     {
         child->setActive(active);
     }
@@ -265,7 +266,8 @@ RTTR_REGISTRATION
         .property("name", &spark::GameObject::name)
         .property("active", &spark::GameObject::active)
         .property("staticObject", &spark::GameObject::staticObject)
-        .property("scene", &spark::GameObject::getScene, &spark::GameObject::setScene, rttr::registration::public_access)
+        .property("scene", &spark::GameObject::getScene, &spark::GameObject::setScene,
+                  rttr::registration::public_access)//(rttr::detail::metadata(spark::SerializerMeta::Serializable, false))
         .property("parent", &spark::GameObject::getParent, &spark::GameObject::setParent, rttr::registration::public_access)
         .property("children", &spark::GameObject::children)
         .property("components", &spark::GameObject::components);

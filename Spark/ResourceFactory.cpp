@@ -11,19 +11,16 @@ std::map<std::string, std::function<std::shared_ptr<Resource>(const std::filesys
     {".obj", [](const std::filesystem::path& path) { return ResourceLoader::createModel(path); }},
     {".fbx", [](const std::filesystem::path& path) { return ResourceLoader::createModel(path); }},
     {".FBX", [](const std::filesystem::path& path) { return ResourceLoader::createModel(path); }},
-
     {".dds", [](const std::filesystem::path& path) { return ResourceLoader::createCompressedTexture(path); }},
     {".DDS", [](const std::filesystem::path& path) { return ResourceLoader::createCompressedTexture(path); }},
     {".ktx", [](const std::filesystem::path& path) { return ResourceLoader::createCompressedTexture(path); }},
     {".KTX", [](const std::filesystem::path& path) { return ResourceLoader::createCompressedTexture(path); }},
-
     {".png", [](const std::filesystem::path& path) { return ResourceLoader::createUncompressedTexture(path); }},
     {".jpg", [](const std::filesystem::path& path) { return ResourceLoader::createUncompressedTexture(path); }},
     {".tga", [](const std::filesystem::path& path) { return ResourceLoader::createUncompressedTexture(path); }},
-
     {".hdr", [](const std::filesystem::path& path) { return ResourceLoader::createHdrTexture(path); }},
-
     {".glsl", [](const std::filesystem::path& path) { return std::make_shared<resources::Shader>(path); }},
+    {".scene", [](const std::filesystem::path& path) { return ResourceLoader::createScene(path); }},
 };
 
 std::shared_ptr<Resource> ResourceFactory::createResource(const std::filesystem::path& filePath)
@@ -56,6 +53,11 @@ std::vector<std::string> ResourceFactory::supportedTextureExtensions()
 std::vector<std::string> ResourceFactory::supportedShaderExtensions()
 {
     return std::vector<std::string>{".glsl"};
+}
+
+std::vector<std::string> ResourceFactory::supportedSceneExtensions()
+{
+    return std::vector<std::string>{".scene"};
 }
 
 std::vector<std::string> ResourceFactory::supportedExtensions()

@@ -38,6 +38,11 @@ std::vector<std::shared_ptr<ResourceIdentifier>> ResourceLibrary::getShaderResou
     return getResourceIdentifiers(findWithinExtensions(ResourceFactory::supportedShaderExtensions()));
 }
 
+std::vector<std::shared_ptr<ResourceIdentifier>> ResourceLibrary::getSceneResourceIdentifiers() const
+{
+    return getResourceIdentifiers(findWithinExtensions(ResourceFactory::supportedSceneExtensions()));
+}
+
 void ResourceLibrary::createResources(const std::filesystem::path& pathToResources)
 {
     for(const auto& path : std::filesystem::recursive_directory_iterator(pathToResources))

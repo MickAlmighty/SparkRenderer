@@ -18,6 +18,7 @@ class ResourceFactory
     static std::vector<std::string> supportedModelExtensions();
     static std::vector<std::string> supportedTextureExtensions();
     static std::vector<std::string> supportedShaderExtensions();
+    static std::vector<std::string> supportedSceneExtensions();
     static std::vector<std::string> supportedExtensions();
 
     private:

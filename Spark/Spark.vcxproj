@@ -131,7 +131,6 @@
     <ClCompile Include="EngineSystems\SceneManager.cpp" />
     <ClCompile Include="EngineSystems\SparkRenderer.cpp" />
     <ClCompile Include="Enums.cpp" />
-    <ClCompile Include="Factory.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="GBuffer.cpp" />
     <ClCompile Include="glad.c" />
@@ -187,7 +186,6 @@
     <ClInclude Include="EngineSystems\SceneManager.h" />
     <ClInclude Include="EngineSystems\SparkRenderer.h" />
     <ClInclude Include="Enums.h" />
-    <ClInclude Include="Factory.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="GBuffer.h" />
     <ClInclude Include="GUI\ImGuizmo.h" />

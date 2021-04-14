@@ -47,7 +47,7 @@ void SceneManager::addScene(const std::shared_ptr<Scene>& scene)
 
 bool SceneManager::setCurrentScene(const std::string& sceneName)
 {
-    const auto searchingFunction = [&sceneName](const std::shared_ptr<Scene>& scene) { return scene->name == sceneName; };
+    const auto searchingFunction = [&sceneName](const std::shared_ptr<Scene>& scene) { return scene->getName() == sceneName; };
 
     const auto scene_it = std::find_if(std::begin(scenes), std::end(scenes), searchingFunction);
 
@@ -69,29 +69,23 @@ void SceneManager::drawGui()
 {
     if(ImGui::BeginMenu("SceneManager"))
     {
-        const std::string menuName = "Current Scene: " + current_scene->name;
-        if(ImGui::BeginMenu(menuName.c_str()))
-        {
-            ImGui::MenuItem("Camera Movement", NULL, &current_scene->cameraMovement);
-            ImGui::EndMenu();
-        }
-        if(ImGui::MenuItem("Save Current Scene"))
+        /*if(ImGui::MenuItem("Save Current Scene"))
         {
             if(!JsonSerializer::getInstance()->saveSceneToFile(current_scene, "scene.json"))
             {
                 SPARK_ERROR("Scene serialization failed!");
             }
-        }
+        }*/
         if(ImGui::MenuItem("Load main scene"))
         {
             const std::shared_ptr<Scene> scene{JsonSerializer::getInstance()->loadSceneFromFile("scene.json")};
             if(scene != nullptr)
             {
-                if(scene->name == current_scene->name)
+                if(scene->getName() == current_scene->getName())
                 {
                     scenes.remove(current_scene);
                     scenes.push_back(scene);
-                    setCurrentScene(scene->name);
+                    setCurrentScene(scene->getName());
                 }
             }
         }

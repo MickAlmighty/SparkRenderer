@@ -29,6 +29,9 @@ TEST_F(ResourceFactoryTest, AllCreatedResourcesAreValid)
     const std::filesystem::path resPath(R"(..\..\..\res)");
     for(const auto& pathMaybeInvalid : std::filesystem::recursive_directory_iterator(resPath))
     {
+        if (!pathMaybeInvalid.is_regular_file())
+            continue;
+
         const bool fileWithValidExtension = ResourceFactory::isExtensionSupported(pathMaybeInvalid.path());
         if(fileWithValidExtension)
         {
@@ -80,9 +83,9 @@ TEST_F(ResourceFactoryTest, InvalidFilenameWithoutExtensionReturnsFalse)
 TEST_F(ResourceFactoryTest, NumberOfSupportedExtensionsForDistinctResourcesAreSummingToNumberOfAllSupportedExtensions)
 {
     const auto numberOfAllSupportedExtensions = ResourceFactory::supportedExtensions().size();
-    const auto summedNumberOfSupportedExtensions = ResourceFactory::supportedModelExtensions().size() +
-                                                   ResourceFactory::supportedTextureExtensions().size() +
-                                                   ResourceFactory::supportedShaderExtensions().size();
+    const auto summedNumberOfSupportedExtensions =
+        ResourceFactory::supportedModelExtensions().size() + ResourceFactory::supportedTextureExtensions().size() +
+        ResourceFactory::supportedShaderExtensions().size() + ResourceFactory::supportedSceneExtensions().size();
     ASSERT_EQ(numberOfAllSupportedExtensions, summedNumberOfSupportedExtensions);
 }
 

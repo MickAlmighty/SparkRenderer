@@ -16,9 +16,12 @@ namespace spark
 class GameObject;
 class Component;
 class Camera;
-class Scene final : public std::enable_shared_from_this<Scene>
+class Scene final : public std::enable_shared_from_this<Scene>, public resourceManagement::Resource
 {
     public:
+    Scene();
+    Scene(const std::filesystem::path& path_);
+    Scene(const std::filesystem::path& path_, const std::shared_ptr<Scene>&& scene_);
     ~Scene();
     Scene(Scene&) = delete;
     Scene(Scene&&) = delete;
@@ -35,20 +38,15 @@ class Scene final : public std::enable_shared_from_this<Scene>
     std::list<std::function<void()>> toRemove;
     std::shared_ptr<LightManager> lightManager;
     std::shared_ptr<GameObject> getGameObjectToPreview() const;
+    std::string getName() const;
 
     private:
-    friend class SceneManager;
-    friend class Factory;
-    friend class SparkRenderer;
-    Scene() = default;
-    explicit Scene(std::string&& sceneName);
     void drawTreeNode(std::shared_ptr<GameObject> node, bool isRootNode);
     void setGameObjectToPreview(const std::shared_ptr<GameObject> node);
-    std::string name{"New Scene"};
     std::shared_ptr<GameObject> root{};
     std::weak_ptr<GameObject> gameObjectToPreview;
     std::shared_ptr<Camera> camera{};
-    bool cameraMovement{false};
+
     RTTR_REGISTRATION_FRIEND;
     RTTR_ENABLE()
 };

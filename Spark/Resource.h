@@ -6,6 +6,7 @@ namespace spark::resourceManagement
 class Resource abstract
 {
     public:
+    Resource() = default;
     Resource(const std::filesystem::path& path_) : path(path_) {}
     virtual ~Resource() = default;
 

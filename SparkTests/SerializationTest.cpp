@@ -308,6 +308,7 @@ TEST(SerializationTest, GameObjectWithComponentSerializedProperly)
         ASSERT_FALSE("Unable to deserialize gameobject!");
     }
     ASSERT_EQ(obj->getName(), obj2->getName());
+    ASSERT_EQ(nullptr, obj2->getScene());
     ASSERT_NE(nullptr, obj->getComponent<spark::Camera>());
     ASSERT_NE(nullptr, obj2->getComponent<spark::Camera>());
 }

@@ -2,7 +2,6 @@
 
 #include <iostream>
 #include <list>
-#include <utility>
 
 #include <GUI/ImGui/imgui.h>
 
@@ -15,11 +14,24 @@
 
 namespace spark
 {
-Scene::Scene(std::string&& sceneName) : name(std::move(sceneName))
+Scene::Scene() : Resource("NewScene.scene")
 {
     root = std::make_shared<GameObject>("Root");
     camera = std::make_shared<Camera>(glm::vec3(0, 0, 5));
     lightManager = std::make_unique<LightManager>();
+}
+
+Scene::Scene(const std::filesystem::path& path_) : Resource(path_)
+{
+    root = std::make_shared<GameObject>("Root");
+    camera = std::make_shared<Camera>(glm::vec3(0, 0, 5));
+    lightManager = std::make_unique<LightManager>();
+}
+
+Scene::Scene(const std::filesystem::path& path_, const std::shared_ptr<Scene>&& scene_) : Resource(path_)
+{
+    camera = std::move(scene_->camera);
+    root = std::move(scene_->root);
 }
 
 Scene::~Scene()
@@ -30,12 +42,11 @@ Scene::~Scene()
 void Scene::update()
 {
     removeObjectsFromScene();
-    if(cameraMovement)
-    {
-        camera->processKeyboard();
-        camera->processMouseMovement(HID::mouse.direction.x, -HID::mouse.direction.y);
-    }
+
+    camera->processKeyboard();
+    camera->processMouseMovement(HID::mouse.direction.x, -HID::mouse.direction.y);
     camera->update();
+
     root->update();
     lightManager->updateLightBuffers();
 }
@@ -70,16 +81,16 @@ void Scene::drawGUI()
     ImGui::SetNextWindowPos({io.DisplaySize.x - 5, 25}, ImGuiCond_Always, {1, 0});
     ImGui::SetNextWindowSizeConstraints(ImVec2(350, 20), ImVec2(350, io.DisplaySize.y - 50));
 
-    if (getGameObjectToPreview() != nullptr)
+    if(getGameObjectToPreview() != nullptr)
     {
-        if (ImGui::Begin("GameObject", &opened, { 0, 0 }, -1,
-            ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_AlwaysHorizontalScrollbar | ImGuiWindowFlags_NoCollapse))
+        if(ImGui::Begin("GameObject", &opened, {0, 0}, -1,
+                        ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_AlwaysHorizontalScrollbar | ImGuiWindowFlags_NoCollapse))
         {
             auto gameObject_ptr = getGameObjectToPreview();
-            if (gameObject_ptr != nullptr)
+            if(gameObject_ptr != nullptr)
             {
                 camera->setCameraTarget(gameObject_ptr->transform.world.getPosition());
-                if (ImGui::Button("Close Preview"))
+                if(ImGui::Button("Close Preview"))
                 {
                     setGameObjectToPreview(nullptr);
                 }
@@ -99,7 +110,7 @@ void Scene::drawSceneGraph()
     ImGui::SetNextWindowPos({5, 25}, ImGuiCond_Always, {0, 0});
     if(ImGui::Begin("Scene", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_HorizontalScrollbar))
     {
-        ImGui::Text(name.c_str());
+        ImGui::Text(getName().c_str());
         ImGui::Separator();
         drawTreeNode(root, true);
     }
@@ -174,6 +185,11 @@ std::shared_ptr<GameObject> Scene::getGameObjectToPreview() const
     return gameObjectToPreview.lock();
 }
 
+std::string Scene::getName() const
+{
+    return getPath().filename().string();
+}
+
 void Scene::setGameObjectToPreview(const std::shared_ptr<GameObject> node)
 {
     gameObjectToPreview = node;
@@ -185,10 +201,6 @@ RTTR_REGISTRATION
     rttr::registration::class_<spark::Scene>("Scene")
         .constructor()(rttr::policy::ctor::as_std_shared_ptr)
         .property("lightManager", &spark::Scene::lightManager)
-        .property("name", &spark::Scene::name)
         .property("root", &spark::Scene::root)
-        .property("gameObjectToPreview", &spark::Scene::getGameObjectToPreview, &spark::Scene::setGameObjectToPreview,
-                  rttr::registration::private_access)
-        .property("camera", &spark::Scene::camera)
-        .property("cameraMovement", &spark::Scene::cameraMovement);
+        .property("camera", &spark::Scene::camera);
 }

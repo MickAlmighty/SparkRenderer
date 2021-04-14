@@ -19,6 +19,7 @@ class ResourceLoader final
     static std::shared_ptr<resourceManagement::Resource> createCompressedTexture(const std::filesystem::path& path);
     static std::shared_ptr<resourceManagement::Resource> createUncompressedTexture(const std::filesystem::path& path);
     static std::shared_ptr<resourceManagement::Resource> createModel(const std::filesystem::path& path);
+    static std::shared_ptr<resourceManagement::Resource> createScene(const std::filesystem::path& path);
 
     ResourceLoader(const ResourceLoader&) = delete;
     ResourceLoader(const ResourceLoader&&) = delete;

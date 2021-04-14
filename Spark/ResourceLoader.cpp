@@ -8,6 +8,7 @@
 #include <stb_image/stb_image.h>
 
 #include "CommonUtils.h"
+#include "JsonSerializer.h"
 #include "Structs.h"
 #include "Logging.h"
 #include "Mesh.h"
@@ -332,5 +333,16 @@ std::shared_ptr<Mesh> ResourceLoader::loadMesh(aiMesh* assimpMesh, const std::fi
     attributes.push_back(VertexShaderAttribute::createVertexShaderAttributeInfo(4, 3, biTangent));
 
     return std::make_shared<Mesh>(attributes, indices, textures);
+}
+
+std::shared_ptr<resourceManagement::Resource> ResourceLoader::createScene(const std::filesystem::path& path)
+{
+    const auto scene = JsonSerializer::getInstance()->loadSceneFromFile(path);
+    if (scene)
+    {
+        return std::make_shared<Scene>(path, std::move(scene));
+    }
+
+    return nullptr;
 }
 }  // namespace spark

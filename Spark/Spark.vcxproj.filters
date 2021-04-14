@@ -107,9 +107,6 @@
     <ClCompile Include="Structs.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Factory.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Enums.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -260,9 +257,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Timer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Factory.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Logging.h">
