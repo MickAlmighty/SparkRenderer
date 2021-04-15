@@ -18,7 +18,6 @@ class Spark
 
     inline static unsigned int WIDTH{1280};
     inline static unsigned int HEIGHT{720};
-    inline static std::filesystem::path pathToModelMeshes{};
     inline static std::filesystem::path pathToResources{};
     inline static bool vsync = true;
 
@@ -38,7 +37,5 @@ class Spark
 
     static void initImGui();
     static void destroyImGui();
-
-    static void createCustomCursor();
 };
 }  // namespace spark

@@ -35,7 +35,7 @@ TEST_F(ResourceFactoryTest, AllCreatedResourcesAreValid)
         const bool fileWithValidExtension = ResourceFactory::isExtensionSupported(pathMaybeInvalid.path());
         if(fileWithValidExtension)
         {
-            const std::shared_ptr<Resource> resource = ResourceFactory::createResource(pathMaybeInvalid);
+            const std::shared_ptr<Resource> resource = ResourceFactory::loadResource(pathMaybeInvalid);
             if(resource != nullptr)
             {
                 createdResources.push_back(resource);
@@ -55,13 +55,13 @@ TEST_F(ResourceFactoryTest, AllCreatedResourcesAreValid)
 
 TEST_F(ResourceFactoryTest, CreatingResourceFromNonexistentFileReturnsNullptr)
 {
-    const std::shared_ptr<Resource> resource = ResourceFactory::createResource("tmp123.obj");
+    const std::shared_ptr<Resource> resource = ResourceFactory::loadResource("tmp123.obj");
     ASSERT_TRUE(resource == nullptr);
 }
 
 TEST_F(ResourceFactoryTest, CreatingResourceFromFileWithUnsuportedExtensionReturnsNullptr)
 {
-    const std::shared_ptr<Resource> resource = ResourceFactory::createResource("tmp123.zip");
+    const std::shared_ptr<Resource> resource = ResourceFactory::loadResource("tmp123.zip");
     ASSERT_TRUE(resource == nullptr);
 }
 

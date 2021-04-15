@@ -26,13 +26,16 @@ namespace resourceManagement
         std::filesystem::path getFullPath() const;
         std::filesystem::path getDirectoryPath() const;
         std::filesystem::path getResourceName(bool withExtension = true) const;
-        std::filesystem::path getResourceExtension() const;
+        std::string getResourceExtension() const;
+        std::string getResourceExtensionLowerCase() const;
 
         bool changeResourceDirectory(const std::filesystem::path& path);
         bool changeResourceName(const std::filesystem::path& name);
         std::shared_ptr<Resource> getResource();
 
         private:
+        std::string extensionToLowerCase(const std::filesystem::path& path) const;
+
         std::filesystem::path resourcePath{};
         std::weak_ptr<Resource> resource;
     };

@@ -1,6 +1,9 @@
 #include "GUI/SparkGui.h"
 
+#include <iostream>
+
 #include "EngineSystems/SparkRenderer.h"
+#include "ImGuiFileBrowser.h"
 #include "ImGuizmo.h"
 #include "ImGui/imgui_impl_glfw.h"
 #include "ImGui/imgui_impl_opengl3.h"
@@ -14,7 +17,6 @@
 #include "Model.h"
 #include "ModelMesh.h"
 #include "ResourceLibrary.h"
-#include "ResourceLoader.h"
 #include "Skybox.h"
 #include "Spark.h"
 #include "Texture.h"
@@ -81,9 +83,6 @@ void SparkGui::drawSparkSettings(bool* p_open)
     ImGui::InputTextWithHint("Path to Models", Spark::pathToModelMeshes.string().c_str(), buf1, 128);
     ImGui::InputTextWithHint("Path to Resources", Spark::pathToResources.string().c_str(), buf2, 128);*/
     ImGui::Text("Framerate: %f", ImGui::GetIO().Framerate);
-    ImGui::Text("Path to models:");
-    ImGui::SameLine();
-    ImGui::Text(Spark::pathToModelMeshes.string().c_str());
     ImGui::Text("Path to resources:");
     ImGui::SameLine();
     ImGui::Text(Spark::pathToResources.string().c_str());
@@ -170,107 +169,108 @@ std::shared_ptr<Component> SparkGui::addComponent()
     return component;
 }
 
-std::optional<std::shared_ptr<resources::Model>> SparkGui::getModel()
+std::optional<std::shared_ptr<resources::Model>> SparkGui::selectModelByFilePicker()
 {
-    bool objectPicked{false};
-    std::shared_ptr<resources::Model> model{nullptr};
-    if(ImGui::Button("Add Model"))
-    {
-        ImGui::OpenPopup("Models");
-    }
+    constexpr auto buttonName = "Select Model";
+    const auto fileExtensions = resourceManagement::ResourceFactory::supportedModelExtensions();
 
-    if(ImGui::BeginPopupModal("Models", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
-    {
-        const auto modelIds = Spark::resourceLibrary.getModelResourceIdentifiers();
-        for(const auto& id : modelIds)
-        {
-            if(ImGui::Button(id->getFullPath().string().c_str()))
-            {
-                model = std::static_pointer_cast<resources::Model>(id->getResource());
-                objectPicked = true;
-                ImGui::CloseCurrentPopup();
-            }
-        }
-        if(ImGui::Button("Close"))
-        {
-            ImGui::CloseCurrentPopup();
-        }
-        ImGui::EndPopup();
-    }
+    const auto resource = getResourceIdentifierByFilePicker(buttonName, fileExtensions);
 
-    if(objectPicked)
-        return {model};
+    if(resource)
+        return {std::static_pointer_cast<resources::Model>(resource)};
 
     return std::nullopt;
 }
 
-std::optional<std::shared_ptr<resources::Texture>> SparkGui::getTexture()
+std::optional<std::shared_ptr<resources::Texture>> SparkGui::selectTextureByFilePicker()
 {
-    bool objectPicked{false};
-    std::shared_ptr<resources::Texture> texture{nullptr};
-    if(ImGui::Button("Add Texture"))
-    {
-        ImGui::OpenPopup("Textures");
-    }
+    constexpr auto buttonName = "Select Texture";
+    const auto fileExtensions = resourceManagement::ResourceFactory::supportedTextureExtensions();
 
-    if(ImGui::BeginPopupModal("Textures", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
-    {
-        const auto textureIds = Spark::resourceLibrary.getTextureResourceIdentifiers();
-        for(const auto& id : textureIds)
-        {
-            if(ImGui::Button(id->getFullPath().string().c_str()))
-            {
-                texture = std::static_pointer_cast<resources::Texture>(id->getResource());
-                objectPicked = true;
-                ImGui::CloseCurrentPopup();
-            }
-        }
+    const auto resource = getResourceIdentifierByFilePicker(buttonName, fileExtensions);
 
-        if(ImGui::Button("Close"))
-        {
-            ImGui::CloseCurrentPopup();
-        }
-        ImGui::EndPopup();
-    }
-
-    if(objectPicked)
-        return {texture};
+    if(resource)
+        return {std::static_pointer_cast<resources::Texture>(resource)};
 
     return std::nullopt;
 }
 
-std::optional<std::shared_ptr<Scene>> SparkGui::getScene()
+std::optional<std::shared_ptr<Scene>> SparkGui::selectSceneByFilePicker()
 {
-    bool objectPicked{false};
-    std::shared_ptr<Scene> scene{nullptr};
-    if(ImGui::Button("Add Scene"))
-    {
-        ImGui::OpenPopup("Scenes");
-    }
+    constexpr auto buttonName = "Select Scene";
+    const auto fileExtensions = resourceManagement::ResourceFactory::supportedSceneExtensions();
 
-    if(ImGui::BeginPopupModal("Scenes", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
-    {
-        const auto sceneIds = Spark::resourceLibrary.getSceneResourceIdentifiers();
-        for(const auto& id : sceneIds)
-        {
-            if(ImGui::Button(id->getFullPath().string().c_str()))
-            {
-                scene = std::static_pointer_cast<Scene>(id->getResource());
-                objectPicked = true;
-                ImGui::CloseCurrentPopup();
-            }
-        }
+    const auto resource = getResourceIdentifierByFilePicker(buttonName, fileExtensions);
 
-        if(ImGui::Button("Close"))
-        {
-            ImGui::CloseCurrentPopup();
-        }
-        ImGui::EndPopup();
-    }
-
-    if(objectPicked)
-        return {scene};
+    if(resource)
+        return {std::static_pointer_cast<Scene>(resource)};
 
     return std::nullopt;
 }
+
+std::filesystem::path SparkGui::getRelativePathToSaveSceneByFilePicker()
+{
+    if(ImGui::Button("Save Scene"))
+    {
+        ImGui::OpenPopup("Save File");
+    }
+
+    std::filesystem::path filepath;
+    const auto extensions = putExtensionsInOneStringSeparatedByCommas(resourceManagement::ResourceFactory::supportedSceneExtensions());
+    if(file_dialog.showFileDialog("Save File", imgui_addons::ImGuiFileBrowser::DialogMode::SAVE, ImVec2(700, 310), extensions))
+    {
+        filepath = file_dialog.selected_path;
+    }
+
+    if(!filepath.empty())
+    {
+        if(!filepath.has_extension())
+            filepath /= resourceManagement::ResourceFactory::supportedSceneExtensions()[0];
+        filepath = filepath.lexically_relative(std::filesystem::current_path());
+    }
+
+    return filepath;
+}
+
+std::shared_ptr<resourceManagement::Resource> SparkGui::getResourceIdentifierByFilePicker(const char* buttonName,
+                                                                                          const std::vector<std::string>& fileExtensions)
+{
+    if(ImGui::Button(buttonName))
+    {
+        ImGui::OpenPopup("Select File");
+    }
+
+    const auto extensions = putExtensionsInOneStringSeparatedByCommas(fileExtensions);
+
+    if(file_dialog.showFileDialog("Select File", imgui_addons::ImGuiFileBrowser::DialogMode::OPEN, ImVec2(700, 310), extensions))
+    {
+        std::filesystem::path filepath = file_dialog.selected_path;
+
+        if(!filepath.empty())
+        {
+            filepath = filepath.lexically_relative(std::filesystem::current_path());
+            const auto resourceIdentifier = Spark::resourceLibrary.getResourceIdentifier(filepath);
+            if(resourceIdentifier)
+            {
+                return resourceIdentifier->getResource();
+            }
+        }
+    }
+
+    return nullptr;
+}
+
+std::string SparkGui::putExtensionsInOneStringSeparatedByCommas(const std::vector<std::string> fileExtensions)
+{
+    std::stringstream ss;
+    for(size_t i = 0; i < fileExtensions.size(); ++i)
+    {
+        ss << fileExtensions[i];
+        if(i < fileExtensions.size() - 1)
+            ss << ",";
+    }
+
+    return ss.str();
+}
+
 }  // namespace spark

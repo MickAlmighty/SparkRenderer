@@ -39,7 +39,7 @@ void Skybox::drawGUI()
     if(active != isSkyboxActive())
         setActiveSkybox(active);
 
-    const auto tex = SparkGui::getTexture();
+    const auto tex = SparkGui::selectTextureByFilePicker();
     if(tex)
     {
         const auto& texture = tex.value();

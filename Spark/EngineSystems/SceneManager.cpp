@@ -88,19 +88,17 @@ void SceneManager::drawGui()
 {
     if(ImGui::BeginMenu("SceneManager"))
     {
-        if(ImGui::MenuItem("Save Current Scene"))
+        const auto scenePath = SparkGui::getRelativePathToSaveSceneByFilePicker();
+
+        if(!scenePath.empty())
         {
-            if(!JsonSerializer::getInstance()->saveSceneToFile(current_scene, current_scene->getPath()))
+            if(!JsonSerializer::getInstance()->saveSceneToFile(current_scene, scenePath))
             {
                 SPARK_ERROR("Scene serialization failed!");
             }
         }
-        if(ImGui::Button("Load main scene"))
-        {
-            ImGui::OpenPopup("Scenes");
-        }
 
-        const auto sceneOpt = getScene();
+        const auto sceneOpt = SparkGui::selectSceneByFilePicker();
         if(sceneOpt.has_value())
         {
             if(sceneOpt.value() != nullptr)

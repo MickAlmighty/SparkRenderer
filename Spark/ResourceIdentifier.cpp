@@ -71,9 +71,14 @@ std::filesystem::path ResourceIdentifier::getResourceName(bool withExtension) co
     }
 }
 
-std::filesystem::path ResourceIdentifier::getResourceExtension() const
+std::string ResourceIdentifier::getResourceExtension() const
 {
-    return resourcePath.extension();
+    return resourcePath.extension().string();
+}
+
+std::string ResourceIdentifier::getResourceExtensionLowerCase() const
+{
+    return extensionToLowerCase(resourcePath);
 }
 
 bool ResourceIdentifier::changeResourceDirectory(const std::filesystem::path& path)
@@ -147,7 +152,7 @@ std::shared_ptr<Resource> ResourceIdentifier::getResource()
 {
     if(resource.expired())
     {
-        const auto resourcePtr = ResourceFactory::createResource(getFullPath());
+        const auto resourcePtr = ResourceFactory::loadResource(getFullPath());
         if(resourcePtr)
         {
             resource = resourcePtr;
@@ -156,5 +161,13 @@ std::shared_ptr<Resource> ResourceIdentifier::getResource()
     }
 
     return resource.lock();
+}
+
+std::string ResourceIdentifier::extensionToLowerCase(const std::filesystem::path& path) const
+{
+    std::string ext = path.extension().string();
+    std::for_each(ext.begin(), ext.end(), [](char& c) { c = std::tolower(c); });
+
+    return ext;
 }
 }  // namespace spark::resourceManagement

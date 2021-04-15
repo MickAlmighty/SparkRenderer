@@ -70,7 +70,7 @@ void ModelMesh::drawGUI()
         ImGui::Text(std::to_string(static_cast<int>(mesh->shaderType)).c_str());
     }
 
-    const auto modelOpt = SparkGui::getModel();
+    const auto modelOpt = SparkGui::selectModelByFilePicker();
     if(modelOpt)
     {
         setModel(modelOpt.value());

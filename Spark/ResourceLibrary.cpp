@@ -19,7 +19,7 @@ void ResourceLibrary::cleanup()
 std::function<bool(const std::shared_ptr<ResourceIdentifier>&)> findWithinExtensions(const std::vector<std::string>& extensions)
 {
     return [&extensions](const std::shared_ptr<resourceManagement::ResourceIdentifier>& resId) {
-        return std::find(extensions.cbegin(), extensions.cend(), resId->getResourceExtension().string()) != extensions.end();
+        return std::find(extensions.cbegin(), extensions.cend(), resId->getResourceExtensionLowerCase()) != extensions.end();
     };
 }
 
@@ -71,5 +71,22 @@ std::vector<std::shared_ptr<ResourceIdentifier>> ResourceLibrary::getResourceIde
     const std::function<bool(const std::shared_ptr<ResourceIdentifier>&)>& comp) const
 {
     return filter(resourceIdentifiers.begin(), resourceIdentifiers.end(), comp);
+}
+
+std::shared_ptr<ResourceIdentifier> ResourceLibrary::getResourceIdentifier(const std::filesystem::path& path)
+{
+    const auto findByPath = [&path](const std::shared_ptr<ResourceIdentifier>& ri)
+    {
+        return ri->getFullPath() == path;
+    };
+
+    const auto it = std::find_if(resourceIdentifiers.begin(), resourceIdentifiers.end(), findByPath);
+
+    if (it != resourceIdentifiers.end())
+    {
+        return *it;
+    }
+
+    return nullptr;
 }
 }  // namespace spark::resourceManagement

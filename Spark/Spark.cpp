@@ -19,7 +19,6 @@ void Spark::loadConfig(const SparkConfig& config)
 {
     WIDTH = config.width;
     HEIGHT = config.height;
-    pathToModelMeshes = config.pathToModels;
     pathToResources = config.pathToResources;
     vsync = config.vsync;
 }
@@ -35,7 +34,6 @@ void Spark::setup()
     oglContext.setupInputCallbacks();
 
     initImGui();
-    createCustomCursor();
     resourceLibrary.setup(pathToResources);
     SceneManager::getInstance()->setup();
 
@@ -63,7 +61,7 @@ void Spark::run()
                 HEIGHT = height;
             }
         }
-        glViewport(0, 0, WIDTH,  HEIGHT);
+        glViewport(0, 0, WIDTH, HEIGHT);
 
         SceneManager::getInstance()->update();
 
@@ -103,25 +101,4 @@ void Spark::destroyImGui()
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
 }
-
-void Spark::createCustomCursor()
-{
-    int width{0};
-    int height{0};
-    int channels{0};
-    unsigned char* pixels = stbi_load((pathToResources / "cursor.png").string().c_str(), &width, &height, &channels, 4);
-
-    GLFWimage image;
-    image.width = width;
-    image.height = height;
-    image.pixels = pixels;
-
-    GLFWcursor* cursor = glfwCreateCursor(&image, 0, 0);
-
-    glfwSetCursor(oglContext.window, cursor);
-    ImGui_implGlfw_SetMouseCursor(ImGuiMouseCursor_Arrow, cursor);
-
-    stbi_image_free(pixels);
-}
-
 }  // namespace spark

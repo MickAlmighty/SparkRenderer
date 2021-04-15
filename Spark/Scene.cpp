@@ -82,7 +82,7 @@ void Scene::drawGUI()
 
     if(getGameObjectToPreview() != nullptr)
     {
-        if(ImGui::Begin("GameObject", &opened, {0, 0}, -1,
+        if(ImGui::Begin("GameObject", &opened,
                         ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_AlwaysHorizontalScrollbar | ImGuiWindowFlags_NoCollapse))
         {
             auto gameObject_ptr = getGameObjectToPreview();

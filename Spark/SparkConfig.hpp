@@ -7,7 +7,6 @@ struct SparkConfig final
 {
     unsigned int width{1280};
     unsigned int height{720};
-    std::string pathToModels{R"(..\..\..\res\models)"};
     std::string pathToResources{R"(..\..\..\res)"};
     bool vsync{true};
 };
@@ -19,7 +18,6 @@ RTTR_REGISTRATION
         .constructor()(rttr::policy::ctor::as_object)
         .property("width", &spark::SparkConfig::width)
         .property("height", &spark::SparkConfig::height)
-        .property("pathToModels", &spark::SparkConfig::pathToModels)
         .property("pathToResources", &spark::SparkConfig::pathToResources)
         .property("vsync", &spark::SparkConfig::vsync);
 }

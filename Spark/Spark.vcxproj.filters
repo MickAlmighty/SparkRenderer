@@ -179,6 +179,12 @@
     <ClCompile Include="Skybox.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="GUI\ImGui\imgui_tables.cpp">
+      <Filter>GUI\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\ImGuiFileBrowser.cpp">
+      <Filter>GUI</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Spark.h">
@@ -354,6 +360,9 @@
     </ClInclude>
     <ClInclude Include="Skybox.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\ImGuiFileBrowser.h">
+      <Filter>GUI</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

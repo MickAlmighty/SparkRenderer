@@ -127,6 +127,8 @@
     <ClCompile Include="CommonUtils.cpp" />
     <ClCompile Include="Component.cpp" />
     <ClCompile Include="DepthOfFieldPass.cpp" />
+    <ClCompile Include="GUI\ImGuiFileBrowser.cpp" />
+    <ClCompile Include="GUI\ImGui\imgui_tables.cpp" />
     <ClCompile Include="Lights\DirectionalLight.cpp" />
     <ClCompile Include="EngineSystems\SceneManager.cpp" />
     <ClCompile Include="EngineSystems\SparkRenderer.cpp" />
@@ -179,6 +181,7 @@
     <ClInclude Include="CommonUtils.h" />
     <ClInclude Include="Component.h" />
     <ClInclude Include="DepthOfFieldPass.h" />
+    <ClInclude Include="GUI\ImGuiFileBrowser.h" />
     <ClInclude Include="Lights\LightStatus.hpp" />
     <ClInclude Include="Observable.hpp" />
     <ClInclude Include="IObserver.hpp" />

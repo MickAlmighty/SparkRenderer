@@ -30,6 +30,7 @@ class ResourceLibrary
     std::vector<std::shared_ptr<ResourceIdentifier>> getResourceIdentifiers() const;
     std::vector<std::shared_ptr<ResourceIdentifier>> getResourceIdentifiers(
         const std::function<bool(const std::shared_ptr<ResourceIdentifier>&)>& comp) const;
+    std::shared_ptr<ResourceIdentifier> getResourceIdentifier(const std::filesystem::path& path);
 
     template<typename T>
     std::shared_ptr<T> getResourceByName(const std::string& resourceName) const;
