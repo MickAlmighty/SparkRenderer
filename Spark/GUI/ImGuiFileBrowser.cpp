@@ -107,6 +107,28 @@ void ImGuiFileBrowser::closeDialog()
     ImGui::CloseCurrentPopup();
 }
 
+bool isFileExtensionValid(const std::string& filename, const std::vector<std::string>& validExtensions)
+{
+    const auto it = std::find(filename.rbegin(), filename.rend(), '.');
+    if (it == filename.rend())
+        return false;
+
+    const size_t extInFilenameLength = std::distance(filename.rbegin(), it) + 1;
+    const size_t dotPos = std::distance(it, filename.rend()) - 1;
+    for (const auto& validExt : validExtensions)
+    {
+        const bool isExtensionFound = filename.find(validExt, dotPos) != std::string::npos;
+        const bool isLengthValid = validExt.size() == extInFilenameLength;
+        const auto isExtensionValid = isExtensionFound && isLengthValid;
+        if (isExtensionValid)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 bool ImGuiFileBrowser::showFileDialog(const std::string& label, const DialogMode mode, const ImVec2& sz_xy, const std::string& valid_types)
 {
     dialog_mode = mode;
@@ -171,10 +193,21 @@ bool ImGuiFileBrowser::showFileDialog(const std::string& label, const DialogMode
                 selected_fn.clear();
                 selected_path.clear();
             }
-
-            else if(!check && dialog_mode == DialogMode::SAVE)
-                ImGui::OpenPopup(repfile_modal_id.c_str());
-
+            else if(dialog_mode == DialogMode::SAVE)
+            {
+                if(const bool shouldShowReplaceFilePopup = !check; shouldShowReplaceFilePopup)
+                {
+                    ImGui::OpenPopup(repfile_modal_id.c_str());
+                }
+                else
+                {
+                    if(!isFileExtensionValid(selected_fn, valid_exts))
+                    {
+                        ImGui::OpenPopup(invfile_modal_id.c_str());
+                        check = false;
+                    }
+                }
+            }
             else if(!check && dialog_mode == DialogMode::SELECT)
             {
                 selected_fn.clear();
@@ -1004,21 +1037,21 @@ bool ImGuiFileBrowser::showReplaceFileModal()
 
 void ImGuiFileBrowser::showInvalidFileModal()
 {
-    std::string text = "Selected file either doesn't exist or is not supported. Please select a file with the following extensions...";
-    ImVec2 button_size = getButtonSize("OK");
+    const std::string text = "File either doesn't exist or has invalid extension. File should have one of the following extensions...";
+    const ImVec2 button_size = getButtonSize("OK");
 
-    float frame_height = ImGui::GetFrameHeightWithSpacing();
-    float cw_content_height = valid_exts.size() * frame_height;
-    float cw_height = std::min(4.0f * frame_height, cw_content_height);
-    ImVec2 window_size(350, 0);
+    const float frame_height = ImGui::GetFrameHeightWithSpacing();
+    const float cw_content_height = valid_exts.size() * frame_height;
+    const float cw_height = std::min(4.0f * frame_height, cw_content_height);
+    const ImVec2 window_size(350, 0);
     ImGui::SetNextWindowSize(window_size);
 
     if(ImGui::BeginPopupModal(invfile_modal_id.c_str(), nullptr, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoResize))
     {
         ImGui::TextWrapped("%s", text.c_str());
         ImGui::BeginChild("##SupportedExts", ImVec2(0, cw_height), true);
-        for(std::vector<std::string>::size_type i = 0; i < valid_exts.size(); i++)
-            ImGui::BulletText("%s", valid_exts[i].c_str());
+        for(auto& valid_ext : valid_exts)
+            ImGui::BulletText("%s", valid_ext.c_str());
         ImGui::EndChild();
 
         ImGui::SetCursorPosX(window_size.x / 2.0f - button_size.x / 2.0f);
@@ -1102,23 +1135,6 @@ bool ImGuiFileBrowser::validateFile()
         {
             return false;
         }
-
-        // If selected file without extension matches, return false to show a replace file modal
-        for(auto& subFile : subfiles)
-        {
-            const auto dotPos = subFile.name.find_first_of('.');
-            if(dotPos != std::string::npos)
-            {
-                const auto filename = subFile.name.substr(0, dotPos);
-                if(filename == selected_fn)
-                {
-                    match = true;
-                    break;
-                }
-            }
-        }
-
-        return !match;
     }
 
     // If file doesn't match, return true on SAVE mode (since file doesn't exist, hence can be saved directly) and return false on other modes (since

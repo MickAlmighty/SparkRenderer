@@ -21,6 +21,8 @@
 #include "Spark.h"
 #include "Texture.h"
 
+imgui_addons::ImGuiFileBrowser file_dialog{};
+
 namespace spark
 {
 const std::map<std::string, std::function<std::shared_ptr<Component>()>> SparkGui::componentCreation{
@@ -217,6 +219,7 @@ std::filesystem::path SparkGui::getRelativePathToSaveSceneByFilePicker()
 
     std::filesystem::path filepath;
     const auto extensions = putExtensionsInOneStringSeparatedByCommas(resourceManagement::ResourceFactory::supportedSceneExtensions());
+
     if(file_dialog.showFileDialog("Save File", imgui_addons::ImGuiFileBrowser::DialogMode::SAVE, ImVec2(700, 310), extensions))
     {
         filepath = file_dialog.selected_path;
@@ -224,8 +227,6 @@ std::filesystem::path SparkGui::getRelativePathToSaveSceneByFilePicker()
 
     if(!filepath.empty())
     {
-        if(!filepath.has_extension())
-            filepath /= resourceManagement::ResourceFactory::supportedSceneExtensions()[0];
         filepath = filepath.lexically_relative(std::filesystem::current_path());
     }
 
@@ -260,7 +261,7 @@ std::shared_ptr<resourceManagement::Resource> SparkGui::getResourceIdentifierByF
     return nullptr;
 }
 
-std::string SparkGui::putExtensionsInOneStringSeparatedByCommas(const std::vector<std::string> fileExtensions)
+std::string SparkGui::putExtensionsInOneStringSeparatedByCommas(const std::vector<std::string>& fileExtensions)
 {
     std::stringstream ss;
     for(size_t i = 0; i < fileExtensions.size(); ++i)

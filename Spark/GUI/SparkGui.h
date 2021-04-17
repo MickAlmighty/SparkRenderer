@@ -2,9 +2,8 @@
 
 #include "Component.h"
 #include "GameObject.h"
-#include <optional>
 
-#include "ImGuiFileBrowser.h"
+#include <optional>
 
 namespace spark
 {
@@ -38,12 +37,11 @@ class SparkGui
     void drawMainMenuGui();
     void drawSparkSettings(bool* p_open);
     int checkCurrentItem(const char** items) const;
-    static std::string putExtensionsInOneStringSeparatedByCommas(std::vector<std::string> fileExtensions);
+    static std::string putExtensionsInOneStringSeparatedByCommas(const std::vector<std::string>& fileExtensions);
     static std::shared_ptr<resourceManagement::Resource> getResourceIdentifierByFilePicker(const char* buttonName,
                                                                                            const std::vector<std::string>& fileExtensions);
 
     const static std::map<std::string, std::function<std::shared_ptr<Component>()>> componentCreation;
-    inline static imgui_addons::ImGuiFileBrowser file_dialog{};
 };
 
 template<typename T>

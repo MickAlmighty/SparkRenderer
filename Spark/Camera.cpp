@@ -157,14 +157,14 @@ void Camera::setRotation(float yaw, float pitch)
 
 void Camera::processKeyboard()
 {
-    if(cameraMode == CameraMode::FirstPerson)
+    //if(cameraMode == CameraMode::FirstPerson)
     {
         processKeyboardFirstPerson();
     }
-    if(cameraMode == CameraMode::ThirdPerson)
+    /*if(cameraMode == CameraMode::ThirdPerson)
     {
         processKeyboardThirdPerson();
-    }
+    }*/
 }
 
 void Camera::processKeyboardFirstPerson()
@@ -348,10 +348,10 @@ void Camera::updateCameraVectors()
         updateCameraVectorsFirstPerson();
     }
 
-    if(cameraMode == CameraMode::ThirdPerson)
+    /*if(cameraMode == CameraMode::ThirdPerson)
     {
         updateCameraVectorsThirdPerson();
-    }
+    }*/
 }
 
 void Camera::updateCameraVectorsFirstPerson()
@@ -382,8 +382,8 @@ void Camera::update()
 {
     if(HID::isKeyPressed(Key::NUM_1))
         cameraMode = CameraMode::FirstPerson;
-    if(HID::isKeyPressed(Key::NUM_2))
-        cameraMode = CameraMode::ThirdPerson;
+    //if(HID::isKeyPressed(Key::NUM_2))
+    //    cameraMode = CameraMode::ThirdPerson;
     // Update Front, Right and Up Vectors using the updated Euler angles
     updateCameraVectors();
 }
