@@ -25,12 +25,14 @@ void MeshPlane::setup()
         {0.0f, 0.0f}
     };
 
-    std::vector<unsigned int> indices{0, 1, 2, 2, 3, 0};
 
     const auto positionAttribute = VertexShaderAttribute::createVertexShaderAttributeInfo(0, 3, vertices);
     const auto texCoordsAttribute = VertexShaderAttribute::createVertexShaderAttributeInfo(1, 2, texCoords);
-    planeMesh = std::make_shared<Mesh>(std::vector<VertexShaderAttribute>{positionAttribute, texCoordsAttribute}, indices,
-                                    std::map<TextureTarget, std::shared_ptr<resources::Texture>>{}, "Mesh", ShaderType::SOLID_COLOR_SHADER);
+    auto vertexShaderAttributes = std::vector<VertexShaderAttribute>{positionAttribute, texCoordsAttribute};
+    std::vector<unsigned int> indices{0, 1, 2, 2, 3, 0};
+    auto textures = std::map<TextureTarget, std::shared_ptr<resources::Texture>>{};
+    planeMesh = std::make_shared<Mesh>(vertexShaderAttributes, indices,
+                                    textures, "Mesh", ShaderType::SOLID_COLOR_SHADER);
 }
 
 MeshPlane::MeshPlane() : Component("MeshPlane")

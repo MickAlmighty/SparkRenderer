@@ -2,9 +2,9 @@
 
 #include <map>
 
-#include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 
+#include "glad_glfw3.h"
 #include "Key.h"
 #include "State.h"
 

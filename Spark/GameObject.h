@@ -42,6 +42,8 @@ class GameObject final : public std::enable_shared_from_this<GameObject>
     template<class T>
     std::shared_ptr<T> getAllComponentsOfType();
 
+    bool removeComponent(const std::shared_ptr<Component>& c);
+
     template<class T>
     bool removeComponent(const std::string& name);
 

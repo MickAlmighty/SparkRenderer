@@ -3,17 +3,16 @@
 #include <algorithm>
 #include <iostream>
 
-#include <GUI/ImGui/imgui.h>
-#include <GUI/ImGuizmo.h>
-#include "glm/gtc/type_ptr.hpp"
+#include <glm/gtc/type_ptr.hpp>
 
 #include "Camera.h"
 #include "Component.h"
+#include "GUI/ImGui/imgui.h"
+#include "GUI/ImGuizmo.h"
 #include "JsonSerializer.h"
 #include "Scene.h"
 #include "GUI/SparkGui.h"
 #include "Logging.h"
-#include "ReflectionUtils.h"
 
 namespace spark
 {
@@ -120,6 +119,19 @@ bool GameObject::removeChild(std::shared_ptr<GameObject> child)
     if(gameObject_it != children.end())
     {
         children.erase(gameObject_it);
+        return true;
+    }
+    return false;
+}
+
+bool GameObject::removeComponent(const std::shared_ptr<Component>& c)
+{
+    auto component_it = std::find_if(std::begin(components), std::end(components), [&c](const std::shared_ptr<Component>& component) {
+        return component == c;
+    });
+    if(component_it != components.end())
+    {
+        components.erase(component_it);
         return true;
     }
     return false;

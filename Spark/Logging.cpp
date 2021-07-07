@@ -1,5 +1,6 @@
 #include "Logging.h"
 #include <spdlog/sinks/basic_file_sink.h>
+#include "spdlog/sinks/stdout_color_sinks.h"
 
 std::shared_ptr<spark::logger> spark::getSparkLogger()
 {
@@ -8,7 +9,7 @@ std::shared_ptr<spark::logger> spark::getSparkLogger()
     {
         configure = false;
         std::vector<spdlog::sink_ptr> sinks;
-        auto consoleSink = std::make_shared<spdlog::sinks::wincolor_stdout_sink_mt>();
+        auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
         auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>("spark.log", true);
         const spdlog::level::level_enum level{static_cast<spdlog::level::level_enum>(SPARK_ACTIVE_LEVEL)};
         const std::string pattern{"[%d.%m.%Y %T.%f] [%s:%#] [%t] [%^%l%$] %v"};

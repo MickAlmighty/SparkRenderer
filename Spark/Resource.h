@@ -3,7 +3,7 @@
 
 namespace spark::resourceManagement
 {
-class Resource abstract
+class Resource
 {
     public:
     Resource() = default;

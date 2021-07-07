@@ -1,5 +1,7 @@
 #pragma once
 
+#include <filesystem>
+
 #include <rttr/registration>
 #include <json/value.h>
 #include <glm/glm.hpp>
@@ -7,13 +9,6 @@
 #include <regex>
 #include "Logging.h"
 
-namespace std
-{
-namespace filesystem
-{
-    class path;
-}
-}  // namespace std
 
 namespace spark
 {
@@ -125,7 +120,7 @@ T JsonSerializer::loadJson(const Json::Value& root)
         throw e;
     }
     SPARK_ERROR("Couldn't cast type '{}' to deserialized item!", rttr::type::get<T>().get_name().cbegin());
-    throw std::exception("Couldn't cast given type to deserialized item!");
+    throw std::runtime_error("Couldn't cast given type to deserialized item!");
 }
 
 template<typename T>

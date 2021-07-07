@@ -3,9 +3,9 @@
 #include <array>
 #include <vector>
 
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
+
+#include "glad_glfw3.h"
 
 #define PUSH_DEBUG_GROUP(x)                                                                                       \
     {                                                                                                             \

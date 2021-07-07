@@ -310,7 +310,7 @@ create_or_get_type() RTTR_NOEXCEPT
         init = false;
         if(val.is_shared_ptr())
         {
-            type::register_converter_func([](nullptr_t, bool& ok)
+            type::register_converter_func([](std::nullptr_t, bool& ok)
             {
                 ok = true;
                 return T();
@@ -345,7 +345,7 @@ create_or_get_type() RTTR_NOEXCEPT
         init = false;
         if (val.is_shared_ptr())
         {
-            type::register_converter_func([](nullptr_t, bool& ok)
+            type::register_converter_func([](std::nullptr_t, bool& ok)
             {
                 ok = true;
                 return T();

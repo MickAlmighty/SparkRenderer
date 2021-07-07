@@ -1,6 +1,7 @@
 #include "pch.h"
 
 #include <deque>
+#include <string>
 
 #include "Observable.hpp"
 #include "IObserver.hpp"

@@ -6,6 +6,7 @@
 #include "GBuffer.h"
 #include "Scene.h"
 #include "Structs.h"
+#include "RenderingRequest.h"
 
 namespace spark
 {
@@ -13,7 +14,6 @@ class BlurPass;
 class DepthOfFieldPass;
 class LightProbe;
 class Shader;
-struct RenderingRequest;
 struct PbrCubemapTexture;
 
 class SparkRenderer

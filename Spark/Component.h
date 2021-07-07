@@ -1,16 +1,16 @@
 #pragma once
 
 #include "EngineSystems/SceneManager.h"
+#include "GUI/ImGui/imgui.h"
 #include "Scene.h"
 
 #include <rttr/registration_friend>
 #include <rttr/registration>
-#include <GUI/ImGui/imgui.h>
 
 namespace spark
 {
 class GameObject;
-class Component abstract : public std::enable_shared_from_this<Component>
+class Component : public std::enable_shared_from_this<Component>
 {
     public:
     Component() = default;
@@ -32,19 +32,14 @@ class Component abstract : public std::enable_shared_from_this<Component>
     std::string getName() const;
     bool getActive() const;
     void setActive(bool active_);
+    void removeComponent();
 
-    template<class T>
-    void removeComponent()
-    {
-        auto remove = [component = shared_from_base<T>()]() { component->getGameObject()->removeComponent<T>(component); };
-        getGameObject()->getScene()->toRemove.push_back(remove);
-    }
     template<class T>
     void removeComponentGUI()
     {
         if(ImGui::Button("Delete"))
         {
-            removeComponent<T>();
+            removeComponent();
         }
     }
 

@@ -2,7 +2,6 @@
 
 #include <iostream>
 
-#include "EngineSystems/SparkRenderer.h"
 #include "Shader.h"
 #include "Logging.h"
 #include "Texture.h"

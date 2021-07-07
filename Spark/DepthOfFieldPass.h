@@ -1,8 +1,6 @@
 #pragma once
 
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-
+#include "glad_glfw3.h"
 
 #include "Shader.h"
 #include "Structs.h"

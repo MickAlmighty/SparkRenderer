@@ -17,7 +17,7 @@ layout (std140) uniform Camera
     mat4 invertedProjection;
 } camera;
 
-layout(location = 0) out VS_OUT {
+out VS_OUT {
     vec2 tex_coords;
     mat3 viewTBN_matrix;
     vec3 tangentFragPos;
@@ -65,12 +65,12 @@ layout (binding = 3) uniform sampler2D roughnessTexture;
 layout (binding = 4) uniform sampler2D metalnessTexture;
 layout (binding = 5) uniform sampler2D heightTexture;
 
-layout(location = 0) in VS_OUT {
+in VS_OUT {
     vec2 tex_coords;
     mat3 viewTBN_matrix;
     vec3 tangentFragPos;
     vec3 tangentCamPos;
-} fs_in;
+} vs_out;
 
 const float heightScale = 0.05f;
 
@@ -142,11 +142,11 @@ vec3 accurateSRGBToLinear(vec3 sRGBColor)
 
 void main()
 {
-    vec2 tex_coords = fs_in.tex_coords;
-    if (texture(heightTexture, fs_in.tex_coords).r != 0.0) 
+    vec2 tex_coords = vs_out.tex_coords;
+    if (texture(heightTexture, vs_out.tex_coords).r != 0.0) 
     {
-        vec3 tangentViewDir = normalize(fs_in.tangentCamPos - fs_in.tangentFragPos);
-        tex_coords = parallaxMapping(fs_in.tex_coords, tangentViewDir);
+        vec3 tangentViewDir = normalize(vs_out.tangentCamPos - vs_out.tangentFragPos);
+        tex_coords = parallaxMapping(vs_out.tex_coords, tangentViewDir);
     }
 
     if (tex_coords.x > 1.0 || tex_coords.x < 0.0 || tex_coords.y > 1.0 || tex_coords.y < 0.0)
@@ -156,7 +156,7 @@ void main()
 
     vec3 normalFromTexture = vec3(texture(normalTexture, tex_coords).xy, 1.0f);
     normalFromTexture = normalize(normalFromTexture * 2.0 - 1.0);
-    vec3 viewNormal = normalize(fs_in.viewTBN_matrix * normalFromTexture);
+    vec3 viewNormal = normalize(vs_out.viewTBN_matrix * normalFromTexture);
     vec2 encodedNormal = encodeViewSpaceNormal(viewNormal);
     Normal.rg = encodedNormal;
 

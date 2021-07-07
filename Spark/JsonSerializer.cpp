@@ -88,7 +88,7 @@ void* JsonSerializer::getPtr(const rttr::variant& var)
         return resultVar.get_value<void*>();
     }
     SPARK_ERROR("Invalid variant of type '{}' provided as pointer type!", var.get_type().get_name().cbegin());
-    throw std::exception("Invalid variant provided as pointer type!");
+    throw std::runtime_error("Invalid variant provided as pointer type!");
 }
 
 std::shared_ptr<Scene> JsonSerializer::loadSceneFromFile(const std::filesystem::path& filePath)
@@ -421,7 +421,7 @@ void JsonSerializer::writePropertyToJson(Json::Value& root, const rttr::type& ty
         {
             case 1:
                 SPARK_ERROR("Unknown property type: '{}'.", type.get_name().cbegin());
-                throw std::exception("Unknown property type!");
+                throw std::runtime_error("Unknown property type!");
         }
     }
 }
@@ -430,7 +430,7 @@ void JsonSerializer::serialize(const rttr::variant& var, Json::Value& root)
 {
     /* if (!isPtr(var.get_type())) {
          SPARK_ERROR("Source object's type '{}' must be a pointer!", var.get_type().get_name().cbegin());
-         throw std::exception("Source object must be a pointer!");
+         throw std::runtime_error("Source object must be a pointer!");
      }*/
     SPARK_TRACE("Serializing var of type '{}'...", var.get_type().get_name().cbegin());
     if(isPtr(var.get_type()))
@@ -1064,17 +1064,17 @@ rttr::variant JsonSerializer::readPropertyFromJson(const Json::Value& root, cons
     {
         default:
             SPARK_ERROR("Unexpected deserialization failure!");
-            throw std::exception("Unexpected deserialization failure!");
+            throw std::runtime_error("Unexpected deserialization failure!");
         case 1:
             SPARK_ERROR("Unknown property type: '{}'.", type.get_name().cbegin());
-            throw std::exception("Unknown property type!");
+            throw std::runtime_error("Unknown property type!");
         case 2:
             SPARK_WARN("Invalid json value given for type '{}'! Zero value will be used.", type.get_name().cbegin());
             ok = false;
             return 0;
         case 3:
             SPARK_ERROR("Invalid conversion attempt!");
-            throw std::exception("Invalid conversion attempt!");
+            throw std::runtime_error("Invalid conversion attempt!");
     }
 }
 
@@ -1082,7 +1082,7 @@ rttr::variant JsonSerializer::deserialize(const Json::Value& root)
 {
     // if (!root.isMember(ID_NAME)) {
     //    SPARK_ERROR("Invalid serialization object found!");
-    //    throw std::exception("Invalid serialization object found!"); //maybe outcome in the future?
+    //    throw std::runtime_error("Invalid serialization object found!"); //maybe outcome in the future?
     //}
     SPARK_TRACE("Deserializing...");
     if(root.isMember(ID_NAME))
@@ -1102,14 +1102,14 @@ rttr::variant JsonSerializer::deserialize(const Json::Value& root)
         if(!root.isMember(TYPE_NAME) || !root.isMember(CONTENT_NAME))
         {
             SPARK_ERROR("No type/content info provided!");
-            throw std::exception("No type/content info provided!");
+            throw std::runtime_error("No type/content info provided!");
         }
         std::string typeName{root[TYPE_NAME].asString()};
         rttr::type type{rttr::type::get_by_name(typeName)};
         if(!type.is_valid())
         {
             SPARK_ERROR("Invalid type found for name '{}'!", typeName);
-            throw std::exception("Invalid type found!");
+            throw std::runtime_error("Invalid type found!");
         }
         SPARK_TRACE("Node is of type '{}'", type.get_name().cbegin());
         const Json::Value& content{root[CONTENT_NAME]};
@@ -1119,12 +1119,12 @@ rttr::variant JsonSerializer::deserialize(const Json::Value& root)
         if(!var.is_valid())
         {
             SPARK_ERROR("Created variant of '{}' is not valid!", targetType.get_name().cbegin());
-            throw std::exception("Created variant is not valid!");
+            throw std::runtime_error("Created variant is not valid!");
         }
         if(var.get_type() != type)
         {
             SPARK_ERROR("Created variant's type '{}' does not match source type '{}'!", var.get_type().get_name().cbegin(), type.get_name().begin());
-            throw std::exception("Created variant's type does not match source type!");
+            throw std::runtime_error("Created variant's type does not match source type!");
         }
         bindObject(var, id);
         rttr::variant wrapped{isWrappedPtr(type) ? var.extract_wrapped_value() : var};
@@ -1188,14 +1188,14 @@ rttr::variant JsonSerializer::deserialize(const Json::Value& root)
         if(!root.isMember(TYPE_NAME) || !root.isMember(CONTENT_NAME))
         {
             SPARK_ERROR("No type/content info provided!");
-            throw std::exception("No type/content info provided!");
+            throw std::runtime_error("No type/content info provided!");
         }
         std::string typeName{root[TYPE_NAME].asString()};
         rttr::type type{rttr::type::get_by_name(typeName)};
         if(!type.is_valid())
         {
             SPARK_ERROR("Invalid type found for name '{}'!", typeName);
-            throw std::exception("Invalid type found!");
+            throw std::runtime_error("Invalid type found!");
         }
         SPARK_TRACE("Node is of type '{}'", type.get_name().cbegin());
         const Json::Value& content{root[CONTENT_NAME]};
@@ -1203,12 +1203,12 @@ rttr::variant JsonSerializer::deserialize(const Json::Value& root)
         if(!var.is_valid())
         {
             SPARK_ERROR("Created variant of '{}' is not valid!", type.get_name().cbegin());
-            throw std::exception("Created variant is not valid!");
+            throw std::runtime_error("Created variant is not valid!");
         }
         if(var.get_type() != type)
         {
             SPARK_ERROR("Created variant's type '{}' does not match source type '{}'!", var.get_type().get_name().cbegin(), type.get_name().begin());
-            throw std::exception("Created variant's type does not match source type!");
+            throw std::runtime_error("Created variant's type does not match source type!");
         }
         for(rttr::property prop : var.get_type().get_properties())
         {
@@ -1223,7 +1223,7 @@ rttr::variant JsonSerializer::deserialize(const Json::Value& root)
                 if(ok && !prop.set_value(var, propVar))
                 {
                     SPARK_ERROR("Unable to set value for property '{}'!", prop.get_name().cbegin());
-                    throw std::exception("Unable to set value for property!");
+                    throw std::runtime_error("Unable to set value for property!");
                 }
             }
             else
@@ -1240,12 +1240,12 @@ bool JsonSerializer::bindObject(const rttr::variant& var, int id)
     if(isIdBound(id))
     {
         SPARK_ERROR("Provided ID is already bound!");
-        throw std::exception("Provided ID is already bound!");
+        throw std::runtime_error("Provided ID is already bound!");
     }
     if(isVarBound(var))
     {
         SPARK_ERROR("Provided variant is already bound!");
-        throw std::exception("Provided variant is already bound!");
+        throw std::runtime_error("Provided variant is already bound!");
     }
     bindings.emplace_back(var, id);
     return true;
@@ -1275,7 +1275,7 @@ int JsonSerializer::getBoundId(const rttr::variant& var)
         return it->second;
     }
     SPARK_ERROR("Unbound objects do not have an identifier!");
-    throw std::exception("Unbound objects do not have an identifier!");
+    throw std::runtime_error("Unbound objects do not have an identifier!");
 }
 
 bool JsonSerializer::isIdBound(const int id)
@@ -1292,6 +1292,6 @@ rttr::variant JsonSerializer::getBoundObject(const int id)
         return it->first;
     }
     SPARK_ERROR("Unknown identifier provided!");
-    throw std::exception("Unknown identifier provided!");
+    throw std::runtime_error("Unknown identifier provided!");
 }
 }  // namespace spark

@@ -4,6 +4,7 @@
 
 #include "OGLContext.hpp"
 #include "ResourceFactory.h"
+#include "Logging.h"
 
 namespace spark::resourceManagement
 {
@@ -26,15 +27,24 @@ TEST_F(ResourceFactoryTest, AllCreatedResourcesAreValid)
 {
     std::vector<std::shared_ptr<Resource>> createdResources;
 
-    const std::filesystem::path resPath(R"(..\..\..\res)");
+    SPARK_INFO(std::filesystem::current_path().string());
+
+    const std::filesystem::path resPath = utility::findFileOrDirectory("res");
     for(const auto& pathMaybeInvalid : std::filesystem::recursive_directory_iterator(resPath))
     {
         if (!pathMaybeInvalid.is_regular_file())
             continue;
 
-        const bool fileWithValidExtension = ResourceFactory::isExtensionSupported(pathMaybeInvalid.path());
+        auto validFile = pathMaybeInvalid.path();
+        const bool fileWithValidExtension = ResourceFactory::isExtensionSupported(validFile);
         if(fileWithValidExtension)
         {
+            const auto sceneExts = ResourceFactory::supportedSceneExtensions();
+            if (const auto isScene = std::find(sceneExts.cbegin(), sceneExts.cend(), validFile.extension().string()); isScene != sceneExts.cend())
+            {
+                continue;
+            }
+
             const std::shared_ptr<Resource> resource = ResourceFactory::loadResource(pathMaybeInvalid);
             if(resource != nullptr)
             {

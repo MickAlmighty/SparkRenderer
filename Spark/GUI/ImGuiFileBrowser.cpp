@@ -392,7 +392,7 @@ bool ImGuiFileBrowser::renderFileListRegion()
 
                 // If dialog mode is SELECT then copy the selected dir name to the input text bar
                 if(dialog_mode == DialogMode::SELECT)
-                    strcpy_s(input_fn, filtered_dirs[i]->name.c_str());
+                    strcpy(input_fn, filtered_dirs[i]->name.c_str());
 
                 if(ImGui::IsMouseDoubleClicked(0))
                 {
@@ -420,7 +420,7 @@ bool ImGuiFileBrowser::renderFileListRegion()
                 is_dir = false;
 
                 // If dialog mode is OPEN/SAVE then copy the selected file name to the input text bar
-                strcpy_s(input_fn, filtered_files[i]->name.c_str());
+                strcpy(input_fn, filtered_files[i]->name.c_str());
 
                 if(ImGui::IsMouseDoubleClicked(0))
                 {
@@ -674,7 +674,7 @@ bool ImGuiFileBrowser::renderInputComboBox()
                     }
                     else
                     {
-                        strcpy_s(input_fn, element.get().c_str());
+                        strcpy(input_fn, element.get().c_str());
                         show_inputbar_combobox = false;
                     }
                 }
@@ -1191,16 +1191,21 @@ std::string ImGuiFileBrowser::wStringToString(const wchar_t* wchar_arr)
 {
     std::mbstate_t state = std::mbstate_t();
 
+    const std::size_t len_placeholder{600000};
+#ifdef __WIN32   
     // MinGW bug (patched in mingw-w64), wcsrtombs doesn't ignore length parameter when dest = nullptr. Hence the large number.
-    // size_t len = 1 + std::wcsrtombs(nullptr, &(wchar_arr), 600000, &state);
     size_t len{0};
-    wcsrtombs_s(&len, nullptr, 0, &(wchar_arr), 600000, &state);
+    wcsrtombs_s(&len, nullptr, 0, &(wchar_arr), len_placeholder, &state);
     len += 1;
 
     char* char_arr = new char[len];
-    // std::wcsrtombs(char_arr, &wchar_arr, len, &state);
     size_t len2{0};
     wcsrtombs_s(&len2, char_arr, len, &wchar_arr, len, &state);
+#else
+    std::size_t len = 1 + std::wcsrtombs(nullptr, &(wchar_arr), len_placeholder, &state);
+    char* char_arr = new char[len];
+    std::wcsrtombs(char_arr, &wchar_arr, len, &state);
+#endif
 
     std::string ret_val(char_arr);
 

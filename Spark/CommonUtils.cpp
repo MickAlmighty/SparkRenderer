@@ -110,7 +110,7 @@ namespace utils
         {
             if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
             {
-                throw std::exception("Framebuffer incomplete!");
+                throw std::runtime_error("Framebuffer incomplete!");
             }
         }
 

@@ -1,10 +1,10 @@
-#include "EngineSystems/SceneManager.h"
+#include "SceneManager.h"
 
 #include <algorithm>
 
-#include <GUI/ImGui/imgui.h>
+#include "GUI/ImGui/imgui.h"
 
-#include "EngineSystems/SparkRenderer.h"
+#include "SparkRenderer.h"
 #include "JsonSerializer.h"
 #include "Scene.h"
 #include "Spark.h"

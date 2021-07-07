@@ -1,9 +1,9 @@
-#include "EngineSystems/SparkRenderer.h"
+#include "SparkRenderer.h"
 
 #include <functional>
 #include <random>
 
-#include <GUI/ImGui/imgui.h>
+#include "GUI/ImGui/imgui.h"
 #include <glm/gtx/compatibility.hpp>
 
 #include "BlurPass.h"
@@ -98,7 +98,7 @@ void SparkRenderer::setup(unsigned int windowWidth, unsigned int windowHeight)
     height = windowHeight;
 
     const auto generateSsaoSamples = [this] {
-        const std::uniform_real_distribution<float> randomFloats(0.0, 1.0);
+        std::uniform_real_distribution<float> randomFloats(0.0, 1.0);
         std::default_random_engine generator{};
         std::vector<glm::vec4> ssaoKernel;
         ssaoKernel.reserve(64);
@@ -119,7 +119,7 @@ void SparkRenderer::setup(unsigned int windowWidth, unsigned int windowHeight)
     };
 
     const auto generateSsaoNoiseTexture = [this] {
-        const std::uniform_real_distribution<float> randomFloats(0.0, 1.0);
+        std::uniform_real_distribution<float> randomFloats(0.0, 1.0);
         std::default_random_engine generator{};
 
         std::vector<glm::vec3> ssaoNoise;

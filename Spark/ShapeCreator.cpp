@@ -1,5 +1,7 @@
 #include "ShapeCreator.h"
 
+#include <cstring>
+
 #include <glm/gtx/rotate_vector.hpp>
 
 constexpr double pi = 3.14159265358979323846;

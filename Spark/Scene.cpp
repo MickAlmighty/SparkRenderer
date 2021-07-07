@@ -1,17 +1,16 @@
 #include "Scene.h"
 
-#include <iostream>
-#include <list>
-
-#include <GUI/ImGui/imgui.h>
-
 #include "Camera.h"
 #include "GameObject.h"
+#include "GUI/ImGui/imgui.h"
 #include "HID/HID.h"
 #include "JsonSerializer.h"
 #include "Logging.h"
 #include "ResourceLoader.h"
 #include "Spark.h"
+
+#include <iostream>
+#include <list>
 
 namespace spark
 {

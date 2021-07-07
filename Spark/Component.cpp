@@ -85,6 +85,12 @@ void Component::setActive(bool active_)
     }
 }
 
+void Component::removeComponent()
+{
+    auto remove = [component = shared_from_this()]() { component->getGameObject()->removeComponent(component); };
+    getGameObject()->getScene()->toRemove.push_back(remove);
+}
+
 std::shared_ptr<Component> Component::getComponentPtr()
 {
     return std::static_pointer_cast<Component>(shared_from_this());

@@ -1,8 +1,8 @@
 #include "Spark.h"
 
-#include <GUI/ImGui/imgui.h>
-#include <GUI/ImGui/imgui_impl_glfw.h>
-#include <GUI/ImGui/imgui_impl_opengl3.h>
+#include "GUI/ImGui/imgui.h"
+#include "GUI/ImGui/imgui_impl_glfw.h"
+#include "GUI/ImGui/imgui_impl_opengl3.h"
 #include <stb_image/stb_image.h>
 
 #include "Clock.h"
@@ -28,7 +28,7 @@ void Spark::setup()
     if(!oglContext.init(WIDTH, HEIGHT, vsync, false))
     {
         SPARK_CRITICAL("oglContext init failed");
-        throw std::exception("oglContext init failed");
+        throw std::runtime_error("oglContext init failed");
     }
 
     oglContext.setupInputCallbacks();

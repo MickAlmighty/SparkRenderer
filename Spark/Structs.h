@@ -4,11 +4,10 @@
 #include <vector>
 #include <filesystem>
 
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <rttr/registration>
 
+#include "glad_glfw3.h"
 #include "LocalTransform.h"
 #include "WorldTransform.h"
 
