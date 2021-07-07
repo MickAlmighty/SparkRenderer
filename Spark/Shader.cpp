@@ -33,7 +33,6 @@ std::string Shader::loadShader(const std::string& shaderPath)
 {
     std::string codeString;
     std::stringstream shaderStream;
-    SPARK_INFO("Processing shader file: {}", shaderPath);
     try
     {
         std::ifstream shaderFile;
