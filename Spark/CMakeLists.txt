@@ -54,6 +54,10 @@ list(APPEND SparkSources
     ${CMAKE_CURRENT_SOURCE_DIR}/Scene.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Shader.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Shader.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/ShaderDescriptor.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ShaderDescriptor.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ShaderParser.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ShaderParser.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ShapeCreator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ShapeCreator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Skybox.cpp
