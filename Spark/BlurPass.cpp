@@ -4,6 +4,7 @@
 
 #include "CommonUtils.h"
 #include "ResourceLibrary.h"
+#include "Shader.h"
 #include "Spark.h"
 
 namespace spark

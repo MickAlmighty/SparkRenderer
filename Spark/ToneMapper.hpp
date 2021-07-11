@@ -1,9 +1,16 @@
 #pragma once
 
-#include "Shader.h"
+#include <memory>
+
+#include "Buffer.hpp"
+#include "ScreenQuad.hpp"
 
 namespace spark
 {
+namespace resources {
+    class Shader;
+}
+
 class ToneMapper
 {
     public:

@@ -34,7 +34,7 @@ GLuint DepthOfFieldPass::getOutputTexture() const
     return blendDofTexture;
 }
 
-void DepthOfFieldPass::recreateWithNewSize(unsigned width, unsigned height)
+void DepthOfFieldPass::recreateWithNewSize(unsigned int width, unsigned int height)
 {
     this->width = width;
     this->height = height;
@@ -51,7 +51,7 @@ void DepthOfFieldPass::setUniforms(float nearStart, float nearEnd, float farStar
     this->farEnd = farEnd;
 }
 
-DepthOfFieldPass::DepthOfFieldPass(unsigned width_, unsigned height_) : width(width_), height(height_)
+DepthOfFieldPass::DepthOfFieldPass(unsigned int width_, unsigned int height_) : width(width_), height(height_)
 {
     screenQuad.setup();
     cocShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("circleOfConfusion.glsl");

@@ -2,6 +2,7 @@
 
 #include "Clock.h"
 #include "CommonUtils.h"
+#include "Shader.h"
 #include "Spark.h"
 #include "glad_glfw3.h"
 

@@ -1,10 +1,9 @@
 #include "Structs.h"
 
-#include <glm/ext/matrix_clip_space.hpp>
-
 #include "CommonUtils.h"
 #include "Logging.h"
 #include "ResourceLibrary.h"
+#include "ScreenQuad.hpp"
 #include "Shader.h"
 #include "Spark.h"
 #include "Timer.h"

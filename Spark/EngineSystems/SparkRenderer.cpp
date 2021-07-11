@@ -1,6 +1,5 @@
 #include "SparkRenderer.h"
 
-#include "BlurPass.h"
 #include "Camera.h"
 #include "CommonUtils.h"
 #include "DepthOfFieldPass.h"
@@ -71,8 +70,8 @@ void SparkRenderer::drawGui()
         const std::string menuName5 = "Bloom";
         if(ImGui::BeginMenu(menuName5.c_str()))
         {
-            ImGui::Checkbox("Bloom", &bloomEnable);
-            ImGui::DragFloat("Intensity", &bloomIntensity, 0.1f, 0);
+            ImGui::Checkbox("Bloom", &isBloomEnabled);
+            ImGui::DragFloat("Intensity", &bloom.intensity, 0.1f, 0);
             ImGui::EndMenu();
         }
 
@@ -94,6 +93,7 @@ void SparkRenderer::setup(unsigned int windowWidth, unsigned int windowHeight)
 
     ao.setup(windowWidth, windowHeight, cameraUBO);
     toneMapper.setup(windowWidth, windowHeight);
+    bloom.setup(windowWidth, windowHeight);
 
     cubemapViewMatrices.resizeBuffer(sizeof(glm::mat4) * 6);
     cubemapViewMatrices.updateData(utils::getCubemapViewMatrices(glm::vec3(0)));
@@ -118,8 +118,6 @@ void SparkRenderer::initMembers()
     solidColorShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("solidColor.glsl");
     lightShaftsShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("lightShafts.glsl");
     fxaaShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("fxaa.glsl");
-    bloomDownScaleShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("bloomDownScale.glsl");
-    bloomUpScaleShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("bloomUpScale.glsl");
     tileBasedLightCullingShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("tileBasedLightCulling.glsl");
     tileBasedLightingShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("tileBasedLighting.glsl");
     localLightProbesLightingShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("localLightProbesLighting.glsl");
@@ -129,10 +127,6 @@ void SparkRenderer::initMembers()
     resampleCubemapShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("resampleCubemap.glsl");
 
     dofPass = std::make_unique<DepthOfFieldPass>(width, height);
-    upsampleBloomBlurPass2 = std::make_unique<BlurPass>(width / 2, height / 2);
-    upsampleBloomBlurPass4 = std::make_unique<BlurPass>(width / 4, height / 4);
-    upsampleBloomBlurPass8 = std::make_unique<BlurPass>(width / 8, height / 8);
-    upsampleBloomBlurPass16 = std::make_unique<BlurPass>(width / 16, height / 16);
 }
 
 void SparkRenderer::updateBufferBindings() const
@@ -216,7 +210,10 @@ void SparkRenderer::renderPass(unsigned int windowWidth, unsigned int windowHeig
     tileBasedLightRendering(gBuffer);
     renderCubemap(cubemapFramebuffer);
     helperShapes();
-    bloom();
+    if(isBloomEnabled)
+    {
+        textureHandle = bloom.process(screenQuad, lightingTexture, brightPassTexture);
+    }
     depthOfField();
     lightShafts();
     motionBlur();
@@ -343,7 +340,7 @@ void SparkRenderer::renderLights(GLuint framebuffer, const GBuffer& geometryBuff
         glBindTextures(0, static_cast<GLsizei>(textures.size()), nullptr);
     }
 
-    textureHandle = lightColorTexture;
+    textureHandle = lightingTexture;
 
     POP_DEBUG_GROUP();
 }
@@ -375,7 +372,7 @@ void SparkRenderer::tileBasedLightRendering(const GBuffer& geometryBuffer)
 
     PUSH_DEBUG_GROUP(TILE_BASED_DEFERRED)
     float clearRgba[] = {0.0f, 0.0f, 0.0f, 0.0f};
-    glClearTexImage(lightColorTexture, 0, GL_RGBA, GL_FLOAT, &clearRgba);
+    glClearTexImage(lightingTexture, 0, GL_RGBA, GL_FLOAT, &clearRgba);
     glClearTexImage(brightPassTexture, 0, GL_RGBA, GL_FLOAT, &clearRgba);
 
     const auto cubemap = pbrCubemap.lock();
@@ -398,13 +395,13 @@ void SparkRenderer::tileBasedLightRendering(const GBuffer& geometryBuffer)
     glBindImageTexture(2, geometryBuffer.roughnessMetalnessTexture, 0, false, 0, GL_READ_ONLY, GL_RG8);
 
     // output image
-    glBindImageTexture(3, lightColorTexture, 0, false, 0, GL_WRITE_ONLY, GL_RGBA16F);
+    glBindImageTexture(3, lightingTexture, 0, false, 0, GL_WRITE_ONLY, GL_RGBA16F);
     glBindImageTexture(4, brightPassTexture, 0, false, 0, GL_WRITE_ONLY, GL_RGBA16F);
 
     tileBasedLightingShader->dispatchCompute(width / 16, height / 16, 1);
     glBindTextures(0, 0, nullptr);
 
-    textureHandle = lightColorTexture;
+    textureHandle = lightingTexture;
 
     POP_DEBUG_GROUP();
 }
@@ -429,71 +426,6 @@ void SparkRenderer::renderCubemap(GLuint framebuffer) const
     glDepthFunc(GL_GREATER);
     glDisable(GL_DEPTH_TEST);
 
-    POP_DEBUG_GROUP();
-}
-
-void SparkRenderer::bloom()
-{
-    if(!bloomEnable)
-    {
-        return;
-    }
-    PUSH_DEBUG_GROUP(BLOOM)
-
-    const auto downsampleTexture = [this](GLuint framebuffer, GLuint texture, GLuint viewportWidth, GLuint viewportHeight, bool downscale = true,
-                                          float intensity = 1.0f) {
-        glViewport(0, 0, viewportWidth, viewportHeight);
-
-        glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-        // glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-        // glClear(GL_COLOR_BUFFER_BIT);
-
-        bloomDownScaleShader->use();
-        bloomDownScaleShader->setVec2("outputTextureSizeInversion",
-                                      glm::vec2(1.0f / static_cast<float>(viewportWidth), 1.0f / static_cast<float>(viewportHeight)));
-        glBindTextureUnit(0, texture);
-        screenQuad.draw();
-    };
-
-    const auto upsampleTexture = [this](GLuint framebuffer, GLuint texture, GLuint viewportWidth, GLuint viewportHeight, float intensity = 1.0f) {
-        glViewport(0, 0, viewportWidth, viewportHeight);
-
-        glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-
-        bloomUpScaleShader->use();
-        bloomUpScaleShader->setFloat("intensity", intensity);
-        glBindTextureUnit(0, texture);
-        screenQuad.draw();
-    };
-
-    upsampleTexture(bloomFramebuffer, lightColorTexture, width, height);
-
-    downsampleTexture(downsampleFramebuffer2, brightPassTexture, width / 2, height / 2);
-    downsampleTexture(downsampleFramebuffer4, downsampleTexture2, width / 4, height / 4);
-    downsampleTexture(downsampleFramebuffer8, downsampleTexture4, width / 8, height / 8);
-    downsampleTexture(downsampleFramebuffer16, downsampleTexture8, width / 16, height / 16);
-
-    glBlendFunc(GL_ONE, GL_ONE);
-    glBlendEquation(GL_FUNC_ADD);
-    glEnable(GL_BLEND);
-
-    upsampleBloomBlurPass16->blurTexture(downsampleTexture16);
-    upsampleTexture(downsampleFramebuffer8, upsampleBloomBlurPass16->getBlurredTexture(), width / 8, height / 8);
-
-    upsampleBloomBlurPass8->blurTexture(downsampleTexture8);
-    upsampleTexture(downsampleFramebuffer4, upsampleBloomBlurPass8->getBlurredTexture(), width / 4, height / 4);
-
-    upsampleBloomBlurPass4->blurTexture(downsampleTexture4);
-    upsampleTexture(downsampleFramebuffer2, upsampleBloomBlurPass4->getBlurredTexture(), width / 2, height / 2);
-
-    upsampleBloomBlurPass2->blurTexture(downsampleTexture2);
-    upsampleTexture(bloomFramebuffer, upsampleBloomBlurPass2->getBlurredTexture(), width, height, bloomIntensity);
-
-    textureHandle = bloomTexture;
-
-    glDisable(GL_BLEND);
-
-    glViewport(0, 0, width, height);
     POP_DEBUG_GROUP();
 }
 
@@ -530,7 +462,7 @@ void SparkRenderer::depthOfField()
         return;
 
     dofPass->setUniforms(nearStart, nearEnd, farStart, farEnd);
-    dofPass->render(lightColorTexture, gBuffer.depthTexture);
+    dofPass->render(lightingTexture, gBuffer.depthTexture);
     textureHandle = dofPass->getOutputTexture();
 }
 
@@ -681,35 +613,26 @@ void SparkRenderer::createFrameBuffersAndTextures()
     dofPass->recreateWithNewSize(width, height);
     ao.createFrameBuffersAndTextures(width, height);
     toneMapper.createFrameBuffersAndTextures(width, height);
+    bloom.createFrameBuffersAndTextures(width, height);
     pointLightIndices.resizeBuffer(256 * (uint32_t)glm::ceil(height / 16.0f) * (uint32_t)glm::ceil(width / 16.0f) * sizeof(uint32_t));
     spotLightIndices.resizeBuffer(256 * (uint32_t)glm::ceil(height / 16.0f) * (uint32_t)glm::ceil(width / 16.0f) * sizeof(uint32_t));
     lightProbeIndices.resizeBuffer(256 * (uint32_t)glm::ceil(height / 16.0f) * (uint32_t)glm::ceil(width / 16.0f) * sizeof(uint32_t));
 
     gBuffer.setup(width, height);
 
-    utils::recreateTexture2D(lightColorTexture, width, height, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::recreateTexture2D(lightingTexture, width, height, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
     utils::recreateTexture2D(brightPassTexture, width, height, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
     utils::recreateTexture2D(motionBlurTexture, width, height, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
     utils::recreateTexture2D(lightShaftTexture, width / 2, height / 2, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
     utils::recreateTexture2D(fxaaTexture, width, height, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::recreateTexture2D(downsampleTexture2, width / 2, height / 2, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::recreateTexture2D(downsampleTexture4, width / 4, height / 4, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::recreateTexture2D(downsampleTexture8, width / 8, height / 8, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::recreateTexture2D(downsampleTexture16, width / 16, height / 16, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::recreateTexture2D(bloomTexture, width, height, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
     utils::recreateTexture2D(lightsPerTileTexture, width / 16, height / 16, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
 
-    utils::recreateFramebuffer(lightFrameBuffer, {lightColorTexture, brightPassTexture});
-    utils::recreateFramebuffer(cubemapFramebuffer, {lightColorTexture});
+    utils::recreateFramebuffer(lightFrameBuffer, {lightingTexture, brightPassTexture});
+    utils::recreateFramebuffer(cubemapFramebuffer, {lightingTexture});
     utils::bindDepthTexture(cubemapFramebuffer, gBuffer.depthTexture);
     utils::recreateFramebuffer(motionBlurFramebuffer, {motionBlurTexture});
     utils::recreateFramebuffer(lightShaftFramebuffer, {lightShaftTexture});
     utils::recreateFramebuffer(fxaaFramebuffer, {fxaaTexture});
-    utils::recreateFramebuffer(downsampleFramebuffer2, {downsampleTexture2});
-    utils::recreateFramebuffer(downsampleFramebuffer4, {downsampleTexture4});
-    utils::recreateFramebuffer(downsampleFramebuffer8, {downsampleTexture8});
-    utils::recreateFramebuffer(downsampleFramebuffer16, {downsampleTexture16});
-    utils::recreateFramebuffer(bloomFramebuffer, {bloomTexture});
 }
 
 void SparkRenderer::cleanup()
@@ -723,16 +646,13 @@ void SparkRenderer::deleteFrameBuffersAndTextures()
 {
     gBuffer.cleanup();
 
-    GLuint textures[12] = {lightColorTexture,   brightPassTexture, downsampleTexture2,      downsampleTexture4, downsampleTexture8,
-                           downsampleTexture16, bloomTexture,      motionBlurTexture,  lightsPerTileTexture,
-                           fxaaTexture,         lightShaftTexture, brdfLookupTexture};
-    glDeleteTextures(12, textures);
+    GLuint textures[7] = {lightingTexture, brightPassTexture, motionBlurTexture, lightsPerTileTexture,
+                          fxaaTexture,       lightShaftTexture, brdfLookupTexture};
+    glDeleteTextures(7, textures);
 
-    GLuint frameBuffers[10] = {lightFrameBuffer,       cubemapFramebuffer, motionBlurFramebuffer,
-                               downsampleFramebuffer2, downsampleFramebuffer4, downsampleFramebuffer8, downsampleFramebuffer16,
-                               bloomFramebuffer,       lightShaftFramebuffer,  fxaaFramebuffer};
+    GLuint frameBuffers[5] = {lightFrameBuffer, cubemapFramebuffer, motionBlurFramebuffer, lightShaftFramebuffer, fxaaFramebuffer};
 
-    glDeleteFramebuffers(10, frameBuffers);
+    glDeleteFramebuffers(5, frameBuffers);
 }
 
 void SparkRenderer::enableWireframeMode()

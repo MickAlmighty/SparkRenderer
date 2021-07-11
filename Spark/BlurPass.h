@@ -1,12 +1,15 @@
 #pragma once
 
-#include "glad_glfw3.h"
+#include <memory>
 
-#include "Shader.h"
-#include "Structs.h"
+#include "glad_glfw3.h"
+#include "ScreenQuad.hpp"
 
 namespace spark
 {
+namespace resources {
+    class Shader;
+}
 
 class BlurPass
 {

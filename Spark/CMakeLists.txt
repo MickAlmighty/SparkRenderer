@@ -3,6 +3,8 @@ list(APPEND SparkSources
     ${CMAKE_CURRENT_SOURCE_DIR}/AmbientOcclusion.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/BlurPass.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/BlurPass.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Bloom.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Bloom.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Buffer.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Camera.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Camera.h
@@ -54,6 +56,7 @@ list(APPEND SparkSources
     ${CMAKE_CURRENT_SOURCE_DIR}/ResourceLoader.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Scene.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Scene.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/ScreenQuad.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Shader.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Shader.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ShaderDescriptor.hpp

@@ -3,10 +3,11 @@
 #include <glad/glad.h>
 
 #include "AmbientOcclusion.hpp"
+#include "Bloom.hpp"
 #include "Enums.h"
 #include "GBuffer.h"
 #include "Scene.h"
-#include "Structs.h"
+#include "ScreenQuad.hpp"
 #include "RenderingRequest.h"
 #include "ToneMapper.hpp"
 
@@ -47,14 +48,11 @@ class SparkRenderer
     void renderCubemap(GLuint framebuffer) const;
     void tileBasedLightCulling(const GBuffer& geometryBuffer) const;
     void tileBasedLightRendering(const GBuffer& geometryBuffer);
-    void bloom();
     void lightShafts();
     void helperShapes();
     void depthOfField();
     void fxaa();
     void motionBlur();
-    void toneMapping();
-    void calculateAverageLuminance();
     void renderToScreen() const;
     void clearRenderQueues();
     void initMembers();
@@ -80,11 +78,12 @@ class SparkRenderer
     ScreenQuad screenQuad{};
     AmbientOcclusion ao{};
     ToneMapper toneMapper{};
+    Bloom bloom{};
     std::unique_ptr<DepthOfFieldPass> dofPass;
 
     GBuffer gBuffer{};
 
-    GLuint lightFrameBuffer{}, lightColorTexture{}, brightPassTexture{};
+    GLuint lightFrameBuffer{}, lightingTexture{}, brightPassTexture{};
     GLuint cubemapFramebuffer{};
     GLuint motionBlurFramebuffer{}, motionBlurTexture{};
     GLuint lightShaftFramebuffer{}, lightShaftTexture{};
@@ -93,19 +92,6 @@ class SparkRenderer
 
     // IBL
     GLuint brdfLookupTexture{};
-
-    // bloom start
-    std::unique_ptr<BlurPass> upsampleBloomBlurPass2;
-    std::unique_ptr<BlurPass> upsampleBloomBlurPass4;
-    std::unique_ptr<BlurPass> upsampleBloomBlurPass8;
-    std::unique_ptr<BlurPass> upsampleBloomBlurPass16;
-
-    GLuint bloomFramebuffer{}, bloomTexture{};
-    GLuint downsampleFramebuffer2{}, downsampleTexture2{};
-    GLuint downsampleFramebuffer4{}, downsampleTexture4{};
-    GLuint downsampleFramebuffer8{}, downsampleTexture8{};
-    GLuint downsampleFramebuffer16{}, downsampleTexture16{};
-    // bloom end
 
     // local light probes start
     const unsigned int sceneCubemapSize{256};
@@ -129,8 +115,6 @@ class SparkRenderer
     std::shared_ptr<resources::Shader> solidColorShader{nullptr};
     std::shared_ptr<resources::Shader> lightShaftsShader{nullptr};
     std::shared_ptr<resources::Shader> fxaaShader{nullptr};
-    std::shared_ptr<resources::Shader> bloomDownScaleShader{nullptr};
-    std::shared_ptr<resources::Shader> bloomUpScaleShader{nullptr};
     std::shared_ptr<resources::Shader> tileBasedLightCullingShader{nullptr};
     std::shared_ptr<resources::Shader> tileBasedLightingShader{nullptr};
     std::shared_ptr<resources::Shader> localLightProbesLightingShader{nullptr};
@@ -160,8 +144,7 @@ class SparkRenderer
     float density = 0.75f;
     float weight = 6.65f;
 
-    bool bloomEnable = false;
-    float bloomIntensity = 0.1f;
+    bool isBloomEnabled = false;
 
     bool motionBlurEnable = true;
 };
