@@ -8,6 +8,7 @@
 #include "Scene.h"
 #include "Structs.h"
 #include "RenderingRequest.h"
+#include "ToneMapper.hpp"
 
 namespace spark
 {
@@ -78,17 +79,16 @@ class SparkRenderer
 
     ScreenQuad screenQuad{};
     AmbientOcclusion ao{};
+    ToneMapper toneMapper{};
     std::unique_ptr<DepthOfFieldPass> dofPass;
 
     GBuffer gBuffer{};
 
     GLuint lightFrameBuffer{}, lightColorTexture{}, brightPassTexture{};
     GLuint cubemapFramebuffer{};
-    GLuint toneMappingFramebuffer{}, toneMappingTexture{};
     GLuint motionBlurFramebuffer{}, motionBlurTexture{};
     GLuint lightShaftFramebuffer{}, lightShaftTexture{};
     GLuint fxaaFramebuffer{}, fxaaTexture{};
-    GLuint averageLuminanceTexture{};
     GLuint lightsPerTileTexture{};
 
     // IBL
@@ -120,7 +120,6 @@ class SparkRenderer
 
     std::shared_ptr<resources::Shader> mainShader{nullptr};
     std::shared_ptr<resources::Shader> screenShader{nullptr};
-    std::shared_ptr<resources::Shader> toneMappingShader{nullptr};
     std::shared_ptr<resources::Shader> lightShader{nullptr};
     std::shared_ptr<resources::Shader> motionBlurShader{nullptr};
     std::shared_ptr<resources::Shader> cubemapShader{nullptr};
@@ -129,8 +128,6 @@ class SparkRenderer
     std::shared_ptr<resources::Shader> blendDofShader{nullptr};
     std::shared_ptr<resources::Shader> solidColorShader{nullptr};
     std::shared_ptr<resources::Shader> lightShaftsShader{nullptr};
-    std::shared_ptr<resources::Shader> luminanceHistogramComputeShader{nullptr};
-    std::shared_ptr<resources::Shader> averageLuminanceComputeShader{nullptr};
     std::shared_ptr<resources::Shader> fxaaShader{nullptr};
     std::shared_ptr<resources::Shader> bloomDownScaleShader{nullptr};
     std::shared_ptr<resources::Shader> bloomUpScaleShader{nullptr};
@@ -144,7 +141,6 @@ class SparkRenderer
 
     Cube cube = Cube();
     UniformBuffer cameraUBO{};
-    SSBO luminanceHistogram{};
     SSBO pointLightIndices{};
     SSBO spotLightIndices{};
     SSBO lightProbeIndices{};
@@ -163,12 +159,6 @@ class SparkRenderer
     float decay = 0.995f;
     float density = 0.75f;
     float weight = 6.65f;
-
-    // tone mapping
-    float minLogLuminance = 0.5f;
-    float oneOverLogLuminanceRange = 1.0f / 12.0f;
-    float logLuminanceRange = 12.0f;
-    float tau = 1.1f;
 
     bool bloomEnable = false;
     float bloomIntensity = 0.1f;

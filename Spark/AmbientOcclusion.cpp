@@ -71,6 +71,7 @@ GLuint AmbientOcclusion::process(const bool isSsaoEnabled, const ScreenQuad& sq,
 
     return ssaoBlurPass->getBlurredTexture();
 }
+
 void AmbientOcclusion::createFrameBuffersAndTextures(unsigned int width, unsigned int height)
 {
     w = width;

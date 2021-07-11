@@ -74,6 +74,8 @@ list(APPEND SparkSources
     ${CMAKE_CURRENT_SOURCE_DIR}/Texture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Timer.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Timer.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ToneMapper.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ToneMapper.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/WorldTransform.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/WorldTransform.h
 )
