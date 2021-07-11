@@ -1,6 +1,5 @@
 #pragma once
 
-#include <array>
 #include <vector>
 
 #include <glm/glm.hpp>
@@ -21,11 +20,21 @@ namespace utils
 {
     void createTexture2D(GLuint& texture, GLuint width, GLuint height, GLenum internalFormat, GLenum format, GLenum pixelFormat,
                          GLenum textureWrapping, GLenum textureSampling, bool mipMaps = false, void* data = nullptr);
+
+    void recreateTexture2D(GLuint& texture, GLuint width, GLuint height, GLenum internalFormat, GLenum format, GLenum pixelFormat,
+                           GLenum textureWrapping, GLenum textureSampling, bool mipMaps = false, void* data = nullptr);
+
     void createCubemap(GLuint& texture, unsigned int size, GLenum internalFormat, GLenum format, GLenum pixelFormat, GLenum textureWrapping,
                        GLenum textureSampling, bool mipMaps = false);
 
+    void recreateCubemap(GLuint& texture, unsigned int size, GLenum internalFormat, GLenum format, GLenum pixelFormat, GLenum textureWrapping,
+                         GLenum textureSampling, bool mipMaps = false);
+
     void bindDepthTexture(GLuint& framebuffer, GLuint depthTexture);
-    void createFramebuffer(GLuint& framebuffer, const std::vector<GLuint>&& colorTextures, GLuint renderbuffer = 0);
+
+    void createFramebuffer(GLuint& framebuffer, std::vector<GLuint>&& colorTextures, GLuint renderbuffer = 0);
+
+    void recreateFramebuffer(GLuint& framebuffer, std::vector<GLuint>&& colorTextures, GLuint renderbuffer = 0);
 
     GLuint createBrdfLookupTexture(unsigned int size);
 

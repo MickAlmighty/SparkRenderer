@@ -19,30 +19,20 @@ class BufferTest : public ::testing::Test
     }
 };
 
-TEST_F(BufferTest, testProperBindingAsignment) {
+TEST_F(BufferTest, testProperBindingAsignment)
+{
     SSBO ssbo1{};
-    SSBO ssbo2{};
-    SSBO ssbo3{};
-    SSBO ssbo4{};
 
-    std::set<std::uint32_t> bindings{ 0, 1, 2, 3 };
-    ASSERT_EQ(bindings, SSBO::bindings);
-
-    ssbo2.~SSBO();
-    ssbo3.~SSBO();
-
-    bindings = { 0, 3 };
-    ASSERT_EQ(bindings, SSBO::bindings);
+    {
+        SSBO ssbo2{};
+        SSBO ssbo3{};
+        SSBO ssbo4{};
+        ASSERT_EQ(ssbo1.binding, 0);
+        ASSERT_EQ(ssbo2.binding, 1);
+        ASSERT_EQ(ssbo3.binding, 2);
+        ASSERT_EQ(ssbo4.binding, 3);
+    }
 
     SSBO ssbo5{};
-    bindings = { 0, 1, 3 };
-    ASSERT_EQ(bindings, SSBO::bindings);
-
-    SSBO ssbo6;
-    bindings = { 0, 1, 2, 3 };
-    ASSERT_EQ(bindings, SSBO::bindings);
-
-    SSBO ssbo7{};
-    bindings = { 0, 1, 2, 3, 4 };
-    ASSERT_EQ(bindings, SSBO::bindings);
+    ASSERT_EQ(ssbo5.binding, 1);
 }

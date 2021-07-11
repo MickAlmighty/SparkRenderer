@@ -1,4 +1,6 @@
 list(APPEND SparkSources 
+    ${CMAKE_CURRENT_SOURCE_DIR}/AmbientOcclusion.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AmbientOcclusion.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/BlurPass.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/BlurPass.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Buffer.hpp

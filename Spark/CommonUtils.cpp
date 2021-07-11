@@ -6,169 +6,192 @@
 #include "Shader.h"
 #include "Spark.h"
 
-namespace spark
+namespace spark::utils
 {
-namespace utils
+void createTexture2D(GLuint& texture, GLuint width, GLuint height, GLenum internalFormat, GLenum format, GLenum pixelFormat, GLenum textureWrapping,
+                     GLenum textureSampling, bool mipMaps, void* data)
 {
-    void createTexture2D(GLuint& texture, GLuint width, GLuint height, GLenum internalFormat, GLenum format, GLenum pixelFormat,
-                         GLenum textureWrapping, GLenum textureSampling, bool mipMaps, void* data)
+    glCreateTextures(GL_TEXTURE_2D, 1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    if(data == nullptr)
+        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, pixelFormat, nullptr);
+    else
+        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, pixelFormat, data);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, textureSampling);
+
+    if(mipMaps)
     {
-        glCreateTextures(GL_TEXTURE_2D, 1, &texture);
-        glBindTexture(GL_TEXTURE_2D, texture);
-
-        if(data == nullptr)
-            glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, pixelFormat, nullptr);
-        else
-            glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, pixelFormat, data);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, textureSampling);
-
-        if(mipMaps)
+        glGenerateMipmap(GL_TEXTURE_2D);
+        if(textureSampling == GL_LINEAR)
         {
-            glGenerateMipmap(GL_TEXTURE_2D);
-            if(textureSampling == GL_LINEAR)
-            {
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-            }
-            else if(textureSampling == GL_NEAREST)
-            {
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
-            }
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         }
-        else
+        else if(textureSampling == GL_NEAREST)
         {
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, textureSampling);
-        }
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, textureWrapping);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, textureWrapping);
-        glBindTexture(GL_TEXTURE_2D, 0);
-    }
-
-    void createCubemap(GLuint& texture, unsigned size, GLenum internalFormat, GLenum format, GLenum pixelFormat, GLenum textureWrapping,
-                       GLenum textureSampling, bool mipMaps)
-    {
-        glGenTextures(1, &texture);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, texture);
-        for(unsigned int i = 0; i < 6; ++i)
-        {
-            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internalFormat, size, size, 0, format, pixelFormat, nullptr);
-        }
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, textureWrapping);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, textureWrapping);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, textureWrapping);
-
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, textureSampling);
-        if(mipMaps)
-        {
-            if(textureSampling == GL_LINEAR)
-            {
-                glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-            }
-            else if(textureSampling == GL_NEAREST)
-            {
-                glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
-            }
-            glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
-        }
-        else
-        {
-            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, textureSampling);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
         }
     }
-
-    void bindDepthTexture(GLuint& framebuffer, GLuint depthTexture)
+    else
     {
-        glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthTexture, 0);
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, textureSampling);
     }
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, textureWrapping);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, textureWrapping);
+    glBindTexture(GL_TEXTURE_2D, 0);
+}
 
-    void createFramebuffer(GLuint& framebuffer, const std::vector<GLuint>&& colorTextures, GLuint renderbuffer)
+void recreateTexture2D(GLuint& texture, GLuint width, GLuint height, GLenum internalFormat, GLenum format, GLenum pixelFormat, GLenum textureWrapping,
+                       GLenum textureSampling, bool mipMaps, void* data)
+{
+    if(texture != 0)
+        glDeleteTextures(1, &texture);
+
+    createTexture2D(texture, width, height, internalFormat, format, pixelFormat, textureWrapping, textureSampling, mipMaps, data);
+}
+
+void createCubemap(GLuint& texture, unsigned int size, GLenum internalFormat, GLenum format, GLenum pixelFormat, GLenum textureWrapping,
+                   GLenum textureSampling, bool mipMaps)
+{
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, texture);
+    for(unsigned int i = 0; i < 6; ++i)
     {
-        glCreateFramebuffers(1, &framebuffer);
-        glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internalFormat, size, size, 0, format, pixelFormat, nullptr);
+    }
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, textureWrapping);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, textureWrapping);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, textureWrapping);
 
-        if(!colorTextures.empty())
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, textureSampling);
+    if(mipMaps)
+    {
+        if(textureSampling == GL_LINEAR)
         {
-            std::vector<GLenum> colorAttachments;
-            colorAttachments.reserve(colorTextures.size());
-            for(unsigned int i = 0; i < colorTextures.size(); ++i)
-            {
-                glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, colorTextures[i], 0);
-                colorAttachments.push_back(GL_COLOR_ATTACHMENT0 + i);
-            }
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        }
+        else if(textureSampling == GL_NEAREST)
+        {
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+        }
+        glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+    }
+    else
+    {
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, textureSampling);
+    }
+}
 
-            glDrawBuffers(static_cast<GLsizei>(colorAttachments.size()), colorAttachments.data());
+void recreateCubemap(GLuint& texture, unsigned int size, GLenum internalFormat, GLenum format, GLenum pixelFormat, GLenum textureWrapping,
+                     GLenum textureSampling, bool mipMaps)
+{
+    if(texture != 0)
+        glDeleteTextures(1, &texture);
+
+    createCubemap(texture, size, internalFormat, format, pixelFormat, textureWrapping, textureSampling, mipMaps);
+}
+
+void bindDepthTexture(GLuint& framebuffer, GLuint depthTexture)
+{
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthTexture, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void createFramebuffer(GLuint& framebuffer, std::vector<GLuint>&& colorTextures, GLuint renderbuffer)
+{
+    glCreateFramebuffers(1, &framebuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+
+    if(!colorTextures.empty())
+    {
+        std::vector<GLenum> colorAttachments;
+        colorAttachments.reserve(colorTextures.size());
+        for(unsigned int i = 0; i < colorTextures.size(); ++i)
+        {
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, colorTextures[i], 0);
+            colorAttachments.push_back(GL_COLOR_ATTACHMENT0 + i);
         }
 
-        if(renderbuffer != 0)
+        glDrawBuffers(static_cast<GLsizei>(colorAttachments.size()), colorAttachments.data());
+    }
+
+    if(renderbuffer != 0)
+    {
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, renderbuffer);
+    }
+
+    if(!colorTextures.empty() || renderbuffer != 0)
+    {
+        if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         {
-            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, renderbuffer);
+            throw std::runtime_error("Framebuffer incomplete!");
         }
-
-        if(!colorTextures.empty() || renderbuffer != 0)
-        {
-            if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-            {
-                throw std::runtime_error("Framebuffer incomplete!");
-            }
-        }
-
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
-    GLuint createBrdfLookupTexture(unsigned size)
-    {
-        PUSH_DEBUG_GROUP(BRDF_LOOKUP_TABLE);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
 
-        GLuint brdfLUTTexture{};
-        utils::createTexture2D(brdfLUTTexture, size, size, GL_RG16F, GL_RG, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+void recreateFramebuffer(GLuint& framebuffer, std::vector<GLuint>&& colorTextures, GLuint renderbuffer)
+{
+    if (framebuffer != 0)
+        glDeleteFramebuffers(1, &framebuffer);
 
-        const auto brdfComputeShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("brdfCompute.glsl");
-        brdfComputeShader->use();
-        glBindImageTexture(0, brdfLUTTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RG16F);
-        brdfComputeShader->dispatchCompute(size / 32, size / 32, 1);
+    createFramebuffer(framebuffer, std::move(colorTextures), renderbuffer);
+}
 
-        POP_DEBUG_GROUP();
+GLuint createBrdfLookupTexture(unsigned int size)
+{
+    PUSH_DEBUG_GROUP(BRDF_LOOKUP_TABLE);
 
-        return brdfLUTTexture;
-    }
+    GLuint brdfLUTTexture{};
+    utils::createTexture2D(brdfLUTTexture, size, size, GL_RG16F, GL_RG, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
 
-    glm::mat4 getProjectionReversedZInfFar(uint32_t width, uint32_t height, float fovDegrees, float zNear)
-    {
-        const float aspectWbyH = static_cast<float>(width) / (1.0f * height);
-        const float f = 1.0f / glm::tan(glm::radians(fovDegrees) / 2.0f);
+    const auto brdfComputeShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("brdfCompute.glsl");
+    brdfComputeShader->use();
+    glBindImageTexture(0, brdfLUTTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RG16F);
+    brdfComputeShader->dispatchCompute(size / 32, size / 32, 1);
 
-        const glm::vec4 column0{f / aspectWbyH, 0.0f, 0.0f, 0.0f};
-        const glm::vec4 column1{0.0f, f, 0.0f, 0.0f};
-        const glm::vec4 column2{0.0f, 0.0f, 0.0f, -1.0f};
-        const glm::vec4 column3{0.0f, 0.0f, zNear, 0.0f};
+    POP_DEBUG_GROUP();
 
-        return glm::mat4(column0, column1, column2, column3);
-    }
+    return brdfLUTTexture;
+}
 
-    glm::mat4 getProjectionReversedZ(uint32_t width, uint32_t height, float fovDegrees, float zNear, float zFar)
-    {
-        const float rad = glm::radians(fovDegrees);
-        const float h = glm::cos(0.5f * rad) / glm::sin(0.5f * rad);
-        const float w = h * static_cast<float>(height) / (1.0f * width);
+glm::mat4 getProjectionReversedZInfFar(uint32_t width, uint32_t height, float fovDegrees, float zNear)
+{
+    const float aspectWbyH = static_cast<float>(width) / (1.0f * height);
+    const float f = 1.0f / glm::tan(glm::radians(fovDegrees) / 2.0f);
 
-        const glm::vec4 column0{w, 0.0f, 0.0f, 0.0f};
-        const glm::vec4 column1{0.0f, h, 0.0f, 0.0f};
-        const glm::vec4 column2{0.0f, 0.0f, zNear / (zFar - zNear), -1.0f};
-        const glm::vec4 column3{0.0f, 0.0f, -(zFar * zNear) / (zNear - zFar), 0.0f};
+    const glm::vec4 column0{f / aspectWbyH, 0.0f, 0.0f, 0.0f};
+    const glm::vec4 column1{0.0f, f, 0.0f, 0.0f};
+    const glm::vec4 column2{0.0f, 0.0f, 0.0f, -1.0f};
+    const glm::vec4 column3{0.0f, 0.0f, zNear, 0.0f};
 
-        return glm::mat4(column0, column1, column2, column3);
-    }
+    return glm::mat4(column0, column1, column2, column3);
+}
 
-    std::array<glm::mat4, 6> getCubemapViewMatrices(glm::vec3 cameraPosition)
-    {
-        return {glm::lookAt(cameraPosition, cameraPosition + glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
-                glm::lookAt(cameraPosition, cameraPosition + glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
-                glm::lookAt(cameraPosition, cameraPosition + glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
-                glm::lookAt(cameraPosition, cameraPosition + glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f)),
-                glm::lookAt(cameraPosition, cameraPosition + glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
-                glm::lookAt(cameraPosition, cameraPosition + glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f))};
-    }
-}  // namespace utils
-}  // namespace spark
+glm::mat4 getProjectionReversedZ(uint32_t width, uint32_t height, float fovDegrees, float zNear, float zFar)
+{
+    const float rad = glm::radians(fovDegrees);
+    const float h = glm::cos(0.5f * rad) / glm::sin(0.5f * rad);
+    const float w = h * static_cast<float>(height) / (1.0f * width);
+
+    const glm::vec4 column0{w, 0.0f, 0.0f, 0.0f};
+    const glm::vec4 column1{0.0f, h, 0.0f, 0.0f};
+    const glm::vec4 column2{0.0f, 0.0f, zNear / (zFar - zNear), -1.0f};
+    const glm::vec4 column3{0.0f, 0.0f, -(zFar * zNear) / (zNear - zFar), 0.0f};
+
+    return glm::mat4(column0, column1, column2, column3);
+}
+
+std::array<glm::mat4, 6> getCubemapViewMatrices(glm::vec3 cameraPosition)
+{
+    return {glm::lookAt(cameraPosition, cameraPosition + glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
+            glm::lookAt(cameraPosition, cameraPosition + glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
+            glm::lookAt(cameraPosition, cameraPosition + glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
+            glm::lookAt(cameraPosition, cameraPosition + glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f)),
+            glm::lookAt(cameraPosition, cameraPosition + glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
+            glm::lookAt(cameraPosition, cameraPosition + glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f))};
+}
+}  // namespace spark::utils

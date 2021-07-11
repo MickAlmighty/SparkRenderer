@@ -10,8 +10,6 @@ template<GLenum BUFFER_TYPE>
 class Buffer
 {
     public:
-    static inline std::set<uint32_t> bindings{};
-
     GLuint ID{0};
     GLint binding{-1};
     GLsizei size{0};
@@ -47,6 +45,8 @@ class Buffer
     void cleanup();
     void getBinding();
     void freeBinding();
+
+    static inline std::set<uint32_t> bindings{};
 };
 
 template<GLenum BUFFER_TYPE>

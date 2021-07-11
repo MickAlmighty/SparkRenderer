@@ -46,15 +46,14 @@ GLuint BlurPass::getSecondPassFramebuffer() const
     return hFramebuffer;
 }
 
-void BlurPass::recreateWithNewSize(unsigned width, unsigned height)
+void BlurPass::recreateWithNewSize(unsigned int width, unsigned int height)
 {
     this->width = width;
     this->height = height;
-    deleteGlObjects();
     createGlObjects();
 }
 
-BlurPass::BlurPass(unsigned width_, unsigned height_) : width(width_), height(height_)
+BlurPass::BlurPass(unsigned int width_, unsigned int height_) : width(width_), height(height_)
 {
     gaussianBlurShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("gaussianBlur.glsl");
     screenQuad.setup();
@@ -68,11 +67,11 @@ BlurPass::~BlurPass()
 
 void BlurPass::createGlObjects()
 {
-    utils::createTexture2D(hTexture, width, height, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::recreateTexture2D(hTexture, width, height, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
     utils::createTexture2D(vTexture, width, height , GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
 
-    utils::createFramebuffer(hFramebuffer, {hTexture});
-    utils::createFramebuffer(vFramebuffer, {vTexture});
+    utils::recreateFramebuffer(hFramebuffer, {hTexture});
+    utils::recreateFramebuffer(vFramebuffer, {vTexture});
 }
 
 void BlurPass::deleteGlObjects()

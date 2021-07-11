@@ -2,6 +2,7 @@
 
 #include <glad/glad.h>
 
+#include "AmbientOcclusion.hpp"
 #include "Enums.h"
 #include "GBuffer.h"
 #include "Scene.h"
@@ -41,7 +42,6 @@ class SparkRenderer
     void resizeWindowIfNecessary(unsigned int windowWidth, unsigned int windowHeight);
     void fillGBuffer(const GBuffer& geometryBuffer);
     void fillGBuffer(const GBuffer& geometryBuffer, const std::function<bool(const RenderingRequest& request)>& filter);
-    void ssaoComputing(const GBuffer& geometryBuffer);
     void renderLights(GLuint framebuffer, const GBuffer& geometryBuffer);
     void renderCubemap(GLuint framebuffer) const;
     void tileBasedLightCulling(const GBuffer& geometryBuffer) const;
@@ -77,8 +77,8 @@ class SparkRenderer
     std::weak_ptr<PbrCubemapTexture> pbrCubemap;
 
     ScreenQuad screenQuad{};
+    AmbientOcclusion ao{};
     std::unique_ptr<DepthOfFieldPass> dofPass;
-    std::unique_ptr<BlurPass> ssaoBlurPass;
 
     GBuffer gBuffer{};
 
@@ -116,8 +116,6 @@ class SparkRenderer
     SSBO cubemapViewMatrices{};
     // local light probes end
 
-    GLuint ssaoFramebuffer{}, ssaoTexture{}, randomNormalsTexture{}, ssaoDisabledTexture{};
-
     GLuint textureHandle{};  // temporary, its only a handle to other texture -> dont delete it
 
     std::shared_ptr<resources::Shader> mainShader{nullptr};
@@ -126,7 +124,6 @@ class SparkRenderer
     std::shared_ptr<resources::Shader> lightShader{nullptr};
     std::shared_ptr<resources::Shader> motionBlurShader{nullptr};
     std::shared_ptr<resources::Shader> cubemapShader{nullptr};
-    std::shared_ptr<resources::Shader> ssaoShader{nullptr};
     std::shared_ptr<resources::Shader> circleOfConfusionShader{nullptr};
     std::shared_ptr<resources::Shader> bokehDetectionShader{nullptr};
     std::shared_ptr<resources::Shader> blendDofShader{nullptr};
@@ -147,17 +144,12 @@ class SparkRenderer
 
     Cube cube = Cube();
     UniformBuffer cameraUBO{};
-    UniformBuffer sampleUniformBuffer{};
     SSBO luminanceHistogram{};
     SSBO pointLightIndices{};
     SSBO spotLightIndices{};
     SSBO lightProbeIndices{};
 
     bool ssaoEnable = false;
-    int kernelSize = 32;
-    float radius = 0.7f;
-    float bias = 0.035f;
-    float power = 4.0f;
 
     bool dofEnable = false;
     float nearStart = 1.0f;
