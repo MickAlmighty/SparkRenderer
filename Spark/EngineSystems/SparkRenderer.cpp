@@ -2,7 +2,6 @@
 
 #include "Camera.h"
 #include "CommonUtils.h"
-#include "DepthOfFieldPass.h"
 #include "GUI/ImGui/imgui.h"
 #include "Lights/DirectionalLight.h"
 #include "Lights/LightProbe.h"
@@ -94,6 +93,7 @@ void SparkRenderer::setup(unsigned int windowWidth, unsigned int windowHeight)
     ao.setup(windowWidth, windowHeight, cameraUBO);
     toneMapper.setup(windowWidth, windowHeight);
     bloom.setup(windowWidth, windowHeight);
+    dofPass.setup(width, height, cameraUBO);
 
     cubemapViewMatrices.resizeBuffer(sizeof(glm::mat4) * 6);
     cubemapViewMatrices.updateData(utils::getCubemapViewMatrices(glm::vec3(0)));
@@ -112,9 +112,6 @@ void SparkRenderer::initMembers()
     lightShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("light.glsl");
     motionBlurShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("motionBlur.glsl");
     cubemapShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("cubemap.glsl");
-    circleOfConfusionShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("circleOfConfusion.glsl");
-    bokehDetectionShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("bokehDetection.glsl");
-    blendDofShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("blendDof.glsl");
     solidColorShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("solidColor.glsl");
     lightShaftsShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("lightShafts.glsl");
     fxaaShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("fxaa.glsl");
@@ -125,8 +122,6 @@ void SparkRenderer::initMembers()
     irradianceShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("irradiance.glsl");
     prefilterShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("prefilter.glsl");
     resampleCubemapShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("resampleCubemap.glsl");
-
-    dofPass = std::make_unique<DepthOfFieldPass>(width, height);
 }
 
 void SparkRenderer::updateBufferBindings() const
@@ -135,7 +130,6 @@ void SparkRenderer::updateBufferBindings() const
     lightShader->bindUniformBuffer("Camera", cameraUBO);
     motionBlurShader->bindUniformBuffer("Camera", cameraUBO);
     cubemapShader->bindUniformBuffer("Camera", cameraUBO);
-    circleOfConfusionShader->bindUniformBuffer("Camera", cameraUBO);
     solidColorShader->bindUniformBuffer("Camera", cameraUBO);
 
     tileBasedLightCullingShader->bindUniformBuffer("Camera", cameraUBO);
@@ -243,7 +237,7 @@ void SparkRenderer::setCubemap(const std::shared_ptr<PbrCubemapTexture>& cubemap
 
 void SparkRenderer::resizeWindowIfNecessary(unsigned int windowWidth, unsigned int windowHeight)
 {
-    if(width != static_cast<unsigned int>(windowWidth) || height != static_cast<unsigned int>(windowHeight))
+    if(width != windowWidth || height != windowHeight)
     {
         if(windowWidth != 0 && windowHeight != 0)
         {
@@ -461,9 +455,9 @@ void SparkRenderer::depthOfField()
     if(!dofEnable)
         return;
 
-    dofPass->setUniforms(nearStart, nearEnd, farStart, farEnd);
-    dofPass->render(lightingTexture, gBuffer.depthTexture);
-    textureHandle = dofPass->getOutputTexture();
+    dofPass.setUniforms(nearStart, nearEnd, farStart, farEnd);
+    dofPass.render(lightingTexture, gBuffer.depthTexture);
+    textureHandle = dofPass.getOutputTexture();
 }
 
 void SparkRenderer::lightShafts()
@@ -610,7 +604,7 @@ void SparkRenderer::clearRenderQueues()
 
 void SparkRenderer::createFrameBuffersAndTextures()
 {
-    dofPass->recreateWithNewSize(width, height);
+    dofPass.createFrameBuffersAndTextures(width, height);
     ao.createFrameBuffersAndTextures(width, height);
     toneMapper.createFrameBuffersAndTextures(width, height);
     bloom.createFrameBuffersAndTextures(width, height);

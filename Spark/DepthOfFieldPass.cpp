@@ -8,6 +8,49 @@
 
 namespace spark
 {
+void DepthOfFieldPass::setup(unsigned int width_, unsigned int height_, const UniformBuffer& cameraUbo)
+{
+    screenQuad.setup();
+    cocShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("circleOfConfusion.glsl");
+    blendShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("blendDof.glsl");
+    blurPass = std::make_unique<BlurPass>(width / 2, height / 2);
+
+    cocShader->bindUniformBuffer("Camera", cameraUbo);
+
+    createGlObjects();
+
+    // glGenBuffers(1, &indirectBufferID);
+    // glBindBuffer(GL_DRAW_INDIRECT_BUFFER, indirectBufferID);
+    // DrawArraysIndirectCommand indirectCmd{};
+    // indirectCmd.count = 1;
+    // indirectCmd.instanceCount = 0;
+    // indirectCmd.first = 0;
+    // indirectCmd.baseInstance = 0;
+    // glBufferData(GL_DRAW_INDIRECT_BUFFER, sizeof(DrawArraysIndirectCommand), &indirectCmd, GL_DYNAMIC_DRAW);
+
+    //// Create a texture proxy for the indirect buffer
+    //// (used during bokeh count synch.)
+    // glGenTextures(1, &bokehCountTexID);
+    // glBindTexture(GL_TEXTURE_BUFFER, bokehCountTexID);
+    // glTexBuffer(GL_TEXTURE_BUFFER, GL_R32UI, indirectBufferID);
+    //// Create an atomic counter
+    // glGenBuffers(1, &bokehCounterID);
+    // glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, bokehCounterID);
+    // glBufferData(GL_ATOMIC_COUNTER_BUFFER, sizeof(unsigned int), 0, GL_DYNAMIC_DRAW);
+
+    // glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 0, bokehCounterID);
+
+    // bokehPositionBuffer.genBuffer(sizeof(glm::vec4) * 1024);
+    // glGenTextures(1, &bokehPositionTexture);
+    // glBindTexture(GL_TEXTURE_BUFFER, bokehPositionTexture);
+    // glTexBuffer(GL_TEXTURE_BUFFER, GL_RGBA32F, bokehPositionBuffer.ID);
+
+    // bokehColorBuffer.genBuffer(sizeof(glm::vec4) * 1024);
+    // glGenTextures(1, &bokehColorTexture);
+    // glBindTexture(GL_TEXTURE_BUFFER, bokehColorTexture);
+    // glTexBuffer(GL_TEXTURE_BUFFER, GL_RGBA32F, bokehColorBuffer.ID);
+}
+
 void DepthOfFieldPass::render(GLuint lightPassTexture, GLuint depthTexture) const
 {
     PUSH_DEBUG_GROUP(DEPTH_OF_FIELD)
@@ -34,7 +77,7 @@ GLuint DepthOfFieldPass::getOutputTexture() const
     return blendDofTexture;
 }
 
-void DepthOfFieldPass::recreateWithNewSize(unsigned int width, unsigned int height)
+void DepthOfFieldPass::createFrameBuffersAndTextures(unsigned int width, unsigned int height)
 {
     this->width = width;
     this->height = height;
@@ -49,46 +92,6 @@ void DepthOfFieldPass::setUniforms(float nearStart, float nearEnd, float farStar
     this->nearEnd = nearEnd;
     this->farStart = farStart;
     this->farEnd = farEnd;
-}
-
-DepthOfFieldPass::DepthOfFieldPass(unsigned int width_, unsigned int height_) : width(width_), height(height_)
-{
-    screenQuad.setup();
-    cocShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("circleOfConfusion.glsl");
-    blendShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("blendDof.glsl");
-    blurPass = std::make_unique<BlurPass>(width / 2, height / 2);
-    createGlObjects();
-
-    //glGenBuffers(1, &indirectBufferID);
-    //glBindBuffer(GL_DRAW_INDIRECT_BUFFER, indirectBufferID);
-    //DrawArraysIndirectCommand indirectCmd{};
-    //indirectCmd.count = 1;
-    //indirectCmd.instanceCount = 0;
-    //indirectCmd.first = 0;
-    //indirectCmd.baseInstance = 0;
-    //glBufferData(GL_DRAW_INDIRECT_BUFFER, sizeof(DrawArraysIndirectCommand), &indirectCmd, GL_DYNAMIC_DRAW);
-
-    //// Create a texture proxy for the indirect buffer
-    //// (used during bokeh count synch.)
-    //glGenTextures(1, &bokehCountTexID);
-    //glBindTexture(GL_TEXTURE_BUFFER, bokehCountTexID);
-    //glTexBuffer(GL_TEXTURE_BUFFER, GL_R32UI, indirectBufferID);
-    //// Create an atomic counter
-    //glGenBuffers(1, &bokehCounterID);
-    //glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, bokehCounterID);
-    //glBufferData(GL_ATOMIC_COUNTER_BUFFER, sizeof(unsigned int), 0, GL_DYNAMIC_DRAW);
-
-    //glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 0, bokehCounterID);
-
-    //bokehPositionBuffer.genBuffer(sizeof(glm::vec4) * 1024);
-    //glGenTextures(1, &bokehPositionTexture);
-    //glBindTexture(GL_TEXTURE_BUFFER, bokehPositionTexture);
-    //glTexBuffer(GL_TEXTURE_BUFFER, GL_RGBA32F, bokehPositionBuffer.ID);
-
-    //bokehColorBuffer.genBuffer(sizeof(glm::vec4) * 1024);
-    //glGenTextures(1, &bokehColorTexture);
-    //glBindTexture(GL_TEXTURE_BUFFER, bokehColorTexture);
-    //glTexBuffer(GL_TEXTURE_BUFFER, GL_RGBA32F, bokehColorBuffer.ID);
 }
 
 DepthOfFieldPass::~DepthOfFieldPass()
@@ -136,7 +139,7 @@ void DepthOfFieldPass::blurLightPassTexture(GLuint lightPassTexture) const
 
 void DepthOfFieldPass::detectBokehPositions(GLuint lightPassTexture) const
 {
-    // const auto bokehDetectionShader = ResourceManager::getInstance()->getShader(ShaderType::BOKEH_DETECTION_SHADER);
+    // const auto bokehDetectionShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("bokehDetection.glsl");
     // bokehDetectionShader->use();
     // GLuint textures[2] = {lightPassTexture, circleOfConfusionTexture};
     // glBindTextures(3, 2, textures);

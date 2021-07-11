@@ -4,6 +4,7 @@
 
 #include "AmbientOcclusion.hpp"
 #include "Bloom.hpp"
+#include "DepthOfFieldPass.h"
 #include "Enums.h"
 #include "GBuffer.h"
 #include "Scene.h"
@@ -79,7 +80,7 @@ class SparkRenderer
     AmbientOcclusion ao{};
     ToneMapper toneMapper{};
     Bloom bloom{};
-    std::unique_ptr<DepthOfFieldPass> dofPass;
+    DepthOfFieldPass dofPass;
 
     GBuffer gBuffer{};
 
@@ -109,9 +110,6 @@ class SparkRenderer
     std::shared_ptr<resources::Shader> lightShader{nullptr};
     std::shared_ptr<resources::Shader> motionBlurShader{nullptr};
     std::shared_ptr<resources::Shader> cubemapShader{nullptr};
-    std::shared_ptr<resources::Shader> circleOfConfusionShader{nullptr};
-    std::shared_ptr<resources::Shader> bokehDetectionShader{nullptr};
-    std::shared_ptr<resources::Shader> blendDofShader{nullptr};
     std::shared_ptr<resources::Shader> solidColorShader{nullptr};
     std::shared_ptr<resources::Shader> lightShaftsShader{nullptr};
     std::shared_ptr<resources::Shader> fxaaShader{nullptr};
