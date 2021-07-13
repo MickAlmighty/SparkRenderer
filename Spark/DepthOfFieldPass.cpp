@@ -10,6 +10,8 @@ namespace spark
 {
 void DepthOfFieldPass::setup(unsigned int width_, unsigned int height_, const UniformBuffer& cameraUbo)
 {
+    width = width_;
+    height = height_;
     screenQuad.setup();
     cocShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("circleOfConfusion.glsl");
     blendShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("blendDof.glsl");

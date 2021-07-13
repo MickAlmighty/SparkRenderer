@@ -86,11 +86,13 @@ void Bloom::upsampleTexture(const ScreenQuad& screenQuad, GLuint framebuffer, GL
 
 void Bloom::createFrameBuffersAndTextures(unsigned int width, unsigned int height)
 {
-    utils::recreateTexture2D(downsampleTexture2, width / 2, height / 2, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::recreateTexture2D(downsampleTexture4, width / 4, height / 4, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::recreateTexture2D(downsampleTexture8, width / 8, height / 8, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::recreateTexture2D(downsampleTexture16, width / 16, height / 16, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::recreateTexture2D(bloomTexture, width, height, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    w = width;
+    h = height;
+    utils::recreateTexture2D(downsampleTexture2, w / 2, h / 2, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::recreateTexture2D(downsampleTexture4, w / 4, h / 4, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::recreateTexture2D(downsampleTexture8, w / 8, h / 8, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::recreateTexture2D(downsampleTexture16, w / 16, h / 16, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::recreateTexture2D(bloomTexture, w, height, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
 
     utils::recreateFramebuffer(downsampleFramebuffer2, {downsampleTexture2});
     utils::recreateFramebuffer(downsampleFramebuffer4, {downsampleTexture4});

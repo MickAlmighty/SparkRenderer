@@ -52,6 +52,10 @@ DirectionalLight::DirectionalLight() : Component("DirectionalLight") {}
 
 DirectionalLight::~DirectionalLight()
 {
+    if(areLightShaftsEnabled())
+    {
+        dirLightForLightShafts = nullptr;
+    }
     notifyAbout(LightCommand::remove);
 }
 
@@ -80,9 +84,16 @@ void DirectionalLight::drawGUI()
     glm::vec3 colorToEdit = getColor();
     glm::vec3 directionToEdit = getDirection();
     float colorStrengthToEdit = getColorStrength();
+    bool areEnabled = areLightShaftsEnabled();
+    ImGui::Checkbox("lightShafts", &areEnabled);
     ImGui::ColorEdit3("color", glm::value_ptr(colorToEdit));
     ImGui::DragFloat("colorStrength", &colorStrengthToEdit, 0.01f);
     ImGui::SliderFloat3("direction", glm::value_ptr(directionToEdit), -1.0f, 1.0f);
+
+    if(areEnabled != areLightShaftsEnabled())
+    {
+        setLightShafts(areEnabled);
+    }
 
     if(colorStrengthToEdit < 0)
     {
@@ -102,6 +113,46 @@ void DirectionalLight::drawGUI()
         setColorStrength(colorStrengthToEdit);
     }
     removeComponentGUI<DirectionalLight>();
+}
+
+bool DirectionalLight::areLightShaftsEnabled() const
+{
+    return lightShaftsActive;
+}
+
+void DirectionalLight::setLightShafts(bool state)
+{
+    if(state)
+    {
+        activateLightShafts();
+    }
+    else
+    {
+        deactivateLightShafts();
+    }
+}
+
+DirectionalLight* DirectionalLight::getDirLightForLightShafts()
+{
+    return dirLightForLightShafts;
+}
+
+void DirectionalLight::activateLightShafts()
+{
+    if(dirLightForLightShafts)
+        dirLightForLightShafts->deactivateLightShafts();
+
+    dirLightForLightShafts = this;
+    lightShaftsActive = true;
+}
+
+void DirectionalLight::deactivateLightShafts()
+{
+    if(dirLightForLightShafts == this)
+    {
+        dirLightForLightShafts = nullptr;
+        lightShaftsActive = false;
+    }
 }
 
 void DirectionalLight::onActive()
@@ -127,5 +178,6 @@ RTTR_REGISTRATION
         .constructor()(rttr::policy::ctor::as_std_shared_ptr)
         .property("color", &spark::DirectionalLight::getColor, &spark::DirectionalLight::setColor)
         .property("colorStrength", &spark::DirectionalLight::getColorStrength, &spark::DirectionalLight::setColorStrength)
-        .property("direction", &spark::DirectionalLight::getDirection, &spark::DirectionalLight::setDirection);
+        .property("direction", &spark::DirectionalLight::getDirection, &spark::DirectionalLight::setDirection)
+        .property("lightShaftsActive", &spark::DirectionalLight::areLightShaftsEnabled, &spark::DirectionalLight::setLightShafts);
 }

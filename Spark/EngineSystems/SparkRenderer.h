@@ -7,6 +7,7 @@
 #include "DepthOfFieldPass.h"
 #include "Enums.h"
 #include "GBuffer.h"
+#include "LightShaftsPass.hpp"
 #include "Scene.h"
 #include "ScreenQuad.hpp"
 #include "RenderingRequest.h"
@@ -14,8 +15,6 @@
 
 namespace spark
 {
-class BlurPass;
-class DepthOfFieldPass;
 class LightProbe;
 class Shader;
 struct PbrCubemapTexture;
@@ -49,9 +48,11 @@ class SparkRenderer
     void renderCubemap(GLuint framebuffer) const;
     void tileBasedLightCulling(const GBuffer& geometryBuffer) const;
     void tileBasedLightRendering(const GBuffer& geometryBuffer);
+    void bloom();
     void lightShafts();
     void helperShapes();
     void depthOfField();
+    void toneMapping();
     void fxaa();
     void motionBlur();
     void renderToScreen() const;
@@ -79,15 +80,15 @@ class SparkRenderer
     ScreenQuad screenQuad{};
     AmbientOcclusion ao{};
     ToneMapper toneMapper{};
-    Bloom bloom{};
-    DepthOfFieldPass dofPass;
+    Bloom bloomPass{};
+    DepthOfFieldPass dofPass{};
+    LightShaftsPass lightShaftsPass{};
 
     GBuffer gBuffer{};
 
     GLuint lightFrameBuffer{}, lightingTexture{}, brightPassTexture{};
     GLuint cubemapFramebuffer{};
     GLuint motionBlurFramebuffer{}, motionBlurTexture{};
-    GLuint lightShaftFramebuffer{}, lightShaftTexture{};
     GLuint fxaaFramebuffer{}, fxaaTexture{};
     GLuint lightsPerTileTexture{};
 
@@ -111,7 +112,6 @@ class SparkRenderer
     std::shared_ptr<resources::Shader> motionBlurShader{nullptr};
     std::shared_ptr<resources::Shader> cubemapShader{nullptr};
     std::shared_ptr<resources::Shader> solidColorShader{nullptr};
-    std::shared_ptr<resources::Shader> lightShaftsShader{nullptr};
     std::shared_ptr<resources::Shader> fxaaShader{nullptr};
     std::shared_ptr<resources::Shader> tileBasedLightCullingShader{nullptr};
     std::shared_ptr<resources::Shader> tileBasedLightingShader{nullptr};
@@ -135,15 +135,8 @@ class SparkRenderer
     float farStart = 20.0f;
     float farEnd = 100.0f;
 
-    bool lightShaftsEnable = false;
-    int samples = 100;
-    float exposure = 0.0034f;
-    float decay = 0.995f;
-    float density = 0.75f;
-    float weight = 6.65f;
-
     bool isBloomEnabled = false;
-
     bool motionBlurEnable = true;
+    bool isLightShaftsPassEnabled = true;
 };
 }  // namespace spark

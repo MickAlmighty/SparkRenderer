@@ -20,7 +20,7 @@ class DirectionalLight final : public Component, public Observable<LightStatus<D
 {
     public:
     DirectionalLight();
-    virtual ~DirectionalLight();
+    ~DirectionalLight() override;
     DirectionalLight(const DirectionalLight&) = delete;
     DirectionalLight(const DirectionalLight&&) = delete;
     DirectionalLight& operator=(const DirectionalLight&) = delete;
@@ -37,16 +37,28 @@ class DirectionalLight final : public Component, public Observable<LightStatus<D
     void fixedUpdate() override;
     void drawGUI() override;
 
+    bool areLightShaftsEnabled() const;
+    void setLightShafts(bool state);
+
+    static DirectionalLight* getDirLightForLightShafts();
+
     private:
     void onActive() override;
     void onInactive() override;
     void notifyAbout(LightCommand command);
+
+    void activateLightShafts();
+    void deactivateLightShafts();
+
+    inline static DirectionalLight* dirLightForLightShafts{ nullptr };
 
     std::shared_ptr<LightManager> lightManager{nullptr};
     glm::vec3 dirLightFront{0.0f, -1.0f, 0.0f};
     glm::vec3 direction{0.0f, -1.0f, 0.0f};
     glm::vec3 color{1};
     float colorStrength{1};
+
+    bool lightShaftsActive{ false };
     RTTR_ENABLE(Component)
 };
 }  // namespace spark

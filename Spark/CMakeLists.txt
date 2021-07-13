@@ -27,6 +27,8 @@ list(APPEND SparkSources
     ${CMAKE_CURRENT_SOURCE_DIR}/IObserver.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/JsonSerializer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/JsonSerializer.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/LightShaftsPass.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LightShaftsPass.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/LocalTransform.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/LocalTransform.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Logging.cpp

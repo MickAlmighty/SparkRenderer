@@ -48,12 +48,11 @@ void SparkRenderer::drawGui()
         const std::string menuName3 = "Light Shafts";
         if(ImGui::BeginMenu(menuName3.c_str()))
         {
-            ImGui::Checkbox("Light shafts enabled", &lightShaftsEnable);
-            ImGui::DragInt("Samples", &samples, 1, 0);
-            ImGui::DragFloat("Exposure", &exposure, 0.01f, 0.0f, 1.0f);
-            ImGui::DragFloat("Decay", &decay, 0.01f, 1.0f);
-            ImGui::DragFloat("Density", &density, 0.01f, 0.0f, 1.0f);
-            ImGui::DragFloat("Weight", &weight, 0.01f, 0.0f, 1.0f);
+            ImGui::Checkbox("Light shafts enabled", &isLightShaftsPassEnabled);
+            ImGui::DragFloat("Exposure", &lightShaftsPass.exposure, 0.01f, 0.0f, 1.0f);
+            ImGui::DragFloat("Decay", &lightShaftsPass.decay, 0.01f, 0.0001f);
+            ImGui::DragFloat("Density", &lightShaftsPass.density, 0.01f, 0.0001f, 1.0f);
+            ImGui::DragFloat("Weight", &lightShaftsPass.weight, 0.01f, 0.0001f);
             ImGui::EndMenu();
         }
 
@@ -70,7 +69,7 @@ void SparkRenderer::drawGui()
         if(ImGui::BeginMenu(menuName5.c_str()))
         {
             ImGui::Checkbox("Bloom", &isBloomEnabled);
-            ImGui::DragFloat("Intensity", &bloom.intensity, 0.1f, 0);
+            ImGui::DragFloat("Intensity", &bloomPass.intensity, 0.1f, 0);
             ImGui::EndMenu();
         }
 
@@ -90,10 +89,11 @@ void SparkRenderer::setup(unsigned int windowWidth, unsigned int windowHeight)
     width = windowWidth;
     height = windowHeight;
 
-    ao.setup(windowWidth, windowHeight, cameraUBO);
-    toneMapper.setup(windowWidth, windowHeight);
-    bloom.setup(windowWidth, windowHeight);
+    ao.setup(width, height, cameraUBO);
+    toneMapper.setup(width, height);
+    bloomPass.setup(width, height);
     dofPass.setup(width, height, cameraUBO);
+    lightShaftsPass.setup(width, height);
 
     cubemapViewMatrices.resizeBuffer(sizeof(glm::mat4) * 6);
     cubemapViewMatrices.updateData(utils::getCubemapViewMatrices(glm::vec3(0)));
@@ -113,7 +113,6 @@ void SparkRenderer::initMembers()
     motionBlurShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("motionBlur.glsl");
     cubemapShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("cubemap.glsl");
     solidColorShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("solidColor.glsl");
-    lightShaftsShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("lightShafts.glsl");
     fxaaShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("fxaa.glsl");
     tileBasedLightCullingShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("tileBasedLightCulling.glsl");
     tileBasedLightingShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("tileBasedLighting.glsl");
@@ -204,14 +203,11 @@ void SparkRenderer::renderPass(unsigned int windowWidth, unsigned int windowHeig
     tileBasedLightRendering(gBuffer);
     renderCubemap(cubemapFramebuffer);
     helperShapes();
-    if(isBloomEnabled)
-    {
-        textureHandle = bloom.process(screenQuad, lightingTexture, brightPassTexture);
-    }
+    bloom();
     depthOfField();
     lightShafts();
     motionBlur();
-    textureHandle = toneMapper.process(textureHandle, screenQuad);
+    toneMapping();
     fxaa();
     renderToScreen();
     glDepthFunc(GL_LESS);
@@ -400,6 +396,27 @@ void SparkRenderer::tileBasedLightRendering(const GBuffer& geometryBuffer)
     POP_DEBUG_GROUP();
 }
 
+void SparkRenderer::bloom()
+{
+    if (isBloomEnabled)
+    {
+        textureHandle = bloomPass.process(screenQuad, lightingTexture, brightPassTexture);
+    }
+}
+
+void SparkRenderer::lightShafts()
+{
+    if (isLightShaftsPassEnabled)
+    {
+        if (auto outputOpt =
+            lightShaftsPass.process(scene->getCamera(), gBuffer.depthTexture, textureHandle);
+            outputOpt.has_value())
+        {
+            textureHandle = outputOpt.value();
+        }
+    }
+}
+
 void SparkRenderer::renderCubemap(GLuint framebuffer) const
 {
     const auto cubemap = pbrCubemap.lock();
@@ -460,63 +477,9 @@ void SparkRenderer::depthOfField()
     textureHandle = dofPass.getOutputTexture();
 }
 
-void SparkRenderer::lightShafts()
+void SparkRenderer::toneMapping()
 {
-    const auto& dirLights = scene->lightManager->getDirLights();
-    if(dirLights.empty() || lightShaftsEnable != true)
-        return;
-
-    const auto camera = scene->getCamera();
-
-    const glm::mat4 view = camera->getViewMatrix();
-    const glm::mat4 projection = camera->getProjectionReversedZ();
-
-    const glm::vec3 camPos = camera->getPosition();
-
-    glm::vec3 dirLightPosition = dirLights[0]->getDirection() * -glm::vec3(100);
-
-    glm::vec4 dirLightNDCpos = projection * view * glm::vec4(dirLightPosition, 1.0f);
-    dirLightNDCpos /= dirLightNDCpos.w;
-
-    glm::vec2 lightScreenPos = glm::vec2((dirLightNDCpos.x + 1.0f) * 0.5f, (dirLightNDCpos.y + 1.0f) * 0.5f);
-
-    // glBindFramebuffer(GL_FRAMEBUFFER, ssaoBlurPass->getSecondPassFramebuffer());
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    if(lightScreenPos.x < 0.0f || lightScreenPos.x > 1.0f || lightScreenPos.y < 0.0f || lightScreenPos.y > 1.0f)
-    {
-        return;
-    }
-    // std::cout << "Light world pos: " << dirLightPosition.x << ", " << dirLightPosition.y << ", " << dirLightPosition.z << std::endl;
-    // std::cout << "Light on the screen. Pos: " << lightScreenPos.x << ", "<< lightScreenPos.y<< std::endl;
-    PUSH_DEBUG_GROUP(LIGHT SHAFTS);
-    glViewport(0, 0, width / 2, height / 2);
-    glBindFramebuffer(GL_FRAMEBUFFER, lightShaftFramebuffer);
-    glClearColor(0, 0, 0, 1);
-    glClear(GL_COLOR_BUFFER_BIT);
-    glm::mat4 m1(1);
-    glm::mat4 m2(1);
-
-    lightShaftsShader->use();
-    lightShaftsShader->setVec2("lightScreenPos", lightScreenPos);
-    lightShaftsShader->setVec3("lightColor", dirLights[0]->getColor());
-    lightShaftsShader->setInt("samples", samples);
-    lightShaftsShader->setFloat("exposure", exposure);
-    lightShaftsShader->setFloat("decay", decay);
-    lightShaftsShader->setFloat("density", density);
-    lightShaftsShader->setFloat("weight", weight);
-
-    glBindTextureUnit(0, gBuffer.depthTexture);
-    screenQuad.draw();
-    glBindTextureUnit(0, 0);
-
-    glViewport(0, 0, width, height);
-    // glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    // ssaoBlurPass->blurTexture(lightShaftTexture);
-
-    // textureHandle = ssaoBlurPass->getBlurredTexture();
-    POP_DEBUG_GROUP();
+    textureHandle = toneMapper.process(textureHandle, screenQuad);
 }
 
 void SparkRenderer::motionBlur()
@@ -524,12 +487,11 @@ void SparkRenderer::motionBlur()
     const auto camera = scene->getCamera();
     const glm::mat4 projectionView = camera->getProjectionReversedZInfiniteFarPlane() * camera->getViewMatrix();
     static glm::mat4 prevProjectionView = projectionView;
-    static bool initialized = false;
 
     if(projectionView == prevProjectionView || !motionBlurEnable)
         return;
 
-    if(!initialized)
+    if(static bool initialized = false; !initialized)
     {
         // it is necessary when the scene has been loaded and
         // the difference between current VP and last frame VP matrices generates huge velocities for all pixels
@@ -607,7 +569,9 @@ void SparkRenderer::createFrameBuffersAndTextures()
     dofPass.createFrameBuffersAndTextures(width, height);
     ao.createFrameBuffersAndTextures(width, height);
     toneMapper.createFrameBuffersAndTextures(width, height);
-    bloom.createFrameBuffersAndTextures(width, height);
+    bloomPass.createFrameBuffersAndTextures(width, height);
+    lightShaftsPass.createFrameBuffersAndTextures(width, height);
+
     pointLightIndices.resizeBuffer(256 * (uint32_t)glm::ceil(height / 16.0f) * (uint32_t)glm::ceil(width / 16.0f) * sizeof(uint32_t));
     spotLightIndices.resizeBuffer(256 * (uint32_t)glm::ceil(height / 16.0f) * (uint32_t)glm::ceil(width / 16.0f) * sizeof(uint32_t));
     lightProbeIndices.resizeBuffer(256 * (uint32_t)glm::ceil(height / 16.0f) * (uint32_t)glm::ceil(width / 16.0f) * sizeof(uint32_t));
@@ -617,7 +581,6 @@ void SparkRenderer::createFrameBuffersAndTextures()
     utils::recreateTexture2D(lightingTexture, width, height, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
     utils::recreateTexture2D(brightPassTexture, width, height, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
     utils::recreateTexture2D(motionBlurTexture, width, height, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::recreateTexture2D(lightShaftTexture, width / 2, height / 2, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
     utils::recreateTexture2D(fxaaTexture, width, height, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
     utils::recreateTexture2D(lightsPerTileTexture, width / 16, height / 16, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
 
@@ -625,7 +588,6 @@ void SparkRenderer::createFrameBuffersAndTextures()
     utils::recreateFramebuffer(cubemapFramebuffer, {lightingTexture});
     utils::bindDepthTexture(cubemapFramebuffer, gBuffer.depthTexture);
     utils::recreateFramebuffer(motionBlurFramebuffer, {motionBlurTexture});
-    utils::recreateFramebuffer(lightShaftFramebuffer, {lightShaftTexture});
     utils::recreateFramebuffer(fxaaFramebuffer, {fxaaTexture});
 }
 
@@ -634,19 +596,20 @@ void SparkRenderer::cleanup()
     deleteFrameBuffersAndTextures();
     ao.cleanup();
     toneMapper.cleanup();
+    bloomPass.cleanup();
+    lightShaftsPass.cleanup();
 }
 
 void SparkRenderer::deleteFrameBuffersAndTextures()
 {
     gBuffer.cleanup();
 
-    GLuint textures[7] = {lightingTexture, brightPassTexture, motionBlurTexture, lightsPerTileTexture,
-                          fxaaTexture,       lightShaftTexture, brdfLookupTexture};
-    glDeleteTextures(7, textures);
+    GLuint textures[6] = {lightingTexture, brightPassTexture, motionBlurTexture, lightsPerTileTexture, fxaaTexture, brdfLookupTexture};
+    glDeleteTextures(6, textures);
 
-    GLuint frameBuffers[5] = {lightFrameBuffer, cubemapFramebuffer, motionBlurFramebuffer, lightShaftFramebuffer, fxaaFramebuffer};
+    GLuint frameBuffers[4] = {lightFrameBuffer, cubemapFramebuffer, motionBlurFramebuffer, fxaaFramebuffer};
 
-    glDeleteFramebuffers(5, frameBuffers);
+    glDeleteFramebuffers(4, frameBuffers);
 }
 
 void SparkRenderer::enableWireframeMode()
