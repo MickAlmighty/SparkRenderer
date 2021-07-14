@@ -3,7 +3,6 @@
 #include "Camera.h"
 #include "CommonUtils.h"
 #include "GUI/ImGui/imgui.h"
-#include "Lights/DirectionalLight.h"
 #include "Lights/LightProbe.h"
 #include "RenderingRequest.h"
 #include "ResourceLibrary.h"
@@ -26,7 +25,7 @@ void SparkRenderer::drawGui()
         const std::string menuName = "SSAO";
         if(ImGui::BeginMenu(menuName.c_str()))
         {
-            ImGui::Checkbox("SSAO enabled", &ssaoEnable);
+            ImGui::Checkbox("SSAO enabled", &isAmbientOcclusionEnabled);
             ImGui::DragInt("Samples", &ao.kernelSize, 1, 0, 64);
             ImGui::DragFloat("Radius", &ao.radius, 0.05f, 0.0f);
             ImGui::DragFloat("Bias", &ao.bias, 0.005f);
@@ -37,11 +36,11 @@ void SparkRenderer::drawGui()
         const std::string menuName2 = "Depth of Field";
         if(ImGui::BeginMenu(menuName2.c_str()))
         {
-            ImGui::Checkbox("DOF enabled", &dofEnable);
-            ImGui::DragFloat("NearStart", &nearStart, 0.1f, 0.0f);
-            ImGui::DragFloat("NearEnd", &nearEnd, 0.1f);
-            ImGui::DragFloat("FarStart", &farStart, 0.1f, 0.0f);
-            ImGui::DragFloat("FarEnd", &farEnd, 0.1f, 0.0f);
+            ImGui::Checkbox("DOF enabled", &isDofEnabled);
+            ImGui::DragFloat("NearStart", &dofPass.nearStart, 0.1f, 0.0f);
+            ImGui::DragFloat("NearEnd", &dofPass.nearEnd, 0.1f);
+            ImGui::DragFloat("FarStart", &dofPass.farStart, 0.1f, 0.0f);
+            ImGui::DragFloat("FarEnd", &dofPass.farEnd, 0.1f, 0.0f);
             ImGui::EndMenu();
         }
 
@@ -186,19 +185,13 @@ void SparkRenderer::renderPass(unsigned int windowWidth, unsigned int windowHeig
 {
     resizeWindowIfNecessary(windowWidth, windowHeight);
 
-    {
-        const auto camera = scene->getCamera();
-        // if(camera->isDirty())
-        {
-            updateCameraUBO(camera->getProjectionReversedZInfiniteFarPlane(), camera->getViewMatrix(), camera->getPosition());
-            camera->cleanDirty();
-        }
-    }
+    const auto& camera = scene->getCamera();
+    updateCameraUBO(camera->getProjectionReversedZInfiniteFarPlane(), camera->getViewMatrix(), camera->getPosition());
 
     lightProbesRenderPass();
 
     fillGBuffer(gBuffer);
-    textureHandle = ao.process(ssaoEnable, screenQuad, gBuffer);
+    ambientOcclusion();
     // renderLights(lightFrameBuffer, gBuffer);
     tileBasedLightRendering(gBuffer);
     renderCubemap(cubemapFramebuffer);
@@ -396,9 +389,14 @@ void SparkRenderer::tileBasedLightRendering(const GBuffer& geometryBuffer)
     POP_DEBUG_GROUP();
 }
 
+void SparkRenderer::ambientOcclusion()
+{
+    textureHandle = ao.process(isAmbientOcclusionEnabled, screenQuad, gBuffer);
+}
+
 void SparkRenderer::bloom()
 {
-    if (isBloomEnabled)
+    if(isBloomEnabled)
     {
         textureHandle = bloomPass.process(screenQuad, lightingTexture, brightPassTexture);
     }
@@ -406,11 +404,9 @@ void SparkRenderer::bloom()
 
 void SparkRenderer::lightShafts()
 {
-    if (isLightShaftsPassEnabled)
+    if(isLightShaftsPassEnabled)
     {
-        if (auto outputOpt =
-            lightShaftsPass.process(scene->getCamera(), gBuffer.depthTexture, textureHandle);
-            outputOpt.has_value())
+        if(auto outputOpt = lightShaftsPass.process(scene->getCamera(), gBuffer.depthTexture, textureHandle); outputOpt.has_value())
         {
             textureHandle = outputOpt.value();
         }
@@ -469,10 +465,9 @@ void SparkRenderer::helperShapes()
 
 void SparkRenderer::depthOfField()
 {
-    if(!dofEnable)
+    if(!isDofEnabled)
         return;
 
-    dofPass.setUniforms(nearStart, nearEnd, farStart, farEnd);
     dofPass.render(lightingTexture, gBuffer.depthTexture);
     textureHandle = dofPass.getOutputTexture();
 }

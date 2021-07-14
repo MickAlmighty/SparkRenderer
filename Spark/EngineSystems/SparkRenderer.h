@@ -48,6 +48,8 @@ class SparkRenderer
     void renderCubemap(GLuint framebuffer) const;
     void tileBasedLightCulling(const GBuffer& geometryBuffer) const;
     void tileBasedLightRendering(const GBuffer& geometryBuffer);
+
+    void ambientOcclusion();
     void bloom();
     void lightShafts();
     void helperShapes();
@@ -127,14 +129,8 @@ class SparkRenderer
     SSBO spotLightIndices{};
     SSBO lightProbeIndices{};
 
-    bool ssaoEnable = false;
-
-    bool dofEnable = false;
-    float nearStart = 1.0f;
-    float nearEnd = 4.0f;
-    float farStart = 20.0f;
-    float farEnd = 100.0f;
-
+    bool isAmbientOcclusionEnabled = false;
+    bool isDofEnabled = false;
     bool isBloomEnabled = false;
     bool motionBlurEnable = true;
     bool isLightShaftsPassEnabled = true;

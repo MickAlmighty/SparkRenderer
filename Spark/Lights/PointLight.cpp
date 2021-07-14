@@ -10,7 +10,6 @@
 #include "JsonSerializer.h"
 #include "Mesh.h"
 #include "RenderingRequest.h"
-#include "ResourceLoader.h"
 #include "ShapeCreator.h"
 #include "Spark.h"
 #include "Structs.h"

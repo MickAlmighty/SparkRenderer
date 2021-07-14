@@ -88,14 +88,6 @@ void DepthOfFieldPass::createFrameBuffersAndTextures(unsigned int width, unsigne
     createGlObjects();
 }
 
-void DepthOfFieldPass::setUniforms(float nearStart, float nearEnd, float farStart, float farEnd)
-{
-    this->nearStart = nearStart;
-    this->nearEnd = nearEnd;
-    this->farStart = farStart;
-    this->farEnd = farEnd;
-}
-
 DepthOfFieldPass::~DepthOfFieldPass()
 {
     deleteGlObjects();

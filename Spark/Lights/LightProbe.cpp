@@ -12,7 +12,6 @@
 #include "Shader.h"
 #include "ShapeCreator.h"
 #include "Spark.h"
-#include "Structs.h"
 #include "Texture.h"
 #include "Timer.h"
 

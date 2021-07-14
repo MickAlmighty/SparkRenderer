@@ -22,7 +22,6 @@ class DepthOfFieldPass
     void render(GLuint lightPassTexture, GLuint depthTexture) const;
     GLuint getOutputTexture() const;
     void createFrameBuffersAndTextures(unsigned int width, unsigned int height);
-    void setUniforms(float nearStart, float nearEnd, float farStart, float farEnd);
 
     DepthOfFieldPass() = default;
     DepthOfFieldPass& operator=(const DepthOfFieldPass& blurPass) = delete;
@@ -30,6 +29,9 @@ class DepthOfFieldPass
     DepthOfFieldPass(const DepthOfFieldPass& blurPass) = delete;
     DepthOfFieldPass(const DepthOfFieldPass&& blurPass) = delete;
     ~DepthOfFieldPass();
+
+    float nearStart{ 1 }, nearEnd{ 4 };
+    float farStart{ 20 }, farEnd{ 100 };
 
     private:
     void calculateCircleOfConfusion(GLuint depthTexture) const;
@@ -42,9 +44,6 @@ class DepthOfFieldPass
     void deleteGlObjects();
 
     unsigned int width{}, height{};
-
-    float nearStart{ 1 }, nearEnd{ 4 };
-    float farStart{ 20 }, farEnd{ 100 };
 
     std::shared_ptr<resources::Shader> cocShader{ nullptr };
     std::shared_ptr<resources::Shader> blendShader{ nullptr };

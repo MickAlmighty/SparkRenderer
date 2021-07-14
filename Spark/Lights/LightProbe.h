@@ -27,7 +27,7 @@ class LightProbe : public Component, public Observable<LightStatus<LightProbe>>
     bool generateLightProbe{true};
 
     LightProbe();
-    ~LightProbe();
+    ~LightProbe() override;
 
     LightProbe(const LightProbe&) = delete;
     LightProbe(const LightProbe&&) = delete;
