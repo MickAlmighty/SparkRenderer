@@ -5,8 +5,6 @@
 #include "Scene.h"
 #include "GameObject.h"
 #include "JsonSerializer.h"
-#include "ReflectionUtils.h"
-#include "Structs.h"
 
 namespace spark
 {
@@ -54,7 +52,7 @@ DirectionalLight::~DirectionalLight()
 {
     if(areLightShaftsEnabled())
     {
-        dirLightForLightShafts = nullptr;
+        deactivateLightShafts();
     }
     notifyAbout(LightCommand::remove);
 }

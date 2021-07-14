@@ -19,13 +19,15 @@ class Skybox : public Component
     void setActiveSkybox(bool isActive);
     bool isSkyboxActive() const;
 
+    static Skybox* getActiveSkybox();
+
     private:
     void onActive() override;
     void onInactive() override;
 
     void createPbrCubemap(const std::shared_ptr<resources::Texture>& texture);
 
-    inline static std::vector<Skybox*> skyBoxes{};
+    inline static Skybox* activeSkyboxPtr{nullptr};
 
     bool activeSkybox{false};
     std::string skyboxName{};

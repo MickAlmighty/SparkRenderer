@@ -7,14 +7,12 @@ namespace spark
 {
 Skybox::Skybox() : Component("Skybox")
 {
-    skyBoxes.push_back(this);
 }
 
 Skybox::~Skybox()
 {
-    const auto it = std::find(skyBoxes.begin(), skyBoxes.end(), this);
-    if(it != skyBoxes.end())
-        skyBoxes.erase(it);
+    if(isSkyboxActive())
+        setActiveSkybox(false);
 }
 
 void Skybox::update() {}
@@ -39,11 +37,9 @@ void Skybox::drawGUI()
     if(active != isSkyboxActive())
         setActiveSkybox(active);
 
-    const auto tex = SparkGui::selectTextureByFilePicker();
-    if(tex)
+    if(const auto tex = SparkGui::selectTextureByFilePicker(); tex)
     {
-        const auto& texture = tex.value();
-        if(texture)
+        if(const auto & texture = tex.value(); texture)
         {
             createPbrCubemap(texture);
         }
@@ -56,20 +52,11 @@ void Skybox::setActiveSkybox(bool isActive)
 {
     if(isActive)
     {
-        const auto it =
-            std::find_if(skyBoxes.cbegin(), skyBoxes.cend(), [this](Skybox* skybox) { return skybox != this && skybox->activeSkybox == true; });
-
-        if(it != skyBoxes.end())
-        {
-            (*it)->setActiveSkybox(false);
-        }
-        activeSkybox = isActive;
-        SparkRenderer::getInstance()->setCubemap(pbrCubemapTexture);
+        onActive();
     }
     else
     {
-        activeSkybox = isActive;
-        SparkRenderer::getInstance()->setCubemap(nullptr);
+        onInactive();
     }
 }
 
@@ -78,16 +65,29 @@ bool Skybox::isSkyboxActive() const
     return activeSkybox;
 }
 
+Skybox* Skybox::getActiveSkybox()
+{
+    return activeSkyboxPtr;
+}
+
 void Skybox::onActive()
 {
-    if(activeSkybox)
-        SparkRenderer::getInstance()->setCubemap(pbrCubemapTexture);
+    if(activeSkyboxPtr)
+        activeSkyboxPtr->setActiveSkybox(false);
+
+    activeSkyboxPtr = this;
+    activeSkybox = true;
+    SparkRenderer::getInstance()->setCubemap(pbrCubemapTexture);
 }
 
 void Skybox::onInactive()
 {
-    if(activeSkybox)
+    if(activeSkyboxPtr == this)
+    {
         SparkRenderer::getInstance()->setCubemap(nullptr);
+        activeSkyboxPtr = nullptr;
+        activeSkybox = false;
+    }
 }
 
 std::string Skybox::getSkyboxName() const
