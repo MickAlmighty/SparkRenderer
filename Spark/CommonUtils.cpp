@@ -94,9 +94,7 @@ void recreateCubemap(GLuint& texture, unsigned int size, GLenum internalFormat, 
 
 void bindDepthTexture(GLuint& framebuffer, GLuint depthTexture)
 {
-    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthTexture, 0);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glNamedFramebufferTexture(framebuffer, GL_DEPTH_ATTACHMENT, depthTexture, 0);
 }
 
 void createFramebuffer(GLuint& framebuffer, std::vector<GLuint>&& colorTextures, GLuint renderbuffer)

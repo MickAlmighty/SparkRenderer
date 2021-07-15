@@ -93,6 +93,7 @@ void SparkRenderer::setup(unsigned int windowWidth, unsigned int windowHeight)
     bloomPass.setup(width, height);
     dofPass.setup(width, height, cameraUBO);
     lightShaftsPass.setup(width, height);
+    skyboxPass.setup(width, height, cameraUBO);
 
     cubemapViewMatrices.resizeBuffer(sizeof(glm::mat4) * 6);
     cubemapViewMatrices.updateData(utils::getCubemapViewMatrices(glm::vec3(0)));
@@ -110,7 +111,6 @@ void SparkRenderer::initMembers()
     screenShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("screen.glsl");
     lightShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("light.glsl");
     motionBlurShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("motionBlur.glsl");
-    cubemapShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("cubemap.glsl");
     solidColorShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("solidColor.glsl");
     fxaaShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("fxaa.glsl");
     tileBasedLightCullingShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("tileBasedLightCulling.glsl");
@@ -127,7 +127,6 @@ void SparkRenderer::updateBufferBindings() const
     mainShader->bindUniformBuffer("Camera", cameraUBO);
     lightShader->bindUniformBuffer("Camera", cameraUBO);
     motionBlurShader->bindUniformBuffer("Camera", cameraUBO);
-    cubemapShader->bindUniformBuffer("Camera", cameraUBO);
     solidColorShader->bindUniformBuffer("Camera", cameraUBO);
 
     tileBasedLightCullingShader->bindUniformBuffer("Camera", cameraUBO);
@@ -185,16 +184,16 @@ void SparkRenderer::renderPass(unsigned int windowWidth, unsigned int windowHeig
 {
     resizeWindowIfNecessary(windowWidth, windowHeight);
 
+    lightProbesRenderPass();
+
     const auto& camera = scene->getCamera();
     updateCameraUBO(camera->getProjectionReversedZInfiniteFarPlane(), camera->getViewMatrix(), camera->getPosition());
-
-    lightProbesRenderPass();
 
     fillGBuffer(gBuffer);
     ambientOcclusion();
     // renderLights(lightFrameBuffer, gBuffer);
     tileBasedLightRendering(gBuffer);
-    renderCubemap(cubemapFramebuffer);
+    renderCubemap();
     helperShapes();
     bloom();
     depthOfField();
@@ -244,7 +243,7 @@ void SparkRenderer::fillGBuffer(const GBuffer& geometryBuffer)
 
     glBindFramebuffer(GL_FRAMEBUFFER, geometryBuffer.framebuffer);
     glClearColor(0, 0, 0, 0);
-    glClearDepth(0.0f);
+    glClearDepth(0.0);
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
     glEnable(GL_DEPTH_TEST);
@@ -413,27 +412,12 @@ void SparkRenderer::lightShafts()
     }
 }
 
-void SparkRenderer::renderCubemap(GLuint framebuffer) const
+void SparkRenderer::renderCubemap()
 {
-    const auto cubemap = pbrCubemap.lock();
-    if(!cubemap)
-        return;
-
-    PUSH_DEBUG_GROUP(RENDER_CUBEMAP);
-
-    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_GEQUAL);
-    cubemapShader->use();
-
-    glBindTextureUnit(0, cubemap->cubemap);
-    cube.draw();
-    glBindTextures(0, 1, nullptr);
-    glDepthFunc(GL_GREATER);
-    glDisable(GL_DEPTH_TEST);
-
-    POP_DEBUG_GROUP();
+    if(auto outputOpt = skyboxPass.process(pbrCubemap, gBuffer.depthTexture, lightingTexture); outputOpt.has_value())
+    {
+        textureHandle = outputOpt.value();
+    }
 }
 
 void SparkRenderer::helperShapes()
@@ -442,8 +426,8 @@ void SparkRenderer::helperShapes()
         return;
 
     PUSH_DEBUG_GROUP(HELPER_SHAPES);
-
-    glBindFramebuffer(GL_FRAMEBUFFER, cubemapFramebuffer);
+    utils::bindDepthTexture(lightFrameBuffer, gBuffer.depthTexture);
+    glBindFramebuffer(GL_FRAMEBUFFER, lightFrameBuffer);
 
     glDisable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
@@ -460,6 +444,7 @@ void SparkRenderer::helperShapes()
     glEnable(GL_CULL_FACE);
     glDisable(GL_DEPTH_TEST);
     disableWireframeMode();
+    utils::bindDepthTexture(lightFrameBuffer, 0);
     POP_DEBUG_GROUP();
 }
 
@@ -566,6 +551,7 @@ void SparkRenderer::createFrameBuffersAndTextures()
     toneMapper.createFrameBuffersAndTextures(width, height);
     bloomPass.createFrameBuffersAndTextures(width, height);
     lightShaftsPass.createFrameBuffersAndTextures(width, height);
+    skyboxPass.createFrameBuffersAndTextures(width, height);
 
     pointLightIndices.resizeBuffer(256 * (uint32_t)glm::ceil(height / 16.0f) * (uint32_t)glm::ceil(width / 16.0f) * sizeof(uint32_t));
     spotLightIndices.resizeBuffer(256 * (uint32_t)glm::ceil(height / 16.0f) * (uint32_t)glm::ceil(width / 16.0f) * sizeof(uint32_t));
@@ -580,8 +566,6 @@ void SparkRenderer::createFrameBuffersAndTextures()
     utils::recreateTexture2D(lightsPerTileTexture, width / 16, height / 16, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
 
     utils::recreateFramebuffer(lightFrameBuffer, {lightingTexture, brightPassTexture});
-    utils::recreateFramebuffer(cubemapFramebuffer, {lightingTexture});
-    utils::bindDepthTexture(cubemapFramebuffer, gBuffer.depthTexture);
     utils::recreateFramebuffer(motionBlurFramebuffer, {motionBlurTexture});
     utils::recreateFramebuffer(fxaaFramebuffer, {fxaaTexture});
 }
@@ -602,9 +586,9 @@ void SparkRenderer::deleteFrameBuffersAndTextures()
     GLuint textures[6] = {lightingTexture, brightPassTexture, motionBlurTexture, lightsPerTileTexture, fxaaTexture, brdfLookupTexture};
     glDeleteTextures(6, textures);
 
-    GLuint frameBuffers[4] = {lightFrameBuffer, cubemapFramebuffer, motionBlurFramebuffer, fxaaFramebuffer};
+    GLuint frameBuffers[3] = {lightFrameBuffer, motionBlurFramebuffer, fxaaFramebuffer};
 
-    glDeleteFramebuffers(4, frameBuffers);
+    glDeleteFramebuffers(3, frameBuffers);
 }
 
 void SparkRenderer::enableWireframeMode()
@@ -751,6 +735,6 @@ void SparkRenderer::renderSceneToCubemap(const GBuffer& geometryBuffer, GLuint l
         POP_DEBUG_GROUP();
     }
 
-    renderCubemap(skyboxFbo);
+    skyboxPass.processFramebuffer(pbrCubemap, skyboxFbo, sceneCubemapSize, sceneCubemapSize);
 }
 }  // namespace spark

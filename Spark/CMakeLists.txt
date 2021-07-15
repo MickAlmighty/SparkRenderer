@@ -69,6 +69,8 @@ list(APPEND SparkSources
     ${CMAKE_CURRENT_SOURCE_DIR}/ShapeCreator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Skybox.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Skybox.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/SkyboxPass.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/SkyboxPass.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Spark.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Spark.h
     ${CMAKE_CURRENT_SOURCE_DIR}/SparkConfig.hpp

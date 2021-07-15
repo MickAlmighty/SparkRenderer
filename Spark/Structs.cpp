@@ -170,7 +170,7 @@ GLuint PbrCubemapTexture::createCubemapAndCopyDataFromFirstLayerOf(GLuint cubema
 
 Cube::Cube()
 {
-    float vertices[288] = {
+    constexpr float vertices[288] = {
         // back face
         -1.0f, -1.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f,  // bottom-left
         1.0f, -1.0f, -1.0f, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f,   // bottom-right

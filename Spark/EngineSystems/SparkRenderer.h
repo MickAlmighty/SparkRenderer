@@ -10,13 +10,13 @@
 #include "LightShaftsPass.hpp"
 #include "Scene.h"
 #include "ScreenQuad.hpp"
+#include "SkyboxPass.hpp"
 #include "RenderingRequest.h"
 #include "ToneMapper.hpp"
 
 namespace spark
 {
 class LightProbe;
-class Shader;
 struct PbrCubemapTexture;
 
 class SparkRenderer
@@ -45,7 +45,7 @@ class SparkRenderer
     void fillGBuffer(const GBuffer& geometryBuffer);
     void fillGBuffer(const GBuffer& geometryBuffer, const std::function<bool(const RenderingRequest& request)>& filter);
     void renderLights(GLuint framebuffer, const GBuffer& geometryBuffer);
-    void renderCubemap(GLuint framebuffer) const;
+    void renderCubemap();
     void tileBasedLightCulling(const GBuffer& geometryBuffer) const;
     void tileBasedLightRendering(const GBuffer& geometryBuffer);
 
@@ -85,11 +85,11 @@ class SparkRenderer
     Bloom bloomPass{};
     DepthOfFieldPass dofPass{};
     LightShaftsPass lightShaftsPass{};
+    SkyboxPass skyboxPass{};
 
     GBuffer gBuffer{};
 
     GLuint lightFrameBuffer{}, lightingTexture{}, brightPassTexture{};
-    GLuint cubemapFramebuffer{};
     GLuint motionBlurFramebuffer{}, motionBlurTexture{};
     GLuint fxaaFramebuffer{}, fxaaTexture{};
     GLuint lightsPerTileTexture{};
@@ -112,7 +112,6 @@ class SparkRenderer
     std::shared_ptr<resources::Shader> screenShader{nullptr};
     std::shared_ptr<resources::Shader> lightShader{nullptr};
     std::shared_ptr<resources::Shader> motionBlurShader{nullptr};
-    std::shared_ptr<resources::Shader> cubemapShader{nullptr};
     std::shared_ptr<resources::Shader> solidColorShader{nullptr};
     std::shared_ptr<resources::Shader> fxaaShader{nullptr};
     std::shared_ptr<resources::Shader> tileBasedLightCullingShader{nullptr};
