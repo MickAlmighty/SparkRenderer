@@ -71,6 +71,11 @@ void SparkRenderer::drawGui()
             ImGui::DragFloat("Intensity", &bloomPass.intensity, 0.001f, 0);
             ImGui::DragFloat("Threshold", &bloomPass.threshold, 0.01f, 0.0001f);
             ImGui::DragFloat("ThresholdSize", &bloomPass.thresholdSize, 0.01f, 0.0001f);
+            ImGui::DragFloat("radiusMip0", &bloomPass.radiusMip0, 0.01f, 0.0001f);
+            ImGui::DragFloat("radiusMip1", &bloomPass.radiusMip1, 0.01f, 0.0001f);
+            ImGui::DragFloat("radiusMip2", &bloomPass.radiusMip2, 0.01f, 0.0001f);
+            ImGui::DragFloat("radiusMip3", &bloomPass.radiusMip3, 0.01f, 0.0001f);
+            ImGui::DragFloat("radiusMip4", &bloomPass.radiusMip4, 0.01f, 0.0001f);
             ImGui::EndMenu();
         }
 
@@ -195,10 +200,10 @@ void SparkRenderer::renderPass(unsigned int windowWidth, unsigned int windowHeig
     // renderLights(lightFrameBuffer, gBuffer);
     tileBasedLightRendering(gBuffer);
     renderCubemap();
-    bloom();
     depthOfField();
     lightShafts();
     motionBlur();
+    bloom();
     toneMapping();
     helperShapes();
     fxaa();
@@ -391,14 +396,14 @@ void SparkRenderer::tileBasedLightRendering(const GBuffer& geometryBuffer)
 
 void SparkRenderer::ambientOcclusion()
 {
-    textureHandle = ao.process(isAmbientOcclusionEnabled, screenQuad, gBuffer);
+    textureHandle = ao.process(isAmbientOcclusionEnabled, gBuffer);
 }
 
 void SparkRenderer::bloom()
 {
     if(isBloomEnabled)
     {
-        textureHandle = bloomPass.process(screenQuad, lightingTexture, brightPassTexture);
+        textureHandle = bloomPass.process(textureHandle, brightPassTexture);
     }
 }
 
@@ -460,7 +465,7 @@ void SparkRenderer::depthOfField()
 
 void SparkRenderer::toneMapping()
 {
-    textureHandle = toneMapper.process(textureHandle, screenQuad);
+    textureHandle = toneMapper.process(textureHandle);
 }
 
 void SparkRenderer::motionBlur()

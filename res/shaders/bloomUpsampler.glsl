@@ -19,12 +19,13 @@ layout (binding = 0) uniform sampler2D inputTexture;
 
 uniform float intensity = 1.0f;
 uniform vec2 outputTextureSizeInversion; //equals to 1.0f / texture size 
+uniform float radius = 1.0f;
 
 in vec2 texCoords;
 
 vec2 texelOffset(vec2 offset)
 {
-    return offset * outputTextureSizeInversion * 4;
+    return offset * outputTextureSizeInversion * radius;
 }
 
 #define weight 1.0 / 16.0

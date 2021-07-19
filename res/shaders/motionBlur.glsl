@@ -35,7 +35,7 @@ layout (std140) uniform Camera
     mat4 invertedProjection;
 } camera;
 
-#define MAX_SAMPLES 16
+#define MAX_SAMPLES 32
 
 vec4 worldPosFromDepth(float depth, mat4 invProj, mat4 invView) {
     float z = depth;

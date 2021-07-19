@@ -22,12 +22,11 @@ class ToneMapper
     ~ToneMapper();
 
     void setup(unsigned int width, unsigned int height);
-    GLuint process(GLuint colorTexture, const ScreenQuad& screenQuad);
+    GLuint process(GLuint colorTexture);
     void createFrameBuffersAndTextures(unsigned int width, unsigned int height);
     void cleanup();
 
     float minLogLuminance = 0.5f;
-    float oneOverLogLuminanceRange = 1.0f / 12.0f;
     float logLuminanceRange = 12.0f;
     float tau = 1.1f;
 
@@ -36,6 +35,7 @@ class ToneMapper
 
     unsigned int w{}, h{};
     GLuint toneMappingFramebuffer{}, toneMappingTexture{}, averageLuminanceTexture{};
+    ScreenQuad screenQuad{};
     SSBO luminanceHistogram{};
     std::shared_ptr<resources::Shader> toneMappingShader{nullptr};
     std::shared_ptr<resources::Shader> luminanceHistogramComputeShader{nullptr};

@@ -25,10 +25,11 @@ void ToneMapper::setup(unsigned int width, unsigned int height)
     averageLuminanceComputeShader->bindSSBO("LuminanceHistogram", luminanceHistogram);
 
     luminanceHistogram.resizeBuffer(256 * sizeof(uint32_t));
-    utils::createTexture2D(averageLuminanceTexture, 1, 1, GL_R16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
+    utils::recreateTexture2D(averageLuminanceTexture, 1, 1, GL_R16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
+    screenQuad.setup();
 }
 
-GLuint ToneMapper::process(GLuint colorTexture, const ScreenQuad& screenQuad)
+GLuint ToneMapper::process(GLuint colorTexture)
 {
     PUSH_DEBUG_GROUP(TONE_MAPPING);
 
@@ -66,7 +67,7 @@ void ToneMapper::cleanup()
 
 void ToneMapper::calculateAverageLuminance(GLuint colorTexture)
 {
-    oneOverLogLuminanceRange = 1.0f / logLuminanceRange;
+    const float oneOverLogLuminanceRange = 1.0f / logLuminanceRange;
 
     // this buffer is attached to both shaders in method SparkRenderer::updateBufferBindings()
     luminanceHistogram.clearData();  // resetting histogram buffer

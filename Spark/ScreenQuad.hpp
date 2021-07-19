@@ -23,6 +23,9 @@ class ScreenQuad final
 
     void setup()
     {
+        if (vao != 0 && vbo != 0)
+            return;
+
         glGenVertexArrays(1, &vao);
         glBindVertexArray(vao);
 
@@ -53,8 +56,8 @@ class ScreenQuad final
         glm::vec2 texCoords;
     };
 
-    GLuint vao{};
-    GLuint vbo{};
+    GLuint vao{0};
+    GLuint vbo{0};
     std::vector<QuadVertex> vertices = {
         {{-1.0f, 1.0f, 0.0f}, {0.0f, 1.0f}}, {{1.0f, -1.0f, 0.0f}, {1.0f, 0.0f}},  {{1.0f, 1.0f, 0.0f}, {1.0f, 1.0f}},
 

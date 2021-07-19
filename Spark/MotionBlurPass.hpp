@@ -21,7 +21,7 @@ class MotionBlurPass
     void cleanup();
 
     private:
-    unsigned int w, h;
+    unsigned int w{}, h{};
     ScreenQuad screenQuad;
     GLuint framebuffer1{};
     GLuint texture1{};

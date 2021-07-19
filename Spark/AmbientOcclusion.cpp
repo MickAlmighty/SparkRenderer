@@ -33,6 +33,7 @@ void AmbientOcclusion::setup(unsigned int width, unsigned int height, const Unif
     ssaoShader->bindUniformBuffer("Camera", cameraUbo);
 
     ssaoBlurPass = std::make_unique<BlurPass>(width / 2, height / 2);
+    screenQuad.setup();
 }
 
 void AmbientOcclusion::cleanup()
@@ -43,7 +44,7 @@ void AmbientOcclusion::cleanup()
     glDeleteFramebuffers(1, &ssaoFramebuffer);
 }
 
-GLuint AmbientOcclusion::process(const bool isSsaoEnabled, const ScreenQuad& sq, const GBuffer& geometryBuffer)
+GLuint AmbientOcclusion::process(const bool isSsaoEnabled, const GBuffer& geometryBuffer)
 {
     if(!isSsaoEnabled)
         return ssaoDisabledTexture;
@@ -63,7 +64,7 @@ GLuint AmbientOcclusion::process(const bool isSsaoEnabled, const ScreenQuad& sq,
     ssaoShader->setFloat("power", power);
     ssaoShader->setVec2("screenSize", {static_cast<float>(w), static_cast<float>(h)});
     // uniforms have default values in shader
-    sq.draw();
+    screenQuad.draw();
     glBindTextures(0, 3, nullptr);
 
     ssaoBlurPass->blurTexture(ssaoTexture);
