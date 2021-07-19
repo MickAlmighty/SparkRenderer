@@ -18,6 +18,8 @@ layout (location = 0) out vec4 FragColor;
 layout (binding = 0) uniform sampler2D inputTexture;
 
 uniform vec2 outputTextureSizeInversion; //equals to 1.0f / texture size 
+uniform float threshold = 0.5f;
+uniform float thresholdSize = 1.0f;
 
 in vec2 texCoords;
 
@@ -28,9 +30,27 @@ vec2 texelOffset(vec2 offset)
 
 #define sampleInputRGB(x) texture(inputTexture, x).xyz
 
+float luma(vec3 color)
+{
+    return dot(color, vec3(0.299, 0.587, 0.114));
+}
+
+vec3 averageColor(vec3 color)
+{
+    return color * (1.0f / (1.0f + luma(color)));
+}
+
+
+vec3 getBringhtPassColor(vec3 color, float threshold_, float thresholdSize_)
+{
+    threshold_ = max(threshold_, 0.0f);
+    thresholdSize_ = max(threshold_ + 0.1f, thresholdSize_);
+    return smoothstep(threshold_, threshold_ + thresholdSize_, luma(color)) * color;
+}
+
 vec3 sampleTexture()
 {
-    vec3 outputColor = vec3(0);
+    
     vec3 sample1 = sampleInputRGB(texCoords + texelOffset(vec2(-1.0f, 1.0f)));
     vec3 sample2 = sampleInputRGB(texCoords + texelOffset(vec2(0.0f, 1.0f)));
     vec3 sample3 = sampleInputRGB(texCoords + texelOffset(vec2(1.0f, 1.0f)));
@@ -45,13 +65,24 @@ vec3 sampleTexture()
     vec3 sample12 = sampleInputRGB(texCoords + texelOffset(vec2(0.0f, -1.0f)));
     vec3 sample13 = sampleInputRGB(texCoords + texelOffset(vec2(0.0f, -1.0f)));
 
-    vec3 redSamples = ((sample4 + sample5 + sample9 + sample10) * 0.25f) * 0.5f;
-    vec3 yellowSamples = ((sample1 + sample2 + sample6 + sample7) * 0.25f) * 0.125f;
-    vec3 greenSamples = ((sample2 + sample3 + sample7 + sample8) * 0.25f) * 0.125f;
-    vec3 blueSamples = ((sample7 + sample8 + sample12 + sample13) * 0.25f) * 0.125f;
-    vec3 purpleSamples = ((sample6 + sample7 + sample11 + sample12) * 0.25f) * 0.125f;
-    outputColor = redSamples + yellowSamples + greenSamples + blueSamples + purpleSamples;
-    return outputColor;
+    vec3 redSamplesAvg = (sample4 + sample5 + sample9 + sample10) * 0.25f;
+    vec3 redHBox = averageColor(redSamplesAvg) * 0.5f;
+
+    vec3 yellowSamplesAvg = (sample1 + sample2 + sample6 + sample7) * 0.25f;
+    vec3 yellowHBox = averageColor(yellowSamplesAvg) * 0.125f;
+
+    vec3 greenSamplesAvg = (sample2 + sample3 + sample7 + sample8) * 0.25f;
+    vec3 greenHBox = averageColor(greenSamplesAvg) * 0.125f;
+
+    vec3 blueSamplesAvg = (sample7 + sample8 + sample12 + sample13) * 0.25f;
+    vec3 blueHBox = averageColor(blueSamplesAvg) * 0.125f;
+
+    vec3 purpleSamplesAvg = (sample6 + sample7 + sample11 + sample12) * 0.25f;
+    vec3 purpleHBox = averageColor(purpleSamplesAvg) * 0.125f;
+
+    vec3 outputColor = redHBox + yellowHBox + greenHBox + blueHBox + purpleHBox;
+
+    return getBringhtPassColor(outputColor, threshold, thresholdSize);
 }
 
 void main()

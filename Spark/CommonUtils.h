@@ -30,6 +30,10 @@ namespace utils
     void recreateCubemap(GLuint& texture, unsigned int size, GLenum internalFormat, GLenum format, GLenum pixelFormat, GLenum textureWrapping,
                          GLenum textureSampling, bool mipMaps = false);
 
+    void bindTexture2D(GLuint framebuffer, GLuint colorTexture, GLuint renderTargetIds = 0, GLuint mipmapLevel = 0);
+    void bindTextures2D(GLuint framebuffer, const std::vector<GLuint>& colorTextures, const std::vector<GLuint>& renderTargetIds = {});
+    void bindTextures2D(GLuint framebuffer, const std::vector<GLuint>&& colorTextures, const std::vector<GLuint>&& renderTargetIds = {});
+
     void bindDepthTexture(GLuint& framebuffer, GLuint depthTexture);
 
     void createFramebuffer(GLuint& framebuffer, std::vector<GLuint>&& colorTextures, GLuint renderbuffer = 0);

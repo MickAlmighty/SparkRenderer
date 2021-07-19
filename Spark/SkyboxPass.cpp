@@ -26,7 +26,7 @@ std::optional<GLuint> SkyboxPass::process(const std::weak_ptr<PbrCubemapTexture>
         return {};
 
     PUSH_DEBUG_GROUP(RENDER_CUBEMAP);
-    glNamedFramebufferTexture(cubemapFramebuffer, GL_COLOR_ATTACHMENT0, lightingTexture, 0);
+    utils::bindTexture2D(cubemapFramebuffer, lightingTexture);
     utils::bindDepthTexture(cubemapFramebuffer, depthTexture);
     renderSkybox(cubemapFramebuffer, w, h, cubemapPtr);
     POP_DEBUG_GROUP()

@@ -1,7 +1,10 @@
 #include "CommonUtils.h"
 
+#include <numeric>
+
 #include <glm/gtc/matrix_transform.hpp>
 
+#include "Logging.h"
 #include "ResourceLibrary.h"
 #include "Shader.h"
 #include "Spark.h"
@@ -92,6 +95,48 @@ void recreateCubemap(GLuint& texture, unsigned int size, GLenum internalFormat, 
     createCubemap(texture, size, internalFormat, format, pixelFormat, textureWrapping, textureSampling, mipMaps);
 }
 
+void bindTexture2D(GLuint framebuffer, GLuint colorTexture, GLuint renderTargetIds, GLuint mipmapLevel)
+{
+    glNamedFramebufferTexture(framebuffer, GL_COLOR_ATTACHMENT0 + renderTargetIds, colorTexture, mipmapLevel);
+    glNamedFramebufferDrawBuffer(framebuffer, GL_COLOR_ATTACHMENT0 + renderTargetIds);
+}
+
+void bindTextures2D(GLuint framebuffer, const std::vector<GLuint>& colorTextures, const std::vector<GLuint>& renderTargetIds)
+{
+    if(colorTextures.empty())
+    {
+        return;
+    }
+
+    if(colorTextures.size() != renderTargetIds.size())
+    {
+        std::vector<GLenum> attachments(colorTextures.size());
+        std::iota(attachments.begin(), attachments.end(), GL_COLOR_ATTACHMENT0);
+
+        for(unsigned int i = 0; i < colorTextures.size(); ++i)
+        {
+            glNamedFramebufferTexture(framebuffer, attachments[i], colorTextures[i], 0);
+        }
+
+        glNamedFramebufferDrawBuffers(framebuffer, static_cast<GLsizei>(attachments.size()), attachments.data());
+    }
+    else
+    {
+        std::vector<GLenum> attachments(colorTextures.size());
+        for(unsigned int i = 0; i < colorTextures.size(); ++i)
+        {
+            attachments[i] = GL_COLOR_ATTACHMENT0 + renderTargetIds[i];
+            glNamedFramebufferTexture(framebuffer, attachments[i], colorTextures[i], 0);
+        }
+        glNamedFramebufferDrawBuffers(framebuffer, static_cast<GLsizei>(attachments.size()), attachments.data());
+    }
+}
+
+void bindTextures2D(GLuint framebuffer, const std::vector<GLuint>&& colorTextures, const std::vector<GLuint>&& renderTargetIds)
+{
+    bindTextures2D(framebuffer, colorTextures, renderTargetIds);
+}
+
 void bindDepthTexture(GLuint& framebuffer, GLuint depthTexture)
 {
     glNamedFramebufferTexture(framebuffer, GL_DEPTH_ATTACHMENT, depthTexture, 0);
@@ -104,15 +149,7 @@ void createFramebuffer(GLuint& framebuffer, std::vector<GLuint>&& colorTextures,
 
     if(!colorTextures.empty())
     {
-        std::vector<GLenum> colorAttachments;
-        colorAttachments.reserve(colorTextures.size());
-        for(unsigned int i = 0; i < colorTextures.size(); ++i)
-        {
-            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, colorTextures[i], 0);
-            colorAttachments.push_back(GL_COLOR_ATTACHMENT0 + i);
-        }
-
-        glDrawBuffers(static_cast<GLsizei>(colorAttachments.size()), colorAttachments.data());
+        bindTextures2D(framebuffer, colorTextures);
     }
 
     if(renderbuffer != 0)
@@ -133,7 +170,7 @@ void createFramebuffer(GLuint& framebuffer, std::vector<GLuint>&& colorTextures,
 
 void recreateFramebuffer(GLuint& framebuffer, std::vector<GLuint>&& colorTextures, GLuint renderbuffer)
 {
-    if (framebuffer != 0)
+    if(framebuffer != 0)
         glDeleteFramebuffers(1, &framebuffer);
 
     createFramebuffer(framebuffer, std::move(colorTextures), renderbuffer);

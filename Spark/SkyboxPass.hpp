@@ -21,8 +21,8 @@ class SkyboxPass
     SkyboxPass() = default;
     SkyboxPass(const SkyboxPass&) = delete;
     SkyboxPass(SkyboxPass&&) = delete;
-    SkyboxPass operator=(const SkyboxPass&) = delete;
-    SkyboxPass operator=(SkyboxPass&&) = delete;
+    SkyboxPass& operator=(const SkyboxPass&) = delete;
+    SkyboxPass& operator=(SkyboxPass&&) = delete;
     ~SkyboxPass();
 
     void setup(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo);

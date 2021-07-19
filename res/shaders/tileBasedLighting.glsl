@@ -111,7 +111,6 @@ struct Material
 
 vec3 worldPosFromDepth(float depth, vec2 texCoords);
 vec3 decodeViewSpaceNormal(vec2 enc);
-vec3 getBrightPassColor(vec3 color);
 
 float normalDistributionGGX(vec3 N, vec3 H, float roughness);
 vec3 fresnelSchlick(vec3 V, vec3 H, vec3 F0);
@@ -227,7 +226,7 @@ void main()
     barrier();
     //imageStore(lightOutput, texCoords, vec4(lightProbeIndices[numberOfLightsIndex]));
     imageStore(lightOutput, texCoords, color);
-    imageStore(brightPassOutput, texCoords, vec4(getBrightPassColor(color.xyz), 1.0f));
+    imageStore(brightPassOutput, texCoords, color);
 }
 
 vec3 worldPosFromDepth(float depth, vec2 texCoords) {
@@ -248,49 +247,6 @@ vec3 decodeViewSpaceNormal(vec2 enc)
     n.xy = fenc*g;
     n.z = 1-f/2;
     return n;
-}
-
-vec3 getBrightPassColor(vec3 color)
-{
-    //Y'UV BT.601
-    const mat3 toYUV = mat3(vec3(0.299, 0.587, 0.114),
-        vec3(-0.14713, -0.28886, 0.436),
-        vec3(0.615, -0.51499, -0.10001));
-
-    const mat3 toRGB = mat3(vec3(1, 0, 1.13983),
-        vec3(1, -0.39465, -0.58060),
-        vec3(1, 2.03211, 0));
-
-//    const float luma = dot(color, vec3(0.299, 0.587, 0.114));
-//    float weight = 1 / (1 + luma);
-
-    //const vec3 yuv = toYUV * color;
-
-    // if (yuv.r < 1.0)
-    // {
-    //     const float smoothY = smoothstep(0.0, 1.0, yuv.r);
-    //     // const vec3 smoothedColor = max(toRGB * vec3(smoothY, yuv.gb), vec3(0));
-    //     // float weight = 1 / (1 + smoothY);
-    //     return color * smoothY;
-    // }
-    // else
-    // {
-    //     float weight = 1 / (1 + yuv.r);
-    //     return color * weight;
-    // }
-
-    const float avg = (color.r + color.g + color.b) / 3;
-
-    if (avg < 1.0)
-    {
-        const float smoothAvg = smoothstep(0.5, 1.0, avg);
-        return color * smoothAvg;
-    }
-    else
-    {
-        float weight = 1 / (1 + avg);
-        return color * weight;
-    }
 }
 
 vec3 directionalLightAddition(vec3 V, vec3 N, Material m)

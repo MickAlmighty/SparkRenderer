@@ -8,6 +8,7 @@
 #include "Enums.h"
 #include "GBuffer.h"
 #include "LightShaftsPass.hpp"
+#include "MotionBlurPass.hpp"
 #include "Scene.h"
 #include "ScreenQuad.hpp"
 #include "SkyboxPass.hpp"
@@ -86,11 +87,12 @@ class SparkRenderer
     DepthOfFieldPass dofPass{};
     LightShaftsPass lightShaftsPass{};
     SkyboxPass skyboxPass{};
+    MotionBlurPass motionBlurPass{};
 
     GBuffer gBuffer{};
 
+    GLuint uiShapesFramebuffer{};
     GLuint lightFrameBuffer{}, lightingTexture{}, brightPassTexture{};
-    GLuint motionBlurFramebuffer{}, motionBlurTexture{};
     GLuint fxaaFramebuffer{}, fxaaTexture{};
     GLuint lightsPerTileTexture{};
 
@@ -111,7 +113,6 @@ class SparkRenderer
     std::shared_ptr<resources::Shader> mainShader{nullptr};
     std::shared_ptr<resources::Shader> screenShader{nullptr};
     std::shared_ptr<resources::Shader> lightShader{nullptr};
-    std::shared_ptr<resources::Shader> motionBlurShader{nullptr};
     std::shared_ptr<resources::Shader> solidColorShader{nullptr};
     std::shared_ptr<resources::Shader> fxaaShader{nullptr};
     std::shared_ptr<resources::Shader> tileBasedLightCullingShader{nullptr};

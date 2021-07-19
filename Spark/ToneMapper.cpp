@@ -28,18 +28,18 @@ void ToneMapper::setup(unsigned int width, unsigned int height)
     utils::createTexture2D(averageLuminanceTexture, 1, 1, GL_R16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
 }
 
-GLuint ToneMapper::process(GLuint outputTexture, const ScreenQuad& screenQuad)
+GLuint ToneMapper::process(GLuint colorTexture, const ScreenQuad& screenQuad)
 {
     PUSH_DEBUG_GROUP(TONE_MAPPING);
 
-    calculateAverageLuminance(outputTexture);
+    calculateAverageLuminance(colorTexture);
 
     glBindFramebuffer(GL_FRAMEBUFFER, toneMappingFramebuffer);
 
     toneMappingShader->use();
     toneMappingShader->setVec2("inversedScreenSize", {1.0f / w, 1.0f / h});
 
-    glBindTextureUnit(0, outputTexture);
+    glBindTextureUnit(0, colorTexture);
     glBindTextureUnit(1, averageLuminanceTexture);
     screenQuad.draw();
     glBindTextures(0, 3, nullptr);
@@ -64,7 +64,7 @@ void ToneMapper::cleanup()
     toneMappingFramebuffer = averageLuminanceTexture = toneMappingTexture = 0;
 }
 
-void ToneMapper::calculateAverageLuminance(GLuint outputTexture)
+void ToneMapper::calculateAverageLuminance(GLuint colorTexture)
 {
     oneOverLogLuminanceRange = 1.0f / logLuminanceRange;
 
@@ -78,7 +78,7 @@ void ToneMapper::calculateAverageLuminance(GLuint outputTexture)
     luminanceHistogramComputeShader->setFloat("minLogLuminance", minLogLuminance);
     luminanceHistogramComputeShader->setFloat("oneOverLogLuminanceRange", oneOverLogLuminanceRange);
 
-    glBindImageTexture(0, outputTexture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA16F);
+    glBindImageTexture(0, colorTexture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA16F);
     luminanceHistogramComputeShader->dispatchCompute(w / 16, h / 16, 1);  // localWorkGroups has dimensions of x = 16, y = 16
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 

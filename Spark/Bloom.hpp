@@ -12,8 +12,6 @@ namespace resources
     class Shader;
 }
 
-class BlurPass;
-
 class Bloom
 {
     public:
@@ -29,7 +27,9 @@ class Bloom
     void createFrameBuffersAndTextures(unsigned int width, unsigned int height);
     void cleanup();
 
-    float intensity = 0.1f;
+    float intensity = 0.2f;
+    float threshold = 0.5f;
+    float thresholdSize = 1.0f;
 
     private:
     void downsampleTexture(const ScreenQuad& screenQuad, GLuint framebuffer, GLuint texture, GLuint viewportWidth, GLuint viewportHeight,
@@ -38,18 +38,14 @@ class Bloom
                          float bloomIntensity = 1.0f);
     unsigned int w{}, h{};
 
-    GLuint bloomFramebuffer{}, bloomTexture{};
-    GLuint downsampleFramebuffer2{}, downsampleTexture2{};
-    GLuint downsampleFramebuffer4{}, downsampleTexture4{};
-    GLuint downsampleFramebuffer8{}, downsampleTexture8{};
-    GLuint downsampleFramebuffer16{}, downsampleTexture16{};
+    GLuint fboMip0{};
+    GLuint fboMip1{}, textureMip1{};
+    GLuint fboMip2{}, textureMip2{};
+    GLuint fboMip3{}, textureMip3{};
+    GLuint fboMip4{}, textureMip4{};
 
-    std::unique_ptr<BlurPass> upsampleBloomBlurPass2;
-    std::unique_ptr<BlurPass> upsampleBloomBlurPass4;
-    std::unique_ptr<BlurPass> upsampleBloomBlurPass8;
-    std::unique_ptr<BlurPass> upsampleBloomBlurPass16;
-
+    std::shared_ptr<resources::Shader> bloomDownScaleShaderMip0ToMip1{nullptr};
     std::shared_ptr<resources::Shader> bloomDownScaleShader{nullptr};
-    std::shared_ptr<resources::Shader> bloomUpScaleShader{nullptr};
+    std::shared_ptr<resources::Shader> bloomUpsamplerShader{nullptr};
 };
 }  // namespace spark

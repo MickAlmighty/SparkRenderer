@@ -22,7 +22,7 @@ class ToneMapper
     ~ToneMapper();
 
     void setup(unsigned int width, unsigned int height);
-    GLuint process(GLuint outputTexture, const ScreenQuad& screenQuad);
+    GLuint process(GLuint colorTexture, const ScreenQuad& screenQuad);
     void createFrameBuffersAndTextures(unsigned int width, unsigned int height);
     void cleanup();
 
@@ -32,7 +32,7 @@ class ToneMapper
     float tau = 1.1f;
 
     private:
-    void calculateAverageLuminance(GLuint outputTexture);
+    void calculateAverageLuminance(GLuint colorTexture);
 
     unsigned int w{}, h{};
     GLuint toneMappingFramebuffer{}, toneMappingTexture{}, averageLuminanceTexture{};

@@ -41,6 +41,8 @@ list(APPEND SparkSources
     ${CMAKE_CURRENT_SOURCE_DIR}/Model.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ModelMesh.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ModelMesh.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/MotionBlurPass.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/MotionBlurPass.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Observable.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/OGLContext.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/OGLContext.hpp

@@ -23,7 +23,7 @@ layout (binding = 0) uniform sampler2D colorTexture;
 layout (binding = 1) uniform sampler2D depthTexture;
 
 uniform mat4 prevViewProj;
-uniform float currentFPS;
+uniform float blurScale = 1.0f;
 uniform vec2 texelSize;
 
 layout (std140) uniform Camera
@@ -82,9 +82,8 @@ void main()
     vec2 currentPos = texCoords;
     vec2 previousPos = previousViewPos.xy * 0.5 + 0.5;
     
-    float mblurScale = currentFPS / 60.0; // divided by target fps
     vec2 velocity = (previousPos.xy - currentPos.xy);
-    velocity *= mblurScale;
+    velocity *= blurScale;
     
     float speed = length(velocity / texelSize);
     
