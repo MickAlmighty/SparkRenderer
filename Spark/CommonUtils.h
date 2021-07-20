@@ -8,8 +8,8 @@
 
 #define PUSH_DEBUG_GROUP(x)                                                                                       \
     {                                                                                                             \
-        std::string message = #x;                                                                                 \
-        glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, static_cast<GLsizei>(message.length()), message.data()); \
+        const char message[] = #x;                                                                                 \
+        glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, static_cast<GLsizei>(sizeof(message)), message); \
     }
 
 #define POP_DEBUG_GROUP() glPopDebugGroup();
@@ -36,9 +36,8 @@ namespace utils
 
     void bindDepthTexture(GLuint& framebuffer, GLuint depthTexture);
 
-    void createFramebuffer(GLuint& framebuffer, std::vector<GLuint>&& colorTextures, GLuint renderbuffer = 0);
-
-    void recreateFramebuffer(GLuint& framebuffer, std::vector<GLuint>&& colorTextures, GLuint renderbuffer = 0);
+    void createFramebuffer(GLuint& framebuffer, std::vector<GLuint>&& colorTextures = {}, GLuint renderbuffer = 0);
+    void recreateFramebuffer(GLuint& framebuffer, std::vector<GLuint>&& colorTextures = {}, GLuint renderbuffer = 0);
 
     GLuint createBrdfLookupTexture(unsigned int size);
 

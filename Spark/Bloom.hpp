@@ -29,8 +29,8 @@ class Bloom
     void cleanup();
 
     float intensity = 1.0f;
-    float threshold = 0.2f;
-    float thresholdSize = 0.3f;
+    float threshold = 0.5f;
+    float thresholdSize = 1.0f;
     float radiusMip0{ 4.0f };
     float radiusMip1{ 6.0f };
     float radiusMip2{ 7.5f };

@@ -14,7 +14,6 @@ layout(rgba8, binding = 0) readonly uniform image2D diffuseImage;
 layout(rg16f, binding = 1) readonly uniform image2D normalImage;
 layout(rg8, binding = 2) readonly uniform image2D rougnessMetalnessImage;
 layout(rgba16f, binding = 3) writeonly uniform image2D lightOutput;
-layout(rgba16f, binding = 4) writeonly uniform image2D brightPassOutput;
 
 shared uint numberOfLightsIndex;
 shared uint lightBeginIndex;
@@ -226,7 +225,6 @@ void main()
     barrier();
     //imageStore(lightOutput, texCoords, vec4(lightProbeIndices[numberOfLightsIndex]));
     imageStore(lightOutput, texCoords, color);
-    imageStore(brightPassOutput, texCoords, color);
 }
 
 vec3 worldPosFromDepth(float depth, vec2 texCoords) {

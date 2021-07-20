@@ -7,6 +7,7 @@
 #include "glad_glfw3.h"
 #include "ScreenQuad.hpp"
 #include "Structs.h"
+#include "TexturePass.hpp"
 
 namespace spark
 {
@@ -28,7 +29,7 @@ class SkyboxPass
     void setup(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo);
     std::optional<GLuint> process(const std::weak_ptr<PbrCubemapTexture>& cubemap, GLuint depthTexture, GLuint lightingTexture);
     void processFramebuffer(const std::weak_ptr<PbrCubemapTexture>& cubemap, GLuint framebuffer, unsigned int fboWidth, unsigned int fboHeight);
-    void renderSkybox(GLuint framebuffer, unsigned fboWidth, unsigned fboHeight, const std::shared_ptr<PbrCubemapTexture>& cubemapPtr);
+    void renderSkybox(GLuint framebuffer, unsigned int fboWidth, unsigned int fboHeight, const std::shared_ptr<PbrCubemapTexture>& cubemapPtr);
     void createFrameBuffersAndTextures(unsigned int width, unsigned int height);
     void cleanup();
 
@@ -36,7 +37,8 @@ class SkyboxPass
     unsigned int w{}, h{};
 
     Cube cube = Cube();
-    GLuint cubemapFramebuffer{};
+    GLuint cubemapFramebuffer{}, cubemapTexture{};
+    TexturePass texturePass;
     std::shared_ptr<resources::Shader> cubemapShader{nullptr};
 };
 }  // namespace spark

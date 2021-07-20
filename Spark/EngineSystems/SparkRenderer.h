@@ -13,6 +13,7 @@
 #include "ScreenQuad.hpp"
 #include "SkyboxPass.hpp"
 #include "RenderingRequest.h"
+#include "TexturePass.hpp"
 #include "ToneMapper.hpp"
 
 namespace spark
@@ -88,11 +89,12 @@ class SparkRenderer
     LightShaftsPass lightShaftsPass{};
     SkyboxPass skyboxPass{};
     MotionBlurPass motionBlurPass{};
+    TexturePass texturePass{};
 
     GBuffer gBuffer{};
 
     GLuint uiShapesFramebuffer{};
-    GLuint lightFrameBuffer{}, lightingTexture{}, brightPassTexture{};
+    GLuint lightFrameBuffer{}, lightingTexture{};
     GLuint fxaaFramebuffer{}, fxaaTexture{};
     GLuint lightsPerTileTexture{};
 

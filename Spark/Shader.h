@@ -17,7 +17,7 @@ class Shader : public resourceManagement::Resource
 {
     public:
     Shader(const std::filesystem::path& path_);
-    ~Shader();
+    ~Shader() override;
 
     void use() const;
     void dispatchCompute(GLuint x, GLuint y, GLuint z) const;
