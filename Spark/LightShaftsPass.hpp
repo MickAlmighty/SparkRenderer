@@ -46,7 +46,7 @@ class LightShaftsPass
 
     unsigned int w{}, h{};
     GLuint radialBlurFramebuffer1{}, radialBlurTexture1{};
-    GLuint radialBlurFramebuffer2{}, radialBlurTexture2{};
+    GLuint radialBlurTexture2{};
     GLuint blendingFramebuffer{}, blendingOutputTexture{};
     ScreenQuad screenQuad{};
     std::unique_ptr<BlurPass> blurPass;

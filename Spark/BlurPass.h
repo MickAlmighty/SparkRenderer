@@ -16,7 +16,6 @@ class BlurPass
     public:
     void blurTexture(GLuint texture) const;
     GLuint getBlurredTexture() const;
-    GLuint getSecondPassFramebuffer() const;
     void recreateWithNewSize(unsigned int width, unsigned int height);
 
     BlurPass(unsigned int width_, unsigned int height_);
@@ -29,7 +28,7 @@ class BlurPass
 
     private:
     unsigned int width{}, height{};
-    GLuint hFramebuffer{}, hTexture{};
+    GLuint hTexture{};
     GLuint vFramebuffer{}, vTexture{};
     ScreenQuad screenQuad{};
 

@@ -2,12 +2,11 @@
 
 #include "Camera.h"
 #include "CommonUtils.h"
-#include "GUI/ImGui/imgui.h"
 #include "Lights/LightProbe.h"
 #include "RenderingRequest.h"
 #include "ResourceLibrary.h"
+#include "Shader.h"
 #include "Spark.h"
-#include "Clock.h"
 #include "Timer.h"
 
 namespace spark
@@ -20,74 +19,7 @@ SparkRenderer* SparkRenderer::getInstance()
 
 void SparkRenderer::drawGui()
 {
-    if(ImGui::BeginMenu("SparkRenderer"))
-    {
-        const std::string menuName = "SSAO";
-        if(ImGui::BeginMenu(menuName.c_str()))
-        {
-            ImGui::Checkbox("SSAO enabled", &isAmbientOcclusionEnabled);
-            ImGui::DragInt("Samples", &ao.kernelSize, 1, 0, 64);
-            ImGui::DragFloat("Radius", &ao.radius, 0.05f, 0.0f);
-            ImGui::DragFloat("Bias", &ao.bias, 0.005f);
-            ImGui::DragFloat("Power", &ao.power, 0.05f, 0.0f);
-            ImGui::EndMenu();
-        }
-
-        const std::string menuName2 = "Depth of Field";
-        if(ImGui::BeginMenu(menuName2.c_str()))
-        {
-            ImGui::Checkbox("DOF enabled", &isDofEnabled);
-            ImGui::DragFloat("NearStart", &dofPass.nearStart, 0.1f, 0.0f);
-            ImGui::DragFloat("NearEnd", &dofPass.nearEnd, 0.1f);
-            ImGui::DragFloat("FarStart", &dofPass.farStart, 0.1f, 0.0f);
-            ImGui::DragFloat("FarEnd", &dofPass.farEnd, 0.1f, 0.0f);
-            ImGui::EndMenu();
-        }
-
-        const std::string menuName3 = "Light Shafts";
-        if(ImGui::BeginMenu(menuName3.c_str()))
-        {
-            ImGui::Checkbox("Light shafts enabled", &isLightShaftsPassEnabled);
-            ImGui::DragFloat("Exposure", &lightShaftsPass.exposure, 0.01f, 0.0f, 1.0f);
-            ImGui::DragFloat("Decay", &lightShaftsPass.decay, 0.01f, 0.0001f);
-            ImGui::DragFloat("Density", &lightShaftsPass.density, 0.01f, 0.0001f, 1.0f);
-            ImGui::DragFloat("Weight", &lightShaftsPass.weight, 0.01f, 0.0001f);
-            ImGui::EndMenu();
-        }
-
-        const std::string menuName4 = "Tone Mapping";
-        if(ImGui::BeginMenu(menuName4.c_str()))
-        {
-            ImGui::DragFloat("minLogLuminance", &toneMapper.minLogLuminance, 0.01f);
-            ImGui::DragFloat("logLuminanceRange", &toneMapper.logLuminanceRange, 0.01f);
-            ImGui::DragFloat("tau", &toneMapper.tau, 0.01f, 0.0f);
-            ImGui::EndMenu();
-        }
-
-        const std::string menuName5 = "Bloom";
-        if(ImGui::BeginMenu(menuName5.c_str()))
-        {
-            ImGui::Checkbox("Bloom", &isBloomEnabled);
-            ImGui::DragFloat("Intensity", &bloomPass.intensity, 0.001f, 0);
-            ImGui::DragFloat("Threshold", &bloomPass.threshold, 0.01f, 0.0001f);
-            ImGui::DragFloat("ThresholdSize", &bloomPass.thresholdSize, 0.01f, 0.0001f);
-            ImGui::DragFloat("radiusMip0", &bloomPass.radiusMip0, 0.01f, 0.0001f);
-            ImGui::DragFloat("radiusMip1", &bloomPass.radiusMip1, 0.01f, 0.0001f);
-            ImGui::DragFloat("radiusMip2", &bloomPass.radiusMip2, 0.01f, 0.0001f);
-            ImGui::DragFloat("radiusMip3", &bloomPass.radiusMip3, 0.01f, 0.0001f);
-            ImGui::DragFloat("radiusMip4", &bloomPass.radiusMip4, 0.01f, 0.0001f);
-            ImGui::EndMenu();
-        }
-
-        const std::string menuName6 = "MotionBlur";
-        if(ImGui::BeginMenu(menuName6.c_str()))
-        {
-            ImGui::Checkbox("Motion Blur", &motionBlurEnable);
-            ImGui::EndMenu();
-        }
-
-        ImGui::EndMenu();
-    }
+    postProcessingStack.drawGui();
 }
 
 void SparkRenderer::setup(unsigned int windowWidth, unsigned int windowHeight)
@@ -95,13 +27,8 @@ void SparkRenderer::setup(unsigned int windowWidth, unsigned int windowHeight)
     width = windowWidth;
     height = windowHeight;
 
-    ao.setup(width, height, cameraUBO);
-    toneMapper.setup(width, height);
-    bloomPass.setup(width, height);
-    dofPass.setup(width, height, cameraUBO);
-    lightShaftsPass.setup(width, height);
+    postProcessingStack.setup(width, height, cameraUBO);
     skyboxPass.setup(width, height, cameraUBO);
-    motionBlurPass.setup(width, height, cameraUBO);
 
     cubemapViewMatrices.resizeBuffer(sizeof(glm::mat4) * 6);
     cubemapViewMatrices.updateData(utils::getCubemapViewMatrices(glm::vec3(0)));
@@ -119,7 +46,6 @@ void SparkRenderer::initMembers()
     screenShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("screen.glsl");
     lightShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("light.glsl");
     solidColorShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("solidColor.glsl");
-    fxaaShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("fxaa.glsl");
     tileBasedLightCullingShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("tileBasedLightCulling.glsl");
     tileBasedLightingShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("tileBasedLighting.glsl");
     localLightProbesLightingShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("localLightProbesLighting.glsl");
@@ -196,17 +122,11 @@ void SparkRenderer::renderPass(unsigned int windowWidth, unsigned int windowHeig
     updateCameraUBO(camera->getProjectionReversedZInfiniteFarPlane(), camera->getViewMatrix(), camera->getPosition());
 
     fillGBuffer(gBuffer);
-    ambientOcclusion();
+    const GLuint ssaoTexture = postProcessingStack.processAmbientOcclusion(gBuffer.depthTexture, gBuffer.normalsTexture);
     // renderLights(lightFrameBuffer, gBuffer);
-    tileBasedLightRendering(gBuffer);
-    renderCubemap();
-    depthOfField();
-    lightShafts();
-    motionBlur();
-    bloom();
-    toneMapping();
+    tileBasedLightRendering(gBuffer, ssaoTexture);
+    textureHandle = postProcessingStack.process(lightingTexture, gBuffer.depthTexture, pbrCubemap, scene->getCamera());
     helperShapes();
-    fxaa();
     renderToScreen();
     glDepthFunc(GL_LESS);
 
@@ -354,7 +274,7 @@ void SparkRenderer::tileBasedLightCulling(const GBuffer& geometryBuffer) const
     POP_DEBUG_GROUP();
 }
 
-void SparkRenderer::tileBasedLightRendering(const GBuffer& geometryBuffer)
+void SparkRenderer::tileBasedLightRendering(const GBuffer& geometryBuffer, GLuint ssaoTexture)
 {
     tileBasedLightCulling(geometryBuffer);
 
@@ -374,7 +294,7 @@ void SparkRenderer::tileBasedLightRendering(const GBuffer& geometryBuffer)
         glBindTextureUnit(2, cubemap->prefilteredCubemap);
     }
     glBindTextureUnit(3, brdfLookupTexture);
-    glBindTextureUnit(4, textureHandle);
+    glBindTextureUnit(4, ssaoTexture);
 
     // textures as images
     glBindImageTexture(0, geometryBuffer.colorTexture, 0, false, 0, GL_READ_ONLY, GL_RGBA8);
@@ -390,38 +310,6 @@ void SparkRenderer::tileBasedLightRendering(const GBuffer& geometryBuffer)
     textureHandle = lightingTexture;
 
     POP_DEBUG_GROUP();
-}
-
-void SparkRenderer::ambientOcclusion()
-{
-    textureHandle = ao.process(isAmbientOcclusionEnabled, gBuffer);
-}
-
-void SparkRenderer::bloom()
-{
-    if(isBloomEnabled)
-    {
-        textureHandle = bloomPass.process(textureHandle, lightingTexture);
-    }
-}
-
-void SparkRenderer::lightShafts()
-{
-    if(isLightShaftsPassEnabled)
-    {
-        if(auto outputOpt = lightShaftsPass.process(scene->getCamera(), gBuffer.depthTexture, textureHandle); outputOpt.has_value())
-        {
-            textureHandle = outputOpt.value();
-        }
-    }
-}
-
-void SparkRenderer::renderCubemap()
-{
-    if(auto outputOpt = skyboxPass.process(pbrCubemap, gBuffer.depthTexture, textureHandle); outputOpt.has_value())
-    {
-        textureHandle = outputOpt.value();
-    }
 }
 
 void SparkRenderer::helperShapes()
@@ -452,47 +340,7 @@ void SparkRenderer::helperShapes()
     POP_DEBUG_GROUP();
 }
 
-void SparkRenderer::depthOfField()
-{
-    if(!isDofEnabled)
-        return;
-
-    dofPass.render(textureHandle, gBuffer.depthTexture);
-    textureHandle = dofPass.getOutputTexture();
-}
-
-void SparkRenderer::toneMapping()
-{
-    textureHandle = toneMapper.process(textureHandle);
-}
-
-void SparkRenderer::motionBlur()
-{
-    if(auto outputTextureOpt = motionBlurPass.process(scene->getCamera(), textureHandle, gBuffer.depthTexture);
-       outputTextureOpt.has_value() && motionBlurEnable)
-    {
-        textureHandle = outputTextureOpt.value();
-    }
-}
-
-void SparkRenderer::fxaa()
-{
-    PUSH_DEBUG_GROUP(FXAA);
-
-    glBindFramebuffer(GL_FRAMEBUFFER, fxaaFramebuffer);
-
-    fxaaShader->use();
-    fxaaShader->setVec2("inversedScreenSize", {1.0f / static_cast<float>(width), 1.0f / static_cast<float>(height)});
-
-    glBindTextureUnit(0, textureHandle);
-    screenQuad.draw();
-    glBindTextures(0, 2, nullptr);
-
-    textureHandle = fxaaTexture;
-    POP_DEBUG_GROUP();
-}
-
-void SparkRenderer::renderToScreen() const
+void SparkRenderer::renderToScreen()
 {
     PUSH_DEBUG_GROUP(RENDER_TO_SCREEN);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -521,13 +369,8 @@ void SparkRenderer::clearRenderQueues()
 
 void SparkRenderer::createFrameBuffersAndTextures()
 {
-    dofPass.createFrameBuffersAndTextures(width, height);
-    ao.createFrameBuffersAndTextures(width, height);
-    toneMapper.createFrameBuffersAndTextures(width, height);
-    bloomPass.createFrameBuffersAndTextures(width, height);
-    lightShaftsPass.createFrameBuffersAndTextures(width, height);
+    postProcessingStack.createFrameBuffersAndTextures(width, height);
     skyboxPass.createFrameBuffersAndTextures(width, height);
-    motionBlurPass.createFrameBuffersAndTextures(width, height);
 
     pointLightIndices.resizeBuffer(256 * (uint32_t)glm::ceil(height / 16.0f) * (uint32_t)glm::ceil(width / 16.0f) * sizeof(uint32_t));
     spotLightIndices.resizeBuffer(256 * (uint32_t)glm::ceil(height / 16.0f) * (uint32_t)glm::ceil(width / 16.0f) * sizeof(uint32_t));
@@ -536,36 +379,29 @@ void SparkRenderer::createFrameBuffersAndTextures()
     gBuffer.setup(width, height);
 
     utils::recreateTexture2D(lightingTexture, width, height, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::recreateTexture2D(fxaaTexture, width, height, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
     utils::recreateTexture2D(lightsPerTileTexture, width / 16, height / 16, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
-
     utils::recreateFramebuffer(lightFrameBuffer, {lightingTexture});
-    utils::recreateFramebuffer(fxaaFramebuffer, {fxaaTexture});
-    utils::recreateFramebuffer(uiShapesFramebuffer, {});
+    utils::recreateFramebuffer(uiShapesFramebuffer);
     utils::bindDepthTexture(uiShapesFramebuffer, gBuffer.depthTexture);
 }
 
 void SparkRenderer::cleanup()
 {
     deleteFrameBuffersAndTextures();
-    ao.cleanup();
-    toneMapper.cleanup();
-    bloomPass.cleanup();
-    lightShaftsPass.cleanup();
-    skyboxPass.cleanup();
-    motionBlurPass.cleanup();
 }
 
 void SparkRenderer::deleteFrameBuffersAndTextures()
 {
+    postProcessingStack.cleanup();
+    skyboxPass.cleanup();
     gBuffer.cleanup();
 
-    GLuint textures[4] = {lightingTexture, lightsPerTileTexture, fxaaTexture, brdfLookupTexture};
-    glDeleteTextures(4, textures);
+    GLuint textures[3] = {lightingTexture, lightsPerTileTexture, brdfLookupTexture};
+    glDeleteTextures(3, textures);
 
-    GLuint frameBuffers[3] = {lightFrameBuffer, fxaaFramebuffer, uiShapesFramebuffer};
+    GLuint frameBuffers[2] = {lightFrameBuffer, uiShapesFramebuffer};
 
-    glDeleteFramebuffers(3, frameBuffers);
+    glDeleteFramebuffers(2, frameBuffers);
 }
 
 void SparkRenderer::enableWireframeMode()

@@ -29,10 +29,11 @@ void AmbientOcclusion::setup(unsigned int width, unsigned int height, const Unif
     utils::createTexture2D(ssaoDisabledTexture, 1, 1, GL_RED, GL_RED, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_NEAREST, false, &red);
 
     ssaoShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("ssao.glsl");
+    colorInversionShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("colorInversion.glsl");
     ssaoShader->bindUniformBuffer("Samples", samplesUbo);
     ssaoShader->bindUniformBuffer("Camera", cameraUbo);
 
-    ssaoBlurPass = std::make_unique<BlurPass>(width / 2, height / 2);
+    ssaoBlurPass = std::make_unique<BlurPass>(w, h);
     screenQuad.setup();
 }
 
@@ -44,18 +45,14 @@ void AmbientOcclusion::cleanup()
     glDeleteFramebuffers(1, &ssaoFramebuffer);
 }
 
-GLuint AmbientOcclusion::process(const bool isSsaoEnabled, const GBuffer& geometryBuffer)
+GLuint AmbientOcclusion::process(GLuint depthTexture, GLuint normalsTexture)
 {
-    if(!isSsaoEnabled)
-        return ssaoDisabledTexture;
-
     PUSH_DEBUG_GROUP(SSAO);
 
+    glViewport(0, 0, w, h);
     glBindFramebuffer(GL_FRAMEBUFFER, ssaoFramebuffer);
-    glClearColor(1.0f, 0.0f, 0.0f, 0.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
 
-    GLuint textures[3] = {geometryBuffer.depthTexture, geometryBuffer.normalsTexture, randomNormalsTexture};
+    GLuint textures[3] = { depthTexture, normalsTexture, randomNormalsTexture};
     glBindTextures(0, 3, textures);
     ssaoShader->use();
     ssaoShader->setInt("kernelSize", kernelSize);
@@ -68,17 +65,24 @@ GLuint AmbientOcclusion::process(const bool isSsaoEnabled, const GBuffer& geomet
     glBindTextures(0, 3, nullptr);
 
     ssaoBlurPass->blurTexture(ssaoTexture);
+
+    glViewport(0, 0, w, h);
+    glBindFramebuffer(GL_FRAMEBUFFER, ssaoFramebuffer);
+    glBindTextureUnit(0, ssaoBlurPass->getBlurredTexture());
+    colorInversionShader->use();
+    screenQuad.draw();
+
     POP_DEBUG_GROUP();
 
-    return ssaoBlurPass->getBlurredTexture();
+    return ssaoTexture;
 }
 
 void AmbientOcclusion::createFrameBuffersAndTextures(unsigned int width, unsigned int height)
 {
     w = width;
     h = height;
-    ssaoBlurPass->recreateWithNewSize(w / 2, h / 2);
-    utils::recreateTexture2D(ssaoTexture, width, height, GL_RED, GL_RED, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    ssaoBlurPass->recreateWithNewSize(w, h);
+    utils::recreateTexture2D(ssaoTexture, w, h, GL_R16F, GL_RED, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
     utils::recreateFramebuffer(ssaoFramebuffer, {ssaoTexture});
 }
 

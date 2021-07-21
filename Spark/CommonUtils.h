@@ -6,13 +6,19 @@
 
 #include "glad_glfw3.h"
 
-#define PUSH_DEBUG_GROUP(x)                                                                                       \
-    {                                                                                                             \
-        const char message[] = #x;                                                                                 \
+#ifdef DEBUG
+#define PUSH_DEBUG_GROUP(x)                                                                               \
+    {                                                                                                     \
+        const char message[] = #x;                                                                        \
         glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, static_cast<GLsizei>(sizeof(message)), message); \
     }
 
 #define POP_DEBUG_GROUP() glPopDebugGroup();
+#else
+#define PUSH_DEBUG_GROUP(x)
+#define POP_DEBUG_GROUP()
+#endif
+
 
 namespace spark
 {

@@ -14,8 +14,7 @@ void BlurPass::blurTexture(GLuint texture) const
     PUSH_DEBUG_GROUP(GAUSSIAN_BLUR);
     glViewport(0, 0, width, height);
     glBindFramebuffer(GL_FRAMEBUFFER, vFramebuffer);
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
+    utils::bindTexture2D(vFramebuffer, vTexture);
 
     gaussianBlurShader->use();
     gaussianBlurShader->setVec2("inverseScreenSize", {1.0f / static_cast<float>(width), 1.0f / static_cast<float>(height)});
@@ -23,10 +22,7 @@ void BlurPass::blurTexture(GLuint texture) const
     glBindTextureUnit(0, texture);
     screenQuad.draw();
 
-    glBindFramebuffer(GL_FRAMEBUFFER, hFramebuffer);
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
-
+    utils::bindTexture2D(vFramebuffer, hTexture);
     gaussianBlurShader->setBool("horizontal", true);
     glBindTextureUnit(0, vTexture);
 
@@ -40,11 +36,6 @@ void BlurPass::blurTexture(GLuint texture) const
 GLuint BlurPass::getBlurredTexture() const
 {
     return hTexture;
-}
-
-GLuint BlurPass::getSecondPassFramebuffer() const
-{
-    return hFramebuffer;
 }
 
 void BlurPass::recreateWithNewSize(unsigned int width, unsigned int height)
@@ -71,7 +62,6 @@ void BlurPass::createGlObjects()
     utils::recreateTexture2D(hTexture, width, height, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
     utils::recreateTexture2D(vTexture, width, height, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
 
-    utils::recreateFramebuffer(hFramebuffer, {hTexture});
     utils::recreateFramebuffer(vFramebuffer, {vTexture});
 }
 
@@ -81,8 +71,8 @@ void BlurPass::deleteGlObjects()
     glDeleteTextures(2, textures);
     vTexture = hTexture = 0;
 
-    GLuint framebuffers[] = {vFramebuffer, hFramebuffer};
-    glDeleteFramebuffers(2, framebuffers);
-    vFramebuffer = hFramebuffer = 0;
+    GLuint framebuffers[] = {vFramebuffer};
+    glDeleteFramebuffers(1, framebuffers);
+    vFramebuffer = 0;
 }
 }  // namespace spark

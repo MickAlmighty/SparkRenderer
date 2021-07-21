@@ -3,18 +3,12 @@
 #include <glad/glad.h>
 
 #include "AmbientOcclusion.hpp"
-#include "Bloom.hpp"
-#include "DepthOfFieldPass.h"
 #include "Enums.h"
 #include "GBuffer.h"
-#include "LightShaftsPass.hpp"
-#include "MotionBlurPass.hpp"
+#include "PostProcessingStack.hpp"
 #include "Scene.h"
 #include "ScreenQuad.hpp"
-#include "SkyboxPass.hpp"
 #include "RenderingRequest.h"
-#include "TexturePass.hpp"
-#include "ToneMapper.hpp"
 
 namespace spark
 {
@@ -25,7 +19,9 @@ class SparkRenderer
 {
     public:
     SparkRenderer(const SparkRenderer&) = delete;
-    SparkRenderer operator=(const SparkRenderer&) = delete;
+    SparkRenderer(SparkRenderer&&) = delete;
+    SparkRenderer& operator=(const SparkRenderer&) = delete;
+    SparkRenderer& operator=(SparkRenderer&&) = delete;
     static SparkRenderer* getInstance();
 
     void setup(unsigned int windowWidth, unsigned int windowHeight);
@@ -47,19 +43,11 @@ class SparkRenderer
     void fillGBuffer(const GBuffer& geometryBuffer);
     void fillGBuffer(const GBuffer& geometryBuffer, const std::function<bool(const RenderingRequest& request)>& filter);
     void renderLights(GLuint framebuffer, const GBuffer& geometryBuffer);
-    void renderCubemap();
     void tileBasedLightCulling(const GBuffer& geometryBuffer) const;
-    void tileBasedLightRendering(const GBuffer& geometryBuffer);
+    void tileBasedLightRendering(const GBuffer& geometryBuffer, GLuint ssaoTexture);
 
-    void ambientOcclusion();
-    void bloom();
-    void lightShafts();
     void helperShapes();
-    void depthOfField();
-    void toneMapping();
-    void fxaa();
-    void motionBlur();
-    void renderToScreen() const;
+    void renderToScreen();
     void clearRenderQueues();
     void initMembers();
     void createFrameBuffersAndTextures();
@@ -82,20 +70,11 @@ class SparkRenderer
     std::weak_ptr<PbrCubemapTexture> pbrCubemap;
 
     ScreenQuad screenQuad{};
-    AmbientOcclusion ao{};
-    ToneMapper toneMapper{};
-    Bloom bloomPass{};
-    DepthOfFieldPass dofPass{};
-    LightShaftsPass lightShaftsPass{};
-    SkyboxPass skyboxPass{};
-    MotionBlurPass motionBlurPass{};
-    TexturePass texturePass{};
 
     GBuffer gBuffer{};
 
     GLuint uiShapesFramebuffer{};
     GLuint lightFrameBuffer{}, lightingTexture{};
-    GLuint fxaaFramebuffer{}, fxaaTexture{};
     GLuint lightsPerTileTexture{};
 
     // IBL
@@ -116,7 +95,6 @@ class SparkRenderer
     std::shared_ptr<resources::Shader> screenShader{nullptr};
     std::shared_ptr<resources::Shader> lightShader{nullptr};
     std::shared_ptr<resources::Shader> solidColorShader{nullptr};
-    std::shared_ptr<resources::Shader> fxaaShader{nullptr};
     std::shared_ptr<resources::Shader> tileBasedLightCullingShader{nullptr};
     std::shared_ptr<resources::Shader> tileBasedLightingShader{nullptr};
     std::shared_ptr<resources::Shader> localLightProbesLightingShader{nullptr};
@@ -125,16 +103,13 @@ class SparkRenderer
     std::shared_ptr<resources::Shader> prefilterShader{nullptr};
     std::shared_ptr<resources::Shader> resampleCubemapShader{nullptr};
 
+    PostProcessingStack postProcessingStack{};
+    SkyboxPass skyboxPass{};
+
     Cube cube = Cube();
     UniformBuffer cameraUBO{};
     SSBO pointLightIndices{};
     SSBO spotLightIndices{};
     SSBO lightProbeIndices{};
-
-    bool isAmbientOcclusionEnabled = false;
-    bool isDofEnabled = false;
-    bool isBloomEnabled = false;
-    bool motionBlurEnable = true;
-    bool isLightShaftsPassEnabled = true;
 };
 }  // namespace spark

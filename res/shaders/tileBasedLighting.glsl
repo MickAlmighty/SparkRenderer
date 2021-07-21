@@ -214,7 +214,7 @@ void main()
         ambient += (diffuseIBL + specularIBL) * (1.0f - iblWeight);
     }
 
-    vec4 color = vec4(min(L0 + ambient, vec3(65000)), 1) * ssao;
+    vec4 color = vec4(min(L0 + ambient, vec3(65000)), 1) * (1.0f - ssao);
 
     bvec4 valid = isnan(color);
     if ( valid.x || valid.y || valid.z || valid.w )

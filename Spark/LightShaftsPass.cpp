@@ -46,8 +46,8 @@ void LightShaftsPass::cleanup()
 {
     const GLuint textures[3] = {radialBlurTexture1, radialBlurTexture2, blendingOutputTexture};
     glDeleteTextures(3, textures);
-    const GLuint framebuffers[3] = {radialBlurFramebuffer1, radialBlurFramebuffer2, blendingFramebuffer};
-    glDeleteFramebuffers(3, framebuffers);
+    const GLuint framebuffers[2] = {radialBlurFramebuffer1, blendingFramebuffer};
+    glDeleteFramebuffers(2, framebuffers);
 }
 
 glm::vec2 LightShaftsPass::dirLightPositionInScreenSpace(const std::shared_ptr<Camera>& camera, const DirectionalLight* const dirLight)
@@ -91,11 +91,12 @@ void LightShaftsPass::renderLightShaftsToTexture(const DirectionalLight* const d
     glViewport(0, 0, w / 4, h / 4);
 
     glBindFramebuffer(GL_FRAMEBUFFER, radialBlurFramebuffer1);
+    utils::bindTexture2D(radialBlurFramebuffer1, radialBlurTexture1);
     glBindTextureUnit(0, blurPass->getBlurredTexture());
     glBindTextureUnit(1, lightingTexture);
     screenQuad.draw();
 
-    glBindFramebuffer(GL_FRAMEBUFFER, radialBlurFramebuffer2);
+    utils::bindTexture2D(radialBlurFramebuffer1, radialBlurTexture2);
     glBindTextureUnit(1, radialBlurTexture1);
     screenQuad.draw();
 
@@ -112,23 +113,19 @@ void LightShaftsPass::blurLightShafts() const
 void LightShaftsPass::blendLightShafts(GLuint lightingTexture) const
 {
     glViewport(0, 0, w, h);
+    glBindFramebuffer(GL_FRAMEBUFFER, blendingFramebuffer);
+
+    blendingShader->use();
+    glBindTextureUnit(0, lightingTexture);
+    screenQuad.draw();
+
     glBlendFunc(GL_ONE, GL_ONE);
     glBlendEquation(GL_FUNC_ADD);
     glEnable(GL_BLEND);
 
-    glBindFramebuffer(GL_FRAMEBUFFER, blendingFramebuffer);
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    blendingShader->use();
-
-    glBindTextureUnit(0, lightingTexture);
-    screenQuad.draw();
-
     glBindTextureUnit(0, blurPass->getBlurredTexture());
     screenQuad.draw();
     glBindTextureUnit(0, 0);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     glDisable(GL_BLEND);
 }
@@ -141,7 +138,6 @@ void LightShaftsPass::createFrameBuffersAndTextures(unsigned int width, unsigned
     utils::recreateTexture2D(radialBlurTexture2, w / 4, h / 4, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
     utils::recreateTexture2D(blendingOutputTexture, w, h, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
     utils::recreateFramebuffer(radialBlurFramebuffer1, {radialBlurTexture1});
-    utils::recreateFramebuffer(radialBlurFramebuffer2, {radialBlurTexture2});
     utils::recreateFramebuffer(blendingFramebuffer, {blendingOutputTexture});
     blurPass->recreateWithNewSize(w / 4, h / 4);
 }

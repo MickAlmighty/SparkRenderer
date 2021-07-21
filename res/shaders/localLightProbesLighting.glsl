@@ -317,5 +317,5 @@ float calculateAttenuation(vec3 lightPos, vec3 pos, float maxDistance)
     float factor = squaredDistance * invSqrAttRadius;
     float smoothFactor = clamp(1.0f - factor * factor, 0.0f, 1.0f);
     float attenuation = 1.0 / max(squaredDistance, 0.01f * 0.01f) * smoothFactor * smoothFactor;
-    return attenuation; 
+    return attenuation;
 }

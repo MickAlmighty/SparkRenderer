@@ -22,7 +22,7 @@ class AmbientOcclusion
 
     void setup(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo);
     void cleanup();
-    GLuint process(const bool isSsaoEnabled, const GBuffer& geometryBuffer);
+    GLuint process(GLuint depthTexture, GLuint normalsTexture);
     void createFrameBuffersAndTextures(unsigned int width, unsigned int height);
 
     int kernelSize = 32;
@@ -38,6 +38,7 @@ class AmbientOcclusion
     UniformBuffer samplesUbo{};
     ScreenQuad screenQuad{};
     std::shared_ptr<resources::Shader> ssaoShader{nullptr};
+    std::shared_ptr<resources::Shader> colorInversionShader{nullptr};
     std::unique_ptr<BlurPass> ssaoBlurPass;
 
     unsigned int w{}, h{};
