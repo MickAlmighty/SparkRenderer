@@ -3,7 +3,6 @@
 #include "GUI/ImGui/imgui.h"
 #include "GUI/ImGui/imgui_impl_glfw.h"
 #include "GUI/ImGui/imgui_impl_opengl3.h"
-#include <stb_image/stb_image.h>
 
 #include "Clock.h"
 #include "EngineSystems/SparkRenderer.h"

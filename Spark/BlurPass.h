@@ -7,7 +7,8 @@
 
 namespace spark
 {
-namespace resources {
+namespace resources
+{
     class Shader;
 }
 
@@ -32,7 +33,7 @@ class BlurPass
     GLuint vFramebuffer{}, vTexture{};
     ScreenQuad screenQuad{};
 
-    std::shared_ptr<resources::Shader> gaussianBlurShader{ nullptr };
+    std::shared_ptr<resources::Shader> gaussianBlurShader{nullptr};
 
     void createGlObjects();
     void deleteGlObjects();

@@ -29,11 +29,13 @@ void ToneMapper::setup(unsigned int width, unsigned int height)
     screenQuad.setup();
 }
 
-GLuint ToneMapper::process(GLuint colorTexture)
+GLuint ToneMapper::process(GLuint inputTexture)
 {
     PUSH_DEBUG_GROUP(TONE_MAPPING);
 
-    calculateAverageLuminance(colorTexture);
+    texturePass.process(w, h, inputTexture, colorTexture);
+
+    calculateAverageLuminance();
 
     glBindFramebuffer(GL_FRAMEBUFFER, toneMappingFramebuffer);
 
@@ -54,6 +56,7 @@ void ToneMapper::createFrameBuffersAndTextures(unsigned int width, unsigned int 
     w = width;
     h = height;
     utils::recreateTexture2D(toneMappingTexture, width, height, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::recreateTexture2D(colorTexture, width, height, GL_RGBA16F, GL_RGBA, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
     utils::recreateFramebuffer(toneMappingFramebuffer, {toneMappingTexture});
 }
 
@@ -61,11 +64,12 @@ void ToneMapper::cleanup()
 {
     glDeleteTextures(1, &toneMappingTexture);
     glDeleteTextures(1, &averageLuminanceTexture);
+    glDeleteTextures(1, &colorTexture);
     glDeleteFramebuffers(1, &toneMappingFramebuffer);
-    toneMappingFramebuffer = averageLuminanceTexture = toneMappingTexture = 0;
+    toneMappingFramebuffer = averageLuminanceTexture = toneMappingTexture = colorTexture = 0;
 }
 
-void ToneMapper::calculateAverageLuminance(GLuint colorTexture)
+void ToneMapper::calculateAverageLuminance()
 {
     const float oneOverLogLuminanceRange = 1.0f / logLuminanceRange;
 

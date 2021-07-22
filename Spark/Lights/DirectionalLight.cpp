@@ -132,7 +132,14 @@ void DirectionalLight::setLightShafts(bool state)
 
 DirectionalLight* DirectionalLight::getDirLightForLightShafts()
 {
-    return dirLightForLightShafts;
+    if (dirLightForLightShafts)
+    {
+        if (dirLightForLightShafts->getActive())
+        {
+            return dirLightForLightShafts;
+        }
+    }
+    return nullptr;
 }
 
 void DirectionalLight::activateLightShafts()

@@ -61,7 +61,14 @@ void LightManager::updateDirLightBuffer()
 {
     if(areDirLightsDirty)
     {
-        dirLightSSBO.updateData(prepareLightDataBuffer<DirectionalLightData>(directionalLights));
+        if (const auto lightData = prepareLightDataBuffer<DirectionalLightData>(directionalLights); lightData.empty())
+        {
+            dirLightSSBO.clearData();
+        }
+        else
+        {
+            dirLightSSBO.updateData(lightData);
+        }
         areDirLightsDirty = false;
     }
 }
@@ -70,7 +77,14 @@ void LightManager::updatePointLightBuffer()
 {
     if(arePointLightsDirty)
     {
-        pointLightSSBO.updateData(prepareLightDataBuffer<PointLightData>(pointLights));
+        if(const auto lightData = prepareLightDataBuffer<PointLightData>(pointLights); lightData.empty())
+        {
+            pointLightSSBO.clearData();
+        }
+        else
+        {
+            pointLightSSBO.updateData(lightData);
+        }
         arePointLightsDirty = false;
     }
 }
@@ -79,7 +93,14 @@ void LightManager::updateSpotLightBuffer()
 {
     if(areSpotLightsDirty)
     {
-        spotLightSSBO.updateData(prepareLightDataBuffer<SpotLightData>(spotLights));
+        if (const auto lightData = prepareLightDataBuffer<SpotLightData>(spotLights); lightData.empty())
+        {
+            spotLightSSBO.clearData();
+        }
+        else
+        {
+            spotLightSSBO.updateData(lightData);
+        }
         areSpotLightsDirty = false;
     }
 }
@@ -88,9 +109,15 @@ void LightManager::updateLightProbeBuffer()
 {
     if(areLightProbesDirty)
     {
-        auto lightDataBuffer = prepareLightDataBuffer<LightProbeData>(lightProbes);
-        std::sort(lightDataBuffer.begin(), lightDataBuffer.end());
-        lightProbeSSBO.updateData(lightDataBuffer);
+        if (auto lightDataBuffer = prepareLightDataBuffer<LightProbeData>(lightProbes); lightDataBuffer.empty())
+        {
+            lightProbeSSBO.clearData();
+        }
+        else
+        {
+            std::sort(lightDataBuffer.begin(), lightDataBuffer.end());
+            lightProbeSSBO.updateData(lightDataBuffer);
+        }
         areLightProbesDirty = false;
     }
 }

@@ -253,7 +253,7 @@ void SparkRenderer::renderLights(GLuint framebuffer, const GBuffer& geometryBuff
     POP_DEBUG_GROUP();
 }
 
-void SparkRenderer::tileBasedLightCulling(const GBuffer& geometryBuffer) const
+void SparkRenderer::tileBasedLightCulling(const GBuffer& geometryBuffer)
 {
     PUSH_DEBUG_GROUP(TILE_BASED_LIGHTS_CULLING);
     pointLightIndices.clearData();

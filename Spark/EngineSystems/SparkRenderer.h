@@ -1,6 +1,6 @@
 #pragma once
 
-#include <glad/glad.h>
+#include <glad_glfw3.h>
 
 #include "AmbientOcclusion.hpp"
 #include "Enums.h"
@@ -43,7 +43,7 @@ class SparkRenderer
     void fillGBuffer(const GBuffer& geometryBuffer);
     void fillGBuffer(const GBuffer& geometryBuffer, const std::function<bool(const RenderingRequest& request)>& filter);
     void renderLights(GLuint framebuffer, const GBuffer& geometryBuffer);
-    void tileBasedLightCulling(const GBuffer& geometryBuffer) const;
+    void tileBasedLightCulling(const GBuffer& geometryBuffer);
     void tileBasedLightRendering(const GBuffer& geometryBuffer, GLuint ssaoTexture);
 
     void helperShapes();

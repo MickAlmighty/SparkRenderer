@@ -26,7 +26,8 @@ class PostProcessingStack
 
     void setup(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo);
     GLuint processAmbientOcclusion(GLuint depthTexture, GLuint normalsTexture);
-    GLuint process(GLuint lightingTexture, GLuint depthTexture, const std::weak_ptr<PbrCubemapTexture>& pbrCubemap, const std::shared_ptr<Camera>& camera);
+    GLuint process(GLuint lightingTexture, GLuint depthTexture, const std::weak_ptr<PbrCubemapTexture>& pbrCubemap,
+                   const std::shared_ptr<Camera>& camera);
     void createFrameBuffersAndTextures(unsigned int width, unsigned int height);
     void cleanup();
 
@@ -60,6 +61,6 @@ class PostProcessingStack
 
     ScreenQuad screenQuad{};
     GLuint fxaaFramebuffer{}, fxaaTexture{};
-    std::shared_ptr<resources::Shader> fxaaShader{ nullptr };
+    std::shared_ptr<resources::Shader> fxaaShader{nullptr};
 };
 }  // namespace spark

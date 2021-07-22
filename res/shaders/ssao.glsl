@@ -41,7 +41,7 @@ uniform vec2 screenSize = vec2(1280.0f, 720.0f);
 
 in vec2 texCoords;
 
-vec4 viewPosFromDepth(float depth, mat4 invProj, vec2 uv) 
+vec4 viewSpacePosFromDepth(float depth, mat4 invProj, vec2 uv) 
 {
     vec4 clipSpacePosition = vec4(uv * 2.0 - 1.0, depth, 1.0);
     vec4 viewSpacePosition = invProj * clipSpacePosition;
@@ -66,25 +66,25 @@ vec3 decode(vec2 enc)
 vec3 getViewSpacePosition(vec2 uv)
 {
     float depth = texture(depthTexture, uv).x;
-    return viewPosFromDepth(depth, camera.invertedProjection, uv).xyz;
+    return viewSpacePosFromDepth(depth, camera.invertedProjection, uv).xyz;
 }
 
 vec3 getNormal(vec2 uv)
 {
-    return decode(texture(normalTexture, texCoords).xy);
+    return normalize(decode(texture(normalTexture, uv).xy));
 }
 
 void main() 
 {
-    float depthValue = texture(depthTexture, texCoords).x;
-    if (depthValue == 0.0f)
+    float depth = texture(depthTexture, texCoords).x;
+    if (depth == 0.0f)
     {
         discard;
     }
 
     const vec2 noiseScale = vec2(screenSize.x / 4.0f, screenSize.y / 4.0f);
 
-    vec3 P = getViewSpacePosition(texCoords);
+    vec3 fragPos = viewSpacePosFromDepth(depth, camera.invertedProjection, texCoords).xyz;
     vec3 N = getNormal(texCoords);
     vec3 randomVec = normalize(texture(texNoise, texCoords * noiseScale).xyz) * 2.0 - 1.0;
 
@@ -94,20 +94,19 @@ void main()
     mat3 TBN = mat3(T, B, N);
 
     float occlusion = 0.0f;
-
     for(int i = 0; i < kernelSize; ++i)
     {
         vec3 sampleP = TBN * samples[i].xyz; // from tangent to view-space
-        sampleP = P + sampleP * radius; 
+        sampleP = fragPos + sampleP * radius;
 
         vec4 offset = vec4(sampleP, 1.0);
-        offset      = camera.projection * offset;    // from view to clip-space
+        offset = camera.projection * offset;    // from view to clip-space
         offset.xy /= offset.w;               // perspective divide
-        offset.xy  = offset.xy * 0.5 + 0.5; // transform to range 0.0 - 1.0 
+        offset.xy = offset.xy * 0.5 + 0.5; // transform to range 0.0 - 1.0 
 
         float sampleDepth = getViewSpacePosition(offset.xy).z;
 
-        float rangeCheck = smoothstep(0.0f, 1.0f, radius / abs(P.z - sampleDepth));
+        float rangeCheck = smoothstep(0.0f, 1.0f, radius / abs(fragPos.z - sampleDepth));
         occlusion += (sampleDepth >= sampleP.z + bias ? 1.0 : 0.0) * rangeCheck;
     }
 

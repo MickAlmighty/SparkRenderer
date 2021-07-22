@@ -86,7 +86,8 @@ std::string ModelMesh::getModelPath() const
 
 void ModelMesh::setModelPath(const std::string modelPath)
 {
-    setModel(Spark::resourceLibrary.getResourceByPath<resources::Model>(modelPath));
+    if(const auto modelPtr = Spark::resourceLibrary.getResourceByPath<resources::Model>(modelPath); modelPtr)
+        setModel(modelPtr);
 }
 }  // namespace spark
 

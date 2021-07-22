@@ -4,10 +4,12 @@
 
 #include "Buffer.hpp"
 #include "ScreenQuad.hpp"
+#include "TexturePass.hpp"
 
 namespace spark
 {
-namespace resources {
+namespace resources
+{
     class Shader;
 }
 
@@ -22,7 +24,7 @@ class ToneMapper
     ~ToneMapper();
 
     void setup(unsigned int width, unsigned int height);
-    GLuint process(GLuint colorTexture);
+    GLuint process(GLuint inputTexture);
     void createFrameBuffersAndTextures(unsigned int width, unsigned int height);
     void cleanup();
 
@@ -31,12 +33,13 @@ class ToneMapper
     float tau = 1.1f;
 
     private:
-    void calculateAverageLuminance(GLuint colorTexture);
+    void calculateAverageLuminance();
 
     unsigned int w{}, h{};
-    GLuint toneMappingFramebuffer{}, toneMappingTexture{}, averageLuminanceTexture{};
+    GLuint toneMappingFramebuffer{}, toneMappingTexture{}, averageLuminanceTexture{}, colorTexture{};
     ScreenQuad screenQuad{};
     SSBO luminanceHistogram{};
+    TexturePass texturePass{};
     std::shared_ptr<resources::Shader> toneMappingShader{nullptr};
     std::shared_ptr<resources::Shader> luminanceHistogramComputeShader{nullptr};
     std::shared_ptr<resources::Shader> averageLuminanceComputeShader{nullptr};

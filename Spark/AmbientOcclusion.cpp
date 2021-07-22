@@ -25,23 +25,20 @@ void AmbientOcclusion::setup(unsigned int width, unsigned int height, const Unif
     auto ssaoNoise = generateSsaoNoise();
     utils::createTexture2D(randomNormalsTexture, 4, 4, GL_RGB32F, GL_RGB, GL_FLOAT, GL_REPEAT, GL_NEAREST, false, ssaoNoise.data());
 
-    unsigned char red = 255;
-    utils::createTexture2D(ssaoDisabledTexture, 1, 1, GL_RED, GL_RED, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_NEAREST, false, &red);
-
     ssaoShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("ssao.glsl");
+    ssaoBlurShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("ssaoBlur.glsl");
     colorInversionShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("colorInversion.glsl");
     ssaoShader->bindUniformBuffer("Samples", samplesUbo);
     ssaoShader->bindUniformBuffer("Camera", cameraUbo);
 
-    ssaoBlurPass = std::make_unique<BlurPass>(w, h);
     screenQuad.setup();
 }
 
 void AmbientOcclusion::cleanup()
 {
     glDeleteTextures(1, &randomNormalsTexture);
-    glDeleteTextures(1, &ssaoDisabledTexture);
     glDeleteTextures(1, &ssaoTexture);
+    glDeleteTextures(1, &ssaoTexture2);
     glDeleteFramebuffers(1, &ssaoFramebuffer);
 }
 
@@ -51,8 +48,10 @@ GLuint AmbientOcclusion::process(GLuint depthTexture, GLuint normalsTexture)
 
     glViewport(0, 0, w, h);
     glBindFramebuffer(GL_FRAMEBUFFER, ssaoFramebuffer);
+    glClearColor(1.0f, 0.0f, 0.0f, 0.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
 
-    GLuint textures[3] = { depthTexture, normalsTexture, randomNormalsTexture};
+    GLuint textures[3] = {depthTexture, normalsTexture, randomNormalsTexture};
     glBindTextures(0, 3, textures);
     ssaoShader->use();
     ssaoShader->setInt("kernelSize", kernelSize);
@@ -60,15 +59,17 @@ GLuint AmbientOcclusion::process(GLuint depthTexture, GLuint normalsTexture)
     ssaoShader->setFloat("bias", bias);
     ssaoShader->setFloat("power", power);
     ssaoShader->setVec2("screenSize", {static_cast<float>(w), static_cast<float>(h)});
-    // uniforms have default values in shader
+
     screenQuad.draw();
     glBindTextures(0, 3, nullptr);
 
-    ssaoBlurPass->blurTexture(ssaoTexture);
+    utils::bindTexture2D(ssaoFramebuffer, ssaoTexture2);
+    ssaoBlurShader->use();
+    glBindTextureUnit(0, ssaoTexture);
+    screenQuad.draw();
 
-    glViewport(0, 0, w, h);
-    glBindFramebuffer(GL_FRAMEBUFFER, ssaoFramebuffer);
-    glBindTextureUnit(0, ssaoBlurPass->getBlurredTexture());
+    utils::bindTexture2D(ssaoFramebuffer, ssaoTexture);
+    glBindTextureUnit(0, ssaoTexture2);
     colorInversionShader->use();
     screenQuad.draw();
 
@@ -81,19 +82,19 @@ void AmbientOcclusion::createFrameBuffersAndTextures(unsigned int width, unsigne
 {
     w = width;
     h = height;
-    ssaoBlurPass->recreateWithNewSize(w, h);
     utils::recreateTexture2D(ssaoTexture, w, h, GL_R16F, GL_RED, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::recreateTexture2D(ssaoTexture2, w, h, GL_R16F, GL_RED, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
     utils::recreateFramebuffer(ssaoFramebuffer, {ssaoTexture});
 }
 
 std::array<glm::vec4, 64> AmbientOcclusion::generateSsaoSamples()
 {
-    std::uniform_real_distribution<float> randomFloats(0.0, 1.0);
+    std::uniform_real_distribution<float> randomFloats(0.0f, 1.0f);
     std::default_random_engine generator{};
     std::array<glm::vec4, 64> ssaoKernel;
-    for (unsigned int i = 0; i < 64; ++i)
+    for(unsigned int i = 0; i < 64; ++i)
     {
-        glm::vec4 sample(randomFloats(generator) * 2.0f - 1.0f, randomFloats(generator) * 2.0f - 1.0f, randomFloats(generator), 0.0f);
+        glm::vec3 sample(randomFloats(generator) * 2.0f - 1.0f, randomFloats(generator) * 2.0f - 1.0f, randomFloats(generator));
         sample = glm::normalize(sample);
         sample *= randomFloats(generator);
 
@@ -101,7 +102,7 @@ std::array<glm::vec4, 64> AmbientOcclusion::generateSsaoSamples()
         scale = glm::lerp(0.1f, 1.0f, scale * scale);
         sample *= scale;
 
-        ssaoKernel[i] = sample;
+        ssaoKernel[i] = glm::vec4(sample, 0.0f);
     }
 
     return ssaoKernel;
@@ -109,14 +110,14 @@ std::array<glm::vec4, 64> AmbientOcclusion::generateSsaoSamples()
 
 std::array<glm::vec3, 16> AmbientOcclusion::generateSsaoNoise()
 {
-    std::uniform_real_distribution<float> randomFloats(0.0, 1.0);
+    std::uniform_real_distribution<float> randomFloats(0.0f, 1.0f);
     std::default_random_engine generator{};
 
     std::array<glm::vec3, 16> ssaoNoise;
-    for (unsigned int i = 0; i < 16; i++)
+    for(unsigned int i = 0; i < 16; i++)
     {
         glm::vec3 noise(randomFloats(generator) * 2.0f - 1.0f, randomFloats(generator) * 2.0f - 1.0f, 0.0f);
-        ssaoNoise[i] = noise;
+        ssaoNoise[i] = normalize(noise);
     }
 
     return ssaoNoise;

@@ -38,7 +38,7 @@ class Buffer
 
     void resizeBuffer(size_t sizeInBytes);
     // this method sets value 0 for all bytes in the buffer
-    void clearData() const;
+    void clearData();
 
     private:
     void genBuffer(size_t sizeInBytes = 0);
@@ -158,8 +158,9 @@ void Buffer<BUFFER_TYPE>::resizeBuffer(size_t sizeInBytes)
 }
 
 template<GLenum BUFFER_TYPE>
-void Buffer<BUFFER_TYPE>::clearData() const
+void Buffer<BUFFER_TYPE>::clearData()
 {
+    size = 0;
     glClearNamedBufferData(ID, GL_R32F, GL_RED, GL_FLOAT, nullptr);
 }
 

@@ -58,8 +58,6 @@ void SkyboxPass::renderSkybox(GLuint framebuffer, unsigned int fboWidth, unsigne
     glBindTextureUnit(0, 0);
     glDepthFunc(GL_GREATER);
     glDisable(GL_DEPTH_TEST);
-
-    glViewport(0, 0, w, h);
 }
 
 void SkyboxPass::createFrameBuffersAndTextures(unsigned int width, unsigned int height)

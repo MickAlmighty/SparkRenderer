@@ -7,10 +7,10 @@ namespace spark
 {
 void GBuffer::setup(unsigned int width, unsigned int height)
 {
-    utils::recreateTexture2D(colorTexture, width, height, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_NEAREST);
-    utils::recreateTexture2D(normalsTexture, width, height, GL_RG16F, GL_RG, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
-    utils::recreateTexture2D(roughnessMetalnessTexture, width, height, GL_RG, GL_RG, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_NEAREST);
-    utils::recreateTexture2D(depthTexture, width, height, GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
+    utils::recreateTexture2D(colorTexture, width, height, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::recreateTexture2D(normalsTexture, width, height, GL_RG16F, GL_RG, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::recreateTexture2D(roughnessMetalnessTexture, width, height, GL_RG, GL_RG, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::recreateTexture2D(depthTexture, width, height, GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
 
     utils::recreateFramebuffer(framebuffer, {colorTexture, normalsTexture, roughnessMetalnessTexture});
     utils::bindDepthTexture(framebuffer, depthTexture);

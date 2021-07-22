@@ -5,9 +5,7 @@
 
 namespace spark
 {
-Skybox::Skybox() : Component("Skybox")
-{
-}
+Skybox::Skybox() : Component("Skybox") {}
 
 Skybox::~Skybox()
 {
@@ -39,7 +37,7 @@ void Skybox::drawGUI()
 
     if(const auto tex = SparkGui::selectTextureByFilePicker(); tex)
     {
-        if(const auto & texture = tex.value(); texture)
+        if(const auto& texture = tex.value(); texture)
         {
             createPbrCubemap(texture);
         }
@@ -52,11 +50,21 @@ void Skybox::setActiveSkybox(bool isActive)
 {
     if(isActive)
     {
-        onActive();
+        if(activeSkyboxPtr)
+            activeSkyboxPtr->setActiveSkybox(false);
+
+        activeSkyboxPtr = this;
+        activeSkybox = true;
+        SparkRenderer::getInstance()->setCubemap(pbrCubemapTexture);
     }
     else
     {
-        onInactive();
+        if (activeSkyboxPtr == this)
+        {
+            SparkRenderer::getInstance()->setCubemap(nullptr);
+            activeSkyboxPtr = nullptr;
+            activeSkybox = false;
+        }
     }
 }
 
@@ -72,12 +80,10 @@ Skybox* Skybox::getActiveSkybox()
 
 void Skybox::onActive()
 {
-    if(activeSkyboxPtr)
-        activeSkyboxPtr->setActiveSkybox(false);
-
-    activeSkyboxPtr = this;
-    activeSkybox = true;
-    SparkRenderer::getInstance()->setCubemap(pbrCubemapTexture);
+    if(activeSkyboxPtr == this)
+    {
+        SparkRenderer::getInstance()->setCubemap(pbrCubemapTexture);
+    }
 }
 
 void Skybox::onInactive()
@@ -85,8 +91,6 @@ void Skybox::onInactive()
     if(activeSkyboxPtr == this)
     {
         SparkRenderer::getInstance()->setCubemap(nullptr);
-        activeSkyboxPtr = nullptr;
-        activeSkybox = false;
     }
 }
 
@@ -108,5 +112,5 @@ RTTR_REGISTRATION
     rttr::registration::class_<spark::Skybox>("Skybox")
         .constructor()(rttr::policy::ctor::as_std_shared_ptr)
         .property("skyboxName", &spark::Skybox::getSkyboxName, &spark::Skybox::loadSkyboxByName)
-        .property("activateSkybox", &spark::Skybox::isSkyboxActive, &spark::Skybox::setActiveSkybox);
+        .property("activeSkybox", &spark::Skybox::isSkyboxActive, &spark::Skybox::setActiveSkybox);
 }

@@ -2,11 +2,10 @@
 
 #include <array>
 
-#include "BlurPass.h"
 #include "Buffer.hpp"
-#include "GBuffer.h"
 #include "Shader.h"
 #include "Structs.h"
+#include "ScreenQuad.hpp"
 
 namespace spark
 {
@@ -34,12 +33,12 @@ class AmbientOcclusion
     static std::array<glm::vec4, 64> generateSsaoSamples();
     static std::array<glm::vec3, 16> generateSsaoNoise();
 
-    GLuint ssaoFramebuffer{}, ssaoTexture{}, randomNormalsTexture{}, ssaoDisabledTexture{};
+    GLuint ssaoFramebuffer{}, ssaoTexture{}, ssaoTexture2{}, randomNormalsTexture{};
     UniformBuffer samplesUbo{};
     ScreenQuad screenQuad{};
     std::shared_ptr<resources::Shader> ssaoShader{nullptr};
+    std::shared_ptr<resources::Shader> ssaoBlurShader{nullptr};
     std::shared_ptr<resources::Shader> colorInversionShader{nullptr};
-    std::unique_ptr<BlurPass> ssaoBlurPass;
 
     unsigned int w{}, h{};
 };

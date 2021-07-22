@@ -13,7 +13,7 @@ PostProcessingStack::~PostProcessingStack()
 void PostProcessingStack::setup(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo)
 {
     screenQuad.setup();
-    ao.setup(width / 2, height / 2, cameraUbo);
+    ao.setup(width, height, cameraUbo);
     toneMapper.setup(width, height);
     bloomPass.setup(width, height);
     dofPass.setup(width, height, cameraUbo);
@@ -28,7 +28,7 @@ void PostProcessingStack::setup(unsigned int width, unsigned int height, const U
 
 GLuint PostProcessingStack::processAmbientOcclusion(GLuint depthTexture, GLuint normalsTexture)
 {
-    if (!isAmbientOcclusionEnabled)
+    if(!isAmbientOcclusionEnabled)
         return 0;
 
     return ao.process(depthTexture, normalsTexture);
@@ -37,6 +37,7 @@ GLuint PostProcessingStack::processAmbientOcclusion(GLuint depthTexture, GLuint 
 GLuint PostProcessingStack::process(GLuint lightingTexture, GLuint depthTexture, const std::weak_ptr<PbrCubemapTexture>& pbrCubemap,
                                     const std::shared_ptr<Camera>& camera)
 {
+    textureHandle = lightingTexture;
     renderCubemap(lightingTexture, depthTexture, pbrCubemap);
     depthOfField(depthTexture);
     lightShafts(depthTexture, camera);
@@ -50,7 +51,7 @@ GLuint PostProcessingStack::process(GLuint lightingTexture, GLuint depthTexture,
 
 void PostProcessingStack::createFrameBuffersAndTextures(unsigned int width, unsigned int height)
 {
-    ao.createFrameBuffersAndTextures(width / 2, height / 2);
+    ao.createFrameBuffersAndTextures(width, height);
     dofPass.createFrameBuffersAndTextures(width, height);
     toneMapper.createFrameBuffersAndTextures(width, height);
     bloomPass.createFrameBuffersAndTextures(width, height);
@@ -62,7 +63,7 @@ void PostProcessingStack::createFrameBuffersAndTextures(unsigned int width, unsi
     utils::recreateFramebuffer(fxaaFramebuffer, {fxaaTexture});
 
     fxaaShader->use();
-    fxaaShader->setVec2("inversedScreenSize", { 1.0f / static_cast<float>(width), 1.0f / static_cast<float>(height) });
+    fxaaShader->setVec2("inversedScreenSize", {1.0f / static_cast<float>(width), 1.0f / static_cast<float>(height)});
 }
 
 void PostProcessingStack::cleanup()
