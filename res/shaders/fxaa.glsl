@@ -15,7 +15,6 @@ void main() {
 layout (location = 0) out vec3 FragColor;
 
 layout (binding = 0) uniform sampler2D inputTexture;
-uniform vec2 inversedScreenSize;
 
 in vec2 texCoords;
 
@@ -29,17 +28,18 @@ vec4 fxaaPixelShader(vec2 pos, sampler2D tex, vec2 fxaaQualityRcpFrame);
 
 void main() 
 {
-    FragColor = fxaaPixelShader(texCoords, inputTexture, inversedScreenSize).xyz;
+    const vec2 texelStep = vec2(1.0f) / vec2(textureSize(inputTexture, 0).xy);
+    FragColor = fxaaPixelShader(texCoords, inputTexture, texelStep).xyz;
     //FragColor = FXAA();
 }
 
-vec3 FXAA()
+vec3 FXAA(vec2 texelStep)
 {
     vec3 luma = vec3(0.299, 0.587, 0.114);
-    float lumaTL = dot(luma, texture(inputTexture, texCoords + (vec2(-1.0, -1.0) * inversedScreenSize)).rgb);
-    float lumaTR = dot(luma, texture(inputTexture, texCoords + (vec2(1.0, -1.0) * inversedScreenSize)).rgb);
-    float lumaBL = dot(luma, texture(inputTexture, texCoords + (vec2(-1.0, 1.0) * inversedScreenSize)).rgb);
-    float lumaBR = dot(luma, texture(inputTexture, texCoords + (vec2(1.0, 1.0) * inversedScreenSize)).rgb);
+    float lumaTL = dot(luma, texture(inputTexture, texCoords + (vec2(-1.0, -1.0) * texelStep)).rgb);
+    float lumaTR = dot(luma, texture(inputTexture, texCoords + (vec2(1.0, -1.0) * texelStep)).rgb);
+    float lumaBL = dot(luma, texture(inputTexture, texCoords + (vec2(-1.0, 1.0) * texelStep)).rgb);
+    float lumaBR = dot(luma, texture(inputTexture, texCoords + (vec2(1.0, 1.0) * texelStep)).rgb);
     float lumaM = dot(luma, texture(inputTexture, texCoords).rgb);
 
     vec2 dir;
@@ -50,7 +50,7 @@ vec3 FXAA()
     float inverseDirAdjustment = 1.0 / (min(abs(dir.x), abs(dir.y)) + dirReduce);
 
     dir = min(vec2(fxaaSpanMax, fxaaSpanMax),
-                max(vec2(-fxaaSpanMax, -fxaaSpanMax), dir * inverseDirAdjustment)) * inversedScreenSize;
+                max(vec2(-fxaaSpanMax, -fxaaSpanMax), dir * inverseDirAdjustment)) * texelStep;
 
     vec3 result1 = (1.0 / 2.0) * (
         texture(inputTexture, texCoords + (dir * vec2(1.0 / 3.0 - 0.5))).rgb +

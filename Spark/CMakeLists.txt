@@ -1,10 +1,4 @@
-list(APPEND SparkSources 
-    ${CMAKE_CURRENT_SOURCE_DIR}/AmbientOcclusion.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/AmbientOcclusion.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/BlurPass.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/BlurPass.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Bloom.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Bloom.hpp
+list(APPEND SparkSources
     ${CMAKE_CURRENT_SOURCE_DIR}/Buffer.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Camera.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Camera.h
@@ -14,8 +8,6 @@ list(APPEND SparkSources
     ${CMAKE_CURRENT_SOURCE_DIR}/CommonUtils.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Component.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Component.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/DepthOfFieldPass.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/DepthOfFieldPass.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Enums.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Enums.h
     ${CMAKE_CURRENT_SOURCE_DIR}/GameObject.cpp
@@ -27,8 +19,6 @@ list(APPEND SparkSources
     ${CMAKE_CURRENT_SOURCE_DIR}/IObserver.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/JsonSerializer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/JsonSerializer.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/LightShaftsPass.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/LightShaftsPass.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/LocalTransform.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/LocalTransform.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Logging.cpp
@@ -41,13 +31,9 @@ list(APPEND SparkSources
     ${CMAKE_CURRENT_SOURCE_DIR}/Model.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ModelMesh.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ModelMesh.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/MotionBlurPass.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/MotionBlurPass.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Observable.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/OGLContext.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/OGLContext.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/PostProcessingStack.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/PostProcessingStack.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ReflectionUtils.h
     ${CMAKE_CURRENT_SOURCE_DIR}/RenderingRequest.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Resource.cpp
@@ -73,8 +59,6 @@ list(APPEND SparkSources
     ${CMAKE_CURRENT_SOURCE_DIR}/ShapeCreator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Skybox.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Skybox.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/SkyboxPass.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/SkyboxPass.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Spark.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Spark.h
     ${CMAKE_CURRENT_SOURCE_DIR}/SparkConfig.hpp
@@ -83,12 +67,8 @@ list(APPEND SparkSources
     ${CMAKE_CURRENT_SOURCE_DIR}/Structs.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Texture.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Texture.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/TexturePass.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/TexturePass.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Timer.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Timer.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/ToneMapper.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/ToneMapper.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/WorldTransform.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/WorldTransform.h
 )
@@ -99,7 +79,8 @@ target_sources(Spark PRIVATE ${SparkSources})
 add_subdirectory(EngineSystems)
 add_subdirectory(GUI)
 add_subdirectory(HID)
-add_subdirectory(Lights)
+add_subdirectory(lights)
+add_subdirectory(effects)
 
 # Create the source groups for source tree with root at CMAKE_CURRENT_SOURCE_DIR.
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SparkSources})

@@ -9,7 +9,7 @@
 
 #include "Resource.h"
 #include "Structs.h"
-#include "Lights/LightManager.h"
+#include "lights/LightManager.h"
 
 namespace spark
 {
@@ -22,7 +22,7 @@ class Scene final : public std::enable_shared_from_this<Scene>, public resourceM
     Scene();
     Scene(const std::filesystem::path& path_);
     Scene(const std::filesystem::path& path_, const std::shared_ptr<Scene>&& scene_);
-    ~Scene();
+    ~Scene() override;
     Scene(Scene&) = delete;
     Scene(Scene&&) = delete;
     Scene& operator=(const Scene&) = delete;
@@ -36,7 +36,7 @@ class Scene final : public std::enable_shared_from_this<Scene>, public resourceM
     void drawGUI();
     void drawSceneGraph();
     std::list<std::function<void()>> toRemove;
-    std::shared_ptr<LightManager> lightManager;
+    std::shared_ptr<lights::LightManager> lightManager;
     std::shared_ptr<GameObject> getGameObjectToPreview() const;
     std::string getName() const;
 

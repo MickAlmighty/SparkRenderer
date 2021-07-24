@@ -7,7 +7,7 @@
 #include "SpotLight.h"
 #include "Structs.h"
 
-namespace spark
+namespace spark::lights
 {
 void LightManager::updateLightBuffers()
 {
@@ -61,7 +61,7 @@ void LightManager::updateDirLightBuffer()
 {
     if(areDirLightsDirty)
     {
-        if (const auto lightData = prepareLightDataBuffer<DirectionalLightData>(directionalLights); lightData.empty())
+        if(const auto lightData = prepareLightDataBuffer<DirectionalLightData>(directionalLights); lightData.empty())
         {
             dirLightSSBO.clearData();
         }
@@ -93,7 +93,7 @@ void LightManager::updateSpotLightBuffer()
 {
     if(areSpotLightsDirty)
     {
-        if (const auto lightData = prepareLightDataBuffer<SpotLightData>(spotLights); lightData.empty())
+        if(const auto lightData = prepareLightDataBuffer<SpotLightData>(spotLights); lightData.empty())
         {
             spotLightSSBO.clearData();
         }
@@ -109,7 +109,7 @@ void LightManager::updateLightProbeBuffer()
 {
     if(areLightProbesDirty)
     {
-        if (auto lightDataBuffer = prepareLightDataBuffer<LightProbeData>(lightProbes); lightDataBuffer.empty())
+        if(auto lightDataBuffer = prepareLightDataBuffer<LightProbeData>(lightProbes); lightDataBuffer.empty())
         {
             lightProbeSSBO.clearData();
         }
@@ -142,9 +142,9 @@ void LightManager::update(const LightStatus<LightProbe>* const lightProbeStatus)
     processLightStatus(lightProbeStatus, areLightProbesDirty, lightProbes);
 }
 
-}  // namespace spark
+}  // namespace spark::lights
 
 RTTR_REGISTRATION
 {
-    rttr::registration::class_<spark::LightManager>("LightManager").constructor()(rttr::policy::ctor::as_std_shared_ptr);
+    rttr::registration::class_<spark::lights::LightManager>("LightManager").constructor()(rttr::policy::ctor::as_std_shared_ptr);
 }

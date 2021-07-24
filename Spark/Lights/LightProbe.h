@@ -7,7 +7,10 @@
 namespace spark
 {
 class Mesh;
+}
 
+namespace spark::lights
+{
 struct LightProbeData final
 {
     GLint64 irradianceCubemapHandle{0};
@@ -73,5 +76,4 @@ class LightProbe : public Component, public Observable<LightStatus<LightProbe>>
 
     RTTR_ENABLE(Component)
 };
-
-}  // namespace spark
+}  // namespace spark::lights

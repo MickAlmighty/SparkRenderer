@@ -7,7 +7,7 @@
 #include "CommonUtils.h"
 #include "Spark.h"
 
-namespace spark
+namespace spark::effects
 {
 AmbientOcclusion::~AmbientOcclusion()
 {
@@ -122,4 +122,4 @@ std::array<glm::vec3, 16> AmbientOcclusion::generateSsaoNoise()
 
     return ssaoNoise;
 }
-}  // namespace spark
+}  // namespace spark::effects

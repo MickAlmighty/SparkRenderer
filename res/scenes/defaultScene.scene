@@ -58,7 +58,7 @@
 		{
 			"Content" : null,
 			"Identifier" : 1,
-			"Type" : "classstd::shared_ptr<classspark::LightManager>"
+			"Type" : "classstd::shared_ptr<classspark::lights::LightManager>"
 		},
 		"root" : 
 		{
@@ -77,7 +77,7 @@
 								{
 									"Content" : 
 									{
-										"activateSkybox" : true,
+										"activeSkybox" : true,
 										"active" : true,
 										"gameObject" : 
 										{
@@ -352,7 +352,7 @@
 										"radius" : 8.1999998092651367
 									},
 									"Identifier" : 8,
-									"Type" : "classstd::shared_ptr<classspark::PointLight>"
+									"Type" : "classstd::shared_ptr<classspark::lights::PointLight>"
 								}
 							],
 							"name" : "PointLight",
@@ -494,7 +494,7 @@
 										"name" : "DirectionalLight"
 									},
 									"Identifier" : 10,
-									"Type" : "classstd::shared_ptr<classspark::DirectionalLight>"
+									"Type" : "classstd::shared_ptr<classspark::lights::DirectionalLight>"
 								}
 							],
 							"name" : "dirLight",

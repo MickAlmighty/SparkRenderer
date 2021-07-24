@@ -6,7 +6,7 @@
 #include "LightStatus.hpp"
 #include "Observable.hpp"
 
-namespace spark
+namespace spark::lights
 {
 class LightManager;
 

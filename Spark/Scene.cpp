@@ -107,7 +107,7 @@ void Scene::Init()
     root = std::make_shared<GameObject>("Root");
     root->setScene(this);
     camera = std::make_shared<Camera>(glm::vec3(0, 0, 5));
-    lightManager = std::make_unique<LightManager>();
+    lightManager = std::make_unique<lights::LightManager>();
 }
 
 void Scene::drawSceneGraph()

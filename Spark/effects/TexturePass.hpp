@@ -4,12 +4,13 @@
 #include "glad_glfw3.h"
 #include "ScreenQuad.hpp"
 
-namespace spark
+namespace spark::resources
 {
-namespace resources {
-    class Shader;
+class Shader;
 }
 
+namespace spark::effects
+{
 class TexturePass
 {
     public:
@@ -25,6 +26,6 @@ class TexturePass
     private:
     GLuint framebuffer{};
     ScreenQuad screenQuad{};
-    std::shared_ptr<resources::Shader> texturePassThrough{ nullptr };
+    std::shared_ptr<resources::Shader> texturePassThrough{nullptr};
 };
-}  // namespace spark
+}  // namespace spark::effects

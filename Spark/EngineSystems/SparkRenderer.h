@@ -2,10 +2,9 @@
 
 #include <glad_glfw3.h>
 
-#include "AmbientOcclusion.hpp"
 #include "Enums.h"
 #include "GBuffer.h"
-#include "PostProcessingStack.hpp"
+#include "effects/PostProcessingStack.hpp"
 #include "Scene.h"
 #include "ScreenQuad.hpp"
 #include "RenderingRequest.h"
@@ -59,7 +58,7 @@ class SparkRenderer
     void updateCameraUBO(glm::mat4 projection, glm::mat4 view, glm::vec3 pos);
     bool checkIfSkyboxChanged() const;
     void lightProbesRenderPass();
-    void generateLightProbe(LightProbe* lightProbe);
+    void generateLightProbe(lights::LightProbe* lightProbe);
     void renderSceneToCubemap(const GBuffer& geometryBuffer, GLuint lightFbo, GLuint skyboxFbo);
 
     std::map<ShaderType, std::deque<RenderingRequest>> renderQueue{};
@@ -103,8 +102,8 @@ class SparkRenderer
     std::shared_ptr<resources::Shader> prefilterShader{nullptr};
     std::shared_ptr<resources::Shader> resampleCubemapShader{nullptr};
 
-    PostProcessingStack postProcessingStack{};
-    SkyboxPass skyboxPass{};
+    effects::PostProcessingStack postProcessingStack{};
+    effects::SkyboxPass skyboxPass{};
 
     Cube cube = Cube();
     UniformBuffer cameraUBO{};

@@ -12,7 +12,7 @@
 #include "IObserver.hpp"
 #include "LightStatus.hpp"
 
-namespace spark
+namespace spark::lights
 {
 class DirectionalLight;
 class PointLight;
@@ -114,4 +114,4 @@ void LightManager::processLightStatus(const LightStatus<Light>* const lightStatu
             break;
     }
 }
-}  // namespace spark
+}  // namespace spark::lights

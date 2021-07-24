@@ -4,7 +4,7 @@
 #include "Shader.h"
 #include "Spark.h"
 
-namespace spark
+namespace spark::effects
 {
 LightShaftsPass::~LightShaftsPass()
 {
@@ -23,7 +23,7 @@ void LightShaftsPass::setup(unsigned int width, unsigned int height)
 
 std::optional<GLuint> LightShaftsPass::process(const std::shared_ptr<Camera>& camera, GLuint depthTexture, GLuint lightingTexture)
 {
-    const auto* const dirLight = DirectionalLight::getDirLightForLightShafts();
+    const auto* const dirLight = lights::DirectionalLight::getDirLightForLightShafts();
     if(dirLight == nullptr)
         return {};
 
@@ -50,7 +50,7 @@ void LightShaftsPass::cleanup()
     glDeleteFramebuffers(2, framebuffers);
 }
 
-glm::vec2 LightShaftsPass::dirLightPositionInScreenSpace(const std::shared_ptr<Camera>& camera, const DirectionalLight* const dirLight)
+glm::vec2 LightShaftsPass::dirLightPositionInScreenSpace(const std::shared_ptr<Camera>& camera, const lights::DirectionalLight* const dirLight)
 {
     const glm::mat4 view = camera->getViewMatrix();
     const glm::mat4 projection = camera->getProjectionReversedZ();
@@ -66,18 +66,16 @@ glm::vec2 LightShaftsPass::dirLightPositionInScreenSpace(const std::shared_ptr<C
 }
 
 bool LightShaftsPass::isCameraFacingDirectionalLight(glm::vec2 dirLightScreenSpacePosition, const std::shared_ptr<Camera>& camera,
-                                                     const DirectionalLight* const dirLight)
+                                                     const lights::DirectionalLight* const dirLight)
 {
     const bool isCameraFacingDirLight = glm::dot(dirLight->getDirection(), camera->getFront()) < 0.0f;
     const float distance = glm::distance(glm::vec2(0.5f), dirLightScreenSpacePosition);
     return distance > 1.0f || !isCameraFacingDirLight;
 }
 
-void LightShaftsPass::renderLightShaftsToTexture(const DirectionalLight* const dirLight, GLuint depthTexture, GLuint lightingTexture,
+void LightShaftsPass::renderLightShaftsToTexture(const lights::DirectionalLight* const dirLight, GLuint depthTexture, GLuint lightingTexture,
                                                  const glm::vec2 lightScreenPos) const
 {
-    blurPass->blurTexture(depthTexture);
-
     PUSH_DEBUG_GROUP(RADIAL BLUR);
 
     lightShaftsShader->use();
@@ -92,7 +90,7 @@ void LightShaftsPass::renderLightShaftsToTexture(const DirectionalLight* const d
 
     glBindFramebuffer(GL_FRAMEBUFFER, radialBlurFramebuffer1);
     utils::bindTexture2D(radialBlurFramebuffer1, radialBlurTexture1);
-    glBindTextureUnit(0, blurPass->getBlurredTexture());
+    glBindTextureUnit(0, depthTexture);
     glBindTextureUnit(1, lightingTexture);
     screenQuad.draw();
 
@@ -107,7 +105,6 @@ void LightShaftsPass::renderLightShaftsToTexture(const DirectionalLight* const d
 void LightShaftsPass::blurLightShafts() const
 {
     blurPass->blurTexture(radialBlurTexture2);
-    blurPass->blurTexture(blurPass->getBlurredTexture());
 }
 
 void LightShaftsPass::blendLightShafts(GLuint lightingTexture) const
@@ -141,4 +138,4 @@ void LightShaftsPass::createFrameBuffersAndTextures(unsigned int width, unsigned
     utils::recreateFramebuffer(blendingFramebuffer, {blendingOutputTexture});
     blurPass->recreateWithNewSize(w / 4, h / 4);
 }
-}  // namespace spark
+}  // namespace spark::effects

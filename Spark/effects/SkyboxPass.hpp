@@ -5,17 +5,16 @@
 
 #include "Buffer.hpp"
 #include "glad_glfw3.h"
-#include "ScreenQuad.hpp"
 #include "Structs.h"
 #include "TexturePass.hpp"
 
-namespace spark
+namespace spark::resources
 {
-namespace resources
-{
-    class Shader;
+class Shader;
 }
 
+namespace spark::effects
+{
 class SkyboxPass
 {
     public:
@@ -41,4 +40,4 @@ class SkyboxPass
     TexturePass texturePass;
     std::shared_ptr<resources::Shader> cubemapShader{nullptr};
 };
-}  // namespace spark
+}  // namespace spark::effects

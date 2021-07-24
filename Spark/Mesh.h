@@ -19,14 +19,14 @@ class Mesh
     public:
     Mesh(std::vector<VertexShaderAttribute>& verticesAttributes, std::vector<unsigned int>& indices,
          std::map<TextureTarget, std::shared_ptr<resources::Texture>>& meshTextures, std::string&& newName_ = "Mesh",
-         ShaderType shaderType = ShaderType::DEFAULT_SHADER);
+         ShaderType shaderType = ShaderType::PBR);
     Mesh(std::vector<VertexShaderAttribute>& verticesAttributes, std::vector<unsigned int>& indices, std::string&& newName_ = "Mesh",
-         ShaderType shaderType = ShaderType::DEFAULT_SHADER);
+         ShaderType shaderType = ShaderType::PBR);
     ~Mesh();
 
     void draw(std::shared_ptr<resources::Shader>& shader, glm::mat4 model);
 
-    ShaderType shaderType = ShaderType::DEFAULT_SHADER;
+    ShaderType shaderType = ShaderType::PBR;
     std::vector<std::pair<VertexShaderAttribute, GLuint>> attributesAndVbos;
     unsigned int verticesCount{0};
     std::vector<unsigned int> indices;

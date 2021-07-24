@@ -1,18 +1,17 @@
 #pragma once
 
 #include "AmbientOcclusion.hpp"
-#include "Bloom.hpp"
+#include "BloomPass.hpp"
 #include "Buffer.hpp"
 #include "DepthOfFieldPass.h"
+#include "FxaaPass.hpp"
 #include "glad_glfw3.h"
 #include "LightShaftsPass.hpp"
 #include "MotionBlurPass.hpp"
-#include "ScreenQuad.hpp"
 #include "SkyboxPass.hpp"
-#include "TexturePass.hpp"
 #include "ToneMapper.hpp"
 
-namespace spark
+namespace spark::effects
 {
 class PostProcessingStack
 {
@@ -52,15 +51,11 @@ class PostProcessingStack
 
     AmbientOcclusion ao{};
     ToneMapper toneMapper{};
-    Bloom bloomPass{};
+    BloomPass bloomPass{};
     DepthOfFieldPass dofPass{};
     LightShaftsPass lightShaftsPass{};
     SkyboxPass skyboxPass{};
     MotionBlurPass motionBlurPass{};
-    TexturePass texturePass{};
-
-    ScreenQuad screenQuad{};
-    GLuint fxaaFramebuffer{}, fxaaTexture{};
-    std::shared_ptr<resources::Shader> fxaaShader{nullptr};
+    FxaaPass fxaaPass{};
 };
-}  // namespace spark
+}  // namespace spark::effects

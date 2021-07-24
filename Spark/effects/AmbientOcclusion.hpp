@@ -7,7 +7,7 @@
 #include "Structs.h"
 #include "ScreenQuad.hpp"
 
-namespace spark
+namespace spark::effects
 {
 class AmbientOcclusion
 {
@@ -42,4 +42,4 @@ class AmbientOcclusion
 
     unsigned int w{}, h{};
 };
-}  // namespace spark
+}  // namespace spark::effects

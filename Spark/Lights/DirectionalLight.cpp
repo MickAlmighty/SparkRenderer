@@ -6,7 +6,7 @@
 #include "GameObject.h"
 #include "JsonSerializer.h"
 
-namespace spark
+namespace spark::lights
 {
 DirectionalLightData DirectionalLight::getLightData() const
 {
@@ -132,9 +132,9 @@ void DirectionalLight::setLightShafts(bool state)
 
 DirectionalLight* DirectionalLight::getDirLightForLightShafts()
 {
-    if (dirLightForLightShafts)
+    if(dirLightForLightShafts)
     {
-        if (dirLightForLightShafts->getActive())
+        if(dirLightForLightShafts->getActive())
         {
             return dirLightForLightShafts;
         }
@@ -175,14 +175,14 @@ void DirectionalLight::notifyAbout(LightCommand command)
     const LightStatus<DirectionalLight> status{command, this};
     notify(&status);
 }
-}  // namespace spark
+}  // namespace spark::lights
 
 RTTR_REGISTRATION
 {
-    rttr::registration::class_<spark::DirectionalLight>("DirectionalLight")
+    rttr::registration::class_<spark::lights::DirectionalLight>("DirectionalLight")
         .constructor()(rttr::policy::ctor::as_std_shared_ptr)
-        .property("color", &spark::DirectionalLight::getColor, &spark::DirectionalLight::setColor)
-        .property("colorStrength", &spark::DirectionalLight::getColorStrength, &spark::DirectionalLight::setColorStrength)
-        .property("direction", &spark::DirectionalLight::getDirection, &spark::DirectionalLight::setDirection)
-        .property("lightShaftsActive", &spark::DirectionalLight::areLightShaftsEnabled, &spark::DirectionalLight::setLightShafts);
+        .property("color", &spark::lights::DirectionalLight::getColor, &spark::lights::DirectionalLight::setColor)
+        .property("colorStrength", &spark::lights::DirectionalLight::getColorStrength, &spark::lights::DirectionalLight::setColorStrength)
+        .property("direction", &spark::lights::DirectionalLight::getDirection, &spark::lights::DirectionalLight::setDirection)
+        .property("lightShaftsActive", &spark::lights::DirectionalLight::areLightShaftsEnabled, &spark::lights::DirectionalLight::setLightShafts);
 }

@@ -1,6 +1,6 @@
 #pragma once
 
-namespace spark
+namespace spark::lights
 {
 enum class LightCommand
 {
@@ -15,4 +15,4 @@ struct LightStatus
     LightCommand command{LightCommand::update};
     T* light{nullptr};
 };
-}  // namespace spark
+}  // namespace spark::lights

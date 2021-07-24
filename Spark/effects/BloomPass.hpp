@@ -5,25 +5,25 @@
 #include "glad_glfw3.h"
 #include "ScreenQuad.hpp"
 
-namespace spark
+namespace spark::resources
 {
-namespace resources
-{
-    class Shader;
+class Shader;
 }
 
-class Bloom
+namespace spark::effects
+{
+class BloomPass
 {
     public:
-    Bloom() = default;
-    Bloom(const Bloom&) = delete;
-    Bloom(Bloom&&) = delete;
-    Bloom& operator=(const Bloom&) = delete;
-    Bloom& operator=(Bloom&&) = delete;
-    ~Bloom();
+    BloomPass() = default;
+    BloomPass(const BloomPass&) = delete;
+    BloomPass(BloomPass&&) = delete;
+    BloomPass& operator=(const BloomPass&) = delete;
+    BloomPass& operator=(BloomPass&&) = delete;
+    ~BloomPass();
 
     void setup(unsigned int width, unsigned int height);
-    
+
     GLuint process(GLuint lightingTexture, GLuint brightPassTexture);
     void createFrameBuffersAndTextures(unsigned int width, unsigned int height);
     void cleanup();
@@ -31,11 +31,11 @@ class Bloom
     float intensity = 1.0f;
     float threshold = 0.5f;
     float thresholdSize = 1.0f;
-    float radiusMip0{ 4.0f };
-    float radiusMip1{ 6.0f };
-    float radiusMip2{ 7.5f };
-    float radiusMip3{ 8.0f };
-    float radiusMip4{ 9.3f };
+    float radiusMip0{4.0f};
+    float radiusMip1{6.0f};
+    float radiusMip2{7.5f};
+    float radiusMip3{8.0f};
+    float radiusMip4{9.3f};
 
     private:
     void downsampleFromMip0ToMip1(GLuint brightPassTexture);
@@ -55,4 +55,4 @@ class Bloom
     std::shared_ptr<resources::Shader> bloomDownScaleShader{nullptr};
     std::shared_ptr<resources::Shader> bloomUpsamplerShader{nullptr};
 };
-}  // namespace spark
+}  // namespace spark::effects

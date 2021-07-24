@@ -4,7 +4,7 @@
 #include "Shader.h"
 #include "Spark.h"
 
-namespace spark
+namespace spark::effects
 {
 TexturePass::TexturePass()
 {
@@ -31,4 +31,4 @@ void TexturePass::process(unsigned int width, unsigned int height, GLuint inputT
 
     POP_DEBUG_GROUP()
 }
-}  // namespace spark
+}  // namespace spark::effects

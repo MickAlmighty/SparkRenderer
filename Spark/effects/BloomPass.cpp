@@ -1,17 +1,17 @@
-#include "Bloom.hpp"
+#include "BloomPass.hpp"
 
 #include "CommonUtils.h"
 #include "Shader.h"
 #include "Spark.h"
 
-namespace spark
+namespace spark::effects
 {
-Bloom::~Bloom()
+BloomPass::~BloomPass()
 {
     cleanup();
 }
 
-void Bloom::setup(unsigned int width, unsigned int height)
+void BloomPass::setup(unsigned int width, unsigned int height)
 {
     w = width;
     h = height;
@@ -21,7 +21,7 @@ void Bloom::setup(unsigned int width, unsigned int height)
     bloomUpsamplerShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("bloomUpsampler.glsl");
 }
 
-GLuint Bloom::process(GLuint lightingTexture, GLuint brightPassTexture)
+GLuint BloomPass::process(GLuint lightingTexture, GLuint brightPassTexture)
 {
     PUSH_DEBUG_GROUP(BLOOM)
     downsampleFromMip0ToMip1(brightPassTexture);
@@ -54,7 +54,7 @@ GLuint Bloom::process(GLuint lightingTexture, GLuint brightPassTexture)
     return lightingTexture;
 }
 
-void Bloom::downsampleFromMip0ToMip1(GLuint brightPassTexture)
+void BloomPass::downsampleFromMip0ToMip1(GLuint brightPassTexture)
 {
     PUSH_DEBUG_GROUP(DOWNSAMPLE_MIP_0_TO_MIP_1)
     glViewport(0, 0, w / 2, h / 2);
@@ -69,7 +69,7 @@ void Bloom::downsampleFromMip0ToMip1(GLuint brightPassTexture)
     POP_DEBUG_GROUP()
 }
 
-void Bloom::downsampleTexture(GLuint framebuffer, GLuint texture, GLuint viewportWidth, GLuint viewportHeight)
+void BloomPass::downsampleTexture(GLuint framebuffer, GLuint texture, GLuint viewportWidth, GLuint viewportHeight)
 {
     glViewport(0, 0, viewportWidth, viewportHeight);
     glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
@@ -81,7 +81,7 @@ void Bloom::downsampleTexture(GLuint framebuffer, GLuint texture, GLuint viewpor
     screenQuad.draw();
 }
 
-void Bloom::upsampleTexture(GLuint framebuffer, GLuint texture, GLuint viewportWidth, GLuint viewportHeight, float radius, float bloomIntensity)
+void BloomPass::upsampleTexture(GLuint framebuffer, GLuint texture, GLuint viewportWidth, GLuint viewportHeight, float radius, float bloomIntensity)
 {
     glViewport(0, 0, viewportWidth, viewportHeight);
     glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
@@ -94,7 +94,7 @@ void Bloom::upsampleTexture(GLuint framebuffer, GLuint texture, GLuint viewportW
     screenQuad.draw();
 };
 
-void Bloom::createFrameBuffersAndTextures(unsigned int width, unsigned int height)
+void BloomPass::createFrameBuffersAndTextures(unsigned int width, unsigned int height)
 {
     w = width;
     h = height;
@@ -112,7 +112,7 @@ void Bloom::createFrameBuffersAndTextures(unsigned int width, unsigned int heigh
     utils::recreateFramebuffer(fboMip0, {});
 }
 
-void Bloom::cleanup()
+void BloomPass::cleanup()
 {
     GLuint textures[5] = {textureMip1, textureMip2, textureMip3, textureMip4, textureMip5};
     glDeleteTextures(5, textures);
@@ -120,4 +120,4 @@ void Bloom::cleanup()
     GLuint framebuffers[6] = {fboMip1, fboMip2, fboMip3, fboMip4, fboMip5, fboMip0};
     glDeleteFramebuffers(6, framebuffers);
 }
-}  // namespace spark
+}  // namespace spark::effects

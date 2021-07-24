@@ -5,13 +5,13 @@
 #include "glad_glfw3.h"
 #include "ScreenQuad.hpp"
 
-namespace spark
+namespace spark::resources
 {
-namespace resources
-{
-    class Shader;
+class Shader;
 }
 
+namespace spark::effects
+{
 class BlurPass
 {
     public:
@@ -38,4 +38,4 @@ class BlurPass
     void createGlObjects();
     void deleteGlObjects();
 };
-}  // namespace spark
+}  // namespace spark::effects

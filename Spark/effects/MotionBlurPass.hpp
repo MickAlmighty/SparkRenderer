@@ -3,7 +3,7 @@
 #include "Camera.h"
 #include "ScreenQuad.hpp"
 
-namespace spark
+namespace spark::effects
 {
 class MotionBlurPass
 {
@@ -25,6 +25,6 @@ class MotionBlurPass
     ScreenQuad screenQuad;
     GLuint framebuffer1{};
     GLuint texture1{};
-    std::shared_ptr<resources::Shader> motionBlurShader{ nullptr };
+    std::shared_ptr<resources::Shader> motionBlurShader{nullptr};
 };
-}  // namespace spark
+}  // namespace spark::effects

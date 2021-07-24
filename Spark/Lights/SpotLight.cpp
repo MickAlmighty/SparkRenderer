@@ -6,7 +6,7 @@
 #include "JsonSerializer.h"
 #include "Structs.h"
 
-namespace spark
+namespace spark::lights
 {
 SpotLightData SpotLight::getLightData() const
 {
@@ -224,16 +224,16 @@ void SpotLight::notifyAbout(LightCommand command)
     const LightStatus<SpotLight> status{command, this};
     notify(&status);
 }
-}  // namespace spark
+}  // namespace spark::lights
 
 RTTR_REGISTRATION
 {
-    rttr::registration::class_<spark::SpotLight>("SpotLight")
+    rttr::registration::class_<spark::lights::SpotLight>("SpotLight")
         .constructor()(rttr::policy::ctor::as_std_shared_ptr)
-        .property("color", &spark::SpotLight::getColor, &spark::SpotLight::setColor)
-        .property("colorStrength",&spark::SpotLight::getColorStrength, &spark::SpotLight::setColorStrength)
-        .property("direction", &spark::SpotLight::getDirection, &spark::SpotLight::setDirection)
-        .property("softCutOffRatio", &spark::SpotLight::getSoftCutOffRatio, &spark::SpotLight::setSoftCutOffRatio)
-        .property("outerCutOff", &spark::SpotLight::getOuterCutOff, &spark::SpotLight::setOuterCutOff)
-        .property("maxDistance", &spark::SpotLight::getMaxDistance, &spark::SpotLight::setMaxDistance);
+        .property("color", &spark::lights::SpotLight::getColor, &spark::lights::SpotLight::setColor)
+        .property("colorStrength", &spark::lights::SpotLight::getColorStrength, &spark::lights::SpotLight::setColorStrength)
+        .property("direction", &spark::lights::SpotLight::getDirection, &spark::lights::SpotLight::setDirection)
+        .property("softCutOffRatio", &spark::lights::SpotLight::getSoftCutOffRatio, &spark::lights::SpotLight::setSoftCutOffRatio)
+        .property("outerCutOff", &spark::lights::SpotLight::getOuterCutOff, &spark::lights::SpotLight::setOuterCutOff)
+        .property("maxDistance", &spark::lights::SpotLight::getMaxDistance, &spark::lights::SpotLight::setMaxDistance);
 }

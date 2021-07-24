@@ -1,25 +1,22 @@
 #include "SparkGui.h"
 
-#include <iostream>
-
-#include "../EngineSystems/SparkRenderer.h"
+#include "EngineSystems/SparkRenderer.h"
 #include "ImGuiFileBrowser.h"
 #include "ImGuizmo.h"
 #include "ImGui/imgui_impl_glfw.h"
 #include "ImGui/imgui_impl_opengl3.h"
-#include "../JsonSerializer.h"
-#include "../Lights/DirectionalLight.h"
-#include "../Lights/LightProbe.h"
-#include "../Lights/PointLight.h"
-#include "../Lights/SpotLight.h"
-#include "../Mesh.h"
-#include "../MeshPlane.h"
-#include "../Model.h"
-#include "../ModelMesh.h"
-#include "../ResourceLibrary.h"
-#include "../Skybox.h"
-#include "../Spark.h"
-#include "../Texture.h"
+#include "JsonSerializer.h"
+#include "lights/DirectionalLight.h"
+#include "lights/LightProbe.h"
+#include "lights/PointLight.h"
+#include "lights/SpotLight.h"
+#include "MeshPlane.h"
+#include "Model.h"
+#include "ModelMesh.h"
+#include "ResourceLibrary.h"
+#include "Skybox.h"
+#include "Spark.h"
+#include "Texture.h"
 
 imgui_addons::ImGuiFileBrowser file_dialog{};
 
@@ -29,10 +26,10 @@ const std::map<std::string, std::function<std::shared_ptr<Component>()>> SparkGu
     // TODO: replace with a reflection-based list
     {"ModelMesh", [] { return std::make_shared<ModelMesh>(); }},
     {"MeshPlane", [] { return std::make_shared<MeshPlane>(); }},
-    {"DirectionalLight", [] { return std::make_shared<DirectionalLight>(); }},
-    {"PointLight", [] { return std::make_shared<PointLight>(); }},
-    {"SpotLight", [] { return std::make_shared<SpotLight>(); }},
-    {"LightProbe", [] { return std::make_shared<LightProbe>(); }},
+    {"DirectionalLight", [] { return std::make_shared<lights::DirectionalLight>(); }},
+    {"PointLight", [] { return std::make_shared<lights::PointLight>(); }},
+    {"SpotLight", [] { return std::make_shared<lights::SpotLight>(); }},
+    {"LightProbe", [] { return std::make_shared<lights::LightProbe>(); }},
     {"Skybox", [] { return std::make_shared<Skybox>(); }}};
 
 void SparkGui::drawGui()

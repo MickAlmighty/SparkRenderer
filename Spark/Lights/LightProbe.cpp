@@ -15,7 +15,7 @@
 #include "Texture.h"
 #include "Timer.h"
 
-namespace spark
+namespace spark::lights
 {
 LightProbe::LightProbe() : Component("LightProbe")
 {
@@ -31,7 +31,7 @@ LightProbe::LightProbe() : Component("LightProbe")
     auto vertexShaderAttributes = std::vector<VertexShaderAttribute>{attribute};
     auto indices = std::vector<unsigned int>{};
     auto textures = std::map<TextureTarget, std::shared_ptr<resources::Texture>>{};
-    sphere = std::make_shared<Mesh>(vertexShaderAttributes, indices, textures, "Mesh", ShaderType::SOLID_COLOR_SHADER);
+    sphere = std::make_shared<Mesh>(vertexShaderAttributes, indices, textures, "Mesh", ShaderType::COLOR_ONLY);
 }
 
 LightProbe::~LightProbe()
@@ -219,12 +219,12 @@ void LightProbe::notifyAbout(LightCommand command)
     const LightStatus<LightProbe> status{command, this};
     notify(&status);
 }
-}  // namespace spark
+}  // namespace spark::lights
 
 RTTR_REGISTRATION
 {
-    rttr::registration::class_<spark::LightProbe>("LightProbe")
+    rttr::registration::class_<spark::lights::LightProbe>("LightProbe")
         .constructor()(rttr::policy::ctor::as_std_shared_ptr)
-        .property("radius", &spark::LightProbe::getRadius, &spark::LightProbe::setRadius)
-        .property("fadeDistance", &spark::LightProbe::getFadeDistance, &spark::LightProbe::setFadeDistance);
+        .property("radius", &spark::lights::LightProbe::getRadius, &spark::lights::LightProbe::setRadius)
+        .property("fadeDistance", &spark::lights::LightProbe::getFadeDistance, &spark::lights::LightProbe::setFadeDistance);
 }

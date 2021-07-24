@@ -7,15 +7,15 @@
 #include "Camera.h"
 #include "glad_glfw3.h"
 #include "ScreenQuad.hpp"
-#include "Lights/DirectionalLight.h"
+#include "lights/DirectionalLight.h"
 
-namespace spark
+namespace spark::resources
 {
-namespace resources
-{
-    class Shader;
+class Shader;
 }
 
+namespace spark::effects
+{
 class LightShaftsPass
 {
     public:
@@ -27,22 +27,23 @@ class LightShaftsPass
     ~LightShaftsPass();
 
     void setup(unsigned int width, unsigned int height);
-    std::optional<GLuint> process(const std::shared_ptr<Camera>& camera, GLuint depthTexture,
-                                  GLuint lightingTexture);
+    std::optional<GLuint> process(const std::shared_ptr<Camera>& camera, GLuint depthTexture, GLuint lightingTexture);
     void createFrameBuffersAndTextures(unsigned int width, unsigned int height);
     void cleanup();
 
     float exposure = 0.004f;
-    float decay = 0.960f;
-    float density = 1.0f;
-    float weight = 6.65f;
+    float decay = 0.970f;
+    float density = 0.45f;
+    float weight = 8.0f;
 
     private:
-    void renderLightShaftsToTexture(const DirectionalLight* const dirLight, GLuint depthTexture, GLuint lightingTexture, const glm::vec2 lightScreenPos) const;
+    void renderLightShaftsToTexture(const lights::DirectionalLight* const dirLight, GLuint depthTexture, GLuint lightingTexture,
+                                    const glm::vec2 lightScreenPos) const;
     void blurLightShafts() const;
     void blendLightShafts(GLuint lightingTexture) const;
-    static glm::vec2 dirLightPositionInScreenSpace(const std::shared_ptr<Camera>& camera, const DirectionalLight* const dirLight);
-    static bool isCameraFacingDirectionalLight(glm::vec2 dirLightScreenSpacePosition, const std::shared_ptr<Camera>& camera, const DirectionalLight* const dirLight);
+    static glm::vec2 dirLightPositionInScreenSpace(const std::shared_ptr<Camera>& camera, const lights::DirectionalLight* const dirLight);
+    static bool isCameraFacingDirectionalLight(glm::vec2 dirLightScreenSpacePosition, const std::shared_ptr<Camera>& camera,
+                                               const lights::DirectionalLight* const dirLight);
 
     unsigned int w{}, h{};
     GLuint radialBlurFramebuffer1{}, radialBlurTexture1{};
@@ -53,4 +54,4 @@ class LightShaftsPass
     std::shared_ptr<resources::Shader> lightShaftsShader{nullptr};
     std::shared_ptr<resources::Shader> blendingShader{nullptr};
 };
-}  // namespace spark
+}  // namespace spark::effects

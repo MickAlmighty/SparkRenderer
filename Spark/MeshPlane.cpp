@@ -32,7 +32,7 @@ void MeshPlane::setup()
     std::vector<unsigned int> indices{0, 1, 2, 2, 3, 0};
     auto textures = std::map<TextureTarget, std::shared_ptr<resources::Texture>>{};
     planeMesh = std::make_shared<Mesh>(vertexShaderAttributes, indices,
-                                    textures, "Mesh", ShaderType::SOLID_COLOR_SHADER);
+                                    textures, "Mesh", ShaderType::COLOR_ONLY);
 }
 
 MeshPlane::MeshPlane() : Component("MeshPlane")
@@ -53,7 +53,7 @@ MeshPlane::~MeshPlane()
 void MeshPlane::update()
 {
     RenderingRequest request{};
-    request.shaderType = ShaderType::DEFAULT_SHADER;
+    request.shaderType = ShaderType::COLOR_ONLY;
     request.gameObject = getGameObject();
     request.mesh = planeMesh;
     request.model = getGameObject()->transform.world.getMatrix();

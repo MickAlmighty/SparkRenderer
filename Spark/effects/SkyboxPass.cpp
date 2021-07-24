@@ -4,7 +4,7 @@
 #include "Shader.h"
 #include "Spark.h"
 
-namespace spark
+namespace spark::effects
 {
 SkyboxPass::~SkyboxPass()
 {
@@ -73,4 +73,4 @@ void SkyboxPass::cleanup()
     glDeleteFramebuffers(1, &cubemapFramebuffer);
     glDeleteTextures(1, &cubemapTexture);
 }
-}  // namespace spark
+}  // namespace spark::effects

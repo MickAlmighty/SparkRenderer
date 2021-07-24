@@ -176,7 +176,7 @@ void SparkRenderer::fillGBuffer(const GBuffer& geometryBuffer)
     glDepthFunc(GL_GREATER);
 
     mainShader->use();
-    for(auto& request : renderQueue[ShaderType::DEFAULT_SHADER])
+    for(auto& request : renderQueue[ShaderType::PBR])
     {
         request.mesh->draw(mainShader, request.model);
     }
@@ -197,7 +197,7 @@ void SparkRenderer::fillGBuffer(const GBuffer& geometryBuffer, const std::functi
     glDepthFunc(GL_GREATER);
 
     mainShader->use();
-    for(auto& request : renderQueue[ShaderType::DEFAULT_SHADER])
+    for(auto& request : renderQueue[ShaderType::PBR])
     {
         if(filter(request))
         {
@@ -314,7 +314,7 @@ void SparkRenderer::tileBasedLightRendering(const GBuffer& geometryBuffer, GLuin
 
 void SparkRenderer::helperShapes()
 {
-    if(renderQueue[ShaderType::SOLID_COLOR_SHADER].empty())
+    if(renderQueue[ShaderType::COLOR_ONLY].empty())
         return;
 
     PUSH_DEBUG_GROUP(HELPER_SHAPES);
@@ -328,7 +328,7 @@ void SparkRenderer::helperShapes()
     // light texture must be bound here
     solidColorShader->use();
 
-    for(auto& request : renderQueue[ShaderType::SOLID_COLOR_SHADER])
+    for(auto& request : renderQueue[ShaderType::COLOR_ONLY])
     {
         request.mesh->draw(solidColorShader, request.model);
     }
@@ -450,7 +450,7 @@ bool SparkRenderer::checkIfSkyboxChanged() const
 void SparkRenderer::lightProbesRenderPass()
 {
     const auto& lightProbes = scene->lightManager->getLightProbes();
-    const bool renderingNeeded = std::any_of(lightProbes.cbegin(), lightProbes.cend(), [](LightProbe* lp) { return lp->generateLightProbe; });
+    const bool renderingNeeded = std::any_of(lightProbes.cbegin(), lightProbes.cend(), [](lights::LightProbe* lp) { return lp->generateLightProbe; });
 
     const bool lightProbesRebuildNeeded = checkIfSkyboxChanged();
 
@@ -479,7 +479,7 @@ void SparkRenderer::lightProbesRenderPass()
     glDeleteFramebuffers(1, &lightProbeSkyboxFbo);
 }
 
-void SparkRenderer::generateLightProbe(LightProbe* lightProbe)
+void SparkRenderer::generateLightProbe(lights::LightProbe* lightProbe)
 {
     PUSH_DEBUG_GROUP(SCENE_TO_CUBEMAP);
 

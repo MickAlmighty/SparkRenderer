@@ -7,7 +7,7 @@
 #include "Shader.h"
 #include "Spark.h"
 
-namespace spark
+namespace spark::effects
 {
 void BlurPass::blurTexture(GLuint texture) const
 {
@@ -75,4 +75,4 @@ void BlurPass::deleteGlObjects()
     glDeleteFramebuffers(1, framebuffers);
     vFramebuffer = 0;
 }
-}  // namespace spark
+}  // namespace spark::effects

@@ -6,7 +6,7 @@
 #include "LightStatus.hpp"
 #include "Observable.hpp"
 
-namespace spark
+namespace spark::lights
 {
 struct SpotLightData final
 {
@@ -63,4 +63,4 @@ class SpotLight final : public Component, public Observable<LightStatus<SpotLigh
 
     RTTR_ENABLE(Component)
 };
-}  // namespace spark
+}  // namespace spark::lights

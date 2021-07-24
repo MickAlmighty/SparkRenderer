@@ -3,7 +3,7 @@
 #include "CommonUtils.h"
 #include "Spark.h"
 
-namespace spark
+namespace spark::effects
 {
 PostProcessingStack::~PostProcessingStack()
 {
@@ -12,7 +12,6 @@ PostProcessingStack::~PostProcessingStack()
 
 void PostProcessingStack::setup(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo)
 {
-    screenQuad.setup();
     ao.setup(width, height, cameraUbo);
     toneMapper.setup(width, height);
     bloomPass.setup(width, height);
@@ -20,10 +19,7 @@ void PostProcessingStack::setup(unsigned int width, unsigned int height, const U
     lightShaftsPass.setup(width, height);
     skyboxPass.setup(width, height, cameraUbo);
     motionBlurPass.setup(width, height, cameraUbo);
-
-    fxaaShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("fxaa.glsl");
-    fxaaShader->use();
-    fxaaShader->setVec2("inversedScreenSize", {1.0f / static_cast<float>(width), 1.0f / static_cast<float>(height)});
+    fxaaPass.setup(width, height);
 }
 
 GLuint PostProcessingStack::processAmbientOcclusion(GLuint depthTexture, GLuint normalsTexture)
@@ -58,12 +54,7 @@ void PostProcessingStack::createFrameBuffersAndTextures(unsigned int width, unsi
     lightShaftsPass.createFrameBuffersAndTextures(width, height);
     skyboxPass.createFrameBuffersAndTextures(width, height);
     motionBlurPass.createFrameBuffersAndTextures(width, height);
-
-    utils::recreateTexture2D(fxaaTexture, width, height, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::recreateFramebuffer(fxaaFramebuffer, {fxaaTexture});
-
-    fxaaShader->use();
-    fxaaShader->setVec2("inversedScreenSize", {1.0f / static_cast<float>(width), 1.0f / static_cast<float>(height)});
+    fxaaPass.createFrameBuffersAndTextures(width, height);
 }
 
 void PostProcessingStack::cleanup()
@@ -74,9 +65,7 @@ void PostProcessingStack::cleanup()
     lightShaftsPass.cleanup();
     skyboxPass.cleanup();
     motionBlurPass.cleanup();
-
-    glDeleteTextures(1, &fxaaTexture);
-    glDeleteFramebuffers(1, &fxaaFramebuffer);
+    fxaaPass.cleanup();
 }
 
 void PostProcessingStack::drawGui()
@@ -201,17 +190,6 @@ void PostProcessingStack::toneMapping()
 
 void PostProcessingStack::fxaa()
 {
-    PUSH_DEBUG_GROUP(FXAA);
-
-    glBindFramebuffer(GL_FRAMEBUFFER, fxaaFramebuffer);
-
-    fxaaShader->use();
-
-    glBindTextureUnit(0, textureHandle);
-    screenQuad.draw();
-    glBindTextures(0, 2, nullptr);
-
-    textureHandle = fxaaTexture;
-    POP_DEBUG_GROUP();
+    textureHandle = fxaaPass.process(textureHandle);
 }
-}  // namespace spark
+}  // namespace spark::effects

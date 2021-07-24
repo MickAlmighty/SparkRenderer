@@ -6,7 +6,7 @@
 #include "Shader.h"
 #include "Spark.h"
 
-namespace spark
+namespace spark::effects
 {
 void DepthOfFieldPass::setup(unsigned int width_, unsigned int height_, const UniformBuffer& cameraUbo)
 {
@@ -188,4 +188,4 @@ void DepthOfFieldPass::deleteGlObjects()
     glDeleteFramebuffers(2, framebuffers);
     cocFramebuffer = blendDofFramebuffer = 0;
 }
-}  // namespace spark
+}  // namespace spark::effects

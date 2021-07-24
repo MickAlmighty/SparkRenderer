@@ -58,7 +58,7 @@
 		{
 			"Content" : null,
 			"Identifier" : 1,
-			"Type" : "classstd::shared_ptr<classspark::LightManager>"
+			"Type" : "classstd::shared_ptr<classspark::lights::LightManager>"
 		},
 		"root" : 
 		{
@@ -99,7 +99,7 @@
 										"name" : "DirectionalLight"
 									},
 									"Identifier" : 4,
-									"Type" : "classstd::shared_ptr<classspark::DirectionalLight>"
+									"Type" : "classstd::shared_ptr<classspark::lights::DirectionalLight>"
 								}
 							],
 							"name" : "dirLight",
@@ -364,7 +364,7 @@
 										"radius" : 22.399999618530273
 									},
 									"Identifier" : 8,
-									"Type" : "classstd::shared_ptr<classspark::PointLight>"
+									"Type" : "classstd::shared_ptr<classspark::lights::PointLight>"
 								}
 							],
 							"name" : "point",
@@ -887,7 +887,7 @@
 										"radius" : 27.700000762939453
 									},
 									"Identifier" : 16,
-									"Type" : "classstd::shared_ptr<classspark::PointLight>"
+									"Type" : "classstd::shared_ptr<classspark::lights::PointLight>"
 								}
 							],
 							"name" : "point2",
@@ -1652,7 +1652,7 @@
 										"radius" : 30.399999618530273
 									},
 									"Identifier" : 28,
-									"Type" : "classstd::shared_ptr<classspark::PointLight>"
+									"Type" : "classstd::shared_ptr<classspark::lights::PointLight>"
 								}
 							],
 							"name" : "pointLight3",

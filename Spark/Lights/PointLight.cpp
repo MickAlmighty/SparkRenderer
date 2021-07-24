@@ -14,7 +14,7 @@
 #include "Spark.h"
 #include "Structs.h"
 
-namespace spark
+namespace spark::lights
 {
 PointLightData PointLight::getLightData() const
 {
@@ -76,7 +76,7 @@ PointLight::PointLight() : Component("PointLight")
     auto vertexShaderAttributes = std::vector<VertexShaderAttribute>{attribute};
     auto indices = std::vector<unsigned int>{};
     auto textures = std::map<TextureTarget, std::shared_ptr<resources::Texture>>{};
-    sphere = std::make_shared<Mesh>(vertexShaderAttributes, indices, textures, "Mesh", ShaderType::SOLID_COLOR_SHADER);
+    sphere = std::make_shared<Mesh>(vertexShaderAttributes, indices, textures, "Mesh", ShaderType::COLOR_ONLY);
 }
 
 PointLight::~PointLight()
@@ -164,13 +164,13 @@ void PointLight::notifyAbout(LightCommand command)
     const LightStatus<PointLight> status{command, this};
     notify(&status);
 }
-}  // namespace spark
+}  // namespace spark::lights
 
 RTTR_REGISTRATION
 {
-    rttr::registration::class_<spark::PointLight>("PointLight")
+    rttr::registration::class_<spark::lights::PointLight>("PointLight")
         .constructor()(rttr::policy::ctor::as_std_shared_ptr)
-        .property("color", &spark::PointLight::getColor, &spark::PointLight::setColor)
-        .property("colorStrength", &spark::PointLight::getColorStrength, &spark::PointLight::setColorStrength)
-        .property("radius", &spark::PointLight::getRadius, &spark::PointLight::setRadius);
+        .property("color", &spark::lights::PointLight::getColor, &spark::lights::PointLight::setColor)
+        .property("colorStrength", &spark::lights::PointLight::getColorStrength, &spark::lights::PointLight::setColorStrength)
+        .property("radius", &spark::lights::PointLight::getRadius, &spark::lights::PointLight::setRadius);
 }

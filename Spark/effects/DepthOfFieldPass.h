@@ -6,13 +6,13 @@
 #include "glad_glfw3.h"
 #include "ScreenQuad.hpp"
 
-namespace spark
+namespace spark::resources
 {
-namespace resources
-{
-    class Shader;
+class Shader;
 }
 
+namespace spark::effects
+{
 class BlurPass;
 
 class DepthOfFieldPass
@@ -30,8 +30,8 @@ class DepthOfFieldPass
     DepthOfFieldPass(const DepthOfFieldPass&& blurPass) = delete;
     ~DepthOfFieldPass();
 
-    float nearStart{ 1 }, nearEnd{ 4 };
-    float farStart{ 20 }, farEnd{ 100 };
+    float nearStart{1}, nearEnd{4};
+    float farStart{20}, farEnd{100};
 
     private:
     void calculateCircleOfConfusion(GLuint depthTexture) const;
@@ -45,8 +45,8 @@ class DepthOfFieldPass
 
     unsigned int width{}, height{};
 
-    std::shared_ptr<resources::Shader> cocShader{ nullptr };
-    std::shared_ptr<resources::Shader> blendShader{ nullptr };
+    std::shared_ptr<resources::Shader> cocShader{nullptr};
+    std::shared_ptr<resources::Shader> blendShader{nullptr};
 
     /*GLuint indirectBufferID{}, bokehCountTexID{}, bokehCounterID{};
     SSBO bokehPositionBuffer, bokehColorBuffer;
@@ -58,4 +58,4 @@ class DepthOfFieldPass
     std::unique_ptr<BlurPass> blurPass;
     ScreenQuad screenQuad{};
 };
-}  // namespace spark
+}  // namespace spark::effects

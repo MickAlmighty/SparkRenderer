@@ -5,7 +5,7 @@
 #include "Shader.h"
 #include "Spark.h"
 
-namespace spark
+namespace spark::effects
 {
 MotionBlurPass::~MotionBlurPass()
 {

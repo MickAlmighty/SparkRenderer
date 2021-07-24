@@ -6,13 +6,13 @@
 #include "ScreenQuad.hpp"
 #include "TexturePass.hpp"
 
-namespace spark
+namespace spark::resources
 {
-namespace resources
-{
-    class Shader;
+class Shader;
 }
 
+namespace spark::effects
+{
 class ToneMapper
 {
     public:
@@ -44,4 +44,4 @@ class ToneMapper
     std::shared_ptr<resources::Shader> luminanceHistogramComputeShader{nullptr};
     std::shared_ptr<resources::Shader> averageLuminanceComputeShader{nullptr};
 };
-}  // namespace spark
+}  // namespace spark::effects

@@ -6,7 +6,7 @@
 #include "Spark.h"
 #include "glad_glfw3.h"
 
-namespace spark
+namespace spark::effects
 {
 ToneMapper::~ToneMapper()
 {
@@ -100,4 +100,4 @@ void ToneMapper::calculateAverageLuminance()
     averageLuminanceComputeShader->dispatchCompute(1, 1, 1);  // localWorkGroups has dimensions of x = 16, y = 16
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 }
-}  // namespace spark
+}  // namespace spark::effects

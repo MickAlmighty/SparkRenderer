@@ -28,7 +28,7 @@ uniform float decay = 0.995f;
 uniform float density = 0.95f;
 uniform float weight = 6.65;
 
-const int samples = 48;
+const int samples = 16;
 const float oneStep = 1.0 / float(samples);
 const float maxDistance = length(vec2(0.5f));
 

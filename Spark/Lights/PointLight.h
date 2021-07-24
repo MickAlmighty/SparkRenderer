@@ -8,8 +8,12 @@
 
 namespace spark
 {
-class LightManager;
 class Mesh;
+}
+
+namespace spark::lights
+{
+class LightManager;
 
 struct PointLightData final
 {
@@ -57,4 +61,4 @@ class PointLight final : public Component, public Observable<LightStatus<PointLi
 
     RTTR_ENABLE(Component)
 };
-}  // namespace spark
+}  // namespace spark::lights
