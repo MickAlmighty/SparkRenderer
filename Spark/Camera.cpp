@@ -31,17 +31,17 @@ glm::mat4 Camera::getViewMatrix() const
 
 glm::mat4 Camera::getProjection() const
 {
-    return glm::perspectiveFov(glm::radians(fov), Spark::WIDTH * 1.0f, Spark::HEIGHT * 1.0f, zNear, zFar);
+    return glm::perspectiveFov(glm::radians(fov), Spark::get().WIDTH * 1.0f, Spark::get().HEIGHT * 1.0f, zNear, zFar);
 }
 
 glm::mat4 Camera::getProjectionReversedZInfiniteFarPlane() const
 {
-    return utils::getProjectionReversedZInfFar(Spark::WIDTH, Spark::HEIGHT, fov, zNear);
+    return utils::getProjectionReversedZInfFar(Spark::get().WIDTH, Spark::get().HEIGHT, fov, zNear);
 }
 
 glm::mat4 Camera::getProjectionReversedZ() const
 {
-    return utils::getProjectionReversedZ(Spark::WIDTH, Spark::HEIGHT, fov, zNear, zFar);
+    return utils::getProjectionReversedZ(Spark::get().WIDTH, Spark::get().HEIGHT, fov, zNear, zFar);
 }
 
 glm::vec3 Camera::getPosition() const
@@ -266,12 +266,12 @@ void Camera::processMouseMovement(float xoffset, float yoffset, bool constrainPi
 
     if(HID::isKeyReleased(Key::MOUSE_RIGHT) && cameraRotation)
     {
-        glfwSetInputMode(Spark::oglContext.window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        glfwSetInputMode(Spark::get().getRenderingContext().window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
         cameraRotation = false;
     }
     else if(HID::isKeyPressedOrDown(Key::MOUSE_RIGHT) && !cameraRotation)
     {
-        glfwSetInputMode(Spark::oglContext.window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        glfwSetInputMode(Spark::get().getRenderingContext().window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         cameraRotation = true;
     }
 

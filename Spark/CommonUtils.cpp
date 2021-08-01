@@ -183,11 +183,11 @@ GLuint createBrdfLookupTexture(unsigned int size)
     GLuint brdfLUTTexture{};
     utils::createTexture2D(brdfLUTTexture, size, size, GL_RG16F, GL_RG, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
 
-    const auto brdfComputeShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("brdfCompute.glsl");
+    const auto brdfComputeShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("brdfCompute.glsl");
     brdfComputeShader->use();
     glBindImageTexture(0, brdfLUTTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RG16F);
     brdfComputeShader->dispatchCompute(size / 32, size / 32, 1);
-
+    glUseProgram(0);
     POP_DEBUG_GROUP();
 
     return brdfLUTTexture;
@@ -228,5 +228,18 @@ std::array<glm::mat4, 6> getCubemapViewMatrices(glm::vec3 cameraPosition)
             glm::lookAt(cameraPosition, cameraPosition + glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f)),
             glm::lookAt(cameraPosition, cameraPosition + glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
             glm::lookAt(cameraPosition, cameraPosition + glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f))};
+}
+
+void updateCameraUBO(UniformBuffer& buffer, glm::mat4 projection, glm::mat4 view, glm::vec3 pos)
+{
+    struct CamData
+    {
+        glm::vec4 camPos;
+        glm::mat4 matrices[4];
+    };
+    const glm::mat4 invertedView = glm::inverse(view);
+    const glm::mat4 invertedProj = glm::inverse(projection);
+    const CamData camData{ glm::vec4(pos, 1.0f), {view, projection, invertedView, invertedProj} };
+    buffer.updateData<CamData>({ camData });
 }
 }  // namespace spark::utils

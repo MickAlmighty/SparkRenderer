@@ -2,27 +2,33 @@
 
 #include <filesystem>
 
-#include "OGLContext.hpp"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
+
+#include "MockSpark.hpp"
+#include "OpenGLContext.hpp"
 #include "ResourceFactory.h"
 #include "Logging.h"
+
+using ::testing::ReturnRef;
 
 namespace spark::resourceManagement
 {
 class ResourceFactoryTest : public ::testing::Test
 {
+    protected:
     void SetUp() override
     {
-        oglContext.init(1280, 720, true, true);
+        SparkInstanceInjector::injectInstance(&sparkMock);
+        EXPECT_CALL(sparkMock, getResourceLibrary()).WillRepeatedly(ReturnRef(resourceLibrary));
     }
 
-    spark::OGLContext oglContext;
-
-    protected:
-    void TearDown() override
-    {
-        oglContext.destroy();
-    }
+    private:
+    ResourceLibrary resourceLibrary = ResourceLibrary(R"(res)");
+    MockSpark sparkMock;
+    spark::OpenGLContext oglContext{1280, 720, true, true};
 };
+
 TEST_F(ResourceFactoryTest, AllCreatedResourcesAreValid)
 {
     std::vector<std::shared_ptr<Resource>> createdResources;
@@ -32,7 +38,7 @@ TEST_F(ResourceFactoryTest, AllCreatedResourcesAreValid)
     const std::filesystem::path resPath = utility::findFileOrDirectory("res");
     for(const auto& pathMaybeInvalid : std::filesystem::recursive_directory_iterator(resPath))
     {
-        if (!pathMaybeInvalid.is_regular_file())
+        if(!pathMaybeInvalid.is_regular_file())
             continue;
 
         auto validFile = pathMaybeInvalid.path();
@@ -40,7 +46,7 @@ TEST_F(ResourceFactoryTest, AllCreatedResourcesAreValid)
         if(fileWithValidExtension)
         {
             const auto sceneExts = ResourceFactory::supportedSceneExtensions();
-            if (const auto isScene = std::find(sceneExts.cbegin(), sceneExts.cend(), validFile.extension().string()); isScene != sceneExts.cend())
+            if(const auto isScene = std::find(sceneExts.cbegin(), sceneExts.cend(), validFile.extension().string()); isScene != sceneExts.cend())
             {
                 continue;
             }

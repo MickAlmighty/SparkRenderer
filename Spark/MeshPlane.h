@@ -16,7 +16,7 @@ class MeshPlane final : public Component
     public:
     MeshPlane();
     explicit MeshPlane(std::string&& name);
-    ~MeshPlane();
+    ~MeshPlane() override = default;
     MeshPlane(const MeshPlane&) = delete;
     MeshPlane(const MeshPlane&&) = delete;
     MeshPlane& operator=(const MeshPlane&) = delete;

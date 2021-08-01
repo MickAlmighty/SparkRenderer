@@ -1,22 +1,11 @@
 #include "pch.h"
 
 #include "Buffer.hpp"
-#include "OGLContext.hpp"
+#include "OpenGLContext.hpp"
 
 class BufferTest : public ::testing::Test
 {
-    void SetUp() override
-    {
-        oglContext.init(1280, 720, true, true);
-    }
-
-    spark::OGLContext oglContext;
-
-    protected:
-    void TearDown() override
-    {
-        oglContext.destroy();
-    }
+    spark::OpenGLContext oglContext{ 1280, 720, true, true };
 };
 
 TEST_F(BufferTest, testProperBindingAsignment)

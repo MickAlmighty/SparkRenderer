@@ -38,7 +38,7 @@ void ModelMesh::update()
             request.mesh = mesh;
             request.model = getGameObject()->transform.world.getMatrix();
 
-            SparkRenderer::getInstance()->addRenderingRequest(request);
+            Spark::get().getRenderer().addRenderingRequest(request);
         }
     }
 }
@@ -86,7 +86,7 @@ std::string ModelMesh::getModelPath() const
 
 void ModelMesh::setModelPath(const std::string modelPath)
 {
-    if(const auto modelPtr = Spark::resourceLibrary.getResourceByPath<resources::Model>(modelPath); modelPtr)
+    if(const auto modelPtr = Spark::get().getResourceLibrary().getResourceByPath<resources::Model>(modelPath); modelPtr)
         setModel(modelPtr);
 }
 }  // namespace spark

@@ -15,9 +15,8 @@ void LightShaftsPass::setup(unsigned int width, unsigned int height)
 {
     w = width;
     h = height;
-    lightShaftsShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("lightShafts.glsl");
-    blendingShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("renderTexture.glsl");
-    screenQuad.setup();
+    lightShaftsShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("lightShafts.glsl");
+    blendingShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("renderTexture.glsl");
     blurPass = std::make_unique<BlurPass>(w / 4, h / 4);
 }
 

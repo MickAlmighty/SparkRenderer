@@ -4,7 +4,7 @@
 
 #include "Logging.h"
 #include "Model.h"
-#include "OGLContext.hpp"
+#include "OpenGLContext.hpp"
 #include "ResourceLibrary.h"
 #include "Shader.h"
 #include "Texture.h"
@@ -16,21 +16,8 @@ using namespace spark::resources;
 class ResourceLibraryTest : public ::testing::Test
 {
     public:
-    void SetUp() override
-    {
-        oglContext.init(1280, 720, true, true);
-        resourceLibrary.setup(pathToResources);
-    }
-
-    spark::OGLContext oglContext;
-    spark::resourceManagement::ResourceLibrary resourceLibrary;
-
-    protected:
-    void TearDown() override
-    {
-        oglContext.destroy();
-        resourceLibrary.cleanup();
-    }
+    spark::OpenGLContext oglContext{1280, 720, true, true};
+    spark::resourceManagement::ResourceLibrary resourceLibrary{pathToResources};
 
     template<typename Resource>
     void loadInPlace(std::string resourceName)
@@ -55,5 +42,5 @@ TEST_F(ResourceLibraryTest, LoadingTextureInPlace)
 
 TEST_F(ResourceLibraryTest, LoadingShaderInPlace)
 {
-    loadInPlace<Shader>("default.glsl");
+    loadInPlace<Shader>("pbrGeometryBuffer.glsl");
 }

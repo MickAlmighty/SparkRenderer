@@ -8,9 +8,8 @@ namespace spark::effects
 {
 TexturePass::TexturePass()
 {
-    screenQuad.setup();
     utils::createFramebuffer(framebuffer);
-    texturePassThrough = Spark::resourceLibrary.getResourceByName<resources::Shader>("texturePassThrough.glsl");
+    texturePassThrough = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("texturePassThrough.glsl");
 }
 
 TexturePass::~TexturePass()

@@ -27,7 +27,7 @@ void HID::mouse_button_callback(int button, int action, int mods)
 
 void HID::cursor_position_callback(double xpos, double ypos)
 {
-    static double lastXpos = static_cast<double>(Spark::WIDTH) * 0.5, lastYPos = static_cast<double>(Spark::HEIGHT) * 0.5;
+    static double lastXpos = static_cast<double>(Spark::get().WIDTH) * 0.5, lastYPos = static_cast<double>(Spark::get().HEIGHT) * 0.5;
 
     mouse.direction.x = static_cast<float>(xpos - lastXpos);
     mouse.direction.y = static_cast<float>(ypos - lastYPos);

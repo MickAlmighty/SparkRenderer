@@ -24,16 +24,16 @@ class PostProcessingStack
     ~PostProcessingStack();
 
     void setup(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo);
-    GLuint processAmbientOcclusion(GLuint depthTexture, GLuint normalsTexture);
     GLuint process(GLuint lightingTexture, GLuint depthTexture, const std::weak_ptr<PbrCubemapTexture>& pbrCubemap,
-                   const std::shared_ptr<Camera>& camera);
+                   const std::shared_ptr<Camera>& camera, const UniformBuffer& cameraUbo);
     void createFrameBuffersAndTextures(unsigned int width, unsigned int height);
     void cleanup();
 
     void drawGui();
 
     private:
-    void renderCubemap(GLuint lightingTexture, GLuint depthTexture, const std::weak_ptr<PbrCubemapTexture>& pbrCubemap);
+    void renderCubemap(GLuint lightingTexture, GLuint depthTexture, const std::weak_ptr<PbrCubemapTexture>& pbrCubemap,
+                       const UniformBuffer& cameraUbo);
     void depthOfField(GLuint depthTexture);
     void lightShafts(GLuint depthTexture, const std::shared_ptr<Camera>& camera);
     void bloom(GLuint lightingTexture);
@@ -41,7 +41,6 @@ class PostProcessingStack
     void toneMapping();
     void fxaa();
 
-    bool isAmbientOcclusionEnabled = false;
     bool isDofEnabled = false;
     bool isBloomEnabled = false;
     bool isLightShaftsPassEnabled = true;
@@ -49,7 +48,6 @@ class PostProcessingStack
 
     GLuint textureHandle{};
 
-    AmbientOcclusion ao{};
     ToneMapper toneMapper{};
     BloomPass bloomPass{};
     DepthOfFieldPass dofPass{};

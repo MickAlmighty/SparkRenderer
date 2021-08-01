@@ -14,7 +14,6 @@ void main()
 #type fragment
 #version 450
 layout(location = 0) out vec4 FragColor;
-layout(location = 1) out vec4 BrightPass;
 
 in vec2 texCoords;
 #define M_PI 3.14159265359 
@@ -117,17 +116,10 @@ vec3 decodeViewSpaceNormal(vec2 enc)
     return n;
 }
 
-vec3 getBrightPassColor(vec3 color)
-{
-    const float luma = dot(color, vec3(0.299, 0.587, 0.114));
-    float weight = 1 / (1 + luma);
-    return color * weight;
-}
-
 void main()
 {
     float depthValue = texture(depthTexture, texCoords).x;
-    if (depthValue == 0.0f) // 0.0f means its far plane or there is nothing in G-Buffer
+    if (depthValue <= 0.00001) // 0.0f means its far plane or there is nothing in G-Buffer
     {
         discard;
     }
@@ -185,7 +177,7 @@ void main()
         ambient = (kD * diffuse + specular);
     }
 
-    vec4 color = vec4(L0 + ambient, 1);// * ssao;
+    vec4 color = vec4(L0 + ambient, 1) * (1.0f - ssao);
 
     bvec4 valid = isnan(color);
     if ( valid.x || valid.y || valid.z || valid.w )
@@ -196,8 +188,6 @@ void main()
     {
         FragColor = color * ssao;
     }
-
-    BrightPass = vec4(getBrightPassColor(FragColor.xyz), 1.0f);
 }
 
 vec3 directionalLightAddition(vec3 V, vec3 N, Material m)

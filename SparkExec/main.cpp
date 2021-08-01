@@ -17,15 +17,11 @@ int main()
 
     try
     {
-        spark::Spark::loadConfig(config);
-        spark::Spark::setup();
-        spark::Spark::run();
-        spark::Spark::clean();
+        spark::Spark::run(config);
     }
     catch(std::exception& e)
     {
         SPARK_ERROR("{}", e.what());
-        getchar();
         return 1;
     }
     return 0;

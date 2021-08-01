@@ -38,7 +38,9 @@ std::vector<GLuint> Shader::compileShaders(const std::map<GLenum, std::string>& 
         if(!success)
         {
             glGetShaderInfoLog(shader, 512, nullptr, infoLog);
-            std::string fullInfo = "ERROR::SHADER::COMPILATION_FAILED, cause: ";
+            
+            std::string fullInfo = getPath().string();
+            fullInfo.append("\n\rERROR::SHADER::COMPILATION_FAILED, cause: ");
             fullInfo.append(infoLog);
             throw std::runtime_error(fullInfo);
         }
@@ -148,7 +150,7 @@ void Shader::setMat4(const std::string& name, glm::mat4 value) const
     glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(value));
 }
 
-void Shader::bindSSBO(const std::string& name, const SSBO& ssbo) const
+void Shader::bindSSBO(const std::string& name, const SSBO& ssbo)
 {
     const auto shaderBufferBlockIndex = shaderDescriptor.getShaderBufferBlockIndex(name);
     if(shaderBufferBlockIndex.has_value())
@@ -158,7 +160,7 @@ void Shader::bindSSBO(const std::string& name, const SSBO& ssbo) const
     }
 }
 
-void Shader::bindUniformBuffer(const std::string& name, const UniformBuffer& uniformBuffer) const
+void Shader::bindUniformBuffer(const std::string& name, const UniformBuffer& uniformBuffer)
 {
     const auto uniformBlockIndex = shaderDescriptor.getUniformBlockIndex(name);
     if(uniformBlockIndex.has_value())

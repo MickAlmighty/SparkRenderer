@@ -36,17 +36,17 @@ class Scene final : public std::enable_shared_from_this<Scene>, public resourceM
     void drawGUI();
     void drawSceneGraph();
     std::list<std::function<void()>> toRemove;
-    std::shared_ptr<lights::LightManager> lightManager;
+    std::shared_ptr<lights::LightManager> lightManager = std::make_unique<lights::LightManager>();
     std::shared_ptr<GameObject> getGameObjectToPreview() const;
     std::string getName() const;
 
     private:
-    void Init();
+    void init();
     void drawTreeNode(std::shared_ptr<GameObject> node, bool isRootNode);
     void setGameObjectToPreview(const std::shared_ptr<GameObject> node);
     std::shared_ptr<GameObject> root{};
     std::weak_ptr<GameObject> gameObjectToPreview;
-    std::shared_ptr<Camera> camera{};
+    std::shared_ptr<Camera> camera;
 
     RTTR_REGISTRATION_FRIEND;
     RTTR_ENABLE()

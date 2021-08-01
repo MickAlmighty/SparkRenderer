@@ -14,14 +14,14 @@
 
 namespace spark
 {
-Scene::Scene() : Resource(Spark::pathToResources / "NewScene.scene")
+Scene::Scene() : Resource(Spark::get().pathToResources / "NewScene.scene")
 {
-    Init();
+    init();
 }
 
 Scene::Scene(const std::filesystem::path& path_) : Resource(path_)
 {
-    Init();
+    init();
 }
 
 Scene::Scene(const std::filesystem::path& path_, const std::shared_ptr<Scene>&& scene_) : Resource(path_)
@@ -102,12 +102,11 @@ void Scene::drawGUI()
     }
 }
 
-void Scene::Init()
+void Scene::init()
 {
     root = std::make_shared<GameObject>("Root");
     root->setScene(this);
     camera = std::make_shared<Camera>(glm::vec3(0, 0, 5));
-    lightManager = std::make_unique<lights::LightManager>();
 }
 
 void Scene::drawSceneGraph()

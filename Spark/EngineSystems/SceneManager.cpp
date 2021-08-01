@@ -1,23 +1,19 @@
 #include "SceneManager.h"
 
-#include <algorithm>
-
 #include "GUI/ImGui/imgui.h"
 
-#include "SparkRenderer.h"
 #include "JsonSerializer.h"
+#include "ResourceLibrary.h"
 #include "Scene.h"
 #include "Spark.h"
+#include "SparkRenderer.h"
 
 namespace spark
 {
-SceneManager* SceneManager::getInstance()
+SceneManager::SceneManager()
 {
-    static SceneManager sceneManager{};
-    return &sceneManager;
+    current_scene = std::make_shared<Scene>();
 }
-
-void SceneManager::setup() {}
 
 void SceneManager::update() const
 {
@@ -29,23 +25,21 @@ void SceneManager::fixedUpdate() const
     current_scene->fixedUpdate();
 }
 
-void SceneManager::cleanup()
-{
-    current_scene = nullptr;
-}
-
 bool SceneManager::setCurrentScene(const std::shared_ptr<Scene>& scene)
 {
+    bool success{false};
     if(scene)
     {
         current_scene = scene;
-        SparkRenderer::getInstance()->setScene(current_scene);
-        return true;
+        success = true;
+    }
+    else
+    {
+        current_scene = std::make_shared<Scene>();
     }
 
-    current_scene = std::make_shared<Scene>();
-    SparkRenderer::getInstance()->setScene(current_scene);
-    return false;
+    Spark::get().getRenderer().setScene(current_scene);
+    return success;
 }
 
 std::shared_ptr<Scene> SceneManager::getCurrentScene() const
@@ -60,7 +54,7 @@ std::optional<std::shared_ptr<Scene>> getScene()
 
     if(ImGui::BeginPopupModal("Scenes", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
     {
-        const auto sceneIds = Spark::resourceLibrary.getSceneResourceIdentifiers();
+        const auto sceneIds = Spark::get().getResourceLibrary().getSceneResourceIdentifiers();
         for(const auto& id : sceneIds)
         {
             if(ImGui::Button(id->getFullPath().string().c_str()))
@@ -88,9 +82,7 @@ void SceneManager::drawGui()
 {
     if(ImGui::BeginMenu("SceneManager"))
     {
-        const auto scenePath = SparkGui::getRelativePathToSaveSceneByFilePicker();
-
-        if(!scenePath.empty())
+        if(const auto scenePath = SparkGui::getRelativePathToSaveSceneByFilePicker(); !scenePath.empty())
         {
             if(!JsonSerializer::getInstance()->saveSceneToFile(current_scene, scenePath))
             {
@@ -98,8 +90,7 @@ void SceneManager::drawGui()
             }
         }
 
-        const auto sceneOpt = SparkGui::selectSceneByFilePicker();
-        if(sceneOpt.has_value())
+        if(const auto sceneOpt = SparkGui::selectSceneByFilePicker(); sceneOpt.has_value())
         {
             if(sceneOpt.value() != nullptr)
             {

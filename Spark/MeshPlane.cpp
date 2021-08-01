@@ -6,6 +6,7 @@
 #include "ReflectionUtils.h"
 #include "RenderingRequest.h"
 #include "Shader.h"
+#include "Spark.h"
 
 namespace spark
 {
@@ -45,11 +46,6 @@ MeshPlane::MeshPlane(std::string&& name) : Component(std::move(name))
     setup();
 }
 
-MeshPlane::~MeshPlane()
-{
-}
-
-
 void MeshPlane::update()
 {
     RenderingRequest request{};
@@ -58,7 +54,7 @@ void MeshPlane::update()
     request.mesh = planeMesh;
     request.model = getGameObject()->transform.world.getMatrix();
 
-    SparkRenderer::getInstance()->addRenderingRequest(request);
+    Spark::get().getRenderer().addRenderingRequest(request);
 }
 
 void MeshPlane::fixedUpdate() {}

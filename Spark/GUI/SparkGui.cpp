@@ -43,8 +43,8 @@ void SparkGui::drawGui()
     if(ImGui::BeginMainMenuBar())
     {
         drawMainMenuGui();
-        SceneManager::getInstance()->drawGui();
-        SparkRenderer::getInstance()->drawGui();
+        Spark::get().getSceneManager().drawGui();
+        Spark::get().getRenderer().drawGui();
         ImGui::EndMainMenuBar();
     }
 
@@ -61,7 +61,7 @@ void SparkGui::drawMainMenuGui()
         ImGui::Separator();
         if(ImGui::MenuItem("Exit", "Esc"))
         {
-            Spark::oglContext.closeWindow();
+            Spark::get().getRenderingContext().closeWindow();
         }
         ImGui::EndMenu();
     }
@@ -79,19 +79,19 @@ void SparkGui::drawSparkSettings(bool* p_open)
     }
     /*static char buf1[128];
     static char buf2[128];
-    ImGui::InputTextWithHint("Path to Models", Spark::pathToModelMeshes.string().c_str(), buf1, 128);
-    ImGui::InputTextWithHint("Path to Resources", Spark::pathToResources.string().c_str(), buf2, 128);*/
+    ImGui::InputTextWithHint("Path to Models", Spark::get().pathToModelMeshes.string().c_str(), buf1, 128);
+    ImGui::InputTextWithHint("Path to Resources", Spark::get().pathToResources.string().c_str(), buf2, 128);*/
     ImGui::Text("Framerate: %f", ImGui::GetIO().Framerate);
     ImGui::Text("Path to resources:");
     ImGui::SameLine();
-    ImGui::Text(Spark::pathToResources.string().c_str());
-    bool vsync = Spark::vsync;
+    ImGui::Text(Spark::get().pathToResources.string().c_str());
+    bool vsync = Spark::get().vsync;
     ImGui::Checkbox("V-Sync", &vsync);
 
-    if(vsync != Spark::vsync)
+    if(vsync != Spark::get().vsync)
     {
-        Spark::vsync = vsync;
-        Spark::oglContext.setVsync(vsync);
+        Spark::get().vsync = vsync;
+        Spark::get().getRenderingContext().setVsync(vsync);
     }
 
     static const char* items[4] = {"1280x720", "1600x900", "1920x1080", "1920x1055"};
@@ -100,19 +100,19 @@ void SparkGui::drawSparkSettings(bool* p_open)
     {
         if(current_item == 0)
         {
-            Spark::oglContext.resizeWindow(1280, 720);
+            Spark::get().getRenderingContext().resizeWindow(1280, 720);
         }
         else if(current_item == 1)
         {
-            Spark::oglContext.resizeWindow(1600, 900);
+            Spark::get().getRenderingContext().resizeWindow(1600, 900);
         }
         else if(current_item == 2)
         {
-            Spark::oglContext.resizeWindow(1920, 1080);
+            Spark::get().getRenderingContext().resizeWindow(1920, 1080);
         }
         else if(current_item == 3)
         {
-            Spark::oglContext.resizeWindow(1920, 1055);
+            Spark::get().getRenderingContext().resizeWindow(1920, 1055);
         }
     }
 
@@ -120,10 +120,10 @@ void SparkGui::drawSparkSettings(bool* p_open)
     // if (ImGui::Button("Save settings"))
     //{
     //	InitializationVariables variables;
-    //	variables.width = Spark::WIDTH;
-    //	variables.height = Spark::HEIGHT;
-    //	variables.pathToResources = Spark::pathToResources;
-    //	variables.pathToModels = Spark::pathToModelMeshes;
+    //	variables.width = Spark::get().WIDTH;
+    //	variables.height = Spark::get().HEIGHT;
+    //	variables.pathToResources = Spark::get().pathToResources;
+    //	variables.pathToModels = Spark::get().pathToModelMeshes;
     //	JsonSerializer::writeToFile("settings.json", variables.serialize());
     //}
     ImGui::End();
@@ -131,7 +131,7 @@ void SparkGui::drawSparkSettings(bool* p_open)
 
 int SparkGui::checkCurrentItem(const char** items) const
 {
-    const std::string resolution = std::to_string(Spark::WIDTH) + "x" + std::to_string(Spark::HEIGHT);
+    const std::string resolution = std::to_string(Spark::get().WIDTH) + "x" + std::to_string(Spark::get().HEIGHT);
     for(int i = 0; i < 4; i++)
     {
         std::string item(items[i]);
@@ -247,7 +247,7 @@ std::shared_ptr<resourceManagement::Resource> SparkGui::getResourceIdentifierByF
         if(!filepath.empty())
         {
             filepath = filepath.lexically_relative(std::filesystem::current_path());
-            const auto resourceIdentifier = Spark::resourceLibrary.getResourceIdentifier(filepath);
+            const auto resourceIdentifier = Spark::get().getResourceLibrary().getResourceIdentifier(filepath);
             if(resourceIdentifier)
             {
                 return resourceIdentifier->getResource();

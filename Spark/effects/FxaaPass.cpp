@@ -13,8 +13,7 @@ FxaaPass::~FxaaPass()
 
 void FxaaPass::setup(unsigned int width, unsigned int height)
 {
-    screenQuad.setup();
-    fxaaShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("fxaa.glsl");
+    fxaaShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("fxaa.glsl");
 }
 
 GLuint FxaaPass::process(GLuint inputTexture)

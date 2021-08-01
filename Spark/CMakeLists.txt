@@ -3,11 +3,14 @@ list(APPEND SparkSources
     ${CMAKE_CURRENT_SOURCE_DIR}/Camera.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Camera.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Clock.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Cube.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Clock.h
     ${CMAKE_CURRENT_SOURCE_DIR}/CommonUtils.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CommonUtils.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Component.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Component.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/DeferredRenderer.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/DeferredRenderer.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Enums.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Enums.h
     ${CMAKE_CURRENT_SOURCE_DIR}/GameObject.cpp
@@ -19,6 +22,8 @@ list(APPEND SparkSources
     ${CMAKE_CURRENT_SOURCE_DIR}/IObserver.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/JsonSerializer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/JsonSerializer.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/LightProbesRenderer.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LightProbesRenderer.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/LocalTransform.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/LocalTransform.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Logging.cpp
@@ -32,8 +37,8 @@ list(APPEND SparkSources
     ${CMAKE_CURRENT_SOURCE_DIR}/ModelMesh.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ModelMesh.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Observable.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/OGLContext.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/OGLContext.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/OpenGLContext.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/OpenGLContext.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ReflectionUtils.h
     ${CMAKE_CURRENT_SOURCE_DIR}/RenderingRequest.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Resource.cpp
@@ -65,6 +70,10 @@ list(APPEND SparkSources
     ${CMAKE_CURRENT_SOURCE_DIR}/stb_image.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Structs.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Structs.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/TileBasedDeferredRenderer.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/TileBasedDeferredRenderer.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/TileBasedLightCullingPass.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/TileBasedLightCullingPass.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Texture.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Texture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Timer.h

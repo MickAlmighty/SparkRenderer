@@ -3,7 +3,6 @@
 #include <memory>
 
 #include "CommonUtils.h"
-#include "ResourceLibrary.h"
 #include "Shader.h"
 #include "Spark.h"
 
@@ -28,7 +27,7 @@ void BlurPass::blurTexture(GLuint texture) const
 
     screenQuad.draw();
     glBindTextures(0, 1, nullptr);
-    glViewport(0, 0, Spark::WIDTH, Spark::HEIGHT);
+    glViewport(0, 0, Spark::get().WIDTH, Spark::get().HEIGHT);
 
     POP_DEBUG_GROUP();
 }
@@ -47,8 +46,7 @@ void BlurPass::recreateWithNewSize(unsigned int width, unsigned int height)
 
 BlurPass::BlurPass(unsigned int width_, unsigned int height_) : width(width_), height(height_)
 {
-    gaussianBlurShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("gaussianBlur.glsl");
-    screenQuad.setup();
+    gaussianBlurShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("gaussianBlur.glsl");
     createGlObjects();
 }
 

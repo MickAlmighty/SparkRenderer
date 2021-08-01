@@ -112,7 +112,7 @@ void PointLight::update()
         request.mesh = sphere;
         request.model = sphereModel;
 
-        SparkRenderer::getInstance()->addRenderingRequest(request);
+        Spark::get().getRenderer().addRenderingRequest(request);
     }
 }
 

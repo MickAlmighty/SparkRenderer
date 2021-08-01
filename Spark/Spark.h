@@ -1,8 +1,9 @@
 #pragma once
 
 #include "GUI/SparkGui.h"
-#include "OGLContext.hpp"
+#include "OpenGLContext.hpp"
 #include "ResourceLibrary.h"
+#include "EngineSystems/SparkRenderer.h"
 
 namespace spark
 {
@@ -16,26 +17,40 @@ class Spark
     Spark& operator=(const Spark&) = delete;
     Spark& operator=(Spark&&) = delete;
 
-    inline static unsigned int WIDTH{1280};
-    inline static unsigned int HEIGHT{720};
-    inline static std::filesystem::path pathToResources{};
-    inline static bool vsync = true;
+    static Spark& get();
+    static void run(const SparkConfig& config);
 
-    inline static OGLContext oglContext{};
-    inline static resourceManagement::ResourceLibrary resourceLibrary{};
+    virtual OpenGLContext& getRenderingContext() const;
+    virtual resourceManagement::ResourceLibrary& getResourceLibrary() const;
+    virtual SparkRenderer& getRenderer() const;
+    virtual SceneManager& getSceneManager() const;
 
-    static void loadConfig(const SparkConfig& config);
-    static void setup();
-    static void run();
-    static void clean();
+    unsigned int WIDTH{1280};
+    unsigned int HEIGHT{720};
+    std::filesystem::path pathToResources{};
+    bool vsync = true;
+
+    protected:
+    Spark() = default;
+    virtual ~Spark() = default;
 
     private:
-    inline static SparkGui sparkGui{};
+    void loadConfig(const SparkConfig& config);
+    void setup();
+    void runLoop();
+    void destroy();
 
-    ~Spark() = default;
-    Spark() = default;
+    void initImGui();
+    void destroyImGui();
 
-    static void initImGui();
-    static void destroyImGui();
+    std::unique_ptr<OpenGLContext> renderingContext{};
+    std::unique_ptr<resourceManagement::ResourceLibrary> resourceLibrary{};
+    std::unique_ptr<SparkRenderer> renderer{};
+    std::unique_ptr<SceneManager> sceneManager{};
+    SparkGui sparkGui{};
+
+    inline static Spark* ptr{nullptr};
+
+    friend class SparkInstanceInjector;
 };
 }  // namespace spark

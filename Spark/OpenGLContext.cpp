@@ -1,11 +1,25 @@
-#include "OGLContext.hpp"
+#include "OpenGLContext.hpp"
 
 #include "Logging.h"
 #include "HID/HID.h"
 
 namespace spark
 {
-bool OGLContext::init(unsigned width, unsigned height, bool vsyncEnabled, bool isContextOffscreen)
+OpenGLContext::OpenGLContext(unsigned int width, unsigned int height, bool vsyncEnabled, bool isContextOffscreen)
+{
+    if(!init(width, height, vsyncEnabled, isContextOffscreen))
+    {
+        SPARK_CRITICAL("renderingContext init failed");
+        throw std::runtime_error("renderingContext init failed");
+    }
+}
+
+OpenGLContext::~OpenGLContext()
+{
+    destroy();
+}
+
+bool OpenGLContext::init(unsigned int width, unsigned int height, bool vsyncEnabled, bool isContextOffscreen)
 {
     if(!glfwInit())
     {
@@ -37,6 +51,7 @@ bool OGLContext::init(unsigned width, unsigned height, bool vsyncEnabled, bool i
         return false;
     }
 
+    glfwSetWindowUserPointer(window, this);
     glfwMakeContextCurrent(window);
 
     if(!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress)))
@@ -69,24 +84,36 @@ bool OGLContext::init(unsigned width, unsigned height, bool vsyncEnabled, bool i
     return true;
 }
 
-void OGLContext::destroy()
+void OpenGLContext::destroy()
 {
     glfwDestroyWindow(window);
     window = nullptr;
     glfwTerminate();
 }
 
-bool OGLContext::shouldWindowClose() const
+void OpenGLContext::windowSizeCallback(GLFWwindow* window, int width, int height)
+{
+    if(width != 0 && height != 0)
+    {
+        auto& context = *static_cast<OpenGLContext*>(glfwGetWindowUserPointer(window));
+        for (auto& callback : context.onSizeChangedCallbacks)
+        {
+            callback(width, height);
+        }
+    }
+}
+
+bool OpenGLContext::shouldWindowClose() const
 {
     return glfwWindowShouldClose(window);
 }
 
-void OGLContext::closeWindow() const
+void OpenGLContext::closeWindow() const
 {
     glfwSetWindowShouldClose(window, GLFW_TRUE);
 }
 
-void OGLContext::setVsync(bool vsyncEnabled)
+void OpenGLContext::setVsync(bool vsyncEnabled)
 {
     if(vsyncEnabled)
         glfwSwapInterval(1);
@@ -94,29 +121,31 @@ void OGLContext::setVsync(bool vsyncEnabled)
         glfwSwapInterval(0);
 }
 
-void OGLContext::resizeWindow(GLuint width, GLuint height) const
+void OpenGLContext::resizeWindow(GLuint width, GLuint height) const
 {
     glfwSetWindowSize(window, width, height);
 }
 
-void OGLContext::swapBuffers() const
+void OpenGLContext::swapBuffers() const
 {
     glfwSwapBuffers(window);
 }
 
-void OGLContext::setupInputCallbacks() const
+void OpenGLContext::setupCallbacks() const
 {
-    glfwSetKeyCallback(window, [](GLFWwindow* w, int key, int scancode, int action, int mods) {
-        HID::key_callback(key, scancode, action, mods);
-        // const auto* oglContext = static_cast<OGLContext*>(glfwGetWindowUserPointer(w));
-    });
-
-    glfwSetCursorPosCallback(window, [](GLFWwindow* w, double xpos, double ypos) { HID::cursor_position_callback(xpos, ypos); });
-    glfwSetMouseButtonCallback(window, [](GLFWwindow* w, int button, int action, int mods) { HID::mouse_button_callback(button, action, mods); });
-    glfwSetScrollCallback(window, [](GLFWwindow* w, double xoffset, double yoffset) { HID::scroll_callback(xoffset, yoffset); });
+    glfwSetWindowSizeCallback(window, windowSizeCallback);
+    glfwSetKeyCallback(window, [](GLFWwindow*, int key, int scancode, int action, int mods) { HID::key_callback(key, scancode, action, mods); });
+    glfwSetCursorPosCallback(window, [](GLFWwindow*, double xpos, double ypos) { HID::cursor_position_callback(xpos, ypos); });
+    glfwSetMouseButtonCallback(window, [](GLFWwindow*, int button, int action, int mods) { HID::mouse_button_callback(button, action, mods); });
+    glfwSetScrollCallback(window, [](GLFWwindow*, double xoffset, double yoffset) { HID::scroll_callback(xoffset, yoffset); });
 }
 
-void OGLContext::glDebugOutput(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam)
+void OpenGLContext::addOnWindowSizeChangedCallback(const std::function<void(unsigned int, unsigned int)>& callback)
+{
+    onSizeChangedCallbacks.push_back(callback);
+}
+
+void OpenGLContext::glDebugOutput(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei, const GLchar* message, const void*)
 {
     // ignore non-significant error/warning codes
     if(id == 131169 || id == 131185 || id == 131218 || id == 131204)

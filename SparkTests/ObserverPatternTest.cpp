@@ -79,3 +79,41 @@ TEST(ObserverPatternTest, AddMultipleObserversAndNotify)
         ASSERT_EQ(s.getName(), observerPtr->name);
     }
 }
+
+TEST(ObserverPatternTest, ExpiredObserverIsRemovedFromList)
+{
+    Subject s;
+
+    {
+        const auto o = std::make_shared<Observer>();
+        s.add(o);
+        ASSERT_EQ(s.observersCount(), 1);
+    }
+
+    s.setName("newName");
+    ASSERT_EQ(s.observersCount(), 0);
+}
+
+TEST(ObserverPatternTest, NullptrShouldNotBeAdded)
+{
+    Subject s;
+    ASSERT_EQ(s.observersCount(), 0);
+    s.add(nullptr);
+    ASSERT_EQ(s.observersCount(), 0);
+}
+
+TEST(ObserverPatternTest, RemovingNullptrShouldRemoveOneExpiredObserver)
+{
+    Subject s;
+    {
+        const auto o = std::make_shared<Observer>();
+        s.add(o);
+        ASSERT_EQ(s.observersCount(), 1);
+        const auto o2 = std::make_shared<Observer>();
+        s.add(o2);
+        ASSERT_EQ(s.observersCount(), 2);
+    }
+
+    s.remove(nullptr);
+    ASSERT_EQ(s.observersCount(), 1);
+}

@@ -12,21 +12,18 @@ namespace spark::resourceManagement
 class ResourceLibrary
 {
     public:
-    ResourceLibrary() = default;
-    ~ResourceLibrary() = default;
+    ResourceLibrary(const std::filesystem::path& pathToResources);
+    ~ResourceLibrary();
 
     ResourceLibrary(const ResourceLibrary&) = delete;
     ResourceLibrary(const ResourceLibrary&&) = delete;
     ResourceLibrary operator=(const ResourceLibrary&) = delete;
     ResourceLibrary operator=(const ResourceLibrary&&) = delete;
 
-    void setup(const std::filesystem::path& pathToResources);
-    void cleanup();
-
-    std::vector< std::shared_ptr<ResourceIdentifier>> getModelResourceIdentifiers() const;
-    std::vector< std::shared_ptr<ResourceIdentifier>> getTextureResourceIdentifiers() const;
-    std::vector< std::shared_ptr<ResourceIdentifier>> getShaderResourceIdentifiers() const;
-    std::vector< std::shared_ptr<ResourceIdentifier>> getSceneResourceIdentifiers() const;
+    std::vector<std::shared_ptr<ResourceIdentifier>> getModelResourceIdentifiers() const;
+    std::vector<std::shared_ptr<ResourceIdentifier>> getTextureResourceIdentifiers() const;
+    std::vector<std::shared_ptr<ResourceIdentifier>> getShaderResourceIdentifiers() const;
+    std::vector<std::shared_ptr<ResourceIdentifier>> getSceneResourceIdentifiers() const;
     std::vector<std::shared_ptr<ResourceIdentifier>> getResourceIdentifiers() const;
     std::vector<std::shared_ptr<ResourceIdentifier>> getResourceIdentifiers(
         const std::function<bool(const std::shared_ptr<ResourceIdentifier>&)>& comp) const;
@@ -45,7 +42,7 @@ class ResourceLibrary
     template<class InputIterator, class Functor>
     [[nodiscard]] std::vector<typename std::iterator_traits<InputIterator>::value_type> static filter(const InputIterator& begin,
                                                                                                       const InputIterator& end, Functor f);
-    void createResources(const std::filesystem::path& pathToResources);
+    void createResourceIdentifiers(const std::filesystem::path& pathToResources);
 
     std::set<std::shared_ptr<ResourceIdentifier>> resourceIdentifiers;
 };

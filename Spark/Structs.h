@@ -87,27 +87,6 @@ struct VertexShaderAttribute final
     }
 };
 
-struct Cube final
-{
-    GLuint vao{};
-    GLuint vbo{};
-
-    Cube();
-
-    void draw() const
-    {
-        glBindVertexArray(vao);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-        glBindVertexArray(0);
-    }
-
-    ~Cube()
-    {
-        glDeleteBuffers(1, &vbo);
-        glDeleteVertexArrays(1, &vao);
-    }
-};
-
 struct DrawArraysIndirectCommand final
 {
     GLuint count;

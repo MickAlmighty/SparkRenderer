@@ -20,7 +20,7 @@ target_sources(SparkTests PRIVATE
 "ResourceFactoryTest.cpp"
 "ResourceIdentifierTest.cpp"
 "SerializationTest.cpp"
-)
+"MockSpark.hpp")
 
 add_custom_command(TARGET SparkTests POST_BUILD
                     COMMAND ${CMAKE_COMMAND} -E copy_directory
@@ -31,8 +31,13 @@ add_custom_command(TARGET SparkTests POST_BUILD
                         ${CMAKE_SOURCE_DIR}/res ${CMAKE_BINARY_DIR}/res)
 
 target_include_directories(SparkTests PUBLIC ${CMAKE_SOURCE_DIR}/Spark)
+message(${googletest_SOURCE_DIR})
+target_include_directories(SparkTests PUBLIC ${googletest_SOURCE_DIR}/googlemock/include)
 target_include_directories(SparkTests PUBLIC ${googletest_SOURCE_DIR}/googletest/include)
-target_link_libraries(SparkTests gtest_main Spark)
+#target_link_libraries(SparkTests googletest Spark)
+target_link_libraries(SparkTests Spark)
+target_link_libraries(SparkTests debug gtest_maind optimized gtest_main)
+target_link_libraries(SparkTests debug gmock_maind optimized gmock_main)
 
 include(GoogleTest)
 gtest_discover_tests(SparkTests)

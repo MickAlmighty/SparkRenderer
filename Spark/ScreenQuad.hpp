@@ -9,23 +9,36 @@
 class ScreenQuad final
 {
     public:
-    ScreenQuad() = default;
+    ScreenQuad();
     ScreenQuad(const ScreenQuad&) = delete;
     ScreenQuad(ScreenQuad&&) = delete;
     ScreenQuad& operator=(const ScreenQuad&) = delete;
     ScreenQuad& operator=(ScreenQuad&&) = delete;
+    ~ScreenQuad();
 
-    ~ScreenQuad()
+    void draw() const;
+
+    private:
+    struct QuadVertex final
     {
-        glDeleteBuffers(1, &vbo);
-        glDeleteVertexArrays(1, &vao);
-    }
+        glm::vec3 pos;
+        glm::vec2 texCoords;
+    };
 
-    void setup()
+    inline static size_t counter{0};
+    inline static GLuint vao{0};
+    inline static GLuint vbo{0};
+
+    inline static const std::vector<QuadVertex> vertices{
+        {{-1.0f, 1.0f, 0.0f}, {0.0f, 1.0f}}, {{1.0f, -1.0f, 0.0f}, {1.0f, 0.0f}},  {{1.0f, 1.0f, 0.0f}, {1.0f, 1.0f}},
+
+        {{-1.0f, 1.0f, 0.0f}, {0.0f, 1.0f}}, {{-1.0f, -1.0f, 0.0f}, {0.0f, 0.0f}}, {{1.0f, -1.0f, 0.0f}, {1.0f, 0.0f}}};
+};
+
+inline ScreenQuad::ScreenQuad()
+{
+    if(counter == 0)
     {
-        if (vao != 0 && vbo != 0)
-            return;
-
         glGenVertexArrays(1, &vao);
         glBindVertexArray(vao);
 
@@ -41,25 +54,22 @@ class ScreenQuad final
 
         glBindVertexArray(0);
     }
+    ++counter;
+}
 
-    void draw() const
+inline ScreenQuad::~ScreenQuad()
+{
+    --counter;
+    if(counter == 0)
     {
-        glBindVertexArray(vao);
-        glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(vertices.size()));
-        glBindVertexArray(0);
+        glDeleteBuffers(1, &vbo);
+        glDeleteVertexArrays(1, &vao);
     }
+}
 
-    private:
-    struct QuadVertex final
-    {
-        glm::vec3 pos;
-        glm::vec2 texCoords;
-    };
-
-    GLuint vao{0};
-    GLuint vbo{0};
-    std::vector<QuadVertex> vertices = {
-        {{-1.0f, 1.0f, 0.0f}, {0.0f, 1.0f}}, {{1.0f, -1.0f, 0.0f}, {1.0f, 0.0f}},  {{1.0f, 1.0f, 0.0f}, {1.0f, 1.0f}},
-
-        {{-1.0f, 1.0f, 0.0f}, {0.0f, 1.0f}}, {{-1.0f, -1.0f, 0.0f}, {0.0f, 0.0f}}, {{1.0f, -1.0f, 0.0f}, {1.0f, 0.0f}}};
-};
+inline void ScreenQuad::draw() const
+{
+    glBindVertexArray(vao);
+    glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(vertices.size()));
+    glBindVertexArray(0);
+}

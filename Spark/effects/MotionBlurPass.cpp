@@ -16,8 +16,7 @@ void MotionBlurPass::setup(unsigned width, unsigned height, const UniformBuffer&
 {
     w = width;
     h = height;
-    screenQuad.setup();
-    motionBlurShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("motionBlur.glsl");
+    motionBlurShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("motionBlur.glsl");
     motionBlurShader->bindUniformBuffer("Camera", cameraUbo);
 }
 

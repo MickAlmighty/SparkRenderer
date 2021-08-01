@@ -224,7 +224,7 @@ std::map<TextureTarget, std::shared_ptr<resources::Texture>> findTextures(const 
         size_t size = texture_path.path().string().find("_Diffuse");
         if(size != std::string::npos)
         {
-            std::shared_ptr<resources::Texture> texture = Spark::resourceLibrary.getResourceByPath<resources::Texture>(texture_path.path().string());
+            std::shared_ptr<resources::Texture> texture = Spark::get().getResourceLibrary().getResourceByPath<resources::Texture>(texture_path.path().string());
             textures.emplace(TextureTarget::DIFFUSE_TARGET, texture);
             continue;
         }
@@ -232,7 +232,7 @@ std::map<TextureTarget, std::shared_ptr<resources::Texture>> findTextures(const 
         size = texture_path.path().string().find("_Normal");
         if(size != std::string::npos)
         {
-            std::shared_ptr<resources::Texture> texture = Spark::resourceLibrary.getResourceByPath<resources::Texture>(texture_path.path().string());
+            std::shared_ptr<resources::Texture> texture = Spark::get().getResourceLibrary().getResourceByPath<resources::Texture>(texture_path.path().string());
             textures.emplace(TextureTarget::NORMAL_TARGET, texture);
             continue;
         }
@@ -240,7 +240,7 @@ std::map<TextureTarget, std::shared_ptr<resources::Texture>> findTextures(const 
         size = texture_path.path().string().find("_Roughness");
         if(size != std::string::npos)
         {
-            std::shared_ptr<resources::Texture> texture = Spark::resourceLibrary.getResourceByPath<resources::Texture>(texture_path.path().string());
+            std::shared_ptr<resources::Texture> texture = Spark::get().getResourceLibrary().getResourceByPath<resources::Texture>(texture_path.path().string());
             textures.emplace(TextureTarget::ROUGHNESS_TARGET, texture);
             continue;
         }
@@ -248,7 +248,7 @@ std::map<TextureTarget, std::shared_ptr<resources::Texture>> findTextures(const 
         size = texture_path.path().string().find("_Metalness");
         if(size != std::string::npos)
         {
-            std::shared_ptr<resources::Texture> texture = Spark::resourceLibrary.getResourceByPath<resources::Texture>(texture_path.path().string());
+            std::shared_ptr<resources::Texture> texture = Spark::get().getResourceLibrary().getResourceByPath<resources::Texture>(texture_path.path().string());
             textures.emplace(TextureTarget::METALNESS_TARGET, texture);
             continue;
         }
@@ -256,7 +256,7 @@ std::map<TextureTarget, std::shared_ptr<resources::Texture>> findTextures(const 
         size = texture_path.path().string().find("_Height");
         if(size != std::string::npos)
         {
-            std::shared_ptr<resources::Texture> texture = Spark::resourceLibrary.getResourceByPath<resources::Texture>(texture_path.path().string());
+            std::shared_ptr<resources::Texture> texture = Spark::get().getResourceLibrary().getResourceByPath<resources::Texture>(texture_path.path().string());
             textures.emplace(TextureTarget::HEIGHT_TARGET, texture);
             continue;
         }
@@ -264,7 +264,7 @@ std::map<TextureTarget, std::shared_ptr<resources::Texture>> findTextures(const 
         size = texture_path.path().string().find("_AO");
         if(size != std::string::npos)
         {
-            std::shared_ptr<resources::Texture> texture = Spark::resourceLibrary.getResourceByPath<resources::Texture>(texture_path.path().string());
+            std::shared_ptr<resources::Texture> texture = Spark::get().getResourceLibrary().getResourceByPath<resources::Texture>(texture_path.path().string());
             textures.emplace(TextureTarget::AO_TARGET, texture);
         }
     }

@@ -2,7 +2,6 @@
 
 #include "BlurPass.h"
 #include "CommonUtils.h"
-#include "ResourceLibrary.h"
 #include "Shader.h"
 #include "Spark.h"
 
@@ -12,9 +11,8 @@ void DepthOfFieldPass::setup(unsigned int width_, unsigned int height_, const Un
 {
     width = width_;
     height = height_;
-    screenQuad.setup();
-    cocShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("circleOfConfusion.glsl");
-    blendShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("blendDof.glsl");
+    cocShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("circleOfConfusion.glsl");
+    blendShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("blendDof.glsl");
     blurPass = std::make_unique<BlurPass>(width / 2, height / 2);
 
     cocShader->bindUniformBuffer("Camera", cameraUbo);
@@ -133,7 +131,7 @@ void DepthOfFieldPass::blurLightPassTexture(GLuint lightPassTexture) const
 
 void DepthOfFieldPass::detectBokehPositions(GLuint lightPassTexture) const
 {
-    // const auto bokehDetectionShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("bokehDetection.glsl");
+    // const auto bokehDetectionShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("bokehDetection.glsl");
     // bokehDetectionShader->use();
     // GLuint textures[2] = {lightPassTexture, circleOfConfusionTexture};
     // glBindTextures(3, 2, textures);

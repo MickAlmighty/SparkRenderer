@@ -6,21 +6,21 @@
 
 namespace spark::resourceManagement
 {
-void ResourceLibrary::setup(const std::filesystem::path& pathToResources)
-{
-    createResources(pathToResources);
-}
-
-void ResourceLibrary::cleanup()
-{
-    resourceIdentifiers.clear();
-}
-
 std::function<bool(const std::shared_ptr<ResourceIdentifier>&)> findWithinExtensions(const std::vector<std::string>& extensions)
 {
     return [&extensions](const std::shared_ptr<resourceManagement::ResourceIdentifier>& resId) {
         return std::find(extensions.cbegin(), extensions.cend(), resId->getResourceExtensionLowerCase()) != extensions.end();
     };
+}
+
+ResourceLibrary::ResourceLibrary(const std::filesystem::path& pathToResources)
+{
+    createResourceIdentifiers(pathToResources);
+}
+
+ResourceLibrary::~ResourceLibrary()
+{
+    resourceIdentifiers.clear();
 }
 
 std::vector<std::shared_ptr<ResourceIdentifier>> ResourceLibrary::getModelResourceIdentifiers() const
@@ -43,7 +43,7 @@ std::vector<std::shared_ptr<ResourceIdentifier>> ResourceLibrary::getSceneResour
     return getResourceIdentifiers(findWithinExtensions(ResourceFactory::supportedSceneExtensions()));
 }
 
-void ResourceLibrary::createResources(const std::filesystem::path& pathToResources)
+void ResourceLibrary::createResourceIdentifiers(const std::filesystem::path& pathToResources)
 {
     for(const auto& path : std::filesystem::recursive_directory_iterator(pathToResources))
     {
@@ -75,14 +75,11 @@ std::vector<std::shared_ptr<ResourceIdentifier>> ResourceLibrary::getResourceIde
 
 std::shared_ptr<ResourceIdentifier> ResourceLibrary::getResourceIdentifier(const std::filesystem::path& path)
 {
-    const auto findByPath = [&path](const std::shared_ptr<ResourceIdentifier>& ri)
-    {
-        return ri->getFullPath() == path;
-    };
+    const auto findByPath = [&path](const std::shared_ptr<ResourceIdentifier>& ri) { return ri->getFullPath() == path; };
 
     const auto it = std::find_if(resourceIdentifiers.begin(), resourceIdentifiers.end(), findByPath);
 
-    if (it != resourceIdentifiers.end())
+    if(it != resourceIdentifiers.end())
     {
         return *it;
     }

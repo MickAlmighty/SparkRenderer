@@ -47,7 +47,7 @@ void LightProbe::update()
 {
     if(!lightManager)
     {
-        lightManager = SceneManager::getInstance()->getCurrentScene()->lightManager;
+        lightManager = getGameObject()->getScene()->lightManager;
         add(lightManager);
 
         notifyAbout(LightCommand::add);
@@ -74,7 +74,7 @@ void LightProbe::update()
             request.mesh = sphere;
             request.model = sphereModel;
 
-            SparkRenderer::getInstance()->addRenderingRequest(request);
+            Spark::get().getRenderer().addRenderingRequest(request);
         }
     }
 }

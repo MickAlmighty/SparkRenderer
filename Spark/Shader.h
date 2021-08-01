@@ -30,11 +30,11 @@ class Shader : public resourceManagement::Resource
     void setIVec2(const std::string& name, glm::ivec2 value) const;
     void setVec3(const std::string& name, glm::vec3 value) const;
     void setMat4(const std::string& name, glm::mat4 value) const;
-    void bindSSBO(const std::string& name, const SSBO& ssbo) const;
-    void bindUniformBuffer(const std::string& name, const UniformBuffer& uniformBuffer) const;
+    void bindSSBO(const std::string& name, const SSBO& ssbo);
+    void bindUniformBuffer(const std::string& name, const UniformBuffer& uniformBuffer);
 
     private:
-    static inline std::vector<GLuint> compileShaders(const std::map<GLenum, std::string>& shaders);
+    std::vector<GLuint> compileShaders(const std::map<GLenum, std::string>& shaders);
     void linkProgram(const std::vector<GLuint>& ids);
 
     GLuint ID{0};

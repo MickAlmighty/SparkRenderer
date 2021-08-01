@@ -17,16 +17,15 @@ void ToneMapper::setup(unsigned int width, unsigned int height)
 {
     w = width;
     h = height;
-    toneMappingShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("toneMapping.glsl");
-    luminanceHistogramComputeShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("luminanceHistogramCompute.glsl");
-    averageLuminanceComputeShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("averageLuminanceCompute.glsl");
+    toneMappingShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("toneMapping.glsl");
+    luminanceHistogramComputeShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("luminanceHistogramCompute.glsl");
+    averageLuminanceComputeShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("averageLuminanceCompute.glsl");
 
     luminanceHistogramComputeShader->bindSSBO("LuminanceHistogram", luminanceHistogram);
     averageLuminanceComputeShader->bindSSBO("LuminanceHistogram", luminanceHistogram);
 
     luminanceHistogram.resizeBuffer(256 * sizeof(uint32_t));
     utils::recreateTexture2D(averageLuminanceTexture, 1, 1, GL_R16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
-    screenQuad.setup();
 }
 
 GLuint ToneMapper::process(GLuint inputTexture)

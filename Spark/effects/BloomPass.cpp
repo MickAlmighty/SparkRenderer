@@ -15,10 +15,9 @@ void BloomPass::setup(unsigned int width, unsigned int height)
 {
     w = width;
     h = height;
-    screenQuad.setup();
-    bloomDownScaleShaderMip0ToMip1 = Spark::resourceLibrary.getResourceByName<resources::Shader>("bloomDownScaleMip0ToMip1.glsl");
-    bloomDownScaleShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("bloomDownScale.glsl");
-    bloomUpsamplerShader = Spark::resourceLibrary.getResourceByName<resources::Shader>("bloomUpsampler.glsl");
+    bloomDownScaleShaderMip0ToMip1 = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("bloomDownScaleMip0ToMip1.glsl");
+    bloomDownScaleShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("bloomDownScale.glsl");
+    bloomUpsamplerShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("bloomUpsampler.glsl");
 }
 
 GLuint BloomPass::process(GLuint lightingTexture, GLuint brightPassTexture)

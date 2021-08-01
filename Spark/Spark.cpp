@@ -10,10 +10,29 @@
 #include "HID/HID.h"
 #include "JsonSerializer.h"
 #include "Logging.h"
+#include "OpenGLContext.hpp"
 #include "SparkConfig.hpp"
 
 namespace spark
 {
+Spark& Spark::get()
+{
+    if(!ptr)
+    {
+        ptr = new Spark();
+    }
+    return *ptr;
+}
+
+void Spark::run(const SparkConfig& config)
+{
+    auto& engine = get();
+    engine.loadConfig(config);
+    engine.setup();
+    engine.runLoop();
+    engine.destroy();
+}
+
 void Spark::loadConfig(const SparkConfig& config)
 {
     WIDTH = config.width;
@@ -24,61 +43,67 @@ void Spark::loadConfig(const SparkConfig& config)
 
 void Spark::setup()
 {
-    if(!oglContext.init(WIDTH, HEIGHT, vsync, false))
-    {
-        SPARK_CRITICAL("oglContext init failed");
-        throw std::runtime_error("oglContext init failed");
-    }
-
-    oglContext.setupInputCallbacks();
-
+    renderingContext = std::make_unique<OpenGLContext>(WIDTH, HEIGHT, vsync, false);
+    renderingContext->setupCallbacks();
+    resourceLibrary = std::make_unique<resourceManagement::ResourceLibrary>(pathToResources);
     initImGui();
-    resourceLibrary.setup(pathToResources);
-    SceneManager::getInstance()->setup();
+    sceneManager = std::make_unique<SceneManager>();
+    renderer = std::make_unique<SparkRenderer>(WIDTH, HEIGHT, sceneManager->getCurrentScene());
 
-    SparkRenderer::getInstance()->setup(WIDTH, HEIGHT);
-    SparkRenderer::getInstance()->setScene(SceneManager::getInstance()->getCurrentScene());
+    renderingContext->addOnWindowSizeChangedCallback([this](auto width, auto height) {
+        WIDTH = width;
+        HEIGHT = height;
+    });
+    renderingContext->addOnWindowSizeChangedCallback([this](auto width, auto height) { renderer->resize(width, height); });
 }
 
-void Spark::run()
+void Spark::runLoop()
 {
-    while(!oglContext.shouldWindowClose())
+    while(!renderingContext->shouldWindowClose())
     {
         Clock::tick();
         glfwPollEvents();
 
         if(HID::isKeyPressed(Key::ESC))
-            oglContext.closeWindow();
+            renderingContext->closeWindow();
 
-        int width{}, height{};
-        glfwGetWindowSize(oglContext.window, &width, &height);
-        if(WIDTH != static_cast<unsigned int>(width) || HEIGHT != static_cast<unsigned int>(height))
-        {
-            if(width != 0 && height != 0)
-            {
-                WIDTH = width;
-                HEIGHT = height;
-            }
-        }
-        glViewport(0, 0, WIDTH, HEIGHT);
-
-        SceneManager::getInstance()->update();
-
-        SparkRenderer::getInstance()->renderPass(WIDTH, HEIGHT);
+        sceneManager->update();
+        renderer->renderPass();
         sparkGui.drawGui();
-        oglContext.swapBuffers();
+        renderingContext->swapBuffers();
 
         HID::updateStates();
     }
 }
 
-void Spark::clean()
+void Spark::destroy()
 {
-    SparkRenderer::getInstance()->cleanup();
-    SceneManager::getInstance()->cleanup();
-    resourceLibrary.cleanup();
+    sceneManager.reset();
+    renderer.reset();
+    resourceLibrary.reset();
     destroyImGui();
-    oglContext.destroy();
+    renderingContext.reset();
+    delete ptr;
+}
+
+OpenGLContext& Spark::getRenderingContext() const
+{
+    return *renderingContext;
+}
+
+resourceManagement::ResourceLibrary& Spark::getResourceLibrary() const
+{
+    return *resourceLibrary;
+}
+
+SparkRenderer& Spark::getRenderer() const
+{
+    return *renderer;
+}
+
+SceneManager& Spark::getSceneManager() const
+{
+    return *sceneManager;
 }
 
 void Spark::initImGui()
@@ -87,7 +112,7 @@ void Spark::initImGui()
     ImGui::CreateContext();
     ImGui::StyleColorsLight();
 
-    ImGui_ImplGlfw_InitForOpenGL(oglContext.window, true);
+    ImGui_ImplGlfw_InitForOpenGL(renderingContext->window, true);
     const char* glsl_version = "#version 450";
     ImGui_ImplOpenGL3_Init(glsl_version);
     // ImGui::SetMouseCursor(ImGuiMouseCursor_None);
