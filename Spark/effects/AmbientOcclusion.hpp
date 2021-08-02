@@ -12,17 +12,15 @@ namespace spark::effects
 class AmbientOcclusion
 {
     public:
-    AmbientOcclusion() = default;
+    AmbientOcclusion(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo);
     AmbientOcclusion(const AmbientOcclusion&) = delete;
     AmbientOcclusion(AmbientOcclusion&&) = delete;
     AmbientOcclusion& operator=(const AmbientOcclusion&) = delete;
     AmbientOcclusion& operator=(AmbientOcclusion&&) = delete;
     ~AmbientOcclusion();
 
-    void setup(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo);
-    void cleanup();
     GLuint process(GLuint depthTexture, GLuint normalsTexture);
-    void createFrameBuffersAndTextures(unsigned int width, unsigned int height);
+    void resize(unsigned int width, unsigned int height);
 
     int kernelSize = 32;
     float radius = 0.7f;
@@ -30,16 +28,17 @@ class AmbientOcclusion
     float power = 4.0f;
 
     private:
+    void createFrameBuffersAndTextures();
+
     static std::array<glm::vec4, 64> generateSsaoSamples();
     static std::array<glm::vec3, 16> generateSsaoNoise();
 
+    unsigned int w{}, h{};
     GLuint ssaoFramebuffer{}, ssaoTexture{}, ssaoTexture2{}, randomNormalsTexture{};
     UniformBuffer samplesUbo{};
     ScreenQuad screenQuad{};
     std::shared_ptr<resources::Shader> ssaoShader{nullptr};
     std::shared_ptr<resources::Shader> ssaoBlurShader{nullptr};
     std::shared_ptr<resources::Shader> colorInversionShader{nullptr};
-
-    unsigned int w{}, h{};
 };
 }  // namespace spark::effects

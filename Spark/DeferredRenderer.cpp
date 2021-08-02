@@ -7,23 +7,27 @@
 
 namespace spark
 {
-DeferredRenderer::~DeferredRenderer()
+DeferredRenderer::DeferredRenderer(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo,
+                                   const std::shared_ptr<lights::LightManager>& lightManager)
+    : ao(width, height, cameraUbo), w(width), h(height), gBuffer(width, height)
 {
-    cleanup();
-}
-
-void DeferredRenderer::setup(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo,
-                             const std::shared_ptr<lights::LightManager>& lightManager)
-{
-    ao.setup(width, height, cameraUbo);
     brdfLookupTexture = utils::createBrdfLookupTexture(1024);
 
     lightingShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("light.glsl");
     lightingShader->bindUniformBuffer("Camera", cameraUbo);
     bindLightBuffers(lightManager);
+    createFrameBuffersAndTextures();
 }
 
-GLuint DeferredRenderer::process(std::map<ShaderType, std::deque<RenderingRequest>>& renderQueue, const std::weak_ptr<PbrCubemapTexture>& pbrCubemap, const UniformBuffer& cameraUbo)
+DeferredRenderer::~DeferredRenderer()
+{
+    glDeleteTextures(1, &brdfLookupTexture);
+    glDeleteTextures(1, &lightingTexture);
+    glDeleteFramebuffers(1, &framebuffer);
+}
+
+GLuint DeferredRenderer::process(std::map<ShaderType, std::deque<RenderingRequest>>& renderQueue, const std::weak_ptr<PbrCubemapTexture>& pbrCubemap,
+                                 const UniformBuffer& cameraUbo)
 {
     gBuffer.fill(renderQueue, cameraUbo);
 
@@ -70,21 +74,19 @@ void DeferredRenderer::bindLightBuffers(const std::shared_ptr<lights::LightManag
     lightingShader->bindSSBO("SpotLightData", lightManager->getSpotLightSSBO());
 }
 
-void DeferredRenderer::createFrameBuffersAndTextures(unsigned int width, unsigned int height)
+void DeferredRenderer::resize(unsigned int width, unsigned int height)
 {
-    gBuffer.createFrameBuffersAndTextures(width, height);
-    ao.createFrameBuffersAndTextures(width, height);
-
-    utils::recreateTexture2D(lightingTexture, width, height, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::recreateFramebuffer(framebuffer, {lightingTexture});
+    w = width;
+    h = height;
+    ao.resize(w, h);
+    gBuffer.resize(w, h);
+    createFrameBuffersAndTextures();
 }
 
-void DeferredRenderer::cleanup()
+void DeferredRenderer::createFrameBuffersAndTextures()
 {
-    glDeleteTextures(1, &brdfLookupTexture);
-    glDeleteTextures(1, &lightingTexture);
-    glDeleteFramebuffers(1, &framebuffer);
-    ao.cleanup();
+    utils::recreateTexture2D(lightingTexture, w, h, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::recreateFramebuffer(framebuffer, {lightingTexture});
 }
 
 GLuint DeferredRenderer::getDepthTexture() const

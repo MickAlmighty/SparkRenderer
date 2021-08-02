@@ -10,14 +10,13 @@ namespace spark
 class LightProbesRenderer
 {
     public:
-    LightProbesRenderer() = default;
+    LightProbesRenderer(const std::shared_ptr<lights::LightManager>& lightManager);
     LightProbesRenderer(const LightProbesRenderer&) = delete;
     LightProbesRenderer(LightProbesRenderer&&) = delete;
     LightProbesRenderer& operator=(const LightProbesRenderer&) = delete;
     LightProbesRenderer& operator=(LightProbesRenderer&&) = delete;
     ~LightProbesRenderer() = default;
 
-    void setup(const std::shared_ptr<lights::LightManager>& lightManager);
     void process(std::map<ShaderType, std::deque<RenderingRequest>>& renderQueue, const std::shared_ptr<PbrCubemapTexture>& cubemap,
                  const std::vector<lights::LightProbe*>& lightProbes);
     void bindLightBuffers(const std::shared_ptr<lights::LightManager>& lightManager);
@@ -35,10 +34,10 @@ class LightProbesRenderer
 
     ScreenQuad screenQuad{};
     Cube cube{};
-    GBuffer localLightProbeGBuffer{};
+    GBuffer localLightProbeGBuffer;
     SSBO cubemapViewMatrices{};
     UniformBuffer cameraUbo{};
-    effects::SkyboxPass skyboxPass{};
+    effects::SkyboxPass skyboxPass;
 
     std::shared_ptr<resources::Shader> localLightProbesLightingShader{nullptr};
     std::shared_ptr<resources::Shader> equirectangularToCubemapShader{nullptr};

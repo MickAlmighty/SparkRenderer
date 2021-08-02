@@ -17,7 +17,7 @@ class BlurPass
     public:
     void blurTexture(GLuint texture) const;
     GLuint getBlurredTexture() const;
-    void recreateWithNewSize(unsigned int width, unsigned int height);
+    void resize(unsigned int width, unsigned int height);
 
     BlurPass(unsigned int width_, unsigned int height_);
     ~BlurPass();
@@ -28,7 +28,7 @@ class BlurPass
     BlurPass(const BlurPass&& blurPass) = delete;
 
     private:
-    unsigned int width{}, height{};
+    unsigned int w{}, h{};
     GLuint hTexture{};
     GLuint vFramebuffer{}, vTexture{};
     ScreenQuad screenQuad{};
@@ -36,6 +36,5 @@ class BlurPass
     std::shared_ptr<resources::Shader> gaussianBlurShader{nullptr};
 
     void createGlObjects();
-    void deleteGlObjects();
 };
 }  // namespace spark::effects

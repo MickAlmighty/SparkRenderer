@@ -7,14 +7,11 @@
 
 namespace spark
 {
-void LightProbesRenderer::setup(const std::shared_ptr<lights::LightManager>& lightManager)
+LightProbesRenderer::LightProbesRenderer(const std::shared_ptr<lights::LightManager>& lightManager)
+    : localLightProbeGBuffer(sceneCubemapSize, sceneCubemapSize), skyboxPass(2, 2)
 {
-    skyboxPass.setup(2, 2);
-
     cubemapViewMatrices.resizeBuffer(sizeof(glm::mat4) * 6);
     cubemapViewMatrices.updateData(utils::getCubemapViewMatrices(glm::vec3(0)));
-
-    localLightProbeGBuffer.createFrameBuffersAndTextures(sceneCubemapSize, sceneCubemapSize);
 
     localLightProbesLightingShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("localLightProbesLighting.glsl");
     equirectangularToCubemapShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("equirectangularToCubemap.glsl");

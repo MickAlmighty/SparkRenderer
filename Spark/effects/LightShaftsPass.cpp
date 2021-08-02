@@ -6,18 +6,19 @@
 
 namespace spark::effects
 {
-LightShaftsPass::~LightShaftsPass()
+LightShaftsPass::LightShaftsPass(unsigned int width, unsigned int height) : w(width), h(height), blurPass(w / 4, h / 4)
 {
-    cleanup();
-}
-
-void LightShaftsPass::setup(unsigned int width, unsigned int height)
-{
-    w = width;
-    h = height;
     lightShaftsShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("lightShafts.glsl");
     blendingShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("renderTexture.glsl");
-    blurPass = std::make_unique<BlurPass>(w / 4, h / 4);
+    createFrameBuffersAndTextures();
+}
+
+LightShaftsPass::~LightShaftsPass()
+{
+    const GLuint textures[3] = {radialBlurTexture1, radialBlurTexture2, blendingOutputTexture};
+    glDeleteTextures(3, textures);
+    const GLuint framebuffers[2] = {radialBlurFramebuffer1, blendingFramebuffer};
+    glDeleteFramebuffers(2, framebuffers);
 }
 
 std::optional<GLuint> LightShaftsPass::process(const std::shared_ptr<Camera>& camera, GLuint depthTexture, GLuint lightingTexture)
@@ -41,12 +42,12 @@ std::optional<GLuint> LightShaftsPass::process(const std::shared_ptr<Camera>& ca
     return blendingOutputTexture;
 }
 
-void LightShaftsPass::cleanup()
+void LightShaftsPass::resize(unsigned int width, unsigned int height)
 {
-    const GLuint textures[3] = {radialBlurTexture1, radialBlurTexture2, blendingOutputTexture};
-    glDeleteTextures(3, textures);
-    const GLuint framebuffers[2] = {radialBlurFramebuffer1, blendingFramebuffer};
-    glDeleteFramebuffers(2, framebuffers);
+    w = width;
+    h = height;
+    blurPass.resize(w / 4, h / 4);
+    createFrameBuffersAndTextures();
 }
 
 glm::vec2 LightShaftsPass::dirLightPositionInScreenSpace(const std::shared_ptr<Camera>& camera, const lights::DirectionalLight* const dirLight)
@@ -103,7 +104,7 @@ void LightShaftsPass::renderLightShaftsToTexture(const lights::DirectionalLight*
 
 void LightShaftsPass::blurLightShafts() const
 {
-    blurPass->blurTexture(radialBlurTexture2);
+    blurPass.blurTexture(radialBlurTexture2);
 }
 
 void LightShaftsPass::blendLightShafts(GLuint lightingTexture) const
@@ -119,22 +120,19 @@ void LightShaftsPass::blendLightShafts(GLuint lightingTexture) const
     glBlendEquation(GL_FUNC_ADD);
     glEnable(GL_BLEND);
 
-    glBindTextureUnit(0, blurPass->getBlurredTexture());
+    glBindTextureUnit(0, blurPass.getBlurredTexture());
     screenQuad.draw();
     glBindTextureUnit(0, 0);
 
     glDisable(GL_BLEND);
 }
 
-void LightShaftsPass::createFrameBuffersAndTextures(unsigned int width, unsigned int height)
+void LightShaftsPass::createFrameBuffersAndTextures()
 {
-    w = width;
-    h = height;
     utils::recreateTexture2D(radialBlurTexture1, w / 4, h / 4, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
     utils::recreateTexture2D(radialBlurTexture2, w / 4, h / 4, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
     utils::recreateTexture2D(blendingOutputTexture, w, h, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
     utils::recreateFramebuffer(radialBlurFramebuffer1, {radialBlurTexture1});
     utils::recreateFramebuffer(blendingFramebuffer, {blendingOutputTexture});
-    blurPass->recreateWithNewSize(w / 4, h / 4);
 }
 }  // namespace spark::effects

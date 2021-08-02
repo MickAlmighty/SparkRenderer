@@ -32,20 +32,9 @@ void SparkRenderer::drawGui()
 }
 
 SparkRenderer::SparkRenderer(unsigned int windowWidth, unsigned int windowHeight, const std::shared_ptr<Scene>& scene_)
+    : scene(scene_), width(windowWidth), height(windowHeight), lightProbesRenderer(scene_->lightManager),
+      renderer(windowWidth, windowHeight, cameraUBO, scene_->lightManager), postProcessingStack(windowWidth, windowHeight, cameraUBO)
 {
-    setup(windowWidth, windowHeight, scene_);
-}
-
-void SparkRenderer::setup(unsigned int windowWidth, unsigned int windowHeight, const std::shared_ptr<Scene>& scene_)
-{
-    width = windowWidth;
-    height = windowHeight;
-    scene = scene_;
-
-    lightProbesRenderer.setup(scene.lock()->lightManager);
-    renderer.setup(width, height, cameraUBO, scene.lock()->lightManager);
-    postProcessingStack.setup(width, height, cameraUBO);
-
     screenShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("screen.glsl");
     solidColorShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("solidColor.glsl");
     solidColorShader->bindUniformBuffer("Camera", cameraUBO);
@@ -102,6 +91,8 @@ void SparkRenderer::resize(unsigned int windowWidth, unsigned int windowHeight)
 {
     width = windowWidth;
     height = windowHeight;
+    postProcessingStack.resize(width, height);
+    renderer.resize(width, height);
     createFrameBuffersAndTextures();
 }
 
@@ -161,19 +152,12 @@ void SparkRenderer::clearRenderQueues()
 
 void SparkRenderer::createFrameBuffersAndTextures()
 {
-    postProcessingStack.createFrameBuffersAndTextures(width, height);
-
-    renderer.createFrameBuffersAndTextures(width, height);
     utils::recreateFramebuffer(uiShapesFramebuffer);
     utils::bindDepthTexture(uiShapesFramebuffer, renderer.getDepthTexture());
 }
 
 void SparkRenderer::deleteFrameBuffersAndTextures()
 {
-    postProcessingStack.cleanup();
-
-    renderer.cleanup();
-
     GLuint frameBuffers[1] = {uiShapesFramebuffer};
 
     glDeleteFramebuffers(1, frameBuffers);

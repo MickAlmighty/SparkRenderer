@@ -6,22 +6,11 @@
 
 namespace spark
 {
-TileBasedDeferredRenderer::~TileBasedDeferredRenderer()
+TileBasedDeferredRenderer::TileBasedDeferredRenderer(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo,
+                                                     const std::shared_ptr<lights::LightManager>& lightManager)
+    : ao(width, height, cameraUbo), w(width), h(height), gBuffer(width, height), lightCullingPass(width, height, cameraUbo, lightManager)
 {
-    cleanup();
-}
-
-void TileBasedDeferredRenderer::setup(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo,
-                                      const std::shared_ptr<lights::LightManager>& lightManager)
-{
-    w = width;
-    h = height;
-    if(brdfLookupTexture != 0)
-        glDeleteTextures(1, &brdfLookupTexture);
     brdfLookupTexture = utils::createBrdfLookupTexture(1024);
-
-    ao.setup(width, height, cameraUbo);
-    lightCullingPass.setup(width, height, cameraUbo, lightManager);
 
     tileBasedLightingShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("tileBasedLighting.glsl");
     tileBasedLightingShader->bindUniformBuffer("Camera", cameraUbo);
@@ -29,6 +18,12 @@ void TileBasedDeferredRenderer::setup(unsigned int width, unsigned int height, c
     tileBasedLightingShader->bindSSBO("SpotLightIndices", lightCullingPass.spotLightIndices);
     tileBasedLightingShader->bindSSBO("LightProbeIndices", lightCullingPass.lightProbeIndices);
     bindLightBuffers(lightManager);
+    createFrameBuffersAndTextures();
+}
+
+TileBasedDeferredRenderer::~TileBasedDeferredRenderer()
+{
+    glDeleteTextures(1, &lightingTexture);
 }
 
 GLuint TileBasedDeferredRenderer::process(std::map<ShaderType, std::deque<RenderingRequest>>& renderQueue,
@@ -75,21 +70,19 @@ GLuint TileBasedDeferredRenderer::process(std::map<ShaderType, std::deque<Render
     return lightingTexture;
 }
 
-void TileBasedDeferredRenderer::createFrameBuffersAndTextures(unsigned int width, unsigned int height)
+void TileBasedDeferredRenderer::resize(unsigned int width, unsigned int height)
 {
     w = width;
     h = height;
-    gBuffer.createFrameBuffersAndTextures(w, h);
-    lightCullingPass.createFrameBuffersAndTextures(w, h);
-    ao.createFrameBuffersAndTextures(w, h);
-
-    utils::recreateTexture2D(lightingTexture, w, h, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    gBuffer.resize(w, h);
+    ao.resize(w, h);
+    lightCullingPass.resize(w, h);
+    createFrameBuffersAndTextures();
 }
 
-void TileBasedDeferredRenderer::cleanup()
+void TileBasedDeferredRenderer::createFrameBuffersAndTextures()
 {
-    glDeleteTextures(1, &lightingTexture);
-    ao.cleanup();
+    utils::recreateTexture2D(lightingTexture, w, h, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
 }
 
 void TileBasedDeferredRenderer::bindLightBuffers(const std::shared_ptr<lights::LightManager>& lightManager)

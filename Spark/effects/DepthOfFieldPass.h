@@ -3,6 +3,7 @@
 #include <memory>
 
 #include "Buffer.hpp"
+#include "BlurPass.h"
 #include "glad_glfw3.h"
 #include "ScreenQuad.hpp"
 
@@ -18,12 +19,10 @@ class BlurPass;
 class DepthOfFieldPass
 {
     public:
-    void setup(unsigned int width_, unsigned int height_, const UniformBuffer& cameraUbo);
-    void render(GLuint lightPassTexture, GLuint depthTexture) const;
-    GLuint getOutputTexture() const;
-    void createFrameBuffersAndTextures(unsigned int width, unsigned int height);
+    GLuint process(GLuint lightPassTexture, GLuint depthTexture) const;
+    void resize(unsigned int width, unsigned int height);
 
-    DepthOfFieldPass() = default;
+    DepthOfFieldPass(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo);
     DepthOfFieldPass& operator=(const DepthOfFieldPass& blurPass) = delete;
     DepthOfFieldPass& operator=(const DepthOfFieldPass&& blurPass) = delete;
     DepthOfFieldPass(const DepthOfFieldPass& blurPass) = delete;
@@ -34,16 +33,15 @@ class DepthOfFieldPass
     float farStart{20}, farEnd{100};
 
     private:
+    void createFrameBuffersAndTextures();
+
     void calculateCircleOfConfusion(GLuint depthTexture) const;
     void blurLightPassTexture(GLuint lightPassTexture) const;
     inline void detectBokehPositions(GLuint lightPassTexture) const;
     inline void renderBokehShapes() const;
     void blendDepthOfField(GLuint lightPassTexture) const;
 
-    void createGlObjects();
-    void deleteGlObjects();
-
-    unsigned int width{}, height{};
+    unsigned int w{}, h{};
 
     std::shared_ptr<resources::Shader> cocShader{nullptr};
     std::shared_ptr<resources::Shader> blendShader{nullptr};
@@ -55,7 +53,7 @@ class DepthOfFieldPass
     GLuint cocFramebuffer{}, cocTexture{};
     GLuint blendDofFramebuffer{}, blendDofTexture{};
 
-    std::unique_ptr<BlurPass> blurPass;
+    BlurPass blurPass;
     ScreenQuad screenQuad{};
 };
 }  // namespace spark::effects

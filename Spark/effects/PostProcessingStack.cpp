@@ -5,20 +5,10 @@
 
 namespace spark::effects
 {
-PostProcessingStack::~PostProcessingStack()
+PostProcessingStack::PostProcessingStack(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo)
+    : toneMapper(width, height), bloomPass(width, height), dofPass(width, height, cameraUbo), lightShaftsPass(width, height),
+      skyboxPass(width, height), motionBlurPass(width, height, cameraUbo), fxaaPass(width, height)
 {
-    cleanup();
-}
-
-void PostProcessingStack::setup(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo)
-{
-    toneMapper.setup(width, height);
-    bloomPass.setup(width, height);
-    dofPass.setup(width, height, cameraUbo);
-    lightShaftsPass.setup(width, height);
-    skyboxPass.setup(width, height);
-    motionBlurPass.setup(width, height, cameraUbo);
-    fxaaPass.setup(width, height);
 }
 
 GLuint PostProcessingStack::process(GLuint lightingTexture, GLuint depthTexture, const std::weak_ptr<PbrCubemapTexture>& pbrCubemap,
@@ -36,24 +26,15 @@ GLuint PostProcessingStack::process(GLuint lightingTexture, GLuint depthTexture,
     return textureHandle;
 }
 
-void PostProcessingStack::createFrameBuffersAndTextures(unsigned int width, unsigned int height)
+void PostProcessingStack::resize(unsigned int width, unsigned int height)
 {
-    dofPass.createFrameBuffersAndTextures(width, height);
-    toneMapper.createFrameBuffersAndTextures(width, height);
-    bloomPass.createFrameBuffersAndTextures(width, height);
-    lightShaftsPass.createFrameBuffersAndTextures(width, height);
-    skyboxPass.createFrameBuffersAndTextures(width, height);
-    motionBlurPass.createFrameBuffersAndTextures(width, height);
-    fxaaPass.createFrameBuffersAndTextures(width, height);
-}
-
-void PostProcessingStack::cleanup()
-{
-    toneMapper.cleanup();
-    bloomPass.cleanup();
-    lightShaftsPass.cleanup();
-    motionBlurPass.cleanup();
-    fxaaPass.cleanup();
+    dofPass.resize(width, height);
+    toneMapper.resize(width, height);
+    bloomPass.resize(width, height);
+    lightShaftsPass.resize(width, height);
+    skyboxPass.resize(width, height);
+    motionBlurPass.resize(width, height);
+    fxaaPass.resize(width, height);
 }
 
 void PostProcessingStack::drawGui()
@@ -126,8 +107,7 @@ void PostProcessingStack::depthOfField(GLuint depthTexture)
     if(!isDofEnabled)
         return;
 
-    dofPass.render(textureHandle, depthTexture);
-    textureHandle = dofPass.getOutputTexture();
+    textureHandle = dofPass.process(textureHandle, depthTexture);
 }
 
 void PostProcessingStack::lightShafts(GLuint depthTexture, const std::shared_ptr<Camera>& camera)

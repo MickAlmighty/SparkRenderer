@@ -11,12 +11,12 @@ namespace spark::effects
 void BlurPass::blurTexture(GLuint texture) const
 {
     PUSH_DEBUG_GROUP(GAUSSIAN_BLUR);
-    glViewport(0, 0, width, height);
+    glViewport(0, 0, w, h);
     glBindFramebuffer(GL_FRAMEBUFFER, vFramebuffer);
     utils::bindTexture2D(vFramebuffer, vTexture);
 
     gaussianBlurShader->use();
-    gaussianBlurShader->setVec2("inverseScreenSize", {1.0f / static_cast<float>(width), 1.0f / static_cast<float>(height)});
+    gaussianBlurShader->setVec2("inverseScreenSize", {1.0f / static_cast<float>(w), 1.0f / static_cast<float>(h)});
     gaussianBlurShader->setBool("horizontal", false);
     glBindTextureUnit(0, texture);
     screenQuad.draw();
@@ -37,33 +37,20 @@ GLuint BlurPass::getBlurredTexture() const
     return hTexture;
 }
 
-void BlurPass::recreateWithNewSize(unsigned int width, unsigned int height)
+void BlurPass::resize(unsigned int width, unsigned int height)
 {
-    this->width = width;
-    this->height = height;
+    w = width;
+    w = height;
     createGlObjects();
 }
 
-BlurPass::BlurPass(unsigned int width_, unsigned int height_) : width(width_), height(height_)
+BlurPass::BlurPass(unsigned int width_, unsigned int height_) : w(width_), h(height_)
 {
     gaussianBlurShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("gaussianBlur.glsl");
     createGlObjects();
 }
 
 BlurPass::~BlurPass()
-{
-    deleteGlObjects();
-}
-
-void BlurPass::createGlObjects()
-{
-    utils::recreateTexture2D(hTexture, width, height, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::recreateTexture2D(vTexture, width, height, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
-
-    utils::recreateFramebuffer(vFramebuffer, {vTexture});
-}
-
-void BlurPass::deleteGlObjects()
 {
     GLuint textures[] = {vTexture, hTexture};
     glDeleteTextures(2, textures);
@@ -72,5 +59,13 @@ void BlurPass::deleteGlObjects()
     GLuint framebuffers[] = {vFramebuffer};
     glDeleteFramebuffers(1, framebuffers);
     vFramebuffer = 0;
+}
+
+void BlurPass::createGlObjects()
+{
+    utils::recreateTexture2D(hTexture, w, h, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::recreateTexture2D(vTexture, w, h, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+
+    utils::recreateFramebuffer(vFramebuffer, {vTexture});
 }
 }  // namespace spark::effects

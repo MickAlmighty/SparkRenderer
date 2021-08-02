@@ -16,18 +16,16 @@ namespace spark::effects
 class PostProcessingStack
 {
     public:
-    PostProcessingStack() = default;
+    PostProcessingStack(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo);
     PostProcessingStack(const PostProcessingStack&) = delete;
     PostProcessingStack(PostProcessingStack&&) = delete;
     PostProcessingStack& operator=(const PostProcessingStack&) = delete;
     PostProcessingStack& operator=(PostProcessingStack&&) = delete;
-    ~PostProcessingStack();
+    ~PostProcessingStack() = default;
 
-    void setup(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo);
     GLuint process(GLuint lightingTexture, GLuint depthTexture, const std::weak_ptr<PbrCubemapTexture>& pbrCubemap,
                    const std::shared_ptr<Camera>& camera, const UniformBuffer& cameraUbo);
-    void createFrameBuffersAndTextures(unsigned int width, unsigned int height);
-    void cleanup();
+    void resize(unsigned int width, unsigned int height);
 
     void drawGui();
 
@@ -48,12 +46,12 @@ class PostProcessingStack
 
     GLuint textureHandle{};
 
-    ToneMapper toneMapper{};
-    BloomPass bloomPass{};
-    DepthOfFieldPass dofPass{};
-    LightShaftsPass lightShaftsPass{};
-    SkyboxPass skyboxPass{};
-    MotionBlurPass motionBlurPass{};
-    FxaaPass fxaaPass{};
+    ToneMapper toneMapper;
+    BloomPass bloomPass;
+    DepthOfFieldPass dofPass;
+    LightShaftsPass lightShaftsPass;
+    SkyboxPass skyboxPass;
+    MotionBlurPass motionBlurPass;
+    FxaaPass fxaaPass;
 };
 }  // namespace spark::effects

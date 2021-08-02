@@ -16,17 +16,15 @@ namespace spark::effects
 class ToneMapper
 {
     public:
-    ToneMapper() = default;
+    ToneMapper(unsigned int width, unsigned int height);
     ToneMapper(const ToneMapper&) = delete;
     ToneMapper(ToneMapper&&) = delete;
     ToneMapper& operator=(const ToneMapper&) = delete;
     ToneMapper& operator=(ToneMapper&&) = delete;
     ~ToneMapper();
 
-    void setup(unsigned int width, unsigned int height);
     GLuint process(GLuint inputTexture);
-    void createFrameBuffersAndTextures(unsigned int width, unsigned int height);
-    void cleanup();
+    void resize(unsigned int width, unsigned int height);
 
     float minLogLuminance = 0.5f;
     float logLuminanceRange = 12.0f;
@@ -34,6 +32,7 @@ class ToneMapper
 
     private:
     void calculateAverageLuminance();
+    void createFrameBuffersAndTextures();
 
     unsigned int w{}, h{};
     GLuint toneMappingFramebuffer{}, toneMappingTexture{}, averageLuminanceTexture{}, colorTexture{};

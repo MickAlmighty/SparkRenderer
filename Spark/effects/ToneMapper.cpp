@@ -8,15 +8,8 @@
 
 namespace spark::effects
 {
-ToneMapper::~ToneMapper()
+ToneMapper::ToneMapper(unsigned int width, unsigned int height): w(width), h(height)
 {
-    cleanup();
-}
-
-void ToneMapper::setup(unsigned int width, unsigned int height)
-{
-    w = width;
-    h = height;
     toneMappingShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("toneMapping.glsl");
     luminanceHistogramComputeShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("luminanceHistogramCompute.glsl");
     averageLuminanceComputeShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("averageLuminanceCompute.glsl");
@@ -26,6 +19,15 @@ void ToneMapper::setup(unsigned int width, unsigned int height)
 
     luminanceHistogram.resizeBuffer(256 * sizeof(uint32_t));
     utils::recreateTexture2D(averageLuminanceTexture, 1, 1, GL_R16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
+    createFrameBuffersAndTextures();
+}
+
+ToneMapper::~ToneMapper()
+{
+    glDeleteTextures(1, &toneMappingTexture);
+    glDeleteTextures(1, &averageLuminanceTexture);
+    glDeleteTextures(1, &colorTexture);
+    glDeleteFramebuffers(1, &toneMappingFramebuffer);
 }
 
 GLuint ToneMapper::process(GLuint inputTexture)
@@ -50,22 +52,18 @@ GLuint ToneMapper::process(GLuint inputTexture)
     return toneMappingTexture;
 }
 
-void ToneMapper::createFrameBuffersAndTextures(unsigned int width, unsigned int height)
+void ToneMapper::resize(unsigned int width, unsigned int height)
 {
     w = width;
     h = height;
-    utils::recreateTexture2D(toneMappingTexture, width, height, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::recreateTexture2D(colorTexture, width, height, GL_RGBA16F, GL_RGBA, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::recreateFramebuffer(toneMappingFramebuffer, {toneMappingTexture});
+    createFrameBuffersAndTextures();
 }
 
-void ToneMapper::cleanup()
+void ToneMapper::createFrameBuffersAndTextures()
 {
-    glDeleteTextures(1, &toneMappingTexture);
-    glDeleteTextures(1, &averageLuminanceTexture);
-    glDeleteTextures(1, &colorTexture);
-    glDeleteFramebuffers(1, &toneMappingFramebuffer);
-    toneMappingFramebuffer = averageLuminanceTexture = toneMappingTexture = colorTexture = 0;
+    utils::recreateTexture2D(toneMappingTexture, w, h, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::recreateTexture2D(colorTexture, w, h, GL_RGBA16F, GL_RGBA, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::recreateFramebuffer(toneMappingFramebuffer, {toneMappingTexture});
 }
 
 void ToneMapper::calculateAverageLuminance()

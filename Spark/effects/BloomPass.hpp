@@ -15,18 +15,15 @@ namespace spark::effects
 class BloomPass
 {
     public:
-    BloomPass() = default;
+    BloomPass(unsigned int width, unsigned int height);
     BloomPass(const BloomPass&) = delete;
     BloomPass(BloomPass&&) = delete;
     BloomPass& operator=(const BloomPass&) = delete;
     BloomPass& operator=(BloomPass&&) = delete;
     ~BloomPass();
 
-    void setup(unsigned int width, unsigned int height);
-
     GLuint process(GLuint lightingTexture, GLuint brightPassTexture);
-    void createFrameBuffersAndTextures(unsigned int width, unsigned int height);
-    void cleanup();
+    void resize(unsigned int width, unsigned int height);
 
     float intensity = 1.0f;
     float threshold = 0.5f;
@@ -38,6 +35,7 @@ class BloomPass
     float radiusMip4{9.3f};
 
     private:
+    void createFrameBuffersAndTextures();
     void downsampleFromMip0ToMip1(GLuint brightPassTexture);
     void downsampleTexture(GLuint framebuffer, GLuint texture, GLuint viewportWidth, GLuint viewportHeight);
     void upsampleTexture(GLuint framebuffer, GLuint texture, GLuint viewportWidth, GLuint viewportHeight, float radius, float bloomIntensity = 1.0f);

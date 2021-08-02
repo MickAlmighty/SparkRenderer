@@ -7,22 +7,11 @@
 
 namespace spark
 {
-void GBuffer::createFrameBuffersAndTextures(unsigned int width, unsigned int height)
-{
-    w = width;
-    h = height;
-    utils::recreateTexture2D(colorTexture, w, h, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::recreateTexture2D(normalsTexture, w, h, GL_RG16F, GL_RG, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::recreateTexture2D(roughnessMetalnessTexture, w, h, GL_RG, GL_RG, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::recreateTexture2D(depthTexture, w, h, GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
 
-    utils::recreateFramebuffer(framebuffer, {colorTexture, normalsTexture, roughnessMetalnessTexture});
-    utils::bindDepthTexture(framebuffer, depthTexture);
-}
-
-GBuffer::GBuffer()
+GBuffer::GBuffer(unsigned int width, unsigned int height)
 {
     pbrGeometryBufferShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("pbrGeometryBuffer.glsl");
+    resize(width, height);
 }
 
 void GBuffer::fill(std::map<ShaderType, std::deque<RenderingRequest>>& renderQueue, const UniformBuffer& cameraUbo)
@@ -83,5 +72,23 @@ GBuffer::~GBuffer()
 
     glDeleteFramebuffers(1, &framebuffer);
     framebuffer = 0;
+}
+
+void GBuffer::resize(unsigned int width, unsigned int height)
+{
+    w = width;
+    h = height;
+    createFrameBuffersAndTextures();
+}
+
+void GBuffer::createFrameBuffersAndTextures()
+{
+    utils::recreateTexture2D(colorTexture, w, h, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::recreateTexture2D(normalsTexture, w, h, GL_RG16F, GL_RG, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::recreateTexture2D(roughnessMetalnessTexture, w, h, GL_RG, GL_RG, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::recreateTexture2D(depthTexture, w, h, GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+
+    utils::recreateFramebuffer(framebuffer, { colorTexture, normalsTexture, roughnessMetalnessTexture });
+    utils::bindDepthTexture(framebuffer, depthTexture);
 }
 }  // namespace spark

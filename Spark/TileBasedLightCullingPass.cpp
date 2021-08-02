@@ -6,16 +6,10 @@
 
 namespace spark
 {
-TileBasedLightCullingPass::~TileBasedLightCullingPass()
+TileBasedLightCullingPass::TileBasedLightCullingPass(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo,
+                                                     const std::shared_ptr<lights::LightManager>& lightManager)
+    : w(width), h(height)
 {
-    glDeleteTextures(1, &lightsPerTileTexture);
-}
-
-void TileBasedLightCullingPass::setup(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo,
-                                      const std::shared_ptr<lights::LightManager>& lightManager)
-{
-    w = width;
-    h = height;
     tileBasedLightCullingShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("tileBasedLightCulling.glsl");
     tileBasedLightCullingShader->bindUniformBuffer("Camera", cameraUbo);
 
@@ -23,6 +17,12 @@ void TileBasedLightCullingPass::setup(unsigned int width, unsigned int height, c
     tileBasedLightCullingShader->bindSSBO("SpotLightIndices", spotLightIndices);
     tileBasedLightCullingShader->bindSSBO("LightProbeIndices", lightProbeIndices);
     bindLightBuffers(lightManager);
+    createFrameBuffersAndTextures();
+}
+
+TileBasedLightCullingPass::~TileBasedLightCullingPass()
+{
+    glDeleteTextures(1, &lightsPerTileTexture);
 }
 
 void TileBasedLightCullingPass::process(GLuint depthTexture)
@@ -46,14 +46,19 @@ void TileBasedLightCullingPass::process(GLuint depthTexture)
     POP_DEBUG_GROUP();
 }
 
-void TileBasedLightCullingPass::createFrameBuffersAndTextures(unsigned int width, unsigned int height)
+void TileBasedLightCullingPass::resize(unsigned int width, unsigned int height)
 {
     w = width;
     h = height;
+    createFrameBuffersAndTextures();
+}
+
+void TileBasedLightCullingPass::createFrameBuffersAndTextures()
+{
     pointLightIndices.resizeBuffer(256 * utils::uiCeil(h, 16u) * utils::uiCeil(w, 16u) * sizeof(uint32_t));
     spotLightIndices.resizeBuffer(256 * utils::uiCeil(h, 16u) * utils::uiCeil(w, 16u) * sizeof(uint32_t));
     lightProbeIndices.resizeBuffer(256 * utils::uiCeil(h, 16u) * utils::uiCeil(w, 16u) * sizeof(uint32_t));
-    utils::recreateTexture2D(lightsPerTileTexture, width / 16, height / 16, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
+    utils::recreateTexture2D(lightsPerTileTexture, w / 16, h / 16, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
 }
 
 void TileBasedLightCullingPass::bindLightBuffers(const std::shared_ptr<lights::LightManager>& lightManager)

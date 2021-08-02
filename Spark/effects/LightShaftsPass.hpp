@@ -19,17 +19,15 @@ namespace spark::effects
 class LightShaftsPass
 {
     public:
-    LightShaftsPass() = default;
+    LightShaftsPass(unsigned int width, unsigned int height);
     LightShaftsPass(const LightShaftsPass&) = delete;
     LightShaftsPass(LightShaftsPass&&) = delete;
     LightShaftsPass& operator=(const LightShaftsPass&) = delete;
     LightShaftsPass& operator=(LightShaftsPass&&) = delete;
     ~LightShaftsPass();
 
-    void setup(unsigned int width, unsigned int height);
     std::optional<GLuint> process(const std::shared_ptr<Camera>& camera, GLuint depthTexture, GLuint lightingTexture);
-    void createFrameBuffersAndTextures(unsigned int width, unsigned int height);
-    void cleanup();
+    void resize(unsigned int width, unsigned int height);
 
     float exposure = 0.004f;
     float decay = 0.970f;
@@ -37,6 +35,7 @@ class LightShaftsPass
     float weight = 8.0f;
 
     private:
+    void createFrameBuffersAndTextures();
     void renderLightShaftsToTexture(const lights::DirectionalLight* const dirLight, GLuint depthTexture, GLuint lightingTexture,
                                     const glm::vec2 lightScreenPos) const;
     void blurLightShafts() const;
@@ -50,7 +49,7 @@ class LightShaftsPass
     GLuint radialBlurTexture2{};
     GLuint blendingFramebuffer{}, blendingOutputTexture{};
     ScreenQuad screenQuad{};
-    std::unique_ptr<BlurPass> blurPass;
+    BlurPass blurPass;
     std::shared_ptr<resources::Shader> lightShaftsShader{nullptr};
     std::shared_ptr<resources::Shader> blendingShader{nullptr};
 };

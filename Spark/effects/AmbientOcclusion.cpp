@@ -9,15 +9,8 @@
 
 namespace spark::effects
 {
-AmbientOcclusion::~AmbientOcclusion()
+AmbientOcclusion::AmbientOcclusion(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo) : w(width), h(height)
 {
-    cleanup();
-}
-
-void AmbientOcclusion::setup(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo)
-{
-    w = width;
-    h = height;
     const auto ssaoKernel = generateSsaoSamples();
     samplesUbo.resizeBuffer(ssaoKernel.size() * sizeof(glm::vec4));
     samplesUbo.updateData(ssaoKernel);
@@ -30,9 +23,10 @@ void AmbientOcclusion::setup(unsigned int width, unsigned int height, const Unif
     colorInversionShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("colorInversion.glsl");
     ssaoShader->bindUniformBuffer("Samples", samplesUbo);
     ssaoShader->bindUniformBuffer("Camera", cameraUbo);
+    createFrameBuffersAndTextures();
 }
 
-void AmbientOcclusion::cleanup()
+AmbientOcclusion::~AmbientOcclusion()
 {
     glDeleteTextures(1, &randomNormalsTexture);
     glDeleteTextures(1, &ssaoTexture);
@@ -76,10 +70,15 @@ GLuint AmbientOcclusion::process(GLuint depthTexture, GLuint normalsTexture)
     return ssaoTexture;
 }
 
-void AmbientOcclusion::createFrameBuffersAndTextures(unsigned int width, unsigned int height)
+void AmbientOcclusion::resize(unsigned int width, unsigned int height)
 {
     w = width;
     h = height;
+    createFrameBuffersAndTextures();
+}
+
+void AmbientOcclusion::createFrameBuffersAndTextures()
+{
     utils::recreateTexture2D(ssaoTexture, w, h, GL_R16F, GL_RED, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
     utils::recreateTexture2D(ssaoTexture2, w, h, GL_R16F, GL_RED, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
     utils::recreateFramebuffer(ssaoFramebuffer, {ssaoTexture});

@@ -7,17 +7,17 @@
 
 namespace spark::effects
 {
-MotionBlurPass::~MotionBlurPass()
+MotionBlurPass::MotionBlurPass(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo) : w(width), h(height)
 {
-    cleanup();
-}
-
-void MotionBlurPass::setup(unsigned width, unsigned height, const UniformBuffer& cameraUbo)
-{
-    w = width;
-    h = height;
     motionBlurShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("motionBlur.glsl");
     motionBlurShader->bindUniformBuffer("Camera", cameraUbo);
+    createFrameBuffersAndTextures();
+}
+
+MotionBlurPass::~MotionBlurPass()
+{
+    glDeleteTextures(1, &texture1);
+    glDeleteFramebuffers(1, &framebuffer1);
 }
 
 std::optional<GLuint> MotionBlurPass::process(const std::shared_ptr<Camera>& camera, GLuint colorTexture, GLuint depthTexture)
@@ -61,17 +61,16 @@ std::optional<GLuint> MotionBlurPass::process(const std::shared_ptr<Camera>& cam
     return texture1;
 }
 
-void MotionBlurPass::createFrameBuffersAndTextures(unsigned int width, unsigned int height)
+void MotionBlurPass::resize(unsigned int width, unsigned int height)
 {
     w = width;
     h = height;
+    createFrameBuffersAndTextures();
+}
+
+void MotionBlurPass::createFrameBuffersAndTextures()
+{
     utils::recreateTexture2D(texture1, w, h, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
     utils::recreateFramebuffer(framebuffer1, {texture1});
 }
-
-void MotionBlurPass::cleanup()
-{
-    glDeleteTextures(1, &texture1);
-    glDeleteFramebuffers(1, &framebuffer1);
-}
-}  // namespace spark
+}  // namespace spark::effects

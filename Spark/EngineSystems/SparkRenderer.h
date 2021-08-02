@@ -39,7 +39,6 @@ class SparkRenderer
     void resize(unsigned int windowWidth, unsigned int windowHeight);
 
     private:
-    void setup(unsigned int windowWidth, unsigned int windowHeight, const std::shared_ptr<Scene>& scene_);
     void updateLightBuffersBindings();
 
     void helperShapes();
@@ -48,6 +47,7 @@ class SparkRenderer
     void createFrameBuffersAndTextures();
     void deleteFrameBuffersAndTextures();
 
+    UniformBuffer cameraUBO{};
     std::map<ShaderType, std::deque<RenderingRequest>> renderQueue{};
     std::weak_ptr<Scene> scene{};
 
@@ -55,6 +55,7 @@ class SparkRenderer
     std::weak_ptr<PbrCubemapTexture> pbrCubemap;
     LightProbesRenderer lightProbesRenderer;
     TileBasedDeferredRenderer renderer;
+    effects::PostProcessingStack postProcessingStack;
 
     ScreenQuad screenQuad{};
     GLuint uiShapesFramebuffer{};
@@ -63,9 +64,5 @@ class SparkRenderer
 
     std::shared_ptr<resources::Shader> screenShader{nullptr};
     std::shared_ptr<resources::Shader> solidColorShader{nullptr};
-
-    effects::PostProcessingStack postProcessingStack{};
-
-    UniformBuffer cameraUBO{};
 };
 }  // namespace spark

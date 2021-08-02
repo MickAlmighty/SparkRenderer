@@ -15,19 +15,20 @@ namespace spark::effects
 class FxaaPass
 {
     public:
-    FxaaPass() = default;
+    FxaaPass(unsigned int width, unsigned int height);
     FxaaPass(const FxaaPass&) = delete;
     FxaaPass(FxaaPass&&) = delete;
     FxaaPass& operator=(const FxaaPass&) = delete;
     FxaaPass& operator=(FxaaPass&&) = delete;
     ~FxaaPass();
 
-    void setup(unsigned int width, unsigned int height);
     GLuint process(GLuint inputTexture);
-    void createFrameBuffersAndTextures(unsigned int width, unsigned int height);
-    void cleanup();
+    void resize(unsigned int width, unsigned int height);
 
     private:
+    void createFrameBuffersAndTextures();
+
+    unsigned int w{}, h{};
     ScreenQuad screenQuad{};
     GLuint fxaaFramebuffer{}, fxaaTexture{};
     std::shared_ptr<resources::Shader> fxaaShader{nullptr};

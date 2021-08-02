@@ -6,18 +6,21 @@
 
 namespace spark::effects
 {
-BloomPass::~BloomPass()
+BloomPass::BloomPass(unsigned int width, unsigned int height) : w(width), h(height)
 {
-    cleanup();
-}
-
-void BloomPass::setup(unsigned int width, unsigned int height)
-{
-    w = width;
-    h = height;
     bloomDownScaleShaderMip0ToMip1 = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("bloomDownScaleMip0ToMip1.glsl");
     bloomDownScaleShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("bloomDownScale.glsl");
     bloomUpsamplerShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("bloomUpsampler.glsl");
+    createFrameBuffersAndTextures();
+}
+
+BloomPass::~BloomPass()
+{
+    GLuint textures[5] = {textureMip1, textureMip2, textureMip3, textureMip4, textureMip5};
+    glDeleteTextures(5, textures);
+
+    GLuint framebuffers[6] = {fboMip1, fboMip2, fboMip3, fboMip4, fboMip5, fboMip0};
+    glDeleteFramebuffers(6, framebuffers);
 }
 
 GLuint BloomPass::process(GLuint lightingTexture, GLuint brightPassTexture)
@@ -51,6 +54,13 @@ GLuint BloomPass::process(GLuint lightingTexture, GLuint brightPassTexture)
     POP_DEBUG_GROUP();
 
     return lightingTexture;
+}
+
+void BloomPass::resize(unsigned int width, unsigned int height)
+{
+    w = width;
+    h = height;
+    createFrameBuffersAndTextures();
 }
 
 void BloomPass::downsampleFromMip0ToMip1(GLuint brightPassTexture)
@@ -93,10 +103,8 @@ void BloomPass::upsampleTexture(GLuint framebuffer, GLuint texture, GLuint viewp
     screenQuad.draw();
 };
 
-void BloomPass::createFrameBuffersAndTextures(unsigned int width, unsigned int height)
+void BloomPass::createFrameBuffersAndTextures()
 {
-    w = width;
-    h = height;
     utils::recreateTexture2D(textureMip1, w / 2, h / 2, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
     utils::recreateTexture2D(textureMip2, w / 4, h / 4, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
     utils::recreateTexture2D(textureMip3, w / 8, h / 8, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
@@ -109,14 +117,5 @@ void BloomPass::createFrameBuffersAndTextures(unsigned int width, unsigned int h
     utils::recreateFramebuffer(fboMip4, {textureMip4});
     utils::recreateFramebuffer(fboMip5, {textureMip5});
     utils::recreateFramebuffer(fboMip0, {});
-}
-
-void BloomPass::cleanup()
-{
-    GLuint textures[5] = {textureMip1, textureMip2, textureMip3, textureMip4, textureMip5};
-    glDeleteTextures(5, textures);
-
-    GLuint framebuffers[6] = {fboMip1, fboMip2, fboMip3, fboMip4, fboMip5, fboMip0};
-    glDeleteFramebuffers(6, framebuffers);
 }
 }  // namespace spark::effects

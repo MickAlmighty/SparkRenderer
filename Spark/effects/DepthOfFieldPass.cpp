@@ -1,24 +1,20 @@
 #include "DepthOfFieldPass.h"
 
-#include "BlurPass.h"
 #include "CommonUtils.h"
 #include "Shader.h"
 #include "Spark.h"
 
 namespace spark::effects
 {
-void DepthOfFieldPass::setup(unsigned int width_, unsigned int height_, const UniformBuffer& cameraUbo)
+DepthOfFieldPass::DepthOfFieldPass(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo)
+    : w(width), h(height), blurPass(w / 2, h / 2)
 {
-    width = width_;
-    height = height_;
     cocShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("circleOfConfusion.glsl");
     blendShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("blendDof.glsl");
-    blurPass = std::make_unique<BlurPass>(width / 2, height / 2);
 
     cocShader->bindUniformBuffer("Camera", cameraUbo);
 
-    createGlObjects();
-
+    createFrameBuffersAndTextures();
     // glGenBuffers(1, &indirectBufferID);
     // glBindBuffer(GL_DRAW_INDIRECT_BUFFER, indirectBufferID);
     // DrawArraysIndirectCommand indirectCmd{};
@@ -51,7 +47,7 @@ void DepthOfFieldPass::setup(unsigned int width_, unsigned int height_, const Un
     // glTexBuffer(GL_TEXTURE_BUFFER, GL_RGBA32F, bokehColorBuffer.ID);
 }
 
-void DepthOfFieldPass::render(GLuint lightPassTexture, GLuint depthTexture) const
+GLuint DepthOfFieldPass::process(GLuint lightPassTexture, GLuint depthTexture) const
 {
     PUSH_DEBUG_GROUP(DEPTH_OF_FIELD)
     calculateCircleOfConfusion(depthTexture);
@@ -70,25 +66,35 @@ void DepthOfFieldPass::render(GLuint lightPassTexture, GLuint depthTexture) cons
     glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::vec4) * 1024, 0, GL_DYNAMIC_DRAW);
     */
     POP_DEBUG_GROUP();
-}
-
-GLuint DepthOfFieldPass::getOutputTexture() const
-{
     return blendDofTexture;
 }
 
-void DepthOfFieldPass::createFrameBuffersAndTextures(unsigned int width, unsigned int height)
+void DepthOfFieldPass::resize(unsigned int width, unsigned int height)
 {
-    this->width = width;
-    this->height = height;
-    blurPass->recreateWithNewSize(width / 2, height / 2);
-    deleteGlObjects();
-    createGlObjects();
+    w = width;
+    h = height;
+    blurPass.resize(width / 2, height / 2);
+    createFrameBuffersAndTextures();
+}
+
+void DepthOfFieldPass::createFrameBuffersAndTextures()
+{
+    utils::recreateTexture2D(cocTexture, w, h, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::recreateTexture2D(blendDofTexture, w, h, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+
+    utils::recreateFramebuffer(cocFramebuffer, {cocTexture});
+    utils::recreateFramebuffer(blendDofFramebuffer, {blendDofTexture});
 }
 
 DepthOfFieldPass::~DepthOfFieldPass()
 {
-    deleteGlObjects();
+    GLuint textures[] = {cocTexture, blendDofTexture};
+    glDeleteTextures(2, textures);
+    cocTexture = blendDofTexture = 0;
+
+    GLuint framebuffers[] = {cocFramebuffer, blendDofFramebuffer};
+    glDeleteFramebuffers(2, framebuffers);
+    cocFramebuffer = blendDofFramebuffer = 0;
 
     /*deleteFrameBuffersAndTextures();
     glDeleteTextures(1, &randomNormalsTexture);
@@ -105,7 +111,7 @@ void DepthOfFieldPass::calculateCircleOfConfusion(GLuint depthTexture) const
 {
     PUSH_DEBUG_GROUP(COC_COMPUTING)
 
-    glViewport(0, 0, width, height);
+    glViewport(0, 0, w, h);
     glBindFramebuffer(GL_FRAMEBUFFER, cocFramebuffer);
     glClearColor(0, 0, 0, 1);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -124,9 +130,9 @@ void DepthOfFieldPass::calculateCircleOfConfusion(GLuint depthTexture) const
 
 void DepthOfFieldPass::blurLightPassTexture(GLuint lightPassTexture) const
 {
-    blurPass->blurTexture(lightPassTexture);
-    blurPass->blurTexture(blurPass->getBlurredTexture());
-    blurPass->blurTexture(blurPass->getBlurredTexture());
+    blurPass.blurTexture(lightPassTexture);
+    blurPass.blurTexture(blurPass.getBlurredTexture());
+    blurPass.blurTexture(blurPass.getBlurredTexture());
 }
 
 void DepthOfFieldPass::detectBokehPositions(GLuint lightPassTexture) const
@@ -151,7 +157,7 @@ void DepthOfFieldPass::renderBokehShapes() const {}
 void DepthOfFieldPass::blendDepthOfField(GLuint lightPassTexture) const
 {
     PUSH_DEBUG_GROUP(BLEND_DOF);
-    glViewport(0, 0, width, height);
+    glViewport(0, 0, w, h);
 
     glBindFramebuffer(GL_FRAMEBUFFER, blendDofFramebuffer);
     glClearColor(0, 0, 0, 0);
@@ -159,31 +165,11 @@ void DepthOfFieldPass::blendDepthOfField(GLuint lightPassTexture) const
 
     blendShader->use();
 
-    GLuint textures[3] = {cocTexture, lightPassTexture, blurPass->getBlurredTexture()};
+    GLuint textures[3] = {cocTexture, lightPassTexture, blurPass.getBlurredTexture()};
     glBindTextures(0, 3, textures);
     screenQuad.draw();
     glBindTextures(0, 3, nullptr);
 
     POP_DEBUG_GROUP();
-}
-
-void DepthOfFieldPass::createGlObjects()
-{
-    utils::createTexture2D(cocTexture, width, height, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::createTexture2D(blendDofTexture, width, height, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
-
-    utils::createFramebuffer(cocFramebuffer, {cocTexture});
-    utils::createFramebuffer(blendDofFramebuffer, {blendDofTexture});
-}
-
-void DepthOfFieldPass::deleteGlObjects()
-{
-    GLuint textures[] = {cocTexture, blendDofTexture};
-    glDeleteTextures(2, textures);
-    cocTexture = blendDofTexture = 0;
-
-    GLuint framebuffers[] = {cocFramebuffer, blendDofFramebuffer};
-    glDeleteFramebuffers(2, framebuffers);
-    cocFramebuffer = blendDofFramebuffer = 0;
 }
 }  // namespace spark::effects

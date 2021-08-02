@@ -8,19 +8,19 @@ namespace spark::effects
 class MotionBlurPass
 {
     public:
-    MotionBlurPass() = default;
+    MotionBlurPass(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo);
     MotionBlurPass(const MotionBlurPass&) = delete;
     MotionBlurPass(MotionBlurPass&&) = delete;
     MotionBlurPass& operator=(const MotionBlurPass&) = delete;
     MotionBlurPass& operator=(MotionBlurPass&&) = delete;
     ~MotionBlurPass();
 
-    void setup(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo);
     std::optional<GLuint> process(const std::shared_ptr<Camera>& camera, GLuint colorTexture, GLuint depthTexture);
-    void createFrameBuffersAndTextures(unsigned int width, unsigned int height);
-    void cleanup();
+    void resize(unsigned int width, unsigned int height);
 
     private:
+    void createFrameBuffersAndTextures();
+
     unsigned int w{}, h{};
     ScreenQuad screenQuad;
     GLuint framebuffer1{};
