@@ -3,6 +3,7 @@
 
 #include "Buffer.hpp"
 #include "GBuffer.h"
+#include "Renderer.hpp"
 #include "lights/LightManager.h"
 #include "ScreenQuad.hpp"
 #include "effects/AmbientOcclusion.hpp"
@@ -14,7 +15,7 @@ namespace resources
     class Shader;
 }
 
-class DeferredRenderer
+class DeferredRenderer : public Renderer
 {
     public:
     DeferredRenderer(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo,
@@ -23,21 +24,17 @@ class DeferredRenderer
     DeferredRenderer(DeferredRenderer&&) = delete;
     DeferredRenderer& operator=(const DeferredRenderer&) = delete;
     DeferredRenderer& operator=(DeferredRenderer&&) = delete;
-    ~DeferredRenderer();
+    ~DeferredRenderer() override;
 
     GLuint process(std::map<ShaderType, std::deque<RenderingRequest>>& renderQueue, const std::weak_ptr<PbrCubemapTexture>& pbrCubemap,
-                   const UniformBuffer& cameraUbo);
-    void bindLightBuffers(const std::shared_ptr<lights::LightManager>& lightManager);
-    void resize(unsigned int width, unsigned int height);
-    GLuint getDepthTexture() const;
-
-    bool isAmbientOcclusionEnabled{false};
-    effects::AmbientOcclusion ao;
+                   const UniformBuffer& cameraUbo) override;
+    void bindLightBuffers(const std::shared_ptr<lights::LightManager>& lightManager) override;
+    void resize(unsigned int width, unsigned int height) override;
+    GLuint getDepthTexture() const override;
 
     private:
     void createFrameBuffersAndTextures();
 
-    unsigned int w{}, h{};
     GBuffer gBuffer;
     GLuint framebuffer{}, lightingTexture{};
     GLuint brdfLookupTexture{};

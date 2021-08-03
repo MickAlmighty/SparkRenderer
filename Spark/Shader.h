@@ -28,6 +28,7 @@ class Shader : public resourceManagement::Resource
     void setFloat(const std::string& name, float value) const;
     void setVec2(const std::string& name, glm::vec2 value) const;
     void setIVec2(const std::string& name, glm::ivec2 value) const;
+    void setUVec2(const std::string& name, glm::uvec2 value) const;
     void setVec3(const std::string& name, glm::vec3 value) const;
     void setMat4(const std::string& name, glm::mat4 value) const;
     void bindSSBO(const std::string& name, const SSBO& ssbo);

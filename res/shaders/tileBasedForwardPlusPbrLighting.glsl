@@ -1,32 +1,85 @@
 #type vertex
 #version 450
 layout (location = 0) in vec3 position;
-layout (location = 1) in vec2 textureCoords;
+layout (location = 1) in vec3 normal;
+layout (location = 2) in vec2 texture_coords;
+layout (location = 3) in vec3 tangent;
+layout (location = 4) in vec3 bitangent;
 
-out vec2 texCoords;
+uniform mat4 model;
+
+layout (std140) uniform Camera
+{
+    vec4 pos;
+    mat4 view;
+    mat4 projection;
+    mat4 invertedView;
+    mat4 invertedProjection;
+} camera;
+
+out VS_OUT {
+    vec2 tex_coords;
+    mat3 viewTBN_matrix;
+    vec3 tangentFragPos;
+    vec3 tangentCamPos;
+    vec3 worldPos;
+} vs_out;
 
 void main()
 {
-    texCoords = textureCoords;
-    gl_Position = vec4(position, 1);
+    vec4 worldPosition = model * vec4(position, 1);
+
+    mat3 normalMatrix = transpose(inverse(mat3(model)));
+    vec3 T = normalize(normalMatrix * tangent);
+    vec3 N = normalize(normalMatrix * normal);
+    T = normalize(T - dot(T, N) * N);
+    vec3 B = cross(T, N);
+    //vec3 B = normalize(normalMatrix * bitangent);
+    mat3 TBN = mat3(T, B, N);
+    mat3 viewTBN = mat3(camera.view) * TBN;
+    mat3 inverseTBN = transpose(TBN);
+
+    // vec3 T1 = normalize(vec3(model * vec4(tangent, 0.0)));
+    // vec3 N1 = normalize(vec3(model * vec4(normal, 0.0)));
+    // T1 = normalize(T1 - dot(T1, N1) * N1);
+    // vec3 B1 = cross(T1, N1);
+    // //vec3 B1 = normalize(vec3(model * vec4(bitangent, 0.0)));
+    // mat3 TBN1 = mat3(T1, B1, N1);
+    
+    vs_out.worldPos = worldPosition.xyz;
+    vs_out.tangentFragPos = inverseTBN * worldPosition.xyz;
+    vs_out.tangentCamPos  = inverseTBN * camera.pos.xyz;
+    vs_out.tex_coords = texture_coords;
+    vs_out.viewTBN_matrix = viewTBN;
+
+    gl_Position = camera.projection * camera.view * worldPosition;
 }
 
 #type fragment
 #version 450
 #extension GL_ARB_bindless_texture : require
-layout(location = 0) out vec4 FragColor;
+layout (location = 0) out vec4 FragColor;
 
-in vec2 texCoords;
-#define M_PI 3.14159265359
+layout (binding = 1) uniform sampler2D diffuseTexture;
+layout (binding = 2) uniform sampler2D normalTexture;
+layout (binding = 3) uniform sampler2D roughnessTexture;
+layout (binding = 4) uniform sampler2D metalnessTexture;
+layout (binding = 5) uniform sampler2D heightTexture;
 
-layout(binding = 0) uniform sampler2D depthTexture;
-layout(binding = 1) uniform sampler2D diffuseTexture;
-layout(binding = 2) uniform sampler2D normalTexture;
-layout(binding = 3) uniform sampler2D rougnessMetalnessTexture;
-layout(binding = 4) uniform samplerCube irradianceMap;
-layout(binding = 5) uniform samplerCube prefilterMap;
-layout(binding = 6) uniform sampler2D brdfLUT;
-layout(binding = 7) uniform sampler2D ssaoTexture;
+layout(binding = 7) uniform samplerCube irradianceMap;
+layout(binding = 8) uniform samplerCube prefilterMap;
+layout(binding = 9) uniform sampler2D brdfLUT;
+layout(binding = 10) uniform sampler2D ssaoTexture;
+
+uniform uvec2 viewportSize;
+
+in VS_OUT {
+    vec2 tex_coords;
+    mat3 viewTBN_matrix;
+    vec3 tangentFragPos;
+    vec3 tangentCamPos;
+    vec3 worldPos;
+} vs_out;
 
 layout (std140) uniform Camera
 {
@@ -91,6 +144,21 @@ layout(std430) readonly buffer LightProbeData
     LightProbe lightProbes[];
 };
 
+layout(std430) readonly buffer PointLightIndices
+{
+    uint pointLightIndices[];
+};
+
+layout(std430) readonly buffer SpotLightIndices
+{
+    uint spotLightIndices[];
+};
+
+layout(std430) readonly buffer LightProbeIndices
+{
+    uint lightProbeIndices[];
+};
+
 struct Material
 {
     vec3 albedo;
@@ -98,6 +166,11 @@ struct Material
     float metalness;
     vec3 F0;
 };
+
+#define M_PI 3.14159265359
+
+uint numberOfLightsIndex;
+uint lightBeginIndex;
 
 float normalDistributionGGX(vec3 N, vec3 H, float roughness);
 vec3 fresnelSchlick(vec3 V, vec3 H, vec3 F0);
@@ -116,47 +189,96 @@ vec3 calculateDiffuseIBL(vec3 N, vec3 V, float NdotV, Material material, sampler
 vec3 calculateSpecularIBL(vec3 N, vec3 V, float NdotV, Material material);
 vec4 calculateSpecularFromLightProbe(vec3 N, vec3 V, vec3 P, float NdotV, Material material, LightProbe lightProbe);
 vec3 getDiffuseDominantDir(vec3 N , vec3 V , float NdotV , float roughness);
-vec3 getSpecularDominantDir( vec3 N , vec3 R, float roughness );
+vec3 getSpecularDominantDir( vec3 N , vec3 R, float roughness);
 float raySphereIntersection(vec3 rayCenter, vec3 rayDir, vec3 sphereCenter, float sphereRadius);
-float computeDistanceBaseRoughness(float distInteresectionToShadedPoint, float distInteresectionToProbeCenter, float linearRoughness );
+float computeDistanceBaseRoughness(float distInteresectionToShadedPoint, float distInteresectionToProbeCenter, float linearRoughness);
 
-vec3 worldPosFromDepth(float depth) {
-    vec4 clipSpacePosition = vec4(texCoords * 2.0 - 1.0, depth, 1.0);
-    vec4 viewSpacePosition = camera.invertedProjection * clipSpacePosition;
-    vec4 worldSpacePosition = camera.invertedView * viewSpacePosition;
-    return worldSpacePosition.xyz /= worldSpacePosition.w; //perspective division
+const float heightScale = 0.05f;
+
+vec2 parallaxMapping(vec2 texCoords, vec3 viewDir)
+{
+    // number of depth layers
+    const float minLayers = 8.0;
+    const float maxLayers = 32.0;
+    float numLayers = mix(maxLayers, minLayers, abs(dot(vec3(0.0, 0.0, 1.0), viewDir)));
+    // calculate the size of each layer
+    float layerDepth = 1.0 / numLayers;
+    // depth of current layer
+    float currentLayerDepth = 0.0;
+    // the amount to shift the texture coordinates per layer (from vector P)
+    vec2 P = viewDir.xy * heightScale;
+    vec2 deltaTexCoords = P / numLayers;
+
+    vec2  currentTexCoords = texCoords;
+    float currentDepthMapValue = 1.0f - texture(heightTexture, currentTexCoords).r;
+
+    while (currentLayerDepth < currentDepthMapValue)
+    {
+        // shift texture coordinates along direction of P
+        currentTexCoords -= deltaTexCoords;
+        // get depthmap value at current texture coordinates
+        currentDepthMapValue = 1.0f - texture(heightTexture, currentTexCoords).r;
+        // get depth of next layer
+        currentLayerDepth += layerDepth;
+    }
+
+    vec2 prevTexCoords = currentTexCoords + deltaTexCoords;
+
+    // get depth after and before collision for linear interpolation
+    float afterDepth = currentDepthMapValue - currentLayerDepth;
+    float beforeDepth = (1.0f - texture(heightTexture, prevTexCoords).r) - currentLayerDepth + layerDepth;
+
+    // interpolation of texture coordinates
+    float weight = afterDepth / (afterDepth - beforeDepth);
+    vec2 finalTexCoords = prevTexCoords * weight + currentTexCoords * (1.0 - weight);
+
+    return finalTexCoords;
 }
 
-vec3 decodeViewSpaceNormal(vec2 enc)
+vec3 accurateSRGBToLinear(vec3 sRGBColor)
 {
-    //Lambert Azimuthal Equal-Area projection
-    //http://aras-p.info/texts/CompactNormalStorage.html
-    vec2 fenc = enc*4-2;
-    float f = dot(fenc,fenc);
-    float g = sqrt(1-f/4);
-    vec3 n;
-    n.xy = fenc*g;
-    n.z = 1-f/2;
-    return n;
+    // https://seblagarde.files.wordpress.com/2015/07/course_notes_moving_frostbite_to_pbr_v32.pdf
+    // page 88
+    vec3 linearRGBLo = sRGBColor / 12.92f;
+    vec3 linearRGBHi = pow((sRGBColor + 0.055f) / 1.055f, vec3(2.4f));
+    vec3 linearRGB;
+    linearRGB.x = (sRGBColor.x <= 0.04045f) ? linearRGBLo.x : linearRGBHi.x;
+    linearRGB.y = (sRGBColor.y <= 0.04045f) ? linearRGBLo.y : linearRGBHi.y;
+    linearRGB.z = (sRGBColor.z <= 0.04045f) ? linearRGBLo.z : linearRGBHi.z;
+    return linearRGB;
 }
 
 void main()
 {
-    float depthValue = texture(depthTexture, texCoords).x;
-    if (depthValue <= 0.00001) // 0.0f means its far plane or there is nothing in G-Buffer
+    vec2 tex_coords = vs_out.tex_coords;
+    if (texture(heightTexture, vs_out.tex_coords).r != 0.0)
     {
-        discard;
+        vec3 tangentViewDir = normalize(vs_out.tangentCamPos - vs_out.tangentFragPos);
+        tex_coords = parallaxMapping(vs_out.tex_coords, tangentViewDir);
     }
-    vec3 P = worldPosFromDepth(depthValue);
 
-    vec3 albedo = texture(diffuseTexture, texCoords).rgb;
-    vec2 normal = texture(normalTexture, texCoords).xy;
-    vec2 roughnessAndMetalness = texture(rougnessMetalnessTexture, texCoords).rg;
-    float ssao = texture(ssaoTexture, texCoords).x;
+    const uvec2 viewportCoords = uvec2(gl_FragCoord.xy); // pixel coordinates
+    const uint lightIndicesPerTileLength = 256;
+    const uvec2 workGroupSize = uvec2(16);
+    const uint numberOfWorkGroupsInColumn = 1 + ((viewportSize.y - 1) / 16);
+    const uvec2 workGroupID = viewportCoords / workGroupSize;
+    uint nrOfElementsInColumn = lightIndicesPerTileLength * numberOfWorkGroupsInColumn;
+    uint startIndex = nrOfElementsInColumn * workGroupID.x + lightIndicesPerTileLength * workGroupID.y;
+    numberOfLightsIndex = startIndex;
+    lightBeginIndex = startIndex + 1;
 
-    vec3 decoded = decodeViewSpaceNormal(normal.xy);
+    // if (tex_coords.x > 1.0 || tex_coords.x < 0.0 || tex_coords.y > 1.0 || tex_coords.y < 0.0)
+    //     discard;
 
-    vec3 worldPosNormal = (camera.invertedView * vec4(decoded, 0.0f)).xyz;
+    vec3 normalFromTexture = vec3(texture(normalTexture, tex_coords).xy, 1.0f);
+    normalFromTexture = normalize(normalFromTexture * 2.0 - 1.0);
+    vec3 viewNormal = normalize(vs_out.viewTBN_matrix * normalFromTexture);
+    vec3 N = (camera.invertedView * vec4(viewNormal, 0.0f)).xyz;
+    vec3 P = vs_out.worldPos;
+
+    vec3 albedo = accurateSRGBToLinear(texture(diffuseTexture, tex_coords).rgb);
+    vec2 roughnessAndMetalness = vec2(texture(roughnessTexture, tex_coords).x, texture(metalnessTexture, tex_coords).x);
+    float ssao = texture(ssaoTexture, gl_FragCoord.xy / textureSize(ssaoTexture, 0).xy).x;
 
     Material material = {
         albedo.xyz, //albedo in linear space
@@ -169,7 +291,6 @@ void main()
     vec3 F0 = vec3(0.16f) * pow(1.0f - material.roughness, 2.0); //frostbite3 fresnel reflectance https://seblagarde.files.wordpress.com/2015/07/course_notes_moving_frostbite_to_pbr_v32.pdf page 14
     material.F0 = mix(F0, material.albedo, material.metalness);
 
-    vec3 N = worldPosNormal;
     vec3 V = normalize(camera.pos.xyz - P);
 
     vec3 L0 = directionalLightAddition(V, N, material);
@@ -181,9 +302,9 @@ void main()
     float NdotV = max(dot(N, V), 0.0);
 
     float iblWeight = 0.0f;
-    for(uint i = 0; i < lightProbes.length(); ++i)
+    for(uint i = 0; i < lightProbeIndices[numberOfLightsIndex]; ++i)
     {
-        LightProbe lightProbe = lightProbes[i];
+        LightProbe lightProbe = lightProbes[lightProbeIndices[lightBeginIndex + i]];
         samplerCube irradianceSampler = samplerCube(lightProbe.irradianceCubemapHandle);
         vec3 diffuseIBL = calculateDiffuseIBL(N, V, NdotV, material, irradianceSampler);
         vec4 specularIBL = calculateSpecularFromLightProbe(N, V, P, NdotV, material, lightProbe);
@@ -244,10 +365,12 @@ vec3 pointLightAddition(vec3 V, vec3 N, vec3 Pos, Material m)
 
     vec3 L0 = { 0, 0, 0 };
 
-    for (uint i = 0; i < pointLights.length(); ++i)
+    for (int index = 0; index < pointLightIndices[numberOfLightsIndex]; ++index)
     {
-        vec3 lightPos = pointLights[i].positionAndRadius.xyz;
-        float lightRadius = pointLights[i].positionAndRadius.w;
+        PointLight p = pointLights[pointLightIndices[lightBeginIndex + index]];
+
+        vec3 lightPos = p.positionAndRadius.xyz;
+        float lightRadius = p.positionAndRadius.w;
         vec3 L = normalize(lightPos - Pos);
         vec3 H = normalize(V + L);
 
@@ -257,7 +380,7 @@ vec3 pointLightAddition(vec3 V, vec3 N, vec3 Pos, Material m)
         float D = normalDistributionGGX(N, H, m.roughness);
         float G = geometrySmith(NdotV, NdotL, m.roughness);
         
-        vec3 radiance = pointLights[i].color * calculateAttenuation(lightPos, Pos, lightRadius);
+        vec3 radiance = p.color * calculateAttenuation(lightPos, Pos, lightRadius);
 
         vec3 kD = mix(vec3(1.0) - F, vec3(0.0), m.metalness);
         vec3 diffuseColor = kD * m.albedo / M_PI;
@@ -266,6 +389,7 @@ vec3 pointLightAddition(vec3 V, vec3 N, vec3 Pos, Material m)
 
         L0 += (diffuseColor + specularColor) * radiance * NdotL;
     }
+
     return L0;
 }
 
@@ -274,14 +398,15 @@ vec3 spotLightAddition(vec3 V, vec3 N, vec3 Pos, Material m)
     float NdotV = max(dot(N, V), 0.0f);
 
     vec3 L0 = { 0, 0, 0 };
-    for (uint i = 0; i < spotLights.length(); ++i)
+    for (int index = 0; index < spotLightIndices[numberOfLightsIndex]; ++index)
     {
-        vec3 directionToLight = normalize(-spotLights[i].direction);
-        vec3 L = normalize(spotLights[i].position - Pos);
+        SpotLight s = spotLights[spotLightIndices[lightBeginIndex + index]];
+        vec3 directionToLight = normalize(-s.direction);
+        vec3 L = normalize(s.position - Pos);
 
         float theta = dot(directionToLight, L);
-        float epsilon = max(spotLights[i].cutOff - spotLights[i].outerCutOff, 0.0);
-        float intensity = clamp((theta - spotLights[i].outerCutOff) / epsilon, 0.0, 1.0);  
+        float epsilon = max(s.cutOff - s.outerCutOff, 0.0);
+        float intensity = clamp((theta - s.outerCutOff) / epsilon, 0.0, 1.0);  
 
         vec3 H = normalize(V + L);
 
@@ -291,7 +416,7 @@ vec3 spotLightAddition(vec3 V, vec3 N, vec3 Pos, Material m)
         float D = normalDistributionGGX(N, H, m.roughness);
         float G = geometrySmith(NdotV, NdotL, m.roughness);
         
-        vec3 radiance = spotLights[i].color * calculateAttenuation(spotLights[i].position, Pos, spotLights[i].maxDistance);
+        vec3 radiance = s.color * calculateAttenuation(s.position, Pos, s.maxDistance);
         radiance *= intensity;
 
         vec3 kD = mix(vec3(1.0) - F, vec3(0.0), m.metalness);

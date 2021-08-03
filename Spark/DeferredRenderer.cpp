@@ -9,7 +9,7 @@ namespace spark
 {
 DeferredRenderer::DeferredRenderer(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo,
                                    const std::shared_ptr<lights::LightManager>& lightManager)
-    : ao(width, height, cameraUbo), w(width), h(height), gBuffer(width, height)
+    : Renderer(width, height, cameraUbo), gBuffer(width, height)
 {
     brdfLookupTexture = utils::createBrdfLookupTexture(1024);
 
@@ -72,6 +72,7 @@ void DeferredRenderer::bindLightBuffers(const std::shared_ptr<lights::LightManag
     lightingShader->bindSSBO("DirLightData", lightManager->getDirLightSSBO());
     lightingShader->bindSSBO("PointLightData", lightManager->getPointLightSSBO());
     lightingShader->bindSSBO("SpotLightData", lightManager->getSpotLightSSBO());
+    lightingShader->bindSSBO("LightProbeData", lightManager->getLightProbeSSBO());
 }
 
 void DeferredRenderer::resize(unsigned int width, unsigned int height)

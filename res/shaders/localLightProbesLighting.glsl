@@ -154,16 +154,7 @@ void main()
     L0 += spotLightAddition(V, N, pos, material);
 
     vec4 color = vec4(L0, 1);
-
-    bvec4 valid = isnan(color);
-    if ( valid.x || valid.y || valid.z || valid.w )
-    {
-        FragColor = vec4(vec3(0.5f), 1.0f);
-    }
-    else
-    {
-        FragColor = vec4(attenuateHighFrequencies(color.xyz), 1.0f);
-    }
+    FragColor = vec4(attenuateHighFrequencies(color.xyz), 1.0f);
 }
 
 vec3 directionalLightAddition(vec3 V, vec3 N, Material m)
@@ -272,12 +263,12 @@ float normalDistributionGGX(vec3 N, vec3 H, float roughness)
 vec3 fresnelSchlick(vec3 V, vec3 H, vec3 F0)
 {
     float cosTheta = max(dot(V, H), 0.0);
-    return F0 + (vec3(1.0) - F0) * pow(1.0 - cosTheta, 5);
+    return F0 + (vec3(1.0) - F0) * pow(max(1.0 - cosTheta, 0.0f), 5);
 }
 
 vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
 {
-    return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(1.0 - cosTheta, 5.0);
+    return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(max(1.0 - cosTheta, 0.0f), 5.0);
 }
 
 float geometrySchlickGGX(float cosTheta, float k)

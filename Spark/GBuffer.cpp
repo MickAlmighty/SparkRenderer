@@ -8,10 +8,10 @@
 namespace spark
 {
 
-GBuffer::GBuffer(unsigned int width, unsigned int height)
+GBuffer::GBuffer(unsigned int width, unsigned int height) : w(width), h(height)
 {
     pbrGeometryBufferShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("pbrGeometryBuffer.glsl");
-    resize(width, height);
+    createFrameBuffersAndTextures();
 }
 
 void GBuffer::fill(std::map<ShaderType, std::deque<RenderingRequest>>& renderQueue, const UniformBuffer& cameraUbo)

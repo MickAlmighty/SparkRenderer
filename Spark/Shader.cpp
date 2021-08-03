@@ -134,6 +134,14 @@ void Shader::setIVec2(const std::string& name, glm::ivec2 value) const
     glUniform2iv(location, 1, glm::value_ptr(value));
 }
 
+void Shader::setUVec2(const std::string& name, glm::uvec2 value) const
+{
+    const GLint location = shaderDescriptor.getUniformLocation(name);
+    if (location < 0)
+        return;
+    glUniform2uiv(location, 1, glm::value_ptr(value));
+}
+
 void Shader::setVec3(const std::string& name, glm::vec3 value) const
 {
     const GLint location = shaderDescriptor.getUniformLocation(name);

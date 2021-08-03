@@ -8,7 +8,7 @@ namespace spark
 {
 TileBasedDeferredRenderer::TileBasedDeferredRenderer(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo,
                                                      const std::shared_ptr<lights::LightManager>& lightManager)
-    : ao(width, height, cameraUbo), w(width), h(height), gBuffer(width, height), lightCullingPass(width, height, cameraUbo, lightManager)
+    : Renderer(width, height, cameraUbo), gBuffer(width, height), lightCullingPass(width, height, cameraUbo, lightManager)
 {
     brdfLookupTexture = utils::createBrdfLookupTexture(1024);
 

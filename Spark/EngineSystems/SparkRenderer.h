@@ -3,16 +3,16 @@
 #include <glad_glfw3.h>
 
 #include "Enums.h"
-#include "GBuffer.h"
 #include "effects/PostProcessingStack.hpp"
 #include "LightProbesRenderer.hpp"
 #include "Scene.h"
 #include "ScreenQuad.hpp"
 #include "RenderingRequest.h"
-#include "TileBasedDeferredRenderer.hpp"
 
 namespace spark
 {
+class Renderer;
+
 namespace lights
 {
     class LightProbe;
@@ -53,8 +53,8 @@ class SparkRenderer
 
     unsigned int width{}, height{};
     std::weak_ptr<PbrCubemapTexture> pbrCubemap;
+    std::unique_ptr<Renderer> renderer;
     LightProbesRenderer lightProbesRenderer;
-    TileBasedDeferredRenderer renderer;
     effects::PostProcessingStack postProcessingStack;
 
     ScreenQuad screenQuad{};

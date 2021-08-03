@@ -139,8 +139,8 @@ void main()
 
     if (gl_LocalInvocationIndex == 0)
     {
-        uint nrOfElementsInColum = 256 * gl_NumWorkGroups.y;
-        uint startIndex = nrOfElementsInColum * gl_WorkGroupID.x + 256 * gl_WorkGroupID.y;
+        uint nrOfElementsInColumn = 256 * gl_NumWorkGroups.y;
+        uint startIndex = nrOfElementsInColumn * gl_WorkGroupID.x + 256 * gl_WorkGroupID.y;
         numberOfLightsIndex = startIndex;
         lightBeginIndex = startIndex + 1;
     }
@@ -216,13 +216,7 @@ void main()
 
     vec4 color = vec4(min(L0 + ambient, vec3(65000)), 1) * (1.0f - ssao);
 
-    bvec4 valid = isnan(color);
-    if ( valid.x || valid.y || valid.z || valid.w )
-    {
-        color = vec4(0.3f);
-    }
-
-    barrier();
+    //barrier();
     //imageStore(lightOutput, texCoords, vec4(lightProbeIndices[numberOfLightsIndex]));
     imageStore(lightOutput, texCoords, color);
 }
@@ -357,12 +351,12 @@ float normalDistributionGGX(vec3 N, vec3 H, float roughness)
 vec3 fresnelSchlick(vec3 V, vec3 H, vec3 F0)
 {
     float cosTheta = max(dot(V, H), 0.0);
-    return F0 + (vec3(1.0) - F0) * pow(1.0 - cosTheta, 5);
+    return F0 + (vec3(1.0) - F0) * pow(max(1.0 - cosTheta, 0.0f), 5);
 }
 
 vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
 {
-    return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(1.0 - cosTheta, 5.0);
+    return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(max(1.0 - cosTheta, 0.0f), 5.0);
 }
 
 float geometrySchlickGGX(float cosTheta, float k)

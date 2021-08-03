@@ -5,6 +5,7 @@
 #include "Buffer.hpp"
 #include "GBuffer.h"
 #include "glad_glfw3.h"
+#include "Renderer.hpp"
 #include "TileBasedLightCullingPass.hpp"
 #include "effects/AmbientOcclusion.hpp"
 #include "lights/LightManager.h"
@@ -13,7 +14,7 @@ namespace spark
 {
 struct PbrCubemapTexture;
 
-class TileBasedDeferredRenderer
+class TileBasedDeferredRenderer : public Renderer
 {
     public:
     TileBasedDeferredRenderer(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo,
@@ -22,22 +23,18 @@ class TileBasedDeferredRenderer
     TileBasedDeferredRenderer(TileBasedDeferredRenderer&&) = delete;
     TileBasedDeferredRenderer& operator=(const TileBasedDeferredRenderer&) = delete;
     TileBasedDeferredRenderer& operator=(TileBasedDeferredRenderer&&) = delete;
-    ~TileBasedDeferredRenderer();
+    ~TileBasedDeferredRenderer() override;
 
     GLuint process(std::map<ShaderType, std::deque<RenderingRequest>>& renderQueue, const std::weak_ptr<PbrCubemapTexture>& pbrCubemap,
-                   const UniformBuffer& cameraUbo);
-    void resize(unsigned int width, unsigned int height);
-    void bindLightBuffers(const std::shared_ptr<lights::LightManager>& lightManager);
+                   const UniformBuffer& cameraUbo) override;
+    void resize(unsigned int width, unsigned int height) override;
+    void bindLightBuffers(const std::shared_ptr<lights::LightManager>& lightManager) override;
 
-    GLuint getDepthTexture() const;
-
-    bool isAmbientOcclusionEnabled{false};
-    effects::AmbientOcclusion ao;
+    GLuint getDepthTexture() const override;
 
     private:
     void createFrameBuffersAndTextures();
 
-    unsigned int w{}, h{};
     GLuint lightingTexture{};
     GLuint brdfLookupTexture{};
     GBuffer gBuffer;

@@ -13,6 +13,8 @@ list(APPEND SparkSources
     ${CMAKE_CURRENT_SOURCE_DIR}/DeferredRenderer.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Enums.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Enums.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/ForwardPlusRenderer.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ForwardPlusRenderer.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/GameObject.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/GameObject.h
     ${CMAKE_CURRENT_SOURCE_DIR}/GBuffer.cpp
@@ -72,6 +74,8 @@ list(APPEND SparkSources
     ${CMAKE_CURRENT_SOURCE_DIR}/Structs.h
     ${CMAKE_CURRENT_SOURCE_DIR}/TileBasedDeferredRenderer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/TileBasedDeferredRenderer.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/TileBasedForwardPlusRenderer.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/TileBasedForwardPlusRenderer.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/TileBasedLightCullingPass.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/TileBasedLightCullingPass.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Texture.cpp

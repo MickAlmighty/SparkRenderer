@@ -2,11 +2,15 @@
 
 #include "Camera.h"
 #include "CommonUtils.h"
+#include "DeferredRenderer.hpp"
+#include "ForwardPlusRenderer.hpp"
 #include "lights/LightProbe.h"
 #include "RenderingRequest.h"
 #include "ResourceLibrary.h"
 #include "Shader.h"
 #include "Spark.h"
+#include "TileBasedDeferredRenderer.hpp"
+#include "TileBasedForwardPlusRenderer.hpp"
 #include "Timer.h"
 
 namespace spark
@@ -15,14 +19,44 @@ void SparkRenderer::drawGui()
 {
     if(ImGui::BeginMenu("Renderer"))
     {
+        const std::string renderingAlgorithmTypeMenu = "Rendering Algorithms";
+        if(ImGui::BeginMenu(renderingAlgorithmTypeMenu.c_str()))
+        {
+            static int mode = 0;
+            if(ImGui::RadioButton("Tile Based Deferred", mode == 0))
+            {
+                mode = 0;
+                renderer = std::make_unique<TileBasedDeferredRenderer>(width, height, cameraUBO, scene.lock()->lightManager);
+            }
+            ImGui::SameLine();
+            if(ImGui::RadioButton("Deferred", mode == 1))
+            {
+                mode = 1;
+                renderer = std::make_unique<DeferredRenderer>(width, height, cameraUBO, scene.lock()->lightManager);
+            }
+            ImGui::SameLine();
+            if(ImGui::RadioButton("Forward Plus", mode == 2))
+            {
+                mode = 2;
+                renderer = std::make_unique<ForwardPlusRenderer>(width, height, cameraUBO, scene.lock()->lightManager);
+            }
+            ImGui::SameLine();
+            if (ImGui::RadioButton("Tile Based Forward Plus", mode == 3))
+            {
+                mode = 3;
+                renderer = std::make_unique<TileBasedForwardPlusRenderer>(width, height, cameraUBO, scene.lock()->lightManager);
+            }
+            ImGui::EndMenu();
+        }
+
         const std::string menuName = "SSAO";
         if(ImGui::BeginMenu(menuName.c_str()))
         {
-            ImGui::Checkbox("SSAO enabled", &renderer.isAmbientOcclusionEnabled);
-            ImGui::DragInt("Samples", &renderer.ao.kernelSize, 1, 0, 64);
-            ImGui::DragFloat("Radius", &renderer.ao.radius, 0.05f, 0.0f);
-            ImGui::DragFloat("Bias", &renderer.ao.bias, 0.005f);
-            ImGui::DragFloat("Power", &renderer.ao.power, 0.05f, 0.0f);
+            ImGui::Checkbox("SSAO enabled", &renderer->isAmbientOcclusionEnabled);
+            ImGui::DragInt("Samples", &renderer->ao.kernelSize, 1, 0, 64);
+            ImGui::DragFloat("Radius", &renderer->ao.radius, 0.05f, 0.0f);
+            ImGui::DragFloat("Bias", &renderer->ao.bias, 0.005f);
+            ImGui::DragFloat("Power", &renderer->ao.power, 0.05f, 0.0f);
             ImGui::EndMenu();
         }
 
@@ -33,8 +67,10 @@ void SparkRenderer::drawGui()
 
 SparkRenderer::SparkRenderer(unsigned int windowWidth, unsigned int windowHeight, const std::shared_ptr<Scene>& scene_)
     : scene(scene_), width(windowWidth), height(windowHeight), lightProbesRenderer(scene_->lightManager),
-      renderer(windowWidth, windowHeight, cameraUBO, scene_->lightManager), postProcessingStack(windowWidth, windowHeight, cameraUBO)
+      postProcessingStack(windowWidth, windowHeight, cameraUBO)
 {
+    renderer = std::make_unique<TileBasedDeferredRenderer>(windowWidth, windowHeight, cameraUBO, scene_->lightManager);
+
     screenShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("screen.glsl");
     solidColorShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("solidColor.glsl");
     solidColorShader->bindUniformBuffer("Camera", cameraUBO);
@@ -47,7 +83,7 @@ void SparkRenderer::updateLightBuffersBindings()
 {
     const auto& lightManager = scene.lock()->lightManager;
     lightProbesRenderer.bindLightBuffers(lightManager);
-    renderer.bindLightBuffers(lightManager);
+    renderer->bindLightBuffers(lightManager);
 }
 
 SparkRenderer::~SparkRenderer()
@@ -62,8 +98,9 @@ void SparkRenderer::renderPass()
     const auto& camera = scene.lock()->getCamera();
     utils::updateCameraUBO(cameraUBO, camera->getProjectionReversedZInfiniteFarPlane(), camera->getViewMatrix(), camera->getPosition());
 
-    const GLuint lightingTexture = renderer.process(renderQueue, pbrCubemap, cameraUBO);
-    textureHandle = postProcessingStack.process(lightingTexture, renderer.getDepthTexture(), pbrCubemap, scene.lock()->getCamera(), cameraUBO);
+    const GLuint lightingTexture = renderer->process(renderQueue, pbrCubemap, cameraUBO);
+    textureHandle = postProcessingStack.process(lightingTexture, renderer->getDepthTexture(), pbrCubemap, scene.lock()->getCamera(), cameraUBO);
+
     helperShapes();
     renderToScreen();
     glDepthFunc(GL_LESS);
@@ -92,7 +129,7 @@ void SparkRenderer::resize(unsigned int windowWidth, unsigned int windowHeight)
     width = windowWidth;
     height = windowHeight;
     postProcessingStack.resize(width, height);
-    renderer.resize(width, height);
+    renderer->resize(width, height);
     createFrameBuffersAndTextures();
 }
 
@@ -103,6 +140,7 @@ void SparkRenderer::helperShapes()
 
     PUSH_DEBUG_GROUP(HELPER_SHAPES);
     utils::bindTexture2D(uiShapesFramebuffer, textureHandle);
+    utils::bindDepthTexture(uiShapesFramebuffer, renderer->getDepthTexture());
     glBindFramebuffer(GL_FRAMEBUFFER, uiShapesFramebuffer);
 
     glDisable(GL_CULL_FACE);
@@ -153,7 +191,6 @@ void SparkRenderer::clearRenderQueues()
 void SparkRenderer::createFrameBuffersAndTextures()
 {
     utils::recreateFramebuffer(uiShapesFramebuffer);
-    utils::bindDepthTexture(uiShapesFramebuffer, renderer.getDepthTexture());
 }
 
 void SparkRenderer::deleteFrameBuffersAndTextures()
