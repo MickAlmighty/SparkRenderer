@@ -19,7 +19,7 @@ void main()
 
     mat4 rotView = mat4(mat3(camera.view)); // remove translation from the view matrix
     vec4 clipPos = camera.projection * rotView * vec4(aPos, 0.0);
-    clipPos.z = 0.00001; // assigning 0 for inversed Z depth buffer (0 is on a far plane)
+    clipPos.z = 0.0; // assigning 0 for inversed Z depth buffer (0 is on a far plane)
     gl_Position = clipPos;
     // if farPlane depth is 1 then you need to 
     //gl_Position = clipPos.xyww;

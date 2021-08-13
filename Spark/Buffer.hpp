@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <optional>
 #include <set>
 #include <vector>
 
@@ -14,7 +15,7 @@ class Buffer
     GLint binding{-1};
     GLsizei size{0};
 
-    Buffer(std::size_t sizeInBytes = 0);
+    Buffer(std::size_t sizeInBytes = 0, GLenum usage = GL_DYNAMIC_DRAW);
     Buffer(const Buffer& buffer) = delete;
     Buffer(Buffer&& buffer) = delete;
     Buffer& operator=(const Buffer& buffer) = delete;
@@ -47,10 +48,12 @@ class Buffer
     void freeBinding();
 
     static inline std::set<uint32_t> bindings{};
+
+    const GLenum bufferUsage;
 };
 
 template<GLenum BUFFER_TYPE>
-Buffer<BUFFER_TYPE>::Buffer(std::size_t sizeInBytes)
+Buffer<BUFFER_TYPE>::Buffer(std::size_t sizeInBytes, GLenum usage) : bufferUsage(usage)
 {
     genBuffer(sizeInBytes);
 }
@@ -86,7 +89,7 @@ void Buffer<BUFFER_TYPE>::updateData(const std::vector<T>& buffer)
         // SPARK_WARN("Trying to update SSBO with a vector with too large size! SSBO size: {}, vector size: {}. Buffer will be resized and update
         // will be processed!", size, vectorSize);
         size = static_cast<GLsizei>(vectorSize);
-        glNamedBufferData(ID, vectorSize, buffer.data(), GL_DYNAMIC_DRAW);
+        glNamedBufferData(ID, vectorSize, buffer.data(), bufferUsage);
     }
     else
     {
@@ -123,7 +126,7 @@ void Buffer<BUFFER_TYPE>::updateData(const std::array<T, Size>& buffer)
         // SPARK_WARN("Trying to update SSBO with a vector with too large size! SSBO size: {}, vector size: {}. Buffer will be resized and update
         // will be processed!", size, vectorSize);
         size = static_cast<GLsizei>(vectorSize);
-        glNamedBufferData(ID, vectorSize, buffer.data(), GL_DYNAMIC_DRAW);
+        glNamedBufferData(ID, vectorSize, buffer.data(), bufferUsage);
     }
     else
     {
@@ -153,21 +156,20 @@ void Buffer<BUFFER_TYPE>::updateSubData(size_t offsetFromBeginning, const std::a
 template<GLenum BUFFER_TYPE>
 void Buffer<BUFFER_TYPE>::resizeBuffer(size_t sizeInBytes)
 {
-    glNamedBufferData(ID, sizeInBytes, nullptr, GL_DYNAMIC_DRAW);
+    glNamedBufferData(ID, sizeInBytes, nullptr, bufferUsage);
     size = static_cast<GLsizei>(sizeInBytes);
 }
 
 template<GLenum BUFFER_TYPE>
 void Buffer<BUFFER_TYPE>::clearData()
 {
-    size = 0;
     glClearNamedBufferData(ID, GL_R32F, GL_RED, GL_FLOAT, nullptr);
 }
 
 template<GLenum BUFFER_TYPE>
 void Buffer<BUFFER_TYPE>::genBuffer(size_t sizeInBytes)
 {
-    if (ID != 0)
+    if(ID != 0)
     {
         cleanup();
     }
@@ -175,7 +177,7 @@ void Buffer<BUFFER_TYPE>::genBuffer(size_t sizeInBytes)
     size = static_cast<GLsizei>(sizeInBytes);
     glGenBuffers(1, &ID);
     glBindBuffer(BUFFER_TYPE, ID);
-    glBufferData(BUFFER_TYPE, size, nullptr, GL_DYNAMIC_DRAW);
+    glBufferData(BUFFER_TYPE, size, nullptr, bufferUsage);
     glBindBuffer(BUFFER_TYPE, 0);
     getBinding();
 }

@@ -86,6 +86,10 @@ void TileBasedForwardPlusRenderer::lightingPass(std::map<ShaderType, std::deque<
         glBindTextureUnit(7, pbrCubemap.lock()->irradianceCubemap);
         glBindTextureUnit(8, pbrCubemap.lock()->prefilteredCubemap);
     }
+    else
+    {
+        glBindTextures(7, 2, nullptr);
+    }
     glBindTextureUnit(9, brdfLookupTexture);
     glBindTextureUnit(10, ssaoTexture);
 

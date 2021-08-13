@@ -55,9 +55,10 @@ void TileBasedLightCullingPass::resize(unsigned int width, unsigned int height)
 
 void TileBasedLightCullingPass::createFrameBuffersAndTextures()
 {
-    pointLightIndices.resizeBuffer(256 * utils::uiCeil(h, 16u) * utils::uiCeil(w, 16u) * sizeof(uint32_t));
-    spotLightIndices.resizeBuffer(256 * utils::uiCeil(h, 16u) * utils::uiCeil(w, 16u) * sizeof(uint32_t));
-    lightProbeIndices.resizeBuffer(256 * utils::uiCeil(h, 16u) * utils::uiCeil(w, 16u) * sizeof(uint32_t));
+    constexpr unsigned int lightCount = 256;
+    pointLightIndices.resizeBuffer(lightCount * utils::uiCeil(h, 16u) * utils::uiCeil(w, 16u) * sizeof(uint32_t));
+    spotLightIndices.resizeBuffer(lightCount * utils::uiCeil(h, 16u) * utils::uiCeil(w, 16u) * sizeof(uint32_t));
+    lightProbeIndices.resizeBuffer(lightCount * utils::uiCeil(h, 16u) * utils::uiCeil(w, 16u) * sizeof(uint32_t));
     utils::recreateTexture2D(lightsPerTileTexture, w / 16, h / 16, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
 }
 

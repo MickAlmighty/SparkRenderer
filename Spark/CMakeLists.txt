@@ -5,6 +5,10 @@ list(APPEND SparkSources
     ${CMAKE_CURRENT_SOURCE_DIR}/Clock.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Cube.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Clock.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/ClusterBasedForwardPlusRenderer.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ClusterBasedForwardPlusRenderer.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ClusterBasedLightCullingPass.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ClusterBasedLightCullingPass.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CommonUtils.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CommonUtils.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Component.cpp

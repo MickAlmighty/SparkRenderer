@@ -15,6 +15,8 @@ layout (std140) uniform Camera
     mat4 projection;
     mat4 invertedView;
     mat4 invertedProjection;
+    float nearZ;
+    float farZ;
 } camera;
 
 out VS_OUT {
@@ -27,32 +29,32 @@ out VS_OUT {
 
 void main()
 {
-    vec4 worldPosition = model * vec4(position, 1);
+   vec4 worldPosition = model * vec4(position, 1);
 
-    mat3 normalMatrix = transpose(inverse(mat3(model)));
-    vec3 T = normalize(normalMatrix * tangent);
-    vec3 N = normalize(normalMatrix * normal);
-    T = normalize(T - dot(T, N) * N);
-    vec3 B = cross(T, N);
-    //vec3 B = normalize(normalMatrix * bitangent);
-    mat3 TBN = mat3(T, B, N);
-    mat3 viewTBN = mat3(camera.view) * TBN;
-    mat3 inverseTBN = transpose(TBN);
+   mat3 normalMatrix = transpose(inverse(mat3(model)));
+   vec3 T = normalize(normalMatrix * tangent);
+   vec3 N = normalize(normalMatrix * normal);
+   T = normalize(T - dot(T, N) * N);
+   vec3 B = cross(T, N);
+   //vec3 B = normalize(normalMatrix * bitangent);
+   mat3 TBN = mat3(T, B, N);
+   mat3 viewTBN = mat3(camera.view) * TBN;
+   mat3 inverseTBN = transpose(TBN);
 
-    // vec3 T1 = normalize(vec3(model * vec4(tangent, 0.0)));
-    // vec3 N1 = normalize(vec3(model * vec4(normal, 0.0)));
-    // T1 = normalize(T1 - dot(T1, N1) * N1);
-    // vec3 B1 = cross(T1, N1);
-    // //vec3 B1 = normalize(vec3(model * vec4(bitangent, 0.0)));
-    // mat3 TBN1 = mat3(T1, B1, N1);
-    
-    vs_out.worldPos = worldPosition.xyz;
-    vs_out.tangentFragPos = inverseTBN * worldPosition.xyz;
-    vs_out.tangentCamPos  = inverseTBN * camera.pos.xyz;
-    vs_out.tex_coords = texture_coords;
-    vs_out.viewTBN_matrix = viewTBN;
+   // vec3 T1 = normalize(vec3(model * vec4(tangent, 0.0)));
+   // vec3 N1 = normalize(vec3(model * vec4(normal, 0.0)));
+   // T1 = normalize(T1 - dot(T1, N1) * N1);
+   // vec3 B1 = cross(T1, N1);
+   // //vec3 B1 = normalize(vec3(model * vec4(bitangent, 0.0)));
+   // mat3 TBN1 = mat3(T1, B1, N1);
+   
+   vs_out.worldPos = worldPosition.xyz;
+   vs_out.tangentFragPos = inverseTBN * worldPosition.xyz;
+   vs_out.tangentCamPos  = inverseTBN * camera.pos.xyz;
+   vs_out.tex_coords = texture_coords;
+   vs_out.viewTBN_matrix = viewTBN;
 
-    gl_Position = camera.projection * camera.view * worldPosition;
+   gl_Position = camera.projection * camera.view * worldPosition;
 }
 
 #type fragment
@@ -71,7 +73,9 @@ layout(binding = 8) uniform samplerCube prefilterMap;
 layout(binding = 9) uniform sampler2D brdfLUT;
 layout(binding = 10) uniform sampler2D ssaoTexture;
 
-uniform uvec2 viewportSize;
+uniform vec2 tileSize;
+// uniform float equation3Part1;
+// uniform float equation3Part2;
 
 in VS_OUT {
     vec2 tex_coords;
@@ -88,6 +92,8 @@ layout (std140) uniform Camera
     mat4 projection;
     mat4 invertedView;
     mat4 invertedProjection;
+    float nearZ;
+    float farZ;
 } camera;
 
 struct DirLight {
@@ -124,17 +130,17 @@ struct LightProbe {
     float padding3;
 };
 
-layout(std430) buffer DirLightData
+layout(std430) readonly buffer DirLightData
 {
     DirLight dirLights[];
 };
 
-layout(std430) buffer PointLightData
+layout(std430) readonly buffer PointLightData
 {
     PointLight pointLights[];
 };
 
-layout(std430) buffer SpotLightData
+layout(std430) readonly buffer SpotLightData
 {
     SpotLight spotLights[];
 };
@@ -144,19 +150,34 @@ layout(std430) readonly buffer LightProbeData
     LightProbe lightProbes[];
 };
 
-layout(std430) readonly buffer PointLightIndices
+layout(std430) readonly buffer GlobalPointLightIndices
 {
-    uint pointLightIndices[];
+    uint globalPointLightIndices[];
 };
 
-layout(std430) readonly buffer SpotLightIndices
+layout(std430) readonly buffer GlobalSpotLightIndices
 {
-    uint spotLightIndices[];
+    uint globalSpotLightIndices[];
 };
 
-layout(std430) readonly buffer LightProbeIndices
+layout(std430) readonly buffer GlobalLightProbeIndices
 {
-    uint lightProbeIndices[];
+    uint globalLightProbeIndices[];
+};
+
+struct LightIndicesBufferMetadata
+{
+    uint pointLightIndicesOffset;
+    uint pointLightCount;
+    uint spotLightIndicesOffset;
+    uint spotLightCount;
+    uint lightProbeIndicesOffset;
+    uint lightProbeCount;
+};
+
+layout(std430) readonly buffer PerClusterGlobalLightIndicesBufferMetadata
+{
+    LightIndicesBufferMetadata lightIndicesBufferMetadata[];
 };
 
 struct Material
@@ -169,9 +190,6 @@ struct Material
 
 #define M_PI 3.14159265359
 
-uint numberOfLightsIndex;
-uint lightBeginIndex;
-
 float normalDistributionGGX(vec3 N, vec3 H, float roughness);
 vec3 fresnelSchlick(vec3 V, vec3 H, vec3 F0);
 vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness);
@@ -182,8 +200,8 @@ float calculateAttenuation(vec3 lightPos, vec3 Pos);
 float calculateAttenuation(vec3 lightPos, vec3 pos, float maxDistance);
 
 vec3 directionalLightAddition(vec3 V, vec3 N, Material m);
-vec3 pointLightAddition(vec3 V, vec3 N, vec3 Pos, Material m);
-vec3 spotLightAddition(vec3 V, vec3 N, vec3 Pos, Material m);
+vec3 pointLightAddition(vec3 V, vec3 N, vec3 Pos, Material m, uint clusterIndex);
+vec3 spotLightAddition(vec3 V, vec3 N, vec3 Pos, Material m, uint clusterIndex);
 
 vec3 calculateDiffuseIBL(vec3 N, vec3 V, float NdotV, Material material, samplerCube irradianceCubemap);
 vec3 calculateSpecularIBL(vec3 N, vec3 V, float NdotV, Material material);
@@ -248,6 +266,27 @@ vec3 accurateSRGBToLinear(vec3 sRGBColor)
     return linearRGB;
 }
 
+uint getZSlice(float viewSpaceDepth)
+{
+    const float clustersZ = 32.0f;
+    const float logNearByFar = log(camera.farZ / camera.nearZ);
+    const float equation3Part1 = clustersZ / logNearByFar;
+    const float equation3Part2 = clustersZ * log(camera.nearZ) / logNearByFar;
+    return uint(log(abs(viewSpaceDepth)) * equation3Part1 - equation3Part2);
+}
+
+uint calculateClusterIndex(vec2 screenCoords, uint clusterZ)
+{
+    const uint clustersX = 64;
+    const uint clustersY = 64;
+    uint screenSliceOffset = clustersX * clustersY * clusterZ;
+
+    uvec2 clusterAssignmentXY = uvec2(screenCoords / tileSize);
+    uint onScreenSliceIndex = clusterAssignmentXY.x * clustersY + clusterAssignmentXY.y;
+
+    return screenSliceOffset + onScreenSliceIndex;
+}
+
 void main()
 {
     vec2 tex_coords = vs_out.tex_coords;
@@ -257,15 +296,9 @@ void main()
         tex_coords = parallaxMapping(vs_out.tex_coords, tangentViewDir);
     }
 
-    const uvec2 viewportCoords = uvec2(gl_FragCoord.xy); // pixel coordinates
-    const uint lightIndicesPerTileLength = 256;
-    const uvec2 workGroupSize = uvec2(16);
-    const uint numberOfWorkGroupsInColumn = 1 + ((viewportSize.y - 1) / 16);
-    const uvec2 workGroupID = viewportCoords / workGroupSize;
-    uint nrOfElementsInColumn = lightIndicesPerTileLength * numberOfWorkGroupsInColumn;
-    uint startIndex = nrOfElementsInColumn * workGroupID.x + lightIndicesPerTileLength * workGroupID.y;
-    numberOfLightsIndex = startIndex;
-    lightBeginIndex = startIndex + 1;
+    const float viewSpaceDepth = (camera.view * vec4(vs_out.worldPos, 1.0f)).z;
+    const uint clusterZ = getZSlice(viewSpaceDepth);
+    uint clusterIndex = calculateClusterIndex(gl_FragCoord.xy - vec2(0.5f), clusterZ);
 
     // if (tex_coords.x > 1.0 || tex_coords.x < 0.0 || tex_coords.y > 1.0 || tex_coords.y < 0.0)
     //     discard;
@@ -278,7 +311,7 @@ void main()
 
     vec3 albedo = accurateSRGBToLinear(texture(diffuseTexture, tex_coords).rgb);
     vec2 roughnessAndMetalness = vec2(texture(roughnessTexture, tex_coords).x, texture(metalnessTexture, tex_coords).x);
-    float ssao = texture(ssaoTexture, gl_FragCoord.xy / textureSize(ssaoTexture, 0).xy).x;
+    float ssao = texture(ssaoTexture, (gl_FragCoord.xy  - vec2(0.5f)) / textureSize(ssaoTexture, 0).xy).x;
 
     Material material = {
         albedo.xyz, //albedo in linear space
@@ -294,17 +327,21 @@ void main()
     vec3 V = normalize(camera.pos.xyz - P);
 
     vec3 L0 = directionalLightAddition(V, N, material);
-    L0 += pointLightAddition(V, N, P, material);
-    L0 += spotLightAddition(V, N, P, material);
+    L0 += pointLightAddition(V, N, P, material, clusterIndex);
+    L0 += spotLightAddition(V, N, P, material, clusterIndex);
 
     //IBL here
     vec3 ambient = vec3(0.0);
     float NdotV = max(dot(N, V), 0.0);
 
     float iblWeight = 0.0f;
-    for(uint i = 0; i < lightProbeIndices[numberOfLightsIndex]; ++i)
+    const uint lightProbeCount = lightIndicesBufferMetadata[clusterIndex].lightProbeCount;
+    const uint globalLightProbesOffset = lightIndicesBufferMetadata[clusterIndex].lightProbeIndicesOffset;
+    for(uint i = 0; i < lightProbeCount; ++i)
     {
-        LightProbe lightProbe = lightProbes[lightProbeIndices[lightBeginIndex + i]];
+        const uint lightProbeIndex = globalLightProbeIndices[globalLightProbesOffset + i];
+        LightProbe lightProbe = lightProbes[lightProbeIndex];
+
         samplerCube irradianceSampler = samplerCube(lightProbe.irradianceCubemapHandle);
         vec3 diffuseIBL = calculateDiffuseIBL(N, V, NdotV, material, irradianceSampler);
         vec4 specularIBL = calculateSpecularFromLightProbe(N, V, P, NdotV, material, lightProbe);
@@ -359,15 +396,17 @@ vec3 directionalLightAddition(vec3 V, vec3 N, Material m)
     return L0;
 }
 
-vec3 pointLightAddition(vec3 V, vec3 N, vec3 Pos, Material m)
+vec3 pointLightAddition(vec3 V, vec3 N, vec3 Pos, Material m, uint clusterIndex)
 {
     float NdotV = max(dot(N, V), 0.0f);
 
     vec3 L0 = { 0, 0, 0 };
-
-    for (int index = 0; index < pointLightIndices[numberOfLightsIndex]; ++index)
+    const uint pointLightCount = lightIndicesBufferMetadata[clusterIndex].pointLightCount;
+    const uint globalPointLightsOffset = lightIndicesBufferMetadata[clusterIndex].pointLightIndicesOffset;
+    for(uint i = 0; i < pointLightCount; ++i)
     {
-        PointLight p = pointLights[pointLightIndices[lightBeginIndex + index]];
+        const uint pointLightIndex = globalPointLightIndices[globalPointLightsOffset + i];
+        PointLight p = pointLights[pointLightIndex];
 
         vec3 lightPos = p.positionAndRadius.xyz;
         float lightRadius = p.positionAndRadius.w;
@@ -393,14 +432,18 @@ vec3 pointLightAddition(vec3 V, vec3 N, vec3 Pos, Material m)
     return L0;
 }
 
-vec3 spotLightAddition(vec3 V, vec3 N, vec3 Pos, Material m)
+vec3 spotLightAddition(vec3 V, vec3 N, vec3 Pos, Material m, uint clusterIndex)
 {
     float NdotV = max(dot(N, V), 0.0f);
 
     vec3 L0 = { 0, 0, 0 };
-    for (int index = 0; index < spotLightIndices[numberOfLightsIndex]; ++index)
+    const uint spotLightCount = lightIndicesBufferMetadata[clusterIndex].spotLightCount;
+    const uint globalSpotLightsOffset = lightIndicesBufferMetadata[clusterIndex].spotLightIndicesOffset;
+    for(uint i = 0; i < spotLightCount; ++i)
     {
-        SpotLight s = spotLights[spotLightIndices[lightBeginIndex + index]];
+        const uint spotLightIndex = globalSpotLightIndices[globalSpotLightsOffset + i];
+        SpotLight s = spotLights[spotLightIndex];
+
         vec3 directionToLight = normalize(-s.direction);
         vec3 L = normalize(s.position - Pos);
 

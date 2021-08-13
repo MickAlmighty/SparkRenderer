@@ -230,16 +230,20 @@ std::array<glm::mat4, 6> getCubemapViewMatrices(glm::vec3 cameraPosition)
             glm::lookAt(cameraPosition, cameraPosition + glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f))};
 }
 
-void updateCameraUBO(UniformBuffer& buffer, glm::mat4 projection, glm::mat4 view, glm::vec3 pos)
+void updateCameraUBO(UniformBuffer& buffer, glm::mat4 projection, glm::mat4 view, glm::vec3 pos, float nearPlane, float farPlane)
 {
     struct CamData
     {
         glm::vec4 camPos;
         glm::mat4 matrices[4];
+        float nearPlane;
+        float farPlane;
+        glm::vec2 placeholder{};
     };
+
     const glm::mat4 invertedView = glm::inverse(view);
     const glm::mat4 invertedProj = glm::inverse(projection);
-    const CamData camData{ glm::vec4(pos, 1.0f), {view, projection, invertedView, invertedProj} };
-    buffer.updateData<CamData>({ camData });
+    const CamData camData{glm::vec4(pos, 1.0f), {view, projection, invertedView, invertedProj}, nearPlane, farPlane, {}};
+    buffer.updateData<CamData>({camData});
 }
 }  // namespace spark::utils

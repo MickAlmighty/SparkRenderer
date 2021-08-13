@@ -143,7 +143,7 @@ vec3 decodeViewSpaceNormal(vec2 enc)
 void main()
 {
     float depthValue = texture(depthTexture, texCoords).x;
-    if (depthValue <= 0.00001) // 0.0f means its far plane or there is nothing in G-Buffer
+    if (depthValue == 0) // 0.0f means its far plane or there is nothing in G-Buffer
     {
         discard;
     }
@@ -312,7 +312,8 @@ float normalDistributionGGX(vec3 N, vec3 H, float roughness)
 
     float nom = a2;
     float denom = (NdotH * NdotH) * (a2 - 1.0) + 1.0;
-    return nom / (M_PI * denom * denom);
+    const float saveValue = 0.00000000001f;
+    return nom / max((M_PI * denom * denom), saveValue);
 }
 
 vec3 fresnelSchlick(vec3 V, vec3 H, vec3 F0)

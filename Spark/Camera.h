@@ -81,7 +81,7 @@ class Camera : public Component
     // perspective
     float fov = 60;
     float zNear = 0.1f;
-    float zFar = 100.0f;
+    float zFar = 10000.0f;
 
     // Calculates the front vector from the Camera's (updated) Euler Angles
     void updateCameraVectors();

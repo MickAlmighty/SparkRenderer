@@ -134,6 +134,8 @@ std::string ShaderDescriptor::getUniformType(GLenum type)
             return "bool";
         case GL_INT_VEC2:
             return "ivec2";
+        case GL_UNSIGNED_INT_VEC2:
+            return "uvec2";
         case GL_FLOAT_VEC2:
             return "vec2";
         case GL_FLOAT_VEC3:

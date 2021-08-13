@@ -149,7 +149,7 @@ void main()
 
     float depthFloat = texelFetch(depthTexture, texCoords, 0).x;
 
-    if (depthFloat <= 0.00001)
+    if (depthFloat == 0)
         return;
 
 //light calculations in world space
@@ -345,7 +345,8 @@ float normalDistributionGGX(vec3 N, vec3 H, float roughness)
 
     float nom = a2;
     float denom = (NdotH * NdotH) * (a2 - 1.0) + 1.0;
-    return nom / (M_PI * denom * denom);
+    const float saveValue = 0.00000000001f;
+    return nom / max((M_PI * denom * denom), saveValue);
 }
 
 vec3 fresnelSchlick(vec3 V, vec3 H, vec3 F0)

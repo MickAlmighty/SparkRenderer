@@ -103,7 +103,9 @@ void LightProbesRenderer::generateLightProbe(std::map<ShaderType, std::deque<Ren
 
     const glm::vec3 localLightProbePosition = lightProbe->getGameObject()->transform.world.getPosition();
 
-    const auto projection = utils::getProjectionReversedZ(sceneCubemapSize, sceneCubemapSize, 90.0f, 0.05f, 100.0f);
+    const float nearPlane{0.05f};
+    const float farPlane{100.0f};
+    const auto projection = utils::getProjectionReversedZ(sceneCubemapSize, sceneCubemapSize, 90.0f, nearPlane, farPlane);
     const std::array<glm::mat4, 6> viewMatrices = utils::getCubemapViewMatrices(localLightProbePosition);
 
     glViewport(0, 0, sceneCubemapSize, sceneCubemapSize);
@@ -111,7 +113,7 @@ void LightProbesRenderer::generateLightProbe(std::map<ShaderType, std::deque<Ren
     {
         PUSH_DEBUG_GROUP(RENDER_TO_CUBEMAP_FACE)
 
-        utils::updateCameraUBO(cameraUbo, projection, viewMatrices[i], localLightProbePosition);
+        utils::updateCameraUBO(cameraUbo, projection, viewMatrices[i], localLightProbePosition, nearPlane, farPlane);
 
         glBindFramebuffer(GL_FRAMEBUFFER, lightProbeLightFbo);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, lightProbeSceneCubemap, 0);

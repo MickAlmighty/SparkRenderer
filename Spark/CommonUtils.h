@@ -55,7 +55,7 @@ glm::mat4 getProjectionReversedZInfFar(uint32_t width, uint32_t height, float fo
 glm::mat4 getProjectionReversedZ(uint32_t width, uint32_t height, float fovDegrees, float zNear, float zFar);
 
 std::array<glm::mat4, 6> getCubemapViewMatrices(glm::vec3 cameraPosition);
-void updateCameraUBO(UniformBuffer& buffer, glm::mat4 projection, glm::mat4 view, glm::vec3 pos);
+void updateCameraUBO(UniformBuffer& buffer, glm::mat4 projection, glm::mat4 view, glm::vec3 pos, float nearPlane, float farPlane);
 
 template<typename T>
 T uiCeil(T dividend, T divisor)

@@ -11,6 +11,7 @@
 #include "Spark.h"
 #include "TileBasedDeferredRenderer.hpp"
 #include "TileBasedForwardPlusRenderer.hpp"
+#include "ClusterBasedForwardPlusRenderer.hpp"
 #include "Timer.h"
 
 namespace spark
@@ -28,23 +29,25 @@ void SparkRenderer::drawGui()
                 mode = 0;
                 renderer = std::make_unique<TileBasedDeferredRenderer>(width, height, cameraUBO, scene.lock()->lightManager);
             }
-            ImGui::SameLine();
             if(ImGui::RadioButton("Deferred", mode == 1))
             {
                 mode = 1;
                 renderer = std::make_unique<DeferredRenderer>(width, height, cameraUBO, scene.lock()->lightManager);
             }
-            ImGui::SameLine();
             if(ImGui::RadioButton("Forward Plus", mode == 2))
             {
                 mode = 2;
                 renderer = std::make_unique<ForwardPlusRenderer>(width, height, cameraUBO, scene.lock()->lightManager);
             }
-            ImGui::SameLine();
             if (ImGui::RadioButton("Tile Based Forward Plus", mode == 3))
             {
                 mode = 3;
                 renderer = std::make_unique<TileBasedForwardPlusRenderer>(width, height, cameraUBO, scene.lock()->lightManager);
+            }
+            if (ImGui::RadioButton("Cluster Based Forward Plus", mode == 4))
+            {
+                mode = 4;
+                renderer = std::make_unique<ClusterBasedForwardPlusRenderer>(width, height, cameraUBO, scene.lock()->lightManager);
             }
             ImGui::EndMenu();
         }
@@ -96,7 +99,7 @@ void SparkRenderer::renderPass()
     lightProbesRenderer.process(renderQueue, pbrCubemap.lock(), scene.lock()->lightManager->getLightProbes());
 
     const auto& camera = scene.lock()->getCamera();
-    utils::updateCameraUBO(cameraUBO, camera->getProjectionReversedZInfiniteFarPlane(), camera->getViewMatrix(), camera->getPosition());
+    utils::updateCameraUBO(cameraUBO, camera->getProjectionReversedZ(), camera->getViewMatrix(), camera->getPosition(), camera->getNearPlane(), camera->getFarPlane());
 
     const GLuint lightingTexture = renderer->process(renderQueue, pbrCubemap, cameraUBO);
     textureHandle = postProcessingStack.process(lightingTexture, renderer->getDepthTexture(), pbrCubemap, scene.lock()->getCamera(), cameraUBO);

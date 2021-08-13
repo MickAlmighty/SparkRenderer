@@ -86,6 +86,13 @@ void Shader::dispatchCompute(GLuint x, GLuint y, GLuint z) const
     glDispatchCompute(x, y, z);
 }
 
+void Shader::dispatchComputeIndirect(GLuint bufferID) const
+{
+    glBindBuffer(GL_DISPATCH_INDIRECT_BUFFER, bufferID);
+    glDispatchComputeIndirect(0);
+    glBindBuffer(GL_DISPATCH_INDIRECT_BUFFER, 0);
+}
+
 void Shader::setBool(const std::string& name, bool value) const
 {
     const GLint location = shaderDescriptor.getUniformLocation(name);

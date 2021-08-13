@@ -21,6 +21,7 @@ class Shader : public resourceManagement::Resource
 
     void use() const;
     void dispatchCompute(GLuint x, GLuint y, GLuint z) const;
+    void dispatchComputeIndirect(GLuint bufferID) const;
 
     void setBool(const std::string& name, bool value) const;
     void setInt(const std::string& name, int value) const;

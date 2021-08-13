@@ -48,7 +48,7 @@
 					"Identifier" : -1
 				},
 				"name" : "Camera",
-				"zFar" : 100.0,
+				"zFar" : 10000.0,
 				"zNear" : 0.10000000149011612
 			},
 			"Identifier" : 11,

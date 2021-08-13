@@ -1,9 +1,8 @@
 #type compute
 #version 450
-
 layout(local_size_x = 16, local_size_y = 16) in;
 
-layout(binding = 0) uniform sampler2D depthTexture; 
+layout(binding = 0) uniform sampler2D depthTexture;
 
 #define DEBUG
 #ifdef DEBUG
@@ -22,7 +21,7 @@ shared uint lightBeginIndex;
 
 #define MAX_WORK_GROUP_SIZE 16
 #define THREADS_PER_TILE MAX_WORK_GROUP_SIZE * MAX_WORK_GROUP_SIZE
-#define M_PI 3.14159265359 
+#define M_PI 3.14159265359
 
 layout (std140) uniform Camera
 {
@@ -106,7 +105,7 @@ AABB createTileAABB(const float minDepthZ, const float maxDepthZ, const vec2 tex
 Frustum createTileFrustum(const float minDepthZ, const float maxDepthZ, const vec2 texSize);
 bool testSphereVsAABB(const vec3 sphereCenter, const float sphereRadius, const vec3 AABBCenter, const vec3 AABBHalfSize);
 vec3 fromNdcToViewSpace(vec4 ndcPoint);
-float pixToNDC(uint point, float dimSize);
+vec2 pixToNDC(vec2 point, vec2 screenSize);
 vec3 createPlane(vec3 p1, vec3 p2);
 vec4 createPlanePerpendicularToView(vec3 dir1, vec3 dir2, vec3 pointOnPlane);
 float getDistanceFromPlane(vec3 position, vec3 plane);
@@ -173,7 +172,7 @@ void main()
     const float maxDepthZ = float(float(maxDepth) / float(0xffffffffu));
     const float minDepthZ = float(float(minDepth) / float(0xffffffffu));
 
-    const float minDepthVS = fromNdcToViewSpace(vec4(0.0f, 0.0f, max(minDepthZ, 0.00001f), 1.0f)).z;
+    const float minDepthVS = fromNdcToViewSpace(vec4(0.0f, 0.0f, minDepthZ, 1.0f)).z;
     const float maxDepthVS = fromNdcToViewSpace(vec4(0.0f, 0.0f, maxDepthZ, 1.0f)).z;
     const float pixelDepthVS = fromNdcToViewSpace(vec4(0.0f, 0.0f, depthFloat, 1.0f)).z;
 
@@ -216,18 +215,16 @@ Frustum createTileFrustum(const float minDepthZ, const float maxDepthZ, const ve
 
     //Convert tile corners to NDC and then to view space
     vec3 tileCorners[4];
-    const float infZProjectionAdjustment = 0.00001f; //protection when projection far plane z = 0 is inf
-    const float depth = max(minDepthZ, infZProjectionAdjustment);
-    tileCorners[0] = fromNdcToViewSpace(vec4(pixToNDC(minX, texSize.x), pixToNDC(minY, texSize.y), depth, 1.0f));
-    tileCorners[1] = fromNdcToViewSpace(vec4(pixToNDC(maxX, texSize.x), pixToNDC(minY, texSize.y), depth, 1.0f));
-    tileCorners[2] = fromNdcToViewSpace(vec4(pixToNDC(maxX, texSize.x), pixToNDC(maxY, texSize.y), depth, 1.0f));
-    tileCorners[3] = fromNdcToViewSpace(vec4(pixToNDC(minX, texSize.x), pixToNDC(maxY, texSize.y), depth, 1.0f));
+    tileCorners[0] = fromNdcToViewSpace(vec4(pixToNDC(vec2(minX, minY), texSize), minDepthZ, 1.0f));
+    tileCorners[1] = fromNdcToViewSpace(vec4(pixToNDC(vec2(maxX, minY), texSize), minDepthZ, 1.0f));
+    tileCorners[2] = fromNdcToViewSpace(vec4(pixToNDC(vec2(maxX, maxY), texSize), minDepthZ, 1.0f));
+    tileCorners[3] = fromNdcToViewSpace(vec4(pixToNDC(vec2(minX, maxY), texSize), minDepthZ, 1.0f));
 
     //create the frustum planes by using the product between these points
     vec4 planes[6];
     for(int i = 0; i < 4; ++i)
     {
-        planes[i].xyz = createPlane(tileCorners[i],tileCorners[(i+1) & 3]);
+        planes[i].xyz = createPlane(tileCorners[i], tileCorners[(i+1) & 3]);
     }
 
     //create far plane
@@ -236,9 +233,9 @@ Frustum createTileFrustum(const float minDepthZ, const float maxDepthZ, const ve
 
     //create nearPlane
     vec3 nearTileCorners[3];
-    nearTileCorners[0] = fromNdcToViewSpace(vec4(pixToNDC(minX, texSize.x), pixToNDC(minY, texSize.y), maxDepthZ, 1.0f));
-    nearTileCorners[1] = fromNdcToViewSpace(vec4(pixToNDC(maxX, texSize.x), pixToNDC(minY, texSize.y), maxDepthZ, 1.0f));
-    nearTileCorners[2] = fromNdcToViewSpace(vec4(pixToNDC(maxX, texSize.x), pixToNDC(maxY, texSize.y), maxDepthZ, 1.0f));
+    nearTileCorners[0] = fromNdcToViewSpace(vec4(pixToNDC(vec2(minX, minY), texSize), maxDepthZ, 1.0f));
+    nearTileCorners[1] = fromNdcToViewSpace(vec4(pixToNDC(vec2(maxX, minY), texSize), maxDepthZ, 1.0f));
+    nearTileCorners[2] = fromNdcToViewSpace(vec4(pixToNDC(vec2(maxX, maxY), texSize), maxDepthZ, 1.0f));
 
     planes[5] = createPlanePerpendicularToView(nearTileCorners[2] - nearTileCorners[1], 
         nearTileCorners[0] - nearTileCorners[1], nearTileCorners[1]);
@@ -255,12 +252,11 @@ AABB createTileAABB(const float minDepthZ, const float maxDepthZ, const vec2 tex
     uint maxY = MAX_WORK_GROUP_SIZE * (gl_WorkGroupID.y + 1);
 
     //Convert bottom tile corners to NDC and then to view space
-    const float depth = max(minDepthZ, 0.00001f); //protection when projection far plane z = 0 is inf
-    vec3 tileFarBottomLeftCorner = fromNdcToViewSpace(vec4(pixToNDC(minX, texSize.x), pixToNDC(minY, texSize.y), depth, 1.0f));
-    vec3 tileFarUpperRightCorner = fromNdcToViewSpace(vec4(pixToNDC(maxX, texSize.x), pixToNDC(maxY, texSize.y), depth, 1.0f));
+    vec3 tileFarBottomLeftCorner = fromNdcToViewSpace(vec4(pixToNDC(vec2(minX, minY), texSize), minDepthZ, 1.0f));
+    vec3 tileFarUpperRightCorner = fromNdcToViewSpace(vec4(pixToNDC(vec2(maxX, maxY), texSize), minDepthZ, 1.0f));
 
-    vec3 tileNearBottomLeftCorner = fromNdcToViewSpace(vec4(pixToNDC(minX, texSize.x), pixToNDC(minY, texSize.y), maxDepthZ, 1.0f));
-    vec3 tileNearUpperRightCorner = fromNdcToViewSpace(vec4(pixToNDC(maxX, texSize.x), pixToNDC(maxY, texSize.y), maxDepthZ, 1.0f));
+    vec3 tileNearBottomLeftCorner = fromNdcToViewSpace(vec4(pixToNDC(vec2(minX, minY), texSize), maxDepthZ, 1.0f));
+    vec3 tileNearUpperRightCorner = fromNdcToViewSpace(vec4(pixToNDC(vec2(maxX, maxY), texSize), maxDepthZ, 1.0f));
 
     //AABB's min-max points
     float minXViewSpace = min(tileFarBottomLeftCorner.x, tileNearBottomLeftCorner.x);
@@ -269,7 +265,7 @@ AABB createTileAABB(const float minDepthZ, const float maxDepthZ, const vec2 tex
 
     float maxXViewSpace = max(tileFarUpperRightCorner.x, tileNearUpperRightCorner.x);
     float maxYViewSpace = max(tileFarUpperRightCorner.y, tileNearUpperRightCorner.y);
-    vec3 maxPoint = vec3(maxXViewSpace, maxYViewSpace, tileNearUpperRightCorner.z); 
+    vec3 maxPoint = vec3(maxXViewSpace, maxYViewSpace, tileNearUpperRightCorner.z);
 
     vec3 aabbHalfSize = abs(maxPoint - minPoint) * 0.5;
     vec3 aabbCenter = minPoint + aabbHalfSize;
@@ -279,10 +275,7 @@ AABB createTileAABB(const float minDepthZ, const float maxDepthZ, const vec2 tex
 
 bool testSphereVsAABB(const vec3 sphereCenter, const float sphereRadius, const vec3 AABBCenter, const vec3 AABBHalfSize)
 {
-    vec3 delta = vec3(0);
-    delta.x = max(0, abs(AABBCenter.x - sphereCenter.x) - AABBHalfSize.x);
-    delta.y = max(0, abs(AABBCenter.y - sphereCenter.y) - AABBHalfSize.y);
-    delta.z = max(0, abs(AABBCenter.z - sphereCenter.z) - AABBHalfSize.z);
+    vec3 delta = max(vec3(0), abs(AABBCenter - sphereCenter) - AABBHalfSize);
     float distSq = dot(delta, delta);
     return distSq <= (sphereRadius * sphereRadius);
 }
@@ -293,9 +286,9 @@ vec3 fromNdcToViewSpace(vec4 ndcPoint)
     return viewSpacePosition.xyz / viewSpacePosition.w;
 }
 
-float pixToNDC(uint point, float dimSize)
+vec2 pixToNDC(vec2 point, vec2 screenSize)
 {
-    return (float(point) / dimSize) * 2.0f - 1.0f; 
+    return (point / screenSize) * 2.0f - 1.0f;
 }
 
 vec3 createPlane(vec3 p1, vec3 p2)
@@ -305,7 +298,7 @@ vec3 createPlane(vec3 p1, vec3 p2)
     //B = normalize(cross(p1, p2)).y;
     //C = normalize(cross(p1, p2)).z;
     //D = 0 -> because plane goes through the point (0,0,0)
-return normalize(cross(p1, p2));
+    return normalize(cross(p1, p2));
 }
 
 vec4 createPlanePerpendicularToView(vec3 dir1, vec3 dir2, vec3 pointOnPlane)
@@ -443,7 +436,6 @@ void cullSpotLights(const AABB tileAABB)
             uint id = atomicAdd(spotLightCount, 1);
             spotLightIndices[lightBeginIndex + id] = i;
         }
-
     }
 
     spotLightIndices[numberOfLightsIndex] = spotLightCount;
