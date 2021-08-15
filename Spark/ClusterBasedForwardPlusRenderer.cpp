@@ -95,7 +95,6 @@ void ClusterBasedForwardPlusRenderer::lightingPass(std::map<ShaderType, std::deq
 
     lightingShader->use();
     lightingShader->bindUniformBuffer("Camera", cameraUbo);
-    lightingShader->setUVec2("viewportSize", {w, h});
     lightingShader->setVec2("tileSize", lightCullingPass.pxTileSize);
     for(auto& request : renderQueue[ShaderType::PBR])
     {

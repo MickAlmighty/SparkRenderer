@@ -3,10 +3,10 @@
 #include <memory>
 
 #include "Buffer.hpp"
+#include "ClusterBasedLightCullingPass.hpp"
 #include "GBuffer.h"
 #include "glad_glfw3.h"
 #include "Renderer.hpp"
-#include "TileBasedLightCullingPass.hpp"
 #include "effects/AmbientOcclusion.hpp"
 #include "lights/LightManager.h"
 
@@ -14,16 +14,16 @@ namespace spark
 {
 struct PbrCubemapTexture;
 
-class TileBasedDeferredRenderer : public Renderer
+class ClusterBasedDeferredRenderer : public Renderer
 {
     public:
-    TileBasedDeferredRenderer(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo,
-                              const std::shared_ptr<lights::LightManager>& lightManager);
-    TileBasedDeferredRenderer(const TileBasedDeferredRenderer&) = delete;
-    TileBasedDeferredRenderer(TileBasedDeferredRenderer&&) = delete;
-    TileBasedDeferredRenderer& operator=(const TileBasedDeferredRenderer&) = delete;
-    TileBasedDeferredRenderer& operator=(TileBasedDeferredRenderer&&) = delete;
-    ~TileBasedDeferredRenderer() override;
+    ClusterBasedDeferredRenderer(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo,
+                                 const std::shared_ptr<lights::LightManager>& lightManager);
+    ClusterBasedDeferredRenderer(const ClusterBasedDeferredRenderer&) = delete;
+    ClusterBasedDeferredRenderer(ClusterBasedDeferredRenderer&&) = delete;
+    ClusterBasedDeferredRenderer& operator=(const ClusterBasedDeferredRenderer&) = delete;
+    ClusterBasedDeferredRenderer& operator=(ClusterBasedDeferredRenderer&&) = delete;
+    ~ClusterBasedDeferredRenderer() override;
 
     GLuint process(std::map<ShaderType, std::deque<RenderingRequest>>& renderQueue, const std::weak_ptr<PbrCubemapTexture>& pbrCubemap,
                    const UniformBuffer& cameraUbo) override;
@@ -38,7 +38,7 @@ class TileBasedDeferredRenderer : public Renderer
     GLuint lightingTexture{};
     GLuint brdfLookupTexture{};
     GBuffer gBuffer;
-    TileBasedLightCullingPass lightCullingPass;
+    ClusterBasedLightCullingPass lightCullingPass;
     std::shared_ptr<resources::Shader> lightingShader{nullptr};
 };
 }  // namespace spark

@@ -1,4 +1,4 @@
-#include "TileBasedDeferredRenderer.hpp"
+#include "ClusterBasedDeferredRenderer.hpp"
 
 #include "CommonUtils.h"
 #include "Shader.h"
@@ -6,27 +6,24 @@
 
 namespace spark
 {
-TileBasedDeferredRenderer::TileBasedDeferredRenderer(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo,
-                                                     const std::shared_ptr<lights::LightManager>& lightManager)
+ClusterBasedDeferredRenderer::ClusterBasedDeferredRenderer(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo,
+                                                           const std::shared_ptr<lights::LightManager>& lightManager)
     : Renderer(width, height, cameraUbo), gBuffer(width, height), lightCullingPass(width, height, cameraUbo, lightManager)
 {
     brdfLookupTexture = utils::createBrdfLookupTexture(1024);
 
-    lightingShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("tileBasedLighting.glsl");
+    lightingShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("clusterBasedDeferredPbrLighting.glsl");
     lightingShader->bindUniformBuffer("Camera", cameraUbo);
-    lightingShader->bindSSBO("PointLightIndices", lightCullingPass.pointLightIndices);
-    lightingShader->bindSSBO("SpotLightIndices", lightCullingPass.spotLightIndices);
-    lightingShader->bindSSBO("LightProbeIndices", lightCullingPass.lightProbeIndices);
     bindLightBuffers(lightManager);
     createFrameBuffersAndTextures();
 }
 
-TileBasedDeferredRenderer::~TileBasedDeferredRenderer()
+ClusterBasedDeferredRenderer::~ClusterBasedDeferredRenderer()
 {
     glDeleteTextures(1, &lightingTexture);
 }
 
-GLuint TileBasedDeferredRenderer::process(std::map<ShaderType, std::deque<RenderingRequest>>& renderQueue,
+GLuint ClusterBasedDeferredRenderer::process(std::map<ShaderType, std::deque<RenderingRequest>>& renderQueue,
                                           const std::weak_ptr<PbrCubemapTexture>& pbrCubemap, const UniformBuffer& cameraUbo)
 {
     gBuffer.fill(renderQueue, cameraUbo);
@@ -44,6 +41,7 @@ GLuint TileBasedDeferredRenderer::process(std::map<ShaderType, std::deque<Render
     const auto cubemap = pbrCubemap.lock();
 
     lightingShader->use();
+    lightingShader->setVec2("tileSize", lightCullingPass.pxTileSize);
 
     // depth texture as sampler2D
     glBindTextureUnit(0, gBuffer.depthTexture);
@@ -70,7 +68,7 @@ GLuint TileBasedDeferredRenderer::process(std::map<ShaderType, std::deque<Render
     return lightingTexture;
 }
 
-void TileBasedDeferredRenderer::resize(unsigned int width, unsigned int height)
+void ClusterBasedDeferredRenderer::resize(unsigned int width, unsigned int height)
 {
     w = width;
     h = height;
@@ -80,21 +78,25 @@ void TileBasedDeferredRenderer::resize(unsigned int width, unsigned int height)
     createFrameBuffersAndTextures();
 }
 
-void TileBasedDeferredRenderer::createFrameBuffersAndTextures()
+void ClusterBasedDeferredRenderer::createFrameBuffersAndTextures()
 {
     utils::recreateTexture2D(lightingTexture, w, h, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
 }
 
-void TileBasedDeferredRenderer::bindLightBuffers(const std::shared_ptr<lights::LightManager>& lightManager)
+void ClusterBasedDeferredRenderer::bindLightBuffers(const std::shared_ptr<lights::LightManager>& lightManager)
 {
     lightingShader->bindSSBO("DirLightData", lightManager->getDirLightSSBO());
     lightingShader->bindSSBO("PointLightData", lightManager->getPointLightSSBO());
     lightingShader->bindSSBO("SpotLightData", lightManager->getSpotLightSSBO());
     lightingShader->bindSSBO("LightProbeData", lightManager->getLightProbeSSBO());
+    lightingShader->bindSSBO("GlobalPointLightIndices", lightCullingPass.globalPointLightIndices);
+    lightingShader->bindSSBO("GlobalSpotLightIndices", lightCullingPass.globalSpotLightIndices);
+    lightingShader->bindSSBO("GlobalLightProbeIndices", lightCullingPass.globalLightProbeIndices);
+    lightingShader->bindSSBO("PerClusterGlobalLightIndicesBufferMetadata", lightCullingPass.perClusterGlobalLightIndicesBufferMetadata);
     lightCullingPass.bindLightBuffers(lightManager);
 }
 
-GLuint TileBasedDeferredRenderer::getDepthTexture() const
+GLuint ClusterBasedDeferredRenderer::getDepthTexture() const
 {
     return gBuffer.depthTexture;
 }

@@ -12,6 +12,7 @@
 #include "TileBasedDeferredRenderer.hpp"
 #include "TileBasedForwardPlusRenderer.hpp"
 #include "ClusterBasedForwardPlusRenderer.hpp"
+#include "ClusterBasedDeferredRenderer.hpp"
 #include "Timer.h"
 
 namespace spark
@@ -23,30 +24,36 @@ void SparkRenderer::drawGui()
         const std::string renderingAlgorithmTypeMenu = "Rendering Algorithms";
         if(ImGui::BeginMenu(renderingAlgorithmTypeMenu.c_str()))
         {
-            static int mode = 0;
-            if(ImGui::RadioButton("Tile Based Deferred", mode == 0))
+            static int mode = 2;
+            
+            if(ImGui::RadioButton("Deferred", mode == 0))
             {
                 mode = 0;
-                renderer = std::make_unique<TileBasedDeferredRenderer>(width, height, cameraUBO, scene.lock()->lightManager);
-            }
-            if(ImGui::RadioButton("Deferred", mode == 1))
-            {
-                mode = 1;
                 renderer = std::make_unique<DeferredRenderer>(width, height, cameraUBO, scene.lock()->lightManager);
             }
-            if(ImGui::RadioButton("Forward Plus", mode == 2))
+            if(ImGui::RadioButton("Forward Plus", mode == 1))
+            {
+                mode = 1;
+                renderer = std::make_unique<ForwardPlusRenderer>(width, height, cameraUBO, scene.lock()->lightManager);
+            }
+            if (ImGui::RadioButton("Tile Based Deferred", mode == 2))
             {
                 mode = 2;
-                renderer = std::make_unique<ForwardPlusRenderer>(width, height, cameraUBO, scene.lock()->lightManager);
+                renderer = std::make_unique<TileBasedDeferredRenderer>(width, height, cameraUBO, scene.lock()->lightManager);
             }
             if (ImGui::RadioButton("Tile Based Forward Plus", mode == 3))
             {
                 mode = 3;
                 renderer = std::make_unique<TileBasedForwardPlusRenderer>(width, height, cameraUBO, scene.lock()->lightManager);
             }
-            if (ImGui::RadioButton("Cluster Based Forward Plus", mode == 4))
+            if (ImGui::RadioButton("Cluster Based Deferred", mode == 4))
             {
                 mode = 4;
+                renderer = std::make_unique<ClusterBasedDeferredRenderer>(width, height, cameraUBO, scene.lock()->lightManager);
+            }
+            if (ImGui::RadioButton("Cluster Based Forward Plus", mode == 5))
+            {
+                mode = 5;
                 renderer = std::make_unique<ClusterBasedForwardPlusRenderer>(width, height, cameraUBO, scene.lock()->lightManager);
             }
             ImGui::EndMenu();
