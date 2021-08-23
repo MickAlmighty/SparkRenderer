@@ -2,8 +2,6 @@
 #version 450
 layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
-shared uint lightIndices[256];
-
 layout (std140) uniform Camera
 {
     vec4 pos;
@@ -36,11 +34,6 @@ struct GlobalIndicesOffset
     uint globalPointLightIndicesOffset;
     uint globalSpotLightIndicesOffset;
     uint globalLightProbeIndicesOffset;
-};
-
-layout(std430) buffer GlobalLightIndicesOffset //for atomic add
-{
-    GlobalIndicesOffset globalIndicesOffset;
 };
 
 layout(std430) buffer GlobalPointLightIndices
@@ -143,9 +136,11 @@ bool spotLightConeVsAABB(const SpotLight spotLight, const vec3 aabbCenter, const
 void cullPointLights(uint clusterIndex)
 {
     AABB cluster = clusters[clusterIndex];
-    const uint offset = clusterIndex * 256;
+    const uint offset = clusterIndex * 128;
     uint lightCount = 0;
 
+    uint j = 0;
+    uint packedIndices = 0;
     for (int i = 0; i < pointLights.length(); ++i)
     {
         PointLight p = pointLights[i];
@@ -153,23 +148,28 @@ void cullPointLights(uint clusterIndex)
         const float pRadius = p.positionAndRadius.w;
         if (testSphereVsAABB(pPos, pRadius, cluster.center, cluster.halfSize))
         {
-            globalPointLightIndices[offset + lightCount] = i;
+            uint index = i << (16 * (1 - j));
+            packedIndices |= index;
             lightCount += 1;
+            j += 1;
+        }
+        if (j == 2)
+        {
+            const uint packedIndicesOffset = (lightCount - 1) / 2;
+            globalPointLightIndices[offset + packedIndicesOffset] = packedIndices;
+            packedIndices = 0;
+            j = 0;
         }
     }
 
-    // if(lightCount == 0)
-    //     return;
+    if (j == 1)
+    {
+        const uint packedIndicesOffset = (lightCount - 1) / 2;
+        globalPointLightIndices[offset + packedIndicesOffset] = packedIndices;
+    }
 
-    //fill global light indices list
-    //atomicAdd(globalIndicesOffset.globalPointLightIndicesOffset, lightCount);
     lightIndicesBufferMetadata[clusterIndex].pointLightIndicesOffset = offset;
     lightIndicesBufferMetadata[clusterIndex].pointLightCount = lightCount;
-
-    // for (uint i = 0; i < lightCount; ++i)
-    // {
-    //     globalPointLightIndices[offset + i] = lightIndices[i];
-    // }
 }
 
 void cullSpotLights(uint clusterIndex)
@@ -178,36 +178,47 @@ void cullSpotLights(uint clusterIndex)
     const uint offset = clusterIndex * 256;
     uint lightCount = 0;
 
+    uint j = 0;
+    uint packedIndices = 0;
     const float aabbSphereRadius = length(cluster.halfSize);
     for (uint i = 0; i < spotLights.length(); ++i)
     {
         const SpotLight s = spotLights[i];
         if(spotLightConeVsAABB(s, cluster.center, aabbSphereRadius))
         {
-            globalSpotLightIndices[offset + lightCount] = i;
+            uint index = i << (16 * (1 - j));
+            packedIndices |= index;
             lightCount += 1;
+            j += 1;
+        }
+
+        if (j == 2)
+        {
+            const uint packedIndicesOffset = (lightCount - 1) / 2;
+            globalSpotLightIndices[offset + packedIndicesOffset] = packedIndices;
+            packedIndices = 0;
+            j = 0;
         }
     }
 
-    // if(lightCount == 0)
-    //     return;
+    if (j == 1)
+    {
+        const uint packedIndicesOffset = (lightCount - 1) / 2;
+        globalSpotLightIndices[offset + packedIndicesOffset] = packedIndices;
+    }
 
-    //fill global light indices list
-    //atomicAdd(globalIndicesOffset.globalSpotLightIndicesOffset, lightCount);
     lightIndicesBufferMetadata[clusterIndex].spotLightIndicesOffset = offset;
     lightIndicesBufferMetadata[clusterIndex].spotLightCount = lightCount;
-
-    // for (uint i = 0; i < lightCount; ++i)
-    // {
-    //     globalSpotLightIndices[offset + i] = lightIndices[i];
-    // }
 }
 
 void cullLightProbes(uint clusterIndex)
 {
     AABB cluster = clusters[clusterIndex];
-    const uint offset = clusterIndex * 256;
+    const uint offset = clusterIndex * 128;
     uint lightCount = 0;
+
+    uint j = 0;
+    uint packedIndices = 0;
     for (int i = 0; i < lightProbes.length(); ++i)
     {
         LightProbe l = lightProbes[i];
@@ -215,23 +226,29 @@ void cullLightProbes(uint clusterIndex)
         const float lRadius = l.positionAndRadius.w;
         if (testSphereVsAABB(lPos, lRadius, cluster.center, cluster.halfSize))
         {
-            globalLightProbeIndices[offset + lightCount] = i;
+            uint index = i << (16 * (1 - j));
+            packedIndices |= index;
             lightCount += 1;
+            j += 1;
+        }
+
+        if (j == 2)
+        {
+            const uint packedIndicesOffset = (lightCount - 1) / 2;
+            globalLightProbeIndices[offset + packedIndicesOffset] = packedIndices;
+            packedIndices = 0;
+            j = 0;
         }
     }
 
-    // if(lightCount == 0)
-    //     return;
+    if (j == 1)
+    {
+        const uint packedIndicesOffset = (lightCount - 1) / 2;
+        globalLightProbeIndices[offset + packedIndicesOffset] = packedIndices;
+    }
 
-    //fill global light indices list
-    //atomicAdd(globalIndicesOffset.globalLightProbeIndicesOffset, lightCount);
     lightIndicesBufferMetadata[clusterIndex].lightProbeIndicesOffset = offset;
     lightIndicesBufferMetadata[clusterIndex].lightProbeCount = lightCount;
-
-    // for (uint i = 0; i < lightCount; ++i)
-    // {
-    //     globalLightProbeIndices[offset + i] = lightIndices[i];
-    // }
 }
 
 void main()

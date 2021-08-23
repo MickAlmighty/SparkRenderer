@@ -28,18 +28,23 @@ class ClusterBasedLightCullingPass
     SSBO globalSpotLightIndices{};
     SSBO globalLightProbeIndices{};
     SSBO perClusterGlobalLightIndicesBufferMetadata{};
-    glm::vec2 pxTileSize{ 1 };
+    glm::vec2 pxTileSize{1};
 
     private:
+    void createClusters();
+    void determineActiveClusters(GLuint depthTexture);
+    void buildCompactClusterList();
+    void lightCulling();
+    void clearActiveClustersCounter();
+
     unsigned int w{}, h{};
-    
+
     const glm::uvec3 dispatchSize{64, 64, 32};
 
     SSBO clusters{};
     SSBO activeClusters{};
     SSBO activeClustersCount{12};
     SSBO activeClusterIndices{};
-    SSBO globalLightIndicesOffset{};
 
     std::shared_ptr<resources::Shader> clusterCreationShader{nullptr};
     std::shared_ptr<resources::Shader> determineActiveClustersShader{nullptr};

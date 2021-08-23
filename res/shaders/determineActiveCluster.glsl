@@ -5,8 +5,6 @@ layout(local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
 layout(binding = 0) uniform sampler2D depthTexture;
 
 uniform vec2 tileSize;
-//uniform float equation3Part1;
-//uniform float equation3Part2;
 
 layout (std140) uniform Camera
 {
@@ -17,6 +15,8 @@ layout (std140) uniform Camera
     mat4 invertedProjection;
     float nearZ;
     float farZ;
+    float equation3Part1;
+    float equation3Part2;
 } camera;
 
 layout(std430) buffer ActiveClusters
@@ -51,11 +51,7 @@ vec3 fromPxToViewSpace(vec2 pixelCoords, vec2 screenSize, float depth)
 
 uint getZSlice(float viewSpaceDepth)
 {
-    const float clustersZ = 32.0f;
-    const float logNearByFar = log(camera.farZ / camera.nearZ);
-    const float equation3Part1 = clustersZ / logNearByFar;
-    const float equation3Part2 = clustersZ * log(camera.nearZ) / logNearByFar;
-    return uint(log(abs(viewSpaceDepth)) * equation3Part1 - equation3Part2);
+    return uint(log(abs(viewSpaceDepth)) * camera.equation3Part1 - camera.equation3Part2);
 }
 
 uint calculateClusterIndex(uint clusterZ)

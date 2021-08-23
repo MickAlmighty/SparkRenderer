@@ -29,7 +29,6 @@ ClusterBasedLightCullingPass::ClusterBasedLightCullingPass(unsigned int width, u
     clusterBasedLightCullingShader->bindSSBO("ActiveClusterIndices", activeClusterIndices);
     clusterBasedLightCullingShader->bindSSBO("ClusterData", clusters);
     clusterBasedLightCullingShader->bindSSBO("PerClusterGlobalLightIndicesBufferMetadata", perClusterGlobalLightIndicesBufferMetadata);
-    clusterBasedLightCullingShader->bindSSBO("GlobalLightIndicesOffset", globalLightIndicesOffset);
     clusterBasedLightCullingShader->bindSSBO("GlobalPointLightIndices", globalPointLightIndices);
     clusterBasedLightCullingShader->bindSSBO("GlobalSpotLightIndices", globalSpotLightIndices);
     clusterBasedLightCullingShader->bindSSBO("GlobalLightProbeIndices", globalLightProbeIndices);
@@ -38,10 +37,9 @@ ClusterBasedLightCullingPass::ClusterBasedLightCullingPass(unsigned int width, u
     activeClusters.resizeBuffer(dispatchSize.x * dispatchSize.y * dispatchSize.z * sizeof(GLuint));
     activeClusterIndices.resizeBuffer(dispatchSize.x * dispatchSize.y * dispatchSize.z * sizeof(GLuint));
     perClusterGlobalLightIndicesBufferMetadata.resizeBuffer(dispatchSize.x * dispatchSize.y * dispatchSize.z * sizeof(GLuint) * 6);
-    globalLightIndicesOffset.resizeBuffer(sizeof(GLuint) * 3);
-    globalPointLightIndices.resizeBuffer(dispatchSize.x * dispatchSize.y * dispatchSize.z * sizeof(GLuint) * 256);
-    globalSpotLightIndices.resizeBuffer(dispatchSize.x * dispatchSize.y * dispatchSize.z * sizeof(GLuint) * 256);
-    globalLightProbeIndices.resizeBuffer(dispatchSize.x * dispatchSize.y * dispatchSize.z * sizeof(GLuint) * 256);
+    globalPointLightIndices.resizeBuffer(dispatchSize.x * dispatchSize.y * dispatchSize.z * sizeof(GLuint) * 128);
+    globalSpotLightIndices.resizeBuffer(dispatchSize.x * dispatchSize.y * dispatchSize.z * sizeof(GLuint) * 128);
+    globalLightProbeIndices.resizeBuffer(dispatchSize.x * dispatchSize.y * dispatchSize.z * sizeof(GLuint) * 128);
 
     const std::array<unsigned int, 3> dispatches{1, 1, 1};
     activeClustersCount.updateData(dispatches);
@@ -53,53 +51,49 @@ ClusterBasedLightCullingPass::ClusterBasedLightCullingPass(unsigned int width, u
 void ClusterBasedLightCullingPass::process(GLuint depthTexture)
 {
     PUSH_DEBUG_GROUP(CLUSTER_BASED_LIGHT_CULLING)
-    //globalPointLightIndices.clearData();
-    //globalSpotLightIndices.clearData();
-    //globalLightProbeIndices.clearData();
 
+    createClusters();
+    determineActiveClusters(depthTexture);
+    buildCompactClusterList();
+    lightCulling();
+
+    clearActiveClustersCounter();
+    POP_DEBUG_GROUP()
+}
+
+void ClusterBasedLightCullingPass::createClusters()
+{
     clusterCreationShader->use();
     clusterCreationShader->setVec2("tileSize", pxTileSize);
     clusterCreationShader->dispatchCompute(utils::uiCeil(dispatchSize.x, 32u), utils::uiCeil(dispatchSize.y, 32u), dispatchSize.z);
+}
 
-    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+void ClusterBasedLightCullingPass::determineActiveClusters(GLuint depthTexture)
+{
+    determineActiveClustersShader->use();
+    determineActiveClustersShader->setVec2("tileSize", pxTileSize);
 
-    {
-        /*const float logNearByFar = glm::log(camera->getFarPlane() / camera->getNearPlane());
-        const float equation3Part1 = static_cast<float>(dispatchSize.z) / logNearByFar;
-        const float equation3Part2 = static_cast<float>(dispatchSize.z) * glm::log(camera->getNearPlane()) / logNearByFar;*/
+    glBindTextureUnit(0, depthTexture);
+    determineActiveClustersShader->dispatchCompute(utils::uiCeil(w, 32u), utils::uiCeil(h, 32u), 1);
+    glBindTextures(0, 1, nullptr);
+}
 
-        determineActiveClustersShader->use();
-        determineActiveClustersShader->setVec2("tileSize", pxTileSize);
-       /* determineActiveClustersShader->setFloat("equation3Part1", equation3Part1);
-        determineActiveClustersShader->setFloat("equation3Part2", equation3Part2);*/
+void ClusterBasedLightCullingPass::buildCompactClusterList()
+{
+    buildCompactClusterListShader->use();
+    buildCompactClusterListShader->dispatchCompute(utils::uiCeil(dispatchSize.x, 32u), utils::uiCeil(dispatchSize.y, 32u), dispatchSize.z);
+}
 
-        glBindTextureUnit(0, depthTexture);
-        determineActiveClustersShader->dispatchCompute(utils::uiCeil(w, 32u), utils::uiCeil(h, 32u), 1);
-        glBindTextures(0, 1, nullptr);
-    }
+void ClusterBasedLightCullingPass::lightCulling()
+{
+    clusterBasedLightCullingShader->use();
+    clusterBasedLightCullingShader->dispatchComputeIndirect(activeClustersCount.ID);
+}
 
-    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-
-    {
-        buildCompactClusterListShader->use();
-        buildCompactClusterListShader->dispatchCompute(utils::uiCeil(dispatchSize.x, 32u), utils::uiCeil(dispatchSize.y, 32u), dispatchSize.z);
-    }
-
-    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-
-    {
-        clusterBasedLightCullingShader->use();
-        clusterBasedLightCullingShader->dispatchComputeIndirect(activeClustersCount.ID);
-    }
-
-    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-
-    const std::array<GLuint, 1> globalActiveClusterCount{0};
+void ClusterBasedLightCullingPass::clearActiveClustersCounter()
+{
+    const std::array<GLuint, 1> globalActiveClusterCount{ 0 };
     activeClustersCount.updateSubData(0, globalActiveClusterCount);
-    // activeClustersCount.clearData();
-    globalLightIndicesOffset.clearData();
-    activeClusterIndices.clearData(); // if culling will work, to be removed
-    POP_DEBUG_GROUP()
 }
 
 void ClusterBasedLightCullingPass::resize(unsigned int width, unsigned int height)

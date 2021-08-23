@@ -39,7 +39,6 @@ void TileBasedForwardPlusRenderer::depthPrepass(std::map<ShaderType, std::deque<
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_GREATER);
     glClearDepth(0.0);
-    POP_DEBUG_GROUP()
 
     std::shared_ptr<resources::Shader> shader{nullptr};
     if(!isAmbientOcclusionEnabled)
@@ -60,6 +59,8 @@ void TileBasedForwardPlusRenderer::depthPrepass(std::map<ShaderType, std::deque<
     {
         request.mesh->draw(shader, request.model);
     }
+
+    POP_DEBUG_GROUP()
 }
 
 GLuint TileBasedForwardPlusRenderer::aoPass()
