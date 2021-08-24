@@ -8,13 +8,13 @@
 #include "lights/LightManager.h"
 #include "RenderingRequest.h"
 
-namespace spark
+namespace spark::resources
 {
-namespace resources
-{
-    class Shader;
+class Shader;
 }
 
+namespace spark::renderers
+{
 class GBuffer
 {
     public:
@@ -43,4 +43,4 @@ class GBuffer
     unsigned int w{}, h{};
     std::shared_ptr<resources::Shader> pbrGeometryBufferShader{nullptr};
 };
-}  // namespace spark
+}  // namespace spark::renderers

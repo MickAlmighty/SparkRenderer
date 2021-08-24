@@ -4,7 +4,7 @@
 #include "Shader.h"
 #include "Spark.h"
 
-namespace spark
+namespace spark::renderers
 {
 ClusterBasedDeferredRenderer::ClusterBasedDeferredRenderer(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo,
                                                            const std::shared_ptr<lights::LightManager>& lightManager)
@@ -24,7 +24,7 @@ ClusterBasedDeferredRenderer::~ClusterBasedDeferredRenderer()
 }
 
 GLuint ClusterBasedDeferredRenderer::process(std::map<ShaderType, std::deque<RenderingRequest>>& renderQueue,
-                                          const std::weak_ptr<PbrCubemapTexture>& pbrCubemap, const UniformBuffer& cameraUbo)
+                                             const std::weak_ptr<PbrCubemapTexture>& pbrCubemap, const UniformBuffer& cameraUbo)
 {
     gBuffer.fill(renderQueue, cameraUbo);
 
@@ -100,4 +100,4 @@ GLuint ClusterBasedDeferredRenderer::getDepthTexture() const
 {
     return gBuffer.depthTexture;
 }
-}  // namespace spark
+}  // namespace spark::renderers

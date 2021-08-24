@@ -1,19 +1,20 @@
-#include "ClusterBasedForwardPlusRenderer.hpp"
+#include "ForwardPlusRenderer.hpp"
 
 #include "CommonUtils.h"
+#include "Shader.h"
 #include "Spark.h"
 
-namespace spark
+namespace spark::renderers
 {
-ClusterBasedForwardPlusRenderer::ClusterBasedForwardPlusRenderer(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo,
+ForwardPlusRenderer::ForwardPlusRenderer(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo,
                                          const std::shared_ptr<lights::LightManager>& lightManager)
-    : Renderer(width, height, cameraUbo), lightCullingPass(width, height, cameraUbo, lightManager)
+    : Renderer(width, height, cameraUbo)
 {
     brdfLookupTexture = utils::createBrdfLookupTexture(1024);
 
     depthOnlyShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("depthOnly.glsl");
     depthAndNormalsShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("depthAndNormals.glsl");
-    lightingShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("clusterBasedForwardPlusPbrLighting.glsl");
+    lightingShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("forwardPlusPbrLighting.glsl");
 
     depthOnlyShader->bindUniformBuffer("Camera", cameraUbo);
     depthAndNormalsShader->bindUniformBuffer("Camera", cameraUbo);
@@ -23,7 +24,7 @@ ClusterBasedForwardPlusRenderer::ClusterBasedForwardPlusRenderer(unsigned int wi
     createFrameBuffersAndTextures();
 }
 
-ClusterBasedForwardPlusRenderer::~ClusterBasedForwardPlusRenderer()
+ForwardPlusRenderer::~ForwardPlusRenderer()
 {
     glDeleteTextures(1, &lightingTexture);
     glDeleteTextures(1, &normalsTexture);
@@ -32,14 +33,13 @@ ClusterBasedForwardPlusRenderer::~ClusterBasedForwardPlusRenderer()
     glDeleteFramebuffers(1, &lightingFramebuffer);
 }
 
-void ClusterBasedForwardPlusRenderer::depthPrepass(std::map<ShaderType, std::deque<RenderingRequest>>& renderQueue, const UniformBuffer& cameraUbo)
+void ForwardPlusRenderer::depthPrepass(std::map<ShaderType, std::deque<RenderingRequest>>& renderQueue, const UniformBuffer& cameraUbo)
 {
     PUSH_DEBUG_GROUP(DEPTH_PREPASS)
     glBindFramebuffer(GL_FRAMEBUFFER, depthPrepassFramebuffer);
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_GREATER);
     glClearDepth(0.0);
-    POP_DEBUG_GROUP()
 
     std::shared_ptr<resources::Shader> shader{nullptr};
     if(!isAmbientOcclusionEnabled)
@@ -60,9 +60,11 @@ void ClusterBasedForwardPlusRenderer::depthPrepass(std::map<ShaderType, std::deq
     {
         request.mesh->draw(shader, request.model);
     }
+
+    POP_DEBUG_GROUP()
 }
 
-GLuint ClusterBasedForwardPlusRenderer::aoPass()
+GLuint ForwardPlusRenderer::aoPass()
 {
     if(isAmbientOcclusionEnabled)
     {
@@ -71,10 +73,9 @@ GLuint ClusterBasedForwardPlusRenderer::aoPass()
     return 0;
 }
 
-void ClusterBasedForwardPlusRenderer::lightingPass(std::map<ShaderType, std::deque<RenderingRequest>>& renderQueue,
-                                       const std::weak_ptr<PbrCubemapTexture>& pbrCubemap, const UniformBuffer& cameraUbo, const GLuint ssaoTexture)
+void ForwardPlusRenderer::lightingPass(std::map<ShaderType, std::deque<RenderingRequest>>& renderQueue, const std::weak_ptr<PbrCubemapTexture>& pbrCubemap, const UniformBuffer& cameraUbo, const GLuint ssaoTexture)
 {
-    PUSH_DEBUG_GROUP(PBR_LIGHT)
+    PUSH_DEBUG_GROUP(PBR_LIGHT);
     glBindFramebuffer(GL_FRAMEBUFFER, lightingFramebuffer);
     glClearColor(0, 0, 0, 0);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -95,7 +96,6 @@ void ClusterBasedForwardPlusRenderer::lightingPass(std::map<ShaderType, std::deq
 
     lightingShader->use();
     lightingShader->bindUniformBuffer("Camera", cameraUbo);
-    lightingShader->setVec2("tileSize", lightCullingPass.pxTileSize);
     for(auto& request : renderQueue[ShaderType::PBR])
     {
         request.mesh->draw(lightingShader, request.model);
@@ -105,44 +105,37 @@ void ClusterBasedForwardPlusRenderer::lightingPass(std::map<ShaderType, std::deq
     POP_DEBUG_GROUP()
 }
 
-GLuint ClusterBasedForwardPlusRenderer::process(std::map<ShaderType, std::deque<RenderingRequest>>& renderQueue,
+GLuint ForwardPlusRenderer::process(std::map<ShaderType, std::deque<RenderingRequest>>& renderQueue,
                                     const std::weak_ptr<PbrCubemapTexture>& pbrCubemap, const UniformBuffer& cameraUbo)
 {
     depthPrepass(renderQueue, cameraUbo);
     const GLuint ssaoTexture = aoPass();
-    lightCullingPass.process(depthTexture);
     lightingPass(renderQueue, pbrCubemap, cameraUbo, ssaoTexture);
     return lightingTexture;
 }
 
-void ClusterBasedForwardPlusRenderer::bindLightBuffers(const std::shared_ptr<lights::LightManager>& lightManager)
+void ForwardPlusRenderer::bindLightBuffers(const std::shared_ptr<lights::LightManager>& lightManager)
 {
     lightingShader->bindSSBO("DirLightData", lightManager->getDirLightSSBO());
     lightingShader->bindSSBO("PointLightData", lightManager->getPointLightSSBO());
     lightingShader->bindSSBO("SpotLightData", lightManager->getSpotLightSSBO());
     lightingShader->bindSSBO("LightProbeData", lightManager->getLightProbeSSBO());
-    lightingShader->bindSSBO("GlobalPointLightIndices", lightCullingPass.globalPointLightIndices);
-    lightingShader->bindSSBO("GlobalSpotLightIndices", lightCullingPass.globalSpotLightIndices);
-    lightingShader->bindSSBO("GlobalLightProbeIndices", lightCullingPass.globalLightProbeIndices);
-    lightingShader->bindSSBO("PerClusterGlobalLightIndicesBufferMetadata", lightCullingPass.perClusterGlobalLightIndicesBufferMetadata);
-    lightCullingPass.bindLightBuffers(lightManager);
 }
 
-void ClusterBasedForwardPlusRenderer::resize(unsigned int width, unsigned int height)
+void ForwardPlusRenderer::resize(unsigned int width, unsigned int height)
 {
     w = width;
     h = height;
     ao.resize(w, h);
-    lightCullingPass.resize(w, h);
     createFrameBuffersAndTextures();
 }
 
-GLuint ClusterBasedForwardPlusRenderer::getDepthTexture() const
+GLuint ForwardPlusRenderer::getDepthTexture() const
 {
     return depthTexture;
 }
 
-void ClusterBasedForwardPlusRenderer::createFrameBuffersAndTextures()
+void ForwardPlusRenderer::createFrameBuffersAndTextures()
 {
     utils::recreateTexture2D(lightingTexture, w, h, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
     utils::recreateTexture2D(normalsTexture, w, h, GL_RG16F, GL_RG, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);

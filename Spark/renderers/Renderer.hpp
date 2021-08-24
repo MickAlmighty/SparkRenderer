@@ -4,7 +4,7 @@
 #include "RenderingRequest.h"
 #include "effects/AmbientOcclusion.hpp"
 
-namespace spark
+namespace spark::renderers
 {
 class Renderer
 {
@@ -32,4 +32,4 @@ class Renderer
 inline Renderer::Renderer(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo) : ao(width, height, cameraUbo), w(width), h(height)
 {
 }
-}  // namespace spark
+}  // namespace spark::renderers

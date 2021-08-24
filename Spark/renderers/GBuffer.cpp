@@ -1,13 +1,12 @@
-#include "GBuffer.h"
+#include "GBuffer.hpp"
 
 #include "CommonUtils.h"
 #include "Logging.h"
 #include "Shader.h"
 #include "Spark.h"
 
-namespace spark
+namespace spark::renderers
 {
-
 GBuffer::GBuffer(unsigned int width, unsigned int height) : w(width), h(height)
 {
     pbrGeometryBufferShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("pbrGeometryBuffer.glsl");
@@ -88,7 +87,7 @@ void GBuffer::createFrameBuffersAndTextures()
     utils::recreateTexture2D(roughnessMetalnessTexture, w, h, GL_RG, GL_RG, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
     utils::recreateTexture2D(depthTexture, w, h, GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
 
-    utils::recreateFramebuffer(framebuffer, { colorTexture, normalsTexture, roughnessMetalnessTexture });
+    utils::recreateFramebuffer(framebuffer, {colorTexture, normalsTexture, roughnessMetalnessTexture});
     utils::bindDepthTexture(framebuffer, depthTexture);
 }
-}  // namespace spark
+}  // namespace spark::renderers

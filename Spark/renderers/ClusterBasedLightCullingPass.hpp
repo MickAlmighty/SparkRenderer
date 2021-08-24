@@ -6,7 +6,7 @@
 #include "Shader.h"
 #include "lights/LightManager.h"
 
-namespace spark
+namespace spark::renderers
 {
 class ClusterBasedLightCullingPass
 {
@@ -51,4 +51,4 @@ class ClusterBasedLightCullingPass
     std::shared_ptr<resources::Shader> buildCompactClusterListShader{nullptr};
     std::shared_ptr<resources::Shader> clusterBasedLightCullingShader{nullptr};
 };
-}  // namespace spark
+}  // namespace spark::renderers

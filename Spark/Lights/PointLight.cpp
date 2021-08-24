@@ -9,7 +9,7 @@
 #include "GameObject.h"
 #include "JsonSerializer.h"
 #include "Mesh.h"
-#include "RenderingRequest.h"
+#include "renderers/RenderingRequest.h"
 #include "ShapeCreator.h"
 #include "Spark.h"
 #include "Structs.h"
@@ -106,7 +106,7 @@ void PointLight::update()
 
     if(getGameObject() == getGameObject()->getScene()->getGameObjectToPreview())
     {
-        RenderingRequest request{};
+        renderers::RenderingRequest request{};
         request.shaderType = sphere->shaderType;
         request.gameObject = getGameObject();
         request.mesh = sphere;

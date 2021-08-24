@@ -3,7 +3,7 @@
 #include <memory>
 
 #include "Buffer.hpp"
-#include "GBuffer.h"
+#include "GBuffer.hpp"
 #include "glad_glfw3.h"
 #include "Renderer.hpp"
 #include "TileBasedLightCullingPass.hpp"
@@ -13,7 +13,10 @@
 namespace spark
 {
 struct PbrCubemapTexture;
+}
 
+namespace spark::renderers
+{
 class TileBasedDeferredRenderer : public Renderer
 {
     public:
@@ -41,4 +44,4 @@ class TileBasedDeferredRenderer : public Renderer
     TileBasedLightCullingPass lightCullingPass;
     std::shared_ptr<resources::Shader> lightingShader{nullptr};
 };
-}  // namespace spark
+}  // namespace spark::renderers

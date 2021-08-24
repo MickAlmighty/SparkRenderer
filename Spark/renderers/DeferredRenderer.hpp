@@ -2,24 +2,24 @@
 #include <memory>
 
 #include "Buffer.hpp"
-#include "GBuffer.h"
+#include "GBuffer.hpp"
 #include "Renderer.hpp"
 #include "lights/LightManager.h"
 #include "ScreenQuad.hpp"
 #include "effects/AmbientOcclusion.hpp"
 
-namespace spark
+namespace spark::resources
 {
-namespace resources
-{
-    class Shader;
-}
+class Shader;
+}  // namespace spark::resources
 
+namespace spark::renderers
+{
 class DeferredRenderer : public Renderer
 {
     public:
     DeferredRenderer(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo,
-        const std::shared_ptr<lights::LightManager>& lightManager);
+                     const std::shared_ptr<lights::LightManager>& lightManager);
     DeferredRenderer(const DeferredRenderer&) = delete;
     DeferredRenderer(DeferredRenderer&&) = delete;
     DeferredRenderer& operator=(const DeferredRenderer&) = delete;
@@ -41,4 +41,4 @@ class DeferredRenderer : public Renderer
     ScreenQuad screenQuad{};
     std::shared_ptr<resources::Shader> lightingShader{nullptr};
 };
-}  // namespace spark
+}  // namespace spark::renderers

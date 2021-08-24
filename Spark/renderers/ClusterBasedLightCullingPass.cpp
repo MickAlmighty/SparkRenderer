@@ -4,7 +4,7 @@
 #include "Logging.h"
 #include "Spark.h"
 
-namespace spark
+namespace spark::renderers
 {
 ClusterBasedLightCullingPass::ClusterBasedLightCullingPass(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo,
                                                            const std::shared_ptr<lights::LightManager>& lightManager)
@@ -92,7 +92,7 @@ void ClusterBasedLightCullingPass::lightCulling()
 
 void ClusterBasedLightCullingPass::clearActiveClustersCounter()
 {
-    const std::array<GLuint, 1> globalActiveClusterCount{ 0 };
+    const std::array<GLuint, 1> globalActiveClusterCount{0};
     activeClustersCount.updateSubData(0, globalActiveClusterCount);
 }
 
@@ -109,4 +109,4 @@ void ClusterBasedLightCullingPass::bindLightBuffers(const std::shared_ptr<lights
     clusterBasedLightCullingShader->bindSSBO("SpotLightData", lightManager->getSpotLightSSBO());
     clusterBasedLightCullingShader->bindSSBO("LightProbeData", lightManager->getLightProbeSSBO());
 }
-}  // namespace spark
+}  // namespace spark::renderers

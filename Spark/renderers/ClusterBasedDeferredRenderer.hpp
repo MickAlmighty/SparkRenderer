@@ -4,7 +4,7 @@
 
 #include "Buffer.hpp"
 #include "ClusterBasedLightCullingPass.hpp"
-#include "GBuffer.h"
+#include "GBuffer.hpp"
 #include "glad_glfw3.h"
 #include "Renderer.hpp"
 #include "effects/AmbientOcclusion.hpp"
@@ -13,7 +13,10 @@
 namespace spark
 {
 struct PbrCubemapTexture;
+}
 
+namespace spark::renderers
+{
 class ClusterBasedDeferredRenderer : public Renderer
 {
     public:
@@ -41,4 +44,4 @@ class ClusterBasedDeferredRenderer : public Renderer
     ClusterBasedLightCullingPass lightCullingPass;
     std::shared_ptr<resources::Shader> lightingShader{nullptr};
 };
-}  // namespace spark
+}  // namespace spark::renderers

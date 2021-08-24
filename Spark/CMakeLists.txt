@@ -5,33 +5,19 @@ list(APPEND SparkSources
     ${CMAKE_CURRENT_SOURCE_DIR}/Clock.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Cube.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Clock.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/ClusterBasedDeferredRenderer.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/ClusterBasedDeferredRenderer.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/ClusterBasedForwardPlusRenderer.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/ClusterBasedForwardPlusRenderer.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/ClusterBasedLightCullingPass.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/ClusterBasedLightCullingPass.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CommonUtils.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CommonUtils.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Component.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Component.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/DeferredRenderer.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/DeferredRenderer.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Enums.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Enums.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/ForwardPlusRenderer.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/ForwardPlusRenderer.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/GameObject.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/GameObject.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/GBuffer.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/GBuffer.h
     ${CMAKE_CURRENT_SOURCE_DIR}/glad_glfw3.h
     ${CMAKE_CURRENT_SOURCE_DIR}/glad.c
     ${CMAKE_CURRENT_SOURCE_DIR}/IObserver.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/JsonSerializer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/JsonSerializer.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/LightProbesRenderer.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/LightProbesRenderer.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/LocalTransform.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/LocalTransform.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Logging.cpp
@@ -48,7 +34,6 @@ list(APPEND SparkSources
     ${CMAKE_CURRENT_SOURCE_DIR}/OpenGLContext.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/OpenGLContext.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ReflectionUtils.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/RenderingRequest.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Resource.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Resource.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ResourceFactory.cpp
@@ -78,12 +63,6 @@ list(APPEND SparkSources
     ${CMAKE_CURRENT_SOURCE_DIR}/stb_image.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Structs.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Structs.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/TileBasedDeferredRenderer.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/TileBasedDeferredRenderer.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/TileBasedForwardPlusRenderer.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/TileBasedForwardPlusRenderer.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/TileBasedLightCullingPass.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/TileBasedLightCullingPass.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Texture.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Texture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Timer.h
@@ -100,6 +79,7 @@ add_subdirectory(GUI)
 add_subdirectory(HID)
 add_subdirectory(lights)
 add_subdirectory(effects)
+add_subdirectory(renderers)
 
 # Create the source groups for source tree with root at CMAKE_CURRENT_SOURCE_DIR.
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SparkSources})

@@ -3,7 +3,7 @@
 #include "CommonUtils.h"
 #include "Spark.h"
 
-namespace spark
+namespace spark::renderers
 {
 TileBasedForwardPlusRenderer::TileBasedForwardPlusRenderer(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo,
                                          const std::shared_ptr<lights::LightManager>& lightManager)

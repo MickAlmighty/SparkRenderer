@@ -2,7 +2,7 @@
 #include "Renderer.hpp"
 #include "TileBasedLightCullingPass.hpp"
 
-namespace spark
+namespace spark::renderers
 {
 class TileBasedForwardPlusRenderer : public Renderer
 {
@@ -37,4 +37,4 @@ class TileBasedForwardPlusRenderer : public Renderer
     std::shared_ptr<resources::Shader> depthAndNormalsShader{nullptr};
     std::shared_ptr<resources::Shader> lightingShader{nullptr};
 };
-}  // namespace spark
+}  // namespace spark::renderers

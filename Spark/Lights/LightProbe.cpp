@@ -7,7 +7,7 @@
 #include "Enums.h"
 #include "GameObject.h"
 #include "Mesh.h"
-#include "RenderingRequest.h"
+#include "renderers/RenderingRequest.h"
 #include "ResourceLibrary.h"
 #include "Shader.h"
 #include "ShapeCreator.h"
@@ -68,7 +68,7 @@ void LightProbe::update()
     {
         if(sphere)
         {
-            RenderingRequest request{};
+            renderers::RenderingRequest request{};
             request.shaderType = sphere->shaderType;
             request.gameObject = getGameObject();
             request.mesh = sphere;

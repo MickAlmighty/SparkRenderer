@@ -4,7 +4,7 @@
 #include "GameObject.h"
 #include "GUI/SparkGui.h"
 #include "ReflectionUtils.h"
-#include "RenderingRequest.h"
+#include "renderers/RenderingRequest.h"
 #include "Shader.h"
 #include "Spark.h"
 
@@ -48,7 +48,7 @@ MeshPlane::MeshPlane(std::string&& name) : Component(std::move(name))
 
 void MeshPlane::update()
 {
-    RenderingRequest request{};
+    renderers::RenderingRequest request{};
     request.shaderType = ShaderType::COLOR_ONLY;
     request.gameObject = getGameObject();
     request.mesh = planeMesh;

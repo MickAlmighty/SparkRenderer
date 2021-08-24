@@ -9,7 +9,7 @@
 #include "Logging.h"
 #include "Mesh.h"
 #include "Model.h"
-#include "RenderingRequest.h"
+#include "renderers/RenderingRequest.h"
 #include "ResourceLibrary.h"
 #include "Spark.h"
 #include "EngineSystems/SparkRenderer.h"
@@ -32,7 +32,7 @@ void ModelMesh::update()
     {
         for(const auto& mesh : model->getMeshes())
         {
-            RenderingRequest request{};
+            renderers::RenderingRequest request{};
             request.shaderType = mesh->shaderType;
             request.gameObject = getGameObject();
             request.mesh = mesh;

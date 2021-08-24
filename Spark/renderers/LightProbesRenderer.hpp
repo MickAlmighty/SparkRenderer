@@ -1,11 +1,11 @@
 #pragma once
 
 #include "Cube.hpp"
-#include "GBuffer.h"
+#include "GBuffer.hpp"
 #include "glad_glfw3.h"
 #include "effects/SkyboxPass.hpp"
 
-namespace spark
+namespace spark::renderers
 {
 class LightProbesRenderer
 {
@@ -45,4 +45,4 @@ class LightProbesRenderer
     std::shared_ptr<resources::Shader> prefilterShader{nullptr};
     std::shared_ptr<resources::Shader> resampleCubemapShader{nullptr};
 };
-}  // namespace spark
+}  // namespace spark::renderers

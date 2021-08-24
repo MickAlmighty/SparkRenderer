@@ -6,7 +6,7 @@
 #include "GameObject.h"
 #include "Mesh.h"
 
-namespace spark
+namespace spark::renderers
 {
 struct RenderingRequest
 {
@@ -15,4 +15,4 @@ struct RenderingRequest
     std::shared_ptr<Mesh> mesh = nullptr;
     glm::mat4 model{1};
 };
-}  // namespace spark
+}  // namespace spark::renderers

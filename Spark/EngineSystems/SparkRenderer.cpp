@@ -2,17 +2,17 @@
 
 #include "Camera.h"
 #include "CommonUtils.h"
-#include "DeferredRenderer.hpp"
-#include "ForwardPlusRenderer.hpp"
+#include "renderers/DeferredRenderer.hpp"
+#include "renderers/ForwardPlusRenderer.hpp"
 #include "lights/LightProbe.h"
-#include "RenderingRequest.h"
+#include "renderers/RenderingRequest.h"
 #include "ResourceLibrary.h"
 #include "Shader.h"
 #include "Spark.h"
-#include "TileBasedDeferredRenderer.hpp"
-#include "TileBasedForwardPlusRenderer.hpp"
-#include "ClusterBasedForwardPlusRenderer.hpp"
-#include "ClusterBasedDeferredRenderer.hpp"
+#include "renderers/TileBasedDeferredRenderer.hpp"
+#include "renderers/TileBasedForwardPlusRenderer.hpp"
+#include "renderers/ClusterBasedForwardPlusRenderer.hpp"
+#include "renderers/ClusterBasedDeferredRenderer.hpp"
 #include "Timer.h"
 
 namespace spark
@@ -21,11 +21,12 @@ void SparkRenderer::drawGui()
 {
     if(ImGui::BeginMenu("Renderer"))
     {
+        using namespace renderers;
         const std::string renderingAlgorithmTypeMenu = "Rendering Algorithms";
         if(ImGui::BeginMenu(renderingAlgorithmTypeMenu.c_str()))
         {
             static int mode = 2;
-            
+
             if(ImGui::RadioButton("Deferred", mode == 0))
             {
                 mode = 0;
@@ -36,22 +37,22 @@ void SparkRenderer::drawGui()
                 mode = 1;
                 renderer = std::make_unique<ForwardPlusRenderer>(width, height, cameraUBO, scene.lock()->lightManager);
             }
-            if (ImGui::RadioButton("Tile Based Deferred", mode == 2))
+            if(ImGui::RadioButton("Tile Based Deferred", mode == 2))
             {
                 mode = 2;
                 renderer = std::make_unique<TileBasedDeferredRenderer>(width, height, cameraUBO, scene.lock()->lightManager);
             }
-            if (ImGui::RadioButton("Tile Based Forward Plus", mode == 3))
+            if(ImGui::RadioButton("Tile Based Forward Plus", mode == 3))
             {
                 mode = 3;
                 renderer = std::make_unique<TileBasedForwardPlusRenderer>(width, height, cameraUBO, scene.lock()->lightManager);
             }
-            if (ImGui::RadioButton("Cluster Based Deferred", mode == 4))
+            if(ImGui::RadioButton("Cluster Based Deferred", mode == 4))
             {
                 mode = 4;
                 renderer = std::make_unique<ClusterBasedDeferredRenderer>(width, height, cameraUBO, scene.lock()->lightManager);
             }
-            if (ImGui::RadioButton("Cluster Based Forward Plus", mode == 5))
+            if(ImGui::RadioButton("Cluster Based Forward Plus", mode == 5))
             {
                 mode = 5;
                 renderer = std::make_unique<ClusterBasedForwardPlusRenderer>(width, height, cameraUBO, scene.lock()->lightManager);
@@ -79,7 +80,7 @@ SparkRenderer::SparkRenderer(unsigned int windowWidth, unsigned int windowHeight
     : scene(scene_), width(windowWidth), height(windowHeight), lightProbesRenderer(scene_->lightManager),
       postProcessingStack(windowWidth, windowHeight, cameraUBO)
 {
-    renderer = std::make_unique<TileBasedDeferredRenderer>(windowWidth, windowHeight, cameraUBO, scene_->lightManager);
+    renderer = std::make_unique<renderers::TileBasedDeferredRenderer>(windowWidth, windowHeight, cameraUBO, scene_->lightManager);
 
     screenShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("screen.glsl");
     solidColorShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("solidColor.glsl");
@@ -106,7 +107,8 @@ void SparkRenderer::renderPass()
     lightProbesRenderer.process(renderQueue, pbrCubemap.lock(), scene.lock()->lightManager->getLightProbes());
 
     const auto& camera = scene.lock()->getCamera();
-    utils::updateCameraUBO(cameraUBO, camera->getProjectionReversedZ(), camera->getViewMatrix(), camera->getPosition(), camera->getNearPlane(), camera->getFarPlane());
+    utils::updateCameraUBO(cameraUBO, camera->getProjectionReversedZ(), camera->getViewMatrix(), camera->getPosition(), camera->getNearPlane(),
+                           camera->getFarPlane());
 
     const GLuint lightingTexture = renderer->process(renderQueue, pbrCubemap, cameraUBO);
     textureHandle = postProcessingStack.process(lightingTexture, renderer->getDepthTexture(), pbrCubemap, scene.lock()->getCamera(), cameraUBO);
@@ -118,7 +120,7 @@ void SparkRenderer::renderPass()
     clearRenderQueues();
 }
 
-void SparkRenderer::addRenderingRequest(const RenderingRequest& request)
+void SparkRenderer::addRenderingRequest(const renderers::RenderingRequest& request)
 {
     renderQueue[request.shaderType].push_back(request);
 }
@@ -175,8 +177,6 @@ void SparkRenderer::renderToScreen()
 {
     PUSH_DEBUG_GROUP(RENDER_TO_SCREEN);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glClearColor(0, 0, 0, 0);
-    glClear(GL_COLOR_BUFFER_BIT);
 
     glDisable(GL_DEPTH_TEST);
 

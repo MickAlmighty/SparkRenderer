@@ -5,7 +5,7 @@
 #include "Shader.h"
 #include "Spark.h"
 
-namespace spark
+namespace spark::renderers
 {
 DeferredRenderer::DeferredRenderer(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo,
                                    const std::shared_ptr<lights::LightManager>& lightManager)
@@ -94,4 +94,4 @@ GLuint DeferredRenderer::getDepthTexture() const
 {
     return gBuffer.depthTexture;
 }
-}  // namespace spark
+}  // namespace spark::renderers

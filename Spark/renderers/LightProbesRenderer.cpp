@@ -5,7 +5,7 @@
 #include "Timer.h"
 #include "lights/LightProbe.h"
 
-namespace spark
+namespace spark::renderers
 {
 LightProbesRenderer::LightProbesRenderer(const std::shared_ptr<lights::LightManager>& lightManager)
     : localLightProbeGBuffer(sceneCubemapSize, sceneCubemapSize), skyboxPass(2, 2)
@@ -172,4 +172,4 @@ void LightProbesRenderer::renderSceneToCubemap(std::map<ShaderType, std::deque<R
 
     skyboxPass.processFramebuffer(cubemap, lightProbeSkyboxFbo, sceneCubemapSize, sceneCubemapSize, cameraUbo);
 }
-}  // namespace spark
+}  // namespace spark::renderers

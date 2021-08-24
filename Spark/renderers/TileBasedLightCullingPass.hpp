@@ -4,13 +4,12 @@
 #include "Buffer.hpp"
 #include "lights/LightManager.h"
 
-namespace spark
+namespace spark::resources
 {
-namespace resources
-{
-    class Shader;
+class Shader;
 }
-
+namespace spark::renderers
+{
 class TileBasedLightCullingPass
 {
     public:
@@ -38,4 +37,4 @@ class TileBasedLightCullingPass
     GLuint lightsPerTileTexture{};
     std::shared_ptr<resources::Shader> tileBasedLightCullingShader{nullptr};
 };
-}  // namespace spark
+}  // namespace spark::renderers

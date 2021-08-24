@@ -4,14 +4,17 @@
 
 #include "Enums.h"
 #include "effects/PostProcessingStack.hpp"
-#include "LightProbesRenderer.hpp"
+#include "renderers/LightProbesRenderer.hpp"
 #include "Scene.h"
 #include "ScreenQuad.hpp"
-#include "RenderingRequest.h"
+#include "renderers/RenderingRequest.h"
 
 namespace spark
 {
-class Renderer;
+namespace renderers
+{
+    class Renderer;
+}
 
 namespace lights
 {
@@ -33,7 +36,7 @@ class SparkRenderer
     void renderPass();
 
     void drawGui();
-    void addRenderingRequest(const RenderingRequest& request);
+    void addRenderingRequest(const renderers::RenderingRequest& request);
     void setScene(const std::shared_ptr<Scene>& scene_);
     void setCubemap(const std::shared_ptr<PbrCubemapTexture>& cubemap);
     void resize(unsigned int windowWidth, unsigned int windowHeight);
@@ -48,13 +51,13 @@ class SparkRenderer
     void deleteFrameBuffersAndTextures();
 
     UniformBuffer cameraUBO{};
-    std::map<ShaderType, std::deque<RenderingRequest>> renderQueue{};
+    std::map<ShaderType, std::deque<renderers::RenderingRequest>> renderQueue{};
     std::weak_ptr<Scene> scene{};
 
     unsigned int width{}, height{};
     std::weak_ptr<PbrCubemapTexture> pbrCubemap;
-    std::unique_ptr<Renderer> renderer;
-    LightProbesRenderer lightProbesRenderer;
+    std::unique_ptr<renderers::Renderer> renderer;
+    renderers::LightProbesRenderer lightProbesRenderer;
     effects::PostProcessingStack postProcessingStack;
 
     ScreenQuad screenQuad{};

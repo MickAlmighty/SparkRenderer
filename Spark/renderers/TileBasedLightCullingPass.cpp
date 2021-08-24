@@ -4,7 +4,7 @@
 #include "Shader.h"
 #include "Spark.h"
 
-namespace spark
+namespace spark::renderers
 {
 TileBasedLightCullingPass::TileBasedLightCullingPass(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo,
                                                      const std::shared_ptr<lights::LightManager>& lightManager)
@@ -69,4 +69,4 @@ void TileBasedLightCullingPass::bindLightBuffers(const std::shared_ptr<lights::L
     tileBasedLightCullingShader->bindSSBO("SpotLightData", lightManager->getSpotLightSSBO());
     tileBasedLightCullingShader->bindSSBO("LightProbeData", lightManager->getLightProbeSSBO());
 }
-}  // namespace spark
+}  // namespace spark::renderers
