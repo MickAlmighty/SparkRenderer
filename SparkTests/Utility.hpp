@@ -1,3 +1,4 @@
+#pragma once
 #include <filesystem>
 
 namespace utility
@@ -8,7 +9,7 @@ inline std::filesystem::path findFileOrDirectory(const std::string& name)
 
     for (int i = 0; i < 5; ++i)
     {
-        if (exists(currentPath / name))
+        if (std::filesystem::exists(currentPath / name))
         {
             return (currentPath / name);
         }

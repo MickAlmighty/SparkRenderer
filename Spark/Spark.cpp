@@ -45,7 +45,8 @@ void Spark::setup()
 {
     renderingContext = std::make_unique<OpenGLContext>(WIDTH, HEIGHT, vsync, false);
     renderingContext->setupCallbacks();
-    resourceLibrary = std::make_unique<resourceManagement::ResourceLibrary>(pathToResources);
+    const auto resourcePath = std::filesystem::exists(pathToResources) ? pathToResources : findResourceDirectoryPath();
+    resourceLibrary = std::make_unique<resourceManagement::ResourceLibrary>(resourcePath);
     initImGui();
     sceneManager = std::make_unique<SceneManager>();
     renderer = std::make_unique<SparkRenderer>(WIDTH, HEIGHT, sceneManager->getCurrentScene());
@@ -84,6 +85,38 @@ void Spark::destroy()
     destroyImGui();
     renderingContext.reset();
     delete ptr;
+}
+
+std::filesystem::path Spark::findResourceDirectoryPath() const
+{
+    constexpr auto resourceDirectoryName = "sparkData";
+
+    auto currentDir = std::filesystem::current_path();
+
+    const unsigned int maxDepth = 5;
+    for(unsigned int i = 0; i < maxDepth; ++i)
+    {
+        for(const auto& entry : std::filesystem::directory_iterator(currentDir))
+        {
+            if(entry.is_directory() && entry.path().filename() == resourceDirectoryName)
+            {
+                return entry.path();
+            }
+        }
+
+        if(currentDir.has_parent_path())
+        {
+            currentDir = currentDir.parent_path();
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    constexpr auto errorMessage{R"(Resource directory "sparkData" has not been found!)"};
+    SPARK_CRITICAL(errorMessage);
+    throw std::runtime_error(errorMessage);
 }
 
 OpenGLContext& Spark::getRenderingContext() const

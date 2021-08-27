@@ -224,7 +224,7 @@
 										{
 											"Identifier" : 5
 										},
-										"modelPath" : "res\\models\\sphere\\sphere.obj",
+										"modelPath" : "models\\sphere\\sphere.obj",
 										"name" : "ModelMesh"
 									},
 									"Identifier" : 6,
@@ -489,7 +489,7 @@
 										{
 											"Identifier" : 9
 										},
-										"modelPath" : "res\\models\\sphere2\\sphere2.obj",
+										"modelPath" : "models\\sphere2\\sphere2.obj",
 										"name" : "ModelMesh"
 									},
 									"Identifier" : 10,
@@ -618,7 +618,7 @@
 										{
 											"Identifier" : 11
 										},
-										"modelPath" : "res\\models\\sphere4\\sphere4.obj",
+										"modelPath" : "models\\sphere4\\sphere4.obj",
 										"name" : "ModelMesh"
 									},
 									"Identifier" : 12,
@@ -747,7 +747,7 @@
 										{
 											"Identifier" : 13
 										},
-										"modelPath" : "res\\models\\sphere5\\sphere5.obj",
+										"modelPath" : "models\\sphere5\\sphere5.obj",
 										"name" : "ModelMesh"
 									},
 									"Identifier" : 14,
@@ -1012,7 +1012,7 @@
 										{
 											"Identifier" : 17
 										},
-										"modelPath" : "res\\models\\box\\box.obj",
+										"modelPath" : "models\\box\\box.obj",
 										"name" : "ModelMesh"
 									},
 									"Identifier" : 18,
@@ -1141,7 +1141,7 @@
 										{
 											"Identifier" : 19
 										},
-										"modelPath" : "res\\models\\box\\box.obj",
+										"modelPath" : "models\\box\\box.obj",
 										"name" : "ModelMesh"
 									},
 									"Identifier" : 20,
@@ -1270,7 +1270,7 @@
 										{
 											"Identifier" : 21
 										},
-										"modelPath" : "res\\models\\box\\box.obj",
+										"modelPath" : "models\\box\\box.obj",
 										"name" : "ModelMesh"
 									},
 									"Identifier" : 22,
@@ -1512,7 +1512,7 @@
 										{
 											"Identifier" : 25
 										},
-										"modelPath" : "res\\models\\box2\\box2.obj",
+										"modelPath" : "models\\box2\\box2.obj",
 										"name" : "ModelMesh"
 									},
 									"Identifier" : 26,

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <filesystem>
-#include <optional>
 
 #include "Resource.h"
 
@@ -9,17 +8,20 @@ struct aiMesh;
 
 namespace spark
 {
-struct PbrCubemapTexture;
+namespace resourceManagement {
+    class ResourceIdentifier;
+}
+
 class Mesh;
 
 class ResourceLoader final
 {
     public:
-    static std::shared_ptr<resourceManagement::Resource> createHdrTexture(const std::filesystem::path& path);
-    static std::shared_ptr<resourceManagement::Resource> createCompressedTexture(const std::filesystem::path& path);
-    static std::shared_ptr<resourceManagement::Resource> createUncompressedTexture(const std::filesystem::path& path);
-    static std::shared_ptr<resourceManagement::Resource> createModel(const std::filesystem::path& path);
-    static std::shared_ptr<resourceManagement::Resource> createScene(const std::filesystem::path& path);
+    static std::shared_ptr<resourceManagement::Resource> createHdrTexture(const std::shared_ptr<resourceManagement::ResourceIdentifier>& resourceIdentifier);
+    static std::shared_ptr<resourceManagement::Resource> createCompressedTexture(const std::shared_ptr<resourceManagement::ResourceIdentifier>& resourceIdentifier);
+    static std::shared_ptr<resourceManagement::Resource> createUncompressedTexture(const std::shared_ptr<resourceManagement::ResourceIdentifier>& resourceIdentifier);
+    static std::shared_ptr<resourceManagement::Resource> createModel(const std::shared_ptr<resourceManagement::ResourceIdentifier>& resourceIdentifier);
+    static std::shared_ptr<resourceManagement::Resource> createScene(const std::shared_ptr<resourceManagement::ResourceIdentifier>& resourceIdentifier);
 
     ResourceLoader(const ResourceLoader&) = delete;
     ResourceLoader(const ResourceLoader&&) = delete;

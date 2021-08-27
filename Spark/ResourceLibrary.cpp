@@ -45,11 +45,12 @@ std::vector<std::shared_ptr<ResourceIdentifier>> ResourceLibrary::getSceneResour
 
 void ResourceLibrary::createResourceIdentifiers(const std::filesystem::path& pathToResources)
 {
-    for(const auto& path : std::filesystem::recursive_directory_iterator(pathToResources))
+    for(const auto& directory_entry : std::filesystem::recursive_directory_iterator(pathToResources))
     {
-        if(ResourceFactory::isExtensionSupported(path))
+        if(ResourceFactory::isExtensionSupported(directory_entry.path()))
         {
-            resourceIdentifiers.insert(std::make_shared<ResourceIdentifier>(path));
+            const auto relativePath = directory_entry.path().lexically_relative(pathToResources);
+            resourceIdentifiers.insert(std::make_shared<ResourceIdentifier>(pathToResources, relativePath));
         }
     }
 }

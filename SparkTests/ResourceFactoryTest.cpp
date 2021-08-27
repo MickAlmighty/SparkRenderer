@@ -24,7 +24,7 @@ class ResourceFactoryTest : public ::testing::Test
     }
 
     private:
-    ResourceLibrary resourceLibrary = ResourceLibrary(R"(res)");
+    ResourceLibrary resourceLibrary = ResourceLibrary(utility::findFileOrDirectory("sparkData"));
     MockSpark sparkMock;
     spark::OpenGLContext oglContext{1280, 720, true, true};
 };
@@ -35,7 +35,7 @@ TEST_F(ResourceFactoryTest, AllCreatedResourcesAreValid)
 
     SPARK_INFO(std::filesystem::current_path().string());
 
-    const std::filesystem::path resPath = utility::findFileOrDirectory("res");
+    const std::filesystem::path resPath = utility::findFileOrDirectory("sparkData");
     for(const auto& pathMaybeInvalid : std::filesystem::recursive_directory_iterator(resPath))
     {
         if(!pathMaybeInvalid.is_regular_file())
@@ -51,7 +51,7 @@ TEST_F(ResourceFactoryTest, AllCreatedResourcesAreValid)
                 continue;
             }
 
-            const std::shared_ptr<Resource> resource = ResourceFactory::loadResource(pathMaybeInvalid);
+            const std::shared_ptr<Resource> resource = ResourceFactory::loadResource(std::make_shared<resourceManagement::ResourceIdentifier>("", pathMaybeInvalid));
             if(resource != nullptr)
             {
                 createdResources.push_back(resource);
@@ -71,13 +71,13 @@ TEST_F(ResourceFactoryTest, AllCreatedResourcesAreValid)
 
 TEST_F(ResourceFactoryTest, CreatingResourceFromNonexistentFileReturnsNullptr)
 {
-    const std::shared_ptr<Resource> resource = ResourceFactory::loadResource("tmp123.obj");
+    const std::shared_ptr<Resource> resource = ResourceFactory::loadResource(std::make_shared<resourceManagement::ResourceIdentifier>("", "tmp123.obj"));
     ASSERT_TRUE(resource == nullptr);
 }
 
 TEST_F(ResourceFactoryTest, CreatingResourceFromFileWithUnsuportedExtensionReturnsNullptr)
 {
-    const std::shared_ptr<Resource> resource = ResourceFactory::loadResource("tmp123.zip");
+    const std::shared_ptr<Resource> resource = ResourceFactory::loadResource(std::make_shared<resourceManagement::ResourceIdentifier>("", "tmp123.zip"));
     ASSERT_TRUE(resource == nullptr);
 }
 

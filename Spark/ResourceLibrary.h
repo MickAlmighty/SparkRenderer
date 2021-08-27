@@ -33,7 +33,10 @@ class ResourceLibrary
     std::shared_ptr<T> getResourceByName(const std::string& resourceName) const;
 
     template<typename T>
-    std::shared_ptr<T> getResourceByPath(const std::string& resourcePath) const;
+    std::shared_ptr<T> getResourceByFullPath(const std::string& resourcePath) const;
+
+    template<typename T>
+    std::shared_ptr<T> getResourceByRelativePath(const std::string& resourcePath) const;
 
     template<typename T>
     std::shared_ptr<T> getResource(const std::function<bool(const std::shared_ptr<ResourceIdentifier>& resourceIdentifier)>& searchFunc) const;
@@ -59,11 +62,20 @@ std::shared_ptr<T> ResourceLibrary::getResourceByName(const std::string& resourc
 }
 
 template<typename T>
-std::shared_ptr<T> ResourceLibrary::getResourceByPath(const std::string& resourcePath) const
+std::shared_ptr<T> ResourceLibrary::getResourceByFullPath(const std::string& resourcePath) const
 {
     const auto findByPath = [&resourcePath](const std::shared_ptr<ResourceIdentifier>& resourceIdentifier) {
-        const bool validName = resourceIdentifier->getFullPath().string() == resourcePath;
-        return validName;
+        return resourceIdentifier->getFullPath().string() == resourcePath;
+    };
+
+    return getResource<T>(findByPath);
+}
+
+template<typename T>
+std::shared_ptr<T> ResourceLibrary::getResourceByRelativePath(const std::string& resourcePath) const
+{
+    const auto findByPath = [&resourcePath](const std::shared_ptr<ResourceIdentifier>& resourceIdentifier) {
+        return resourceIdentifier->getRelativePath().string() == resourcePath;
     };
 
     return getResource<T>(findByPath);

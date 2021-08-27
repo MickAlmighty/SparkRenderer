@@ -8,14 +8,14 @@ namespace spark
 {
 namespace resourceManagement
 {
-    class ResourceIdentifier
+    class ResourceIdentifier : public std::enable_shared_from_this<ResourceIdentifier>
     {
         public:
-        ResourceIdentifier(const std::filesystem::path& fullResourcePath);
+        ResourceIdentifier(std::filesystem::path pathToResources, std::filesystem::path relativePath);
         ~ResourceIdentifier() = default;
 
         ResourceIdentifier(const ResourceIdentifier& identifier) = default;
-        ResourceIdentifier(ResourceIdentifier&& identifier) noexcept;
+        ResourceIdentifier(ResourceIdentifier&& identifier) noexcept = default;
 
         ResourceIdentifier operator=(const ResourceIdentifier& identifier) = delete;
         ResourceIdentifier operator=(ResourceIdentifier&& identifier) = delete;
@@ -24,19 +24,18 @@ namespace resourceManagement
         bool operator<(const ResourceIdentifier& identifier) const;
 
         std::filesystem::path getFullPath() const;
-        std::filesystem::path getDirectoryPath() const;
+        std::filesystem::path getRelativePath() const;
         std::filesystem::path getResourceName(bool withExtension = true) const;
         std::string getResourceExtension() const;
         std::string getResourceExtensionLowerCase() const;
 
-        bool changeResourceDirectory(const std::filesystem::path& path);
-        bool changeResourceName(const std::filesystem::path& name);
         std::shared_ptr<Resource> getResource();
 
         private:
         std::string extensionToLowerCase(const std::filesystem::path& path) const;
 
-        std::filesystem::path resourcePath{};
+        std::filesystem::path pathToResources{};
+        std::filesystem::path relativePathToResource{};
         std::weak_ptr<Resource> resource;
     };
 }  // namespace resourceManagement

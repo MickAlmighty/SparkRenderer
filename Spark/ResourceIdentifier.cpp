@@ -1,159 +1,63 @@
 #include "ResourceIdentifier.h"
 
-#include <cstdio>
 #include <iostream>
+#include <utility>
 
 #include "Logging.h"
 #include "ResourceFactory.h"
 
 namespace spark::resourceManagement
 {
-ResourceIdentifier::ResourceIdentifier(const std::filesystem::path& fullResourcePath)
+ResourceIdentifier::ResourceIdentifier(std::filesystem::path pathToResources, std::filesystem::path relativePath)
+    : pathToResources(std::move(pathToResources)), relativePathToResource(std::move(relativePath))
 {
-    if(!std::filesystem::exists(fullResourcePath))
-    {
-        SPARK_CRITICAL("File does not exist");
-        throw std::runtime_error("File does not exist");
-    }
-
-    if(!fullResourcePath.has_filename())
-    {
-        SPARK_CRITICAL("Trying to create resource identifier without filename");
-        throw std::runtime_error("Trying to create resource identifier without filename");
-    }
-
-    if(!fullResourcePath.has_extension())
-    {
-        SPARK_CRITICAL("Trying to create resource identifier with name without extension");
-        throw std::runtime_error("Trying to create resource identifier with name without extension");
-    }
-
-    if(!fullResourcePath.has_parent_path())
-    {
-        SPARK_CRITICAL("Trying to create resource identifier without parent path");
-        throw std::runtime_error("Trying to create resource identifier without parent path");
-    }
-
-    resourcePath = fullResourcePath;
 }
-
-ResourceIdentifier::ResourceIdentifier(ResourceIdentifier&& identifier) noexcept : resourcePath(std::move(identifier.resourcePath)) {}
 
 bool ResourceIdentifier::operator==(const ResourceIdentifier& identifier) const
 {
-    return resourcePath == identifier.resourcePath;
+    return relativePathToResource == identifier.relativePathToResource;
 }
 
 bool ResourceIdentifier::operator<(const ResourceIdentifier& identifier) const
 {
-    return resourcePath < identifier.resourcePath;
+    return relativePathToResource < identifier.relativePathToResource;
 }
 
 std::filesystem::path ResourceIdentifier::getFullPath() const
 {
-    return resourcePath;
+    return pathToResources / relativePathToResource;
 }
 
-std::filesystem::path ResourceIdentifier::getDirectoryPath() const
+std::filesystem::path ResourceIdentifier::getRelativePath() const
 {
-    return resourcePath.parent_path();
+    return relativePathToResource;
 }
 
 std::filesystem::path ResourceIdentifier::getResourceName(bool withExtension) const
 {
     if(withExtension)
     {
-        return resourcePath.filename();
+        return relativePathToResource.filename();
     }
-    else
-    {
-        return resourcePath.stem();
-    }
+
+    return relativePathToResource.stem();
 }
 
 std::string ResourceIdentifier::getResourceExtension() const
 {
-    return resourcePath.extension().string();
+    return relativePathToResource.extension().string();
 }
 
 std::string ResourceIdentifier::getResourceExtensionLowerCase() const
 {
-    return extensionToLowerCase(resourcePath);
-}
-
-bool ResourceIdentifier::changeResourceDirectory(const std::filesystem::path& path)
-{
-    if(!std::filesystem::is_directory(path))
-    {
-        return false;
-    }
-
-    const auto directoryPath = path / resourcePath.filename();
-
-    if(std::filesystem::exists(directoryPath))
-    {
-        SPARK_INFO("File with the same name already exists in this directory! Moving file aborted!");
-        return false;
-    }
-
-    std::error_code ec;
-    std::filesystem::rename(resourcePath, directoryPath, ec);
-
-    if(ec.value())
-    {
-        SPARK_ERROR(ec.message());
-        return false;
-    }
-
-    resourcePath = directoryPath;
-    return true;
-}
-
-bool ResourceIdentifier::changeResourceName(const std::filesystem::path& name)
-{
-    if(name.has_parent_path())
-    {
-        return false;
-    }
-
-    if(!name.has_extension())
-    {
-        return false;
-    }
-
-    const auto directoryPath = resourcePath.parent_path() / name;
-
-    if(std::filesystem::exists(directoryPath))
-    {
-        SPARK_INFO("File does already exists! File rename aborted!");
-        return false;
-    }
-
-    std::error_code ec;
-    std::filesystem::rename(resourcePath, directoryPath, ec);
-
-    if(ec.value())
-    {
-        SPARK_ERROR(ec.message());
-    }
-    else
-    {
-        if(std::filesystem::exists(directoryPath))
-        {
-            resourcePath = directoryPath;
-            return true;
-        }
-    }
-
-    return false;
+    return extensionToLowerCase(relativePathToResource);
 }
 
 std::shared_ptr<Resource> ResourceIdentifier::getResource()
 {
     if(resource.expired())
     {
-        const auto resourcePtr = ResourceFactory::loadResource(getFullPath());
-        if(resourcePtr)
+        if(const auto resourcePtr = ResourceFactory::loadResource(shared_from_this()); resourcePtr)
         {
             resource = resourcePtr;
             return resource.lock();

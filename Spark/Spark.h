@@ -27,7 +27,6 @@ class Spark
 
     unsigned int WIDTH{1280};
     unsigned int HEIGHT{720};
-    std::filesystem::path pathToResources{};
     bool vsync = true;
 
     protected:
@@ -40,6 +39,8 @@ class Spark
     void runLoop();
     void destroy();
 
+    std::filesystem::path findResourceDirectoryPath() const;
+
     void initImGui();
     void destroyImGui();
 
@@ -48,6 +49,7 @@ class Spark
     std::unique_ptr<SparkRenderer> renderer{};
     std::unique_ptr<SceneManager> sceneManager{};
     SparkGui sparkGui{};
+    std::filesystem::path pathToResources{};
 
     inline static Spark* ptr{nullptr};
 

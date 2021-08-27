@@ -1,32 +1,33 @@
 #include "ResourceFactory.h"
 
 #include "Resource.h"
+#include "ResourceIdentifier.h"
 #include "ResourceLoader.h"
 #include "Shader.h"
 
 namespace spark::resourceManagement
 {
-std::map<std::string, std::function<std::shared_ptr<Resource>(const std::filesystem::path& path)>> ResourceFactory::resourceCreationFunctions{
+std::map<std::string, std::function<std::shared_ptr<Resource>(const std::shared_ptr<ResourceIdentifier>& ri)>> ResourceFactory::resourceCreationFunctions{
     // TODO: replace with a reflection-based list
-    {".obj", [](const std::filesystem::path& path) { return ResourceLoader::createModel(path); }},
-    {".fbx", [](const std::filesystem::path& path) { return ResourceLoader::createModel(path); }},
-    {".dds", [](const std::filesystem::path& path) { return ResourceLoader::createCompressedTexture(path); }},
-    {".ktx", [](const std::filesystem::path& path) { return ResourceLoader::createCompressedTexture(path); }},
-    {".png", [](const std::filesystem::path& path) { return ResourceLoader::createUncompressedTexture(path); }},
-    {".jpg", [](const std::filesystem::path& path) { return ResourceLoader::createUncompressedTexture(path); }},
-    {".tga", [](const std::filesystem::path& path) { return ResourceLoader::createUncompressedTexture(path); }},
-    {".hdr", [](const std::filesystem::path& path) { return ResourceLoader::createHdrTexture(path); }},
-    {".glsl", [](const std::filesystem::path& path) { return std::make_shared<resources::Shader>(path); }},
-    {".scene", [](const std::filesystem::path& path) { return ResourceLoader::createScene(path); }},
+    {".obj", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createModel(ri); }},
+    {".fbx", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createModel(ri); }},
+    {".dds", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createCompressedTexture(ri); }},
+    {".ktx", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createCompressedTexture(ri); }},
+    {".png", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createUncompressedTexture(ri); }},
+    {".jpg", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createUncompressedTexture(ri); }},
+    {".tga", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createUncompressedTexture(ri); }},
+    {".hdr", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createHdrTexture(ri); }},
+    {".glsl", [](const std::shared_ptr<ResourceIdentifier>& ri) { return std::make_shared<resources::Shader>(ri->getFullPath()); }},
+    {".scene", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createScene(ri); }},
 };
 
-std::shared_ptr<Resource> ResourceFactory::loadResource(const std::filesystem::path& filePath)
+std::shared_ptr<Resource> ResourceFactory::loadResource(const std::shared_ptr<ResourceIdentifier>& resourceIdentifier)
 {
-    const auto it = resourceCreationFunctions.find(extensionToLowerCase(filePath));
+    const auto it = resourceCreationFunctions.find(extensionToLowerCase(resourceIdentifier->getRelativePath().string()));
     if(it != resourceCreationFunctions.end())
     {
         const auto [extension, resourceCreationFunction] = *it;
-        return resourceCreationFunction(filePath);
+        return resourceCreationFunction(resourceIdentifier);
     }
 
     return nullptr;
@@ -40,7 +41,7 @@ bool ResourceFactory::isExtensionSupported(const std::filesystem::path& filePath
 std::string ResourceFactory::extensionToLowerCase(const std::filesystem::path& path)
 {
     std::string ext = path.extension().string();
-    std::for_each(ext.begin(), ext.end(), [](char& c) { c = std::tolower(c); });
+    std::for_each(ext.begin(), ext.end(), [](char& c) { c = static_cast<char>(std::tolower(c)); });
 
     return ext;
 }

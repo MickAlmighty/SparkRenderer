@@ -345,7 +345,7 @@ _deps
 
 # Project
 Spark/imgui.ini
-!res/*
+!sparkData/*
 /SparkTests/test.json
 /out/
 .vscode/

@@ -212,7 +212,7 @@
 										{
 											"Identifier" : 5
 										},
-										"modelPath" : "res\\models\\spaceship\\Spaceship.obj",
+										"modelPath" : "models\\spaceship\\Spaceship.obj",
 										"name" : "ModelMesh"
 									},
 									"Identifier" : 6,

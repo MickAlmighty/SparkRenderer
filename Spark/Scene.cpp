@@ -7,14 +7,13 @@
 #include "JsonSerializer.h"
 #include "Logging.h"
 #include "ResourceLoader.h"
-#include "Spark.h"
 
 #include <iostream>
 #include <list>
 
 namespace spark
 {
-Scene::Scene() : Resource(Spark::get().pathToResources / "NewScene.scene")
+Scene::Scene() : Resource("NewScene.scene")
 {
     init();
 }

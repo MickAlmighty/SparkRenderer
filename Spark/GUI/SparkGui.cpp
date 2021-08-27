@@ -77,14 +77,7 @@ void SparkGui::drawSparkSettings(bool* p_open)
         ImGui::End();
         return;
     }
-    /*static char buf1[128];
-    static char buf2[128];
-    ImGui::InputTextWithHint("Path to Models", Spark::get().pathToModelMeshes.string().c_str(), buf1, 128);
-    ImGui::InputTextWithHint("Path to Resources", Spark::get().pathToResources.string().c_str(), buf2, 128);*/
     ImGui::Text("Framerate: %f", ImGui::GetIO().Framerate);
-    ImGui::Text("Path to resources:");
-    ImGui::SameLine();
-    ImGui::Text(Spark::get().pathToResources.string().c_str());
     bool vsync = Spark::get().vsync;
     ImGui::Checkbox("V-Sync", &vsync);
 
@@ -116,16 +109,6 @@ void SparkGui::drawSparkSettings(bool* p_open)
         }
     }
 
-    // TODO: fix this!
-    // if (ImGui::Button("Save settings"))
-    //{
-    //	InitializationVariables variables;
-    //	variables.width = Spark::get().WIDTH;
-    //	variables.height = Spark::get().HEIGHT;
-    //	variables.pathToResources = Spark::get().pathToResources;
-    //	variables.pathToModels = Spark::get().pathToModelMeshes;
-    //	JsonSerializer::writeToFile("settings.json", variables.serialize());
-    //}
     ImGui::End();
 }
 
@@ -222,11 +205,6 @@ std::filesystem::path SparkGui::getRelativePathToSaveSceneByFilePicker()
         filepath = file_dialog.selected_path;
     }
 
-    if(!filepath.empty())
-    {
-        filepath = filepath.lexically_relative(std::filesystem::current_path());
-    }
-
     return filepath;
 }
 
@@ -242,11 +220,8 @@ std::shared_ptr<resourceManagement::Resource> SparkGui::getResourceIdentifierByF
 
     if(file_dialog.showFileDialog("Select File", imgui_addons::ImGuiFileBrowser::DialogMode::OPEN, ImVec2(700, 310), extensions))
     {
-        std::filesystem::path filepath = file_dialog.selected_path;
-
-        if(!filepath.empty())
+        if(std::filesystem::path filepath = file_dialog.selected_path; !filepath.empty())
         {
-            filepath = filepath.lexically_relative(std::filesystem::current_path());
             const auto resourceIdentifier = Spark::get().getResourceLibrary().getResourceIdentifier(filepath);
             if(resourceIdentifier)
             {

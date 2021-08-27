@@ -20,15 +20,7 @@ target_sources(SparkTests PRIVATE
 "ResourceFactoryTest.cpp"
 "ResourceIdentifierTest.cpp"
 "SerializationTest.cpp"
-"MockSpark.hpp")
-
-add_custom_command(TARGET SparkTests POST_BUILD
-                    COMMAND ${CMAKE_COMMAND} -E copy_directory
-                        ${CMAKE_SOURCE_DIR}/res $<TARGET_FILE_DIR:SparkTests>/res)
-                        
-add_custom_command(TARGET SparkTests POST_BUILD
-                    COMMAND ${CMAKE_COMMAND} -E copy_directory
-                        ${CMAKE_SOURCE_DIR}/res ${CMAKE_BINARY_DIR}/res)
+"MockSpark.hpp" )
 
 target_include_directories(SparkTests PUBLIC ${CMAKE_SOURCE_DIR}/Spark)
 message(${googletest_SOURCE_DIR})
