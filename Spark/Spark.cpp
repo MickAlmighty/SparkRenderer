@@ -5,13 +5,18 @@
 #include "GUI/ImGui/imgui_impl_opengl3.h"
 
 #include "Clock.h"
-#include "EngineSystems/SparkRenderer.h"
 #include "EngineSystems/SceneManager.h"
 #include "HID/HID.h"
 #include "JsonSerializer.h"
 #include "Logging.h"
 #include "OpenGLContext.hpp"
 #include "SparkConfig.hpp"
+#include "renderers/ClusterBasedDeferredRenderer.hpp"
+#include "renderers/ClusterBasedForwardPlusRenderer.hpp"
+#include "renderers/DeferredRenderer.hpp"
+#include "renderers/ForwardPlusRenderer.hpp"
+#include "renderers/TileBasedDeferredRenderer.hpp"
+#include "renderers/TileBasedForwardPlusRenderer.hpp"
 
 namespace spark
 {
@@ -33,6 +38,54 @@ void Spark::run(const SparkConfig& config)
     engine.destroy();
 }
 
+void Spark::drawGui()
+{
+    if(ImGui::BeginMenu("Renderer"))
+    {
+        using namespace renderers;
+        const std::string renderingAlgorithmTypeMenu = "Rendering Algorithms";
+        if(ImGui::BeginMenu(renderingAlgorithmTypeMenu.c_str()))
+        {
+            static int mode = 2;
+
+            if(ImGui::RadioButton("Deferred", mode == 0))
+            {
+                mode = 0;
+                renderer = std::make_unique<DeferredRenderer>(WIDTH, HEIGHT);
+            }
+            if(ImGui::RadioButton("Forward Plus", mode == 1))
+            {
+                mode = 1;
+                renderer = std::make_unique<ForwardPlusRenderer>(WIDTH, HEIGHT);
+            }
+            if(ImGui::RadioButton("Tile Based Deferred", mode == 2))
+            {
+                mode = 2;
+                renderer = std::make_unique<TileBasedDeferredRenderer>(WIDTH, HEIGHT);
+            }
+            if(ImGui::RadioButton("Tile Based Forward Plus", mode == 3))
+            {
+                mode = 3;
+                renderer = std::make_unique<TileBasedForwardPlusRenderer>(WIDTH, HEIGHT);
+            }
+            if(ImGui::RadioButton("Cluster Based Deferred", mode == 4))
+            {
+                mode = 4;
+                renderer = std::make_unique<ClusterBasedDeferredRenderer>(WIDTH, HEIGHT);
+            }
+            if(ImGui::RadioButton("Cluster Based Forward Plus", mode == 5))
+            {
+                mode = 5;
+                renderer = std::make_unique<ClusterBasedForwardPlusRenderer>(WIDTH, HEIGHT);
+            }
+            ImGui::EndMenu();
+        }
+
+        renderer->drawGui();
+        ImGui::EndMenu();
+    }
+}
+
 void Spark::loadConfig(const SparkConfig& config)
 {
     WIDTH = config.width;
@@ -49,7 +102,7 @@ void Spark::setup()
     resourceLibrary = std::make_unique<resourceManagement::ResourceLibrary>(resourcePath);
     initImGui();
     sceneManager = std::make_unique<SceneManager>();
-    renderer = std::make_unique<SparkRenderer>(WIDTH, HEIGHT, sceneManager->getCurrentScene());
+    renderer = std::make_unique<renderers::TileBasedDeferredRenderer>(WIDTH, HEIGHT);
 
     renderingContext->addOnWindowSizeChangedCallback([this](auto width, auto height) {
         WIDTH = width;
@@ -69,7 +122,7 @@ void Spark::runLoop()
             renderingContext->closeWindow();
 
         sceneManager->update();
-        renderer->renderPass();
+        renderer->render(sceneManager->getCurrentScene());
         sparkGui.drawGui();
         renderingContext->swapBuffers();
 
@@ -127,11 +180,6 @@ OpenGLContext& Spark::getRenderingContext() const
 resourceManagement::ResourceLibrary& Spark::getResourceLibrary() const
 {
     return *resourceLibrary;
-}
-
-SparkRenderer& Spark::getRenderer() const
-{
-    return *renderer;
 }
 
 SceneManager& Spark::getSceneManager() const

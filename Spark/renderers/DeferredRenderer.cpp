@@ -2,20 +2,17 @@
 
 #include "CommonUtils.h"
 #include "ResourceLibrary.h"
+#include "Scene.h"
 #include "Shader.h"
 #include "Spark.h"
 
 namespace spark::renderers
 {
-DeferredRenderer::DeferredRenderer(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo,
-                                   const std::shared_ptr<lights::LightManager>& lightManager)
-    : Renderer(width, height, cameraUbo), gBuffer(width, height)
+DeferredRenderer::DeferredRenderer(unsigned int width, unsigned int height) : Renderer(width, height), gBuffer(width, height)
 {
     brdfLookupTexture = utils::createBrdfLookupTexture(1024);
 
     lightingShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("light.glsl");
-    lightingShader->bindUniformBuffer("Camera", cameraUbo);
-    bindLightBuffers(lightManager);
     createFrameBuffersAndTextures();
 }
 
@@ -26,15 +23,14 @@ DeferredRenderer::~DeferredRenderer()
     glDeleteFramebuffers(1, &framebuffer);
 }
 
-GLuint DeferredRenderer::process(std::map<ShaderType, std::deque<RenderingRequest>>& renderQueue, const std::weak_ptr<PbrCubemapTexture>& pbrCubemap,
-                                 const UniformBuffer& cameraUbo)
+void DeferredRenderer::renderMeshes(const std::shared_ptr<Scene>& scene)
 {
-    gBuffer.fill(renderQueue, cameraUbo);
+    gBuffer.fill(scene->getRenderingQueues(), scene->getCamera()->getUbo());
 
     GLuint aoTexture{0};
     if(isAmbientOcclusionEnabled)
     {
-        aoTexture = ao.process(gBuffer.depthTexture, gBuffer.normalsTexture);
+        aoTexture = ao.process(gBuffer.depthTexture, gBuffer.normalsTexture, scene->getCamera());
     }
 
     PUSH_DEBUG_GROUP(PBR_LIGHT);
@@ -44,7 +40,13 @@ GLuint DeferredRenderer::process(std::map<ShaderType, std::deque<RenderingReques
     glClear(GL_COLOR_BUFFER_BIT);
 
     lightingShader->use();
-    if(const auto cubemap = pbrCubemap.lock(); cubemap)
+    lightingShader->bindUniformBuffer("Camera", scene->getCamera()->getUbo());
+    lightingShader->bindSSBO("DirLightData", scene->lightManager->getDirLightSSBO());
+    lightingShader->bindSSBO("PointLightData", scene->lightManager->getPointLightSSBO());
+    lightingShader->bindSSBO("SpotLightData", scene->lightManager->getSpotLightSSBO());
+    lightingShader->bindSSBO("LightProbeData", scene->lightManager->getLightProbeSSBO());
+
+    if(const auto cubemap = scene->getSkyboxCubemap().lock(); cubemap)
     {
         std::array<GLuint, 8> textures{
             gBuffer.depthTexture,       gBuffer.colorTexture,        gBuffer.normalsTexture, gBuffer.roughnessMetalnessTexture,
@@ -63,23 +65,12 @@ GLuint DeferredRenderer::process(std::map<ShaderType, std::deque<RenderingReques
     }
 
     POP_DEBUG_GROUP();
-
-    return lightingTexture;
 }
 
-void DeferredRenderer::bindLightBuffers(const std::shared_ptr<lights::LightManager>& lightManager)
-{
-    lightingShader->bindSSBO("DirLightData", lightManager->getDirLightSSBO());
-    lightingShader->bindSSBO("PointLightData", lightManager->getPointLightSSBO());
-    lightingShader->bindSSBO("SpotLightData", lightManager->getSpotLightSSBO());
-    lightingShader->bindSSBO("LightProbeData", lightManager->getLightProbeSSBO());
-}
-
-void DeferredRenderer::resize(unsigned int width, unsigned int height)
+void DeferredRenderer::resizeDerived(unsigned int width, unsigned int height)
 {
     w = width;
     h = height;
-    ao.resize(w, h);
     gBuffer.resize(w, h);
     createFrameBuffersAndTextures();
 }
@@ -93,5 +84,10 @@ void DeferredRenderer::createFrameBuffersAndTextures()
 GLuint DeferredRenderer::getDepthTexture() const
 {
     return gBuffer.depthTexture;
+}
+
+GLuint DeferredRenderer::getLightingTexture() const
+{
+    return lightingTexture;
 }
 }  // namespace spark::renderers

@@ -1,5 +1,7 @@
 #pragma once
+
 #include "Component.h"
+#include "Structs.h"
 #include "Texture.h"
 
 namespace spark
@@ -8,7 +10,8 @@ class Skybox : public Component
 {
     public:
     Skybox();
-    virtual ~Skybox() override;
+    ~Skybox() override;
+
     void update() override;
     void fixedUpdate() override;
     void drawGUI() override;
@@ -27,9 +30,10 @@ class Skybox : public Component
 
     void createPbrCubemap(const std::shared_ptr<resources::Texture>& texture);
 
+    void setSkyboxInScene(const std::shared_ptr<PbrCubemapTexture>& skyboxCubemap) const;
+
     inline static Skybox* activeSkyboxPtr{nullptr};
 
-    bool activeSkybox{false};
     std::string skyboxName{};
     std::shared_ptr<PbrCubemapTexture> pbrCubemapTexture{nullptr};
     RTTR_ENABLE(Component)

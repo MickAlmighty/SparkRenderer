@@ -12,7 +12,6 @@
 #include "renderers/RenderingRequest.h"
 #include "ResourceLibrary.h"
 #include "Spark.h"
-#include "EngineSystems/SparkRenderer.h"
 
 namespace spark
 {
@@ -38,7 +37,7 @@ void ModelMesh::update()
             request.mesh = mesh;
             request.model = getGameObject()->transform.world.getMatrix();
 
-            Spark::get().getRenderer().addRenderingRequest(request);
+            getGameObject()->getScene()->addRenderingRequest(request);
         }
     }
 }

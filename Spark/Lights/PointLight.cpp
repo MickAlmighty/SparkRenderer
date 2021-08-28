@@ -4,14 +4,13 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
-#include "EngineSystems/SparkRenderer.h"
 #include "Enums.h"
 #include "GameObject.h"
 #include "JsonSerializer.h"
 #include "Mesh.h"
 #include "renderers/RenderingRequest.h"
+#include "Scene.h"
 #include "ShapeCreator.h"
-#include "Spark.h"
 #include "Structs.h"
 
 namespace spark::lights
@@ -112,7 +111,7 @@ void PointLight::update()
         request.mesh = sphere;
         request.model = sphereModel;
 
-        Spark::get().getRenderer().addRenderingRequest(request);
+        getGameObject()->getScene()->addRenderingRequest(request);
     }
 }
 

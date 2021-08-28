@@ -4,6 +4,7 @@
 
 #include "GameObject.h"
 #include "JsonSerializer.h"
+#include "Scene.h"
 #include "Structs.h"
 
 namespace spark::lights

@@ -6,13 +6,11 @@
 
 namespace spark::effects
 {
-DepthOfFieldPass::DepthOfFieldPass(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo)
+DepthOfFieldPass::DepthOfFieldPass(unsigned int width, unsigned int height)
     : w(width), h(height), blurPass(w / 2, h / 2)
 {
     cocShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("circleOfConfusion.glsl");
     blendShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("blendDof.glsl");
-
-    cocShader->bindUniformBuffer("Camera", cameraUbo);
 
     createFrameBuffersAndTextures();
     // glGenBuffers(1, &indirectBufferID);
@@ -47,10 +45,10 @@ DepthOfFieldPass::DepthOfFieldPass(unsigned int width, unsigned int height, cons
     // glTexBuffer(GL_TEXTURE_BUFFER, GL_RGBA32F, bokehColorBuffer.ID);
 }
 
-GLuint DepthOfFieldPass::process(GLuint lightPassTexture, GLuint depthTexture) const
+GLuint DepthOfFieldPass::process(GLuint lightPassTexture, GLuint depthTexture, const std::shared_ptr<Camera>& camera) const
 {
     PUSH_DEBUG_GROUP(DEPTH_OF_FIELD)
-    calculateCircleOfConfusion(depthTexture);
+    calculateCircleOfConfusion(depthTexture, camera);
     blurLightPassTexture(lightPassTexture);
     detectBokehPositions(lightPassTexture);
     renderBokehShapes();
@@ -107,7 +105,7 @@ DepthOfFieldPass::~DepthOfFieldPass()
     glDeleteTextures(1, &bokehColorTexture);*/
 }
 
-void DepthOfFieldPass::calculateCircleOfConfusion(GLuint depthTexture) const
+void DepthOfFieldPass::calculateCircleOfConfusion(GLuint depthTexture, const std::shared_ptr<Camera>& camera) const
 {
     PUSH_DEBUG_GROUP(COC_COMPUTING)
 
@@ -121,6 +119,7 @@ void DepthOfFieldPass::calculateCircleOfConfusion(GLuint depthTexture) const
     cocShader->setFloat("zNearEnd", nearEnd);
     cocShader->setFloat("zFarStart", farStart);
     cocShader->setFloat("zFar", farEnd);
+    cocShader->bindUniformBuffer("Camera", camera->getUbo());
     glBindTextureUnit(0, depthTexture);
     screenQuad.draw();
     glBindTextureUnit(0, 0);

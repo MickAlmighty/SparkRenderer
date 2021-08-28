@@ -18,19 +18,19 @@ namespace spark::renderers
 class DeferredRenderer : public Renderer
 {
     public:
-    DeferredRenderer(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo,
-                     const std::shared_ptr<lights::LightManager>& lightManager);
+    DeferredRenderer(unsigned int width, unsigned int height);
     DeferredRenderer(const DeferredRenderer&) = delete;
     DeferredRenderer(DeferredRenderer&&) = delete;
     DeferredRenderer& operator=(const DeferredRenderer&) = delete;
     DeferredRenderer& operator=(DeferredRenderer&&) = delete;
     ~DeferredRenderer() override;
 
-    GLuint process(std::map<ShaderType, std::deque<RenderingRequest>>& renderQueue, const std::weak_ptr<PbrCubemapTexture>& pbrCubemap,
-                   const UniformBuffer& cameraUbo) override;
-    void bindLightBuffers(const std::shared_ptr<lights::LightManager>& lightManager) override;
-    void resize(unsigned int width, unsigned int height) override;
+    protected:
+    void renderMeshes(const std::shared_ptr<Scene>& scene) override;
+    void resizeDerived(unsigned int width, unsigned int height) override;
+
     GLuint getDepthTexture() const override;
+    GLuint getLightingTexture() const override;
 
     private:
     void createFrameBuffersAndTextures();

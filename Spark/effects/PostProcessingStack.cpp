@@ -1,24 +1,20 @@
 #include "PostProcessingStack.hpp"
 
-#include "CommonUtils.h"
-#include "Spark.h"
-
 namespace spark::effects
 {
-PostProcessingStack::PostProcessingStack(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo)
-    : toneMapper(width, height), bloomPass(width, height), dofPass(width, height, cameraUbo), lightShaftsPass(width, height),
-      skyboxPass(width, height), motionBlurPass(width, height, cameraUbo), fxaaPass(width, height)
+PostProcessingStack::PostProcessingStack(unsigned int width, unsigned int height)
+    : toneMapper(width, height), bloomPass(width, height), dofPass(width, height), lightShaftsPass(width, height),
+      skyboxPass(width, height), motionBlurPass(width, height), fxaaPass(width, height)
 {
 }
 
-GLuint PostProcessingStack::process(GLuint lightingTexture, GLuint depthTexture, const std::weak_ptr<PbrCubemapTexture>& pbrCubemap,
-                                    const std::shared_ptr<Camera>& camera, const UniformBuffer& cameraUbo)
+GLuint PostProcessingStack::process(GLuint lightingTexture, GLuint depthTexture, const std::shared_ptr<Scene>& scene)
 {
     textureHandle = lightingTexture;
-    renderCubemap(lightingTexture, depthTexture, pbrCubemap, cameraUbo);
-    depthOfField(depthTexture);
-    lightShafts(depthTexture, camera);
-    motionBlur(depthTexture, camera);
+    renderCubemap(lightingTexture, depthTexture, scene);
+    depthOfField(depthTexture, scene->getCamera());
+    lightShafts(depthTexture, scene->getCamera());
+    motionBlur(depthTexture, scene->getCamera());
     bloom(lightingTexture);
     toneMapping();
     fxaa();
@@ -93,21 +89,20 @@ void PostProcessingStack::drawGui()
     }
 }
 
-void PostProcessingStack::renderCubemap(GLuint lightingTexture, GLuint depthTexture, const std::weak_ptr<PbrCubemapTexture>& pbrCubemap,
-                                        const UniformBuffer& cameraUbo)
+void PostProcessingStack::renderCubemap(GLuint lightingTexture, GLuint depthTexture, const std::shared_ptr<Scene>& scene)
 {
-    if(auto outputOpt = skyboxPass.process(pbrCubemap, depthTexture, lightingTexture, cameraUbo); outputOpt.has_value())
+    if(auto outputOpt = skyboxPass.process(depthTexture, lightingTexture, scene); outputOpt.has_value())
     {
         textureHandle = outputOpt.value();
     }
 }
 
-void PostProcessingStack::depthOfField(GLuint depthTexture)
+void PostProcessingStack::depthOfField(GLuint depthTexture, const std::shared_ptr<Camera>& camera)
 {
     if(!isDofEnabled)
         return;
 
-    textureHandle = dofPass.process(textureHandle, depthTexture);
+    textureHandle = dofPass.process(textureHandle, depthTexture, camera);
 }
 
 void PostProcessingStack::lightShafts(GLuint depthTexture, const std::shared_ptr<Camera>& camera)

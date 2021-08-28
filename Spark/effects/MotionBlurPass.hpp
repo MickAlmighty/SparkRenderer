@@ -1,14 +1,18 @@
 #pragma once
 
+#include <optional>
+
+#include "Buffer.hpp"
 #include "Camera.h"
 #include "ScreenQuad.hpp"
+#include "Shader.h"
 
 namespace spark::effects
 {
 class MotionBlurPass
 {
     public:
-    MotionBlurPass(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo);
+    MotionBlurPass(unsigned int width, unsigned int height);
     MotionBlurPass(const MotionBlurPass&) = delete;
     MotionBlurPass(MotionBlurPass&&) = delete;
     MotionBlurPass& operator=(const MotionBlurPass&) = delete;

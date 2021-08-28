@@ -20,20 +20,19 @@ namespace spark::renderers
 class ClusterBasedDeferredRenderer : public Renderer
 {
     public:
-    ClusterBasedDeferredRenderer(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo,
-                                 const std::shared_ptr<lights::LightManager>& lightManager);
+    ClusterBasedDeferredRenderer(unsigned int width, unsigned int height);
     ClusterBasedDeferredRenderer(const ClusterBasedDeferredRenderer&) = delete;
     ClusterBasedDeferredRenderer(ClusterBasedDeferredRenderer&&) = delete;
     ClusterBasedDeferredRenderer& operator=(const ClusterBasedDeferredRenderer&) = delete;
     ClusterBasedDeferredRenderer& operator=(ClusterBasedDeferredRenderer&&) = delete;
     ~ClusterBasedDeferredRenderer() override;
 
-    GLuint process(std::map<ShaderType, std::deque<RenderingRequest>>& renderQueue, const std::weak_ptr<PbrCubemapTexture>& pbrCubemap,
-                   const UniformBuffer& cameraUbo) override;
-    void resize(unsigned int width, unsigned int height) override;
-    void bindLightBuffers(const std::shared_ptr<lights::LightManager>& lightManager) override;
+    protected:
+    void renderMeshes(const std::shared_ptr<Scene>& scene) override;
+    void resizeDerived(unsigned int width, unsigned int height) override;
 
     GLuint getDepthTexture() const override;
+    GLuint getLightingTexture() const override;
 
     private:
     void createFrameBuffersAndTextures();

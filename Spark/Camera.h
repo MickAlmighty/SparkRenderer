@@ -2,17 +2,11 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include "Buffer.hpp"
 #include "Component.h"
 
 namespace spark
 {
-// Default camera values
-constexpr float YAW = -90.0f;
-constexpr float PITCH = 0.0f;
-constexpr float SPEED = 3.5f;
-constexpr float SENSITIVITY = 0.1f;
-constexpr float ZOOM = 45.0f;
-
 enum class CameraMode
 {
     FirstPerson = 0,
@@ -23,8 +17,7 @@ class Camera : public Component
 {
     public:
     Camera();
-    Camera(glm::vec3 position, float yaw = YAW, float pitch = PITCH);
-    Camera(float posX, float posY, float posZ, float yaw, float pitch);
+    Camera(glm::vec3 position);
 
     glm::mat4 getViewMatrix() const;
     glm::mat4 getProjection() const;
@@ -41,25 +34,33 @@ class Camera : public Component
     float getPitch() const;
     float getMovementSpeed() const;
     float getMouseSensitivity() const;
-    float getZoom() const;
     float getFov() const;
     float getNearPlane() const;
     float getFarPlane() const;
+    const UniformBuffer& getUbo();
     bool isDirty() const;
     void cleanDirty();
     CameraMode getCameraMode() const;
     void setYaw(float yaw);
     void setPitch(float pitch);
     void setRotation(float yaw, float pitch);
-    void processKeyboard();
-    void processMouseMovement(float xoffset, float yoffset, bool constrainPitch = true);
-    void processMouseScroll(float yoffset);
 
     void update() override;
     void fixedUpdate() override;
     void drawGUI() override;
 
     private:
+    void processKeyboard();
+    void processMouseMovement(float xoffset, float yoffset, bool constrainPitch = true);
+
+    // Calculates the front vector from the Camera's (updated) Euler Angles
+    void updateCameraVectors();
+    void updateCameraVectorsFirstPerson();
+    void updateCameraVectorsThirdPerson();
+    void processKeyboardFirstPerson();
+    void processKeyboardThirdPerson();
+    void processMouseMovementThirdPerson(float xoffset, float yoffset);
+
     glm::vec3 cameraTarget{0};
 
     // Camera Attributes
@@ -69,12 +70,11 @@ class Camera : public Component
     glm::vec3 Right{};
     const glm::vec3 WORLD_UP{0.0f, 1.0f, 0.0f};
     // Euler Angles
-    float Yaw{YAW};
-    float Pitch{PITCH};
+    float Yaw{-90.0f};
+    float Pitch{0.0f};
     // Camera options
-    float MovementSpeed{SPEED};
-    float MouseSensitivity{SENSITIVITY};
-    float Zoom{ZOOM};
+    float MovementSpeed{3.5f};
+    float MouseSensitivity{0.1f};
     bool dirty = true;
 
     CameraMode cameraMode = CameraMode::FirstPerson;
@@ -83,13 +83,8 @@ class Camera : public Component
     float zNear = 0.1f;
     float zFar = 10000.0f;
 
-    // Calculates the front vector from the Camera's (updated) Euler Angles
-    void updateCameraVectors();
-    void updateCameraVectorsFirstPerson();
-    void updateCameraVectorsThirdPerson();
-    void processKeyboardFirstPerson();
-    void processKeyboardThirdPerson();
-    void processMouseMovementThirdPerson(float xoffset, float yoffset);
+    UniformBuffer cameraUbo{};
+
     RTTR_REGISTRATION_FRIEND;
     RTTR_ENABLE(Component)
 };

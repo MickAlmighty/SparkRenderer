@@ -1,12 +1,7 @@
 #pragma once
 #include <memory>
 
-#include "Buffer.hpp"
-#include "Enums.h"
 #include "Renderer.hpp"
-#include "RenderingRequest.h"
-#include "effects/AmbientOcclusion.hpp"
-#include "lights/LightManager.h"
 
 namespace spark::resources
 {
@@ -18,25 +13,24 @@ namespace spark::renderers
 class ForwardPlusRenderer : public Renderer
 {
     public:
-    ForwardPlusRenderer(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo,
-                        const std::shared_ptr<lights::LightManager>& lightManager);
+    ForwardPlusRenderer(unsigned int width, unsigned int height);
     ForwardPlusRenderer(const ForwardPlusRenderer&) = delete;
     ForwardPlusRenderer(ForwardPlusRenderer&&) = delete;
     ForwardPlusRenderer& operator=(const ForwardPlusRenderer&) = delete;
     ForwardPlusRenderer& operator=(ForwardPlusRenderer&&) = delete;
     ~ForwardPlusRenderer() override;
 
-    GLuint process(std::map<ShaderType, std::deque<RenderingRequest>>& renderQueue, const std::weak_ptr<PbrCubemapTexture>& pbrCubemap,
-                   const UniformBuffer& cameraUbo) override;
-    void bindLightBuffers(const std::shared_ptr<lights::LightManager>& lightManager) override;
-    void resize(unsigned int width, unsigned int height) override;
+    protected:
+    void renderMeshes(const std::shared_ptr<Scene>& scene) override;
+    void resizeDerived(unsigned int width, unsigned int height) override;
+
     GLuint getDepthTexture() const override;
+    GLuint getLightingTexture() const override;
 
     private:
-    void depthPrepass(std::map<ShaderType, std::deque<RenderingRequest>>& renderQueue, const UniformBuffer& cameraUbo);
-    GLuint aoPass();
-    void lightingPass(std::map<ShaderType, std::deque<RenderingRequest>>& renderQueue, const std::weak_ptr<PbrCubemapTexture>& pbrCubemap,
-                      const UniformBuffer& cameraUbo, const GLuint ssaoTexture);
+    void depthPrepass(const std::shared_ptr<Scene>& scene);
+    GLuint aoPass(const std::shared_ptr<Scene>& scene);
+    void lightingPass(const std::shared_ptr<Scene>& scene, const GLuint ssaoTexture);
     void createFrameBuffersAndTextures();
 
     GLuint lightingFramebuffer{}, lightingTexture{};

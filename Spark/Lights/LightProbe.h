@@ -1,8 +1,14 @@
 #pragma once
 
+#include <glm/glm.hpp>
+
 #include "Component.h"
+#include "Cube.hpp"
+#include "glad_glfw3.h"
+#include "LightManager.h"
 #include "LightStatus.hpp"
 #include "Observable.hpp"
+#include "Shader.h"
 
 namespace spark
 {

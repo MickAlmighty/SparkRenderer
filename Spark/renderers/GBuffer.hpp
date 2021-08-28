@@ -27,8 +27,8 @@ class GBuffer
 
     void resize(unsigned int width, unsigned int height);
 
-    void fill(std::map<ShaderType, std::deque<RenderingRequest>>& renderQueue, const UniformBuffer& cameraUbo);
-    void fill(std::map<ShaderType, std::deque<RenderingRequest>>& renderQueue, const std::function<bool(const RenderingRequest& request)>& filter,
+    void fill(const std::map<ShaderType, std::deque<RenderingRequest>>& renderingQueues, const UniformBuffer& cameraUbo);
+    void fill(const std::map<ShaderType, std::deque<RenderingRequest>>& renderingQueues, const std::function<bool(const RenderingRequest& request)>& filter,
               const UniformBuffer& cameraUbo);
 
     GLuint framebuffer{};

@@ -1,8 +1,6 @@
 #pragma once
 
-#include "EngineSystems/SceneManager.h"
 #include "GUI/ImGui/imgui.h"
-#include "Scene.h"
 
 #include <rttr/registration_friend>
 #include <rttr/registration>
@@ -52,8 +50,8 @@ class Component : public std::enable_shared_from_this<Component>
     std::shared_ptr<Component> getComponentPtr();
 
     private:
-    virtual void onActive(){};
-    virtual void onInactive(){};
+    virtual void onActive() {}
+    virtual void onInactive() {}
 
     bool active{true};
     std::string name{"Component"};

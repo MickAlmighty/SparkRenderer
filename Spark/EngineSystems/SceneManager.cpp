@@ -6,7 +6,6 @@
 #include "ResourceLibrary.h"
 #include "Scene.h"
 #include "Spark.h"
-#include "SparkRenderer.h"
 
 namespace spark
 {
@@ -38,7 +37,6 @@ bool SceneManager::setCurrentScene(const std::shared_ptr<Scene>& scene)
         current_scene = std::make_shared<Scene>();
     }
 
-    Spark::get().getRenderer().setScene(current_scene);
     return success;
 }
 

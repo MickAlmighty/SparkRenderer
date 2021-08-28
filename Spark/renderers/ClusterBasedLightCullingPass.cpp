@@ -6,16 +6,13 @@
 
 namespace spark::renderers
 {
-ClusterBasedLightCullingPass::ClusterBasedLightCullingPass(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo,
-                                                           const std::shared_ptr<lights::LightManager>& lightManager)
+ClusterBasedLightCullingPass::ClusterBasedLightCullingPass(unsigned int width, unsigned int height)
     : w(width), h(height)
 {
     clusterCreationShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("clusterCreation.glsl");
     clusterCreationShader->bindSSBO("ClusterData", clusters);
-    clusterCreationShader->bindUniformBuffer("Camera", cameraUbo);
 
     determineActiveClustersShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("determineActiveCluster.glsl");
-    determineActiveClustersShader->bindUniformBuffer("Camera", cameraUbo);
     determineActiveClustersShader->bindSSBO("ActiveClusters", activeClusters);
     determineActiveClustersShader->bindSSBO("PerClusterGlobalLightIndicesBufferMetadata", perClusterGlobalLightIndicesBufferMetadata);
 
@@ -25,7 +22,6 @@ ClusterBasedLightCullingPass::ClusterBasedLightCullingPass(unsigned int width, u
     buildCompactClusterListShader->bindSSBO("ActiveClusterIndices", activeClusterIndices);
 
     clusterBasedLightCullingShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("clusterBasedLightCulling.glsl");
-    clusterBasedLightCullingShader->bindUniformBuffer("Camera", cameraUbo);
     clusterBasedLightCullingShader->bindSSBO("ActiveClusterIndices", activeClusterIndices);
     clusterBasedLightCullingShader->bindSSBO("ClusterData", clusters);
     clusterBasedLightCullingShader->bindSSBO("PerClusterGlobalLightIndicesBufferMetadata", perClusterGlobalLightIndicesBufferMetadata);
@@ -44,34 +40,35 @@ ClusterBasedLightCullingPass::ClusterBasedLightCullingPass(unsigned int width, u
     const std::array<unsigned int, 3> dispatches{1, 1, 1};
     activeClustersCount.updateData(dispatches);
 
-    bindLightBuffers(lightManager);
     resize(w, h);
 }
 
-void ClusterBasedLightCullingPass::process(GLuint depthTexture)
+void ClusterBasedLightCullingPass::process(GLuint depthTexture, const std::shared_ptr<Scene>& scene)
 {
     PUSH_DEBUG_GROUP(CLUSTER_BASED_LIGHT_CULLING)
 
-    createClusters();
-    determineActiveClusters(depthTexture);
+    createClusters(scene);
+    determineActiveClusters(depthTexture, scene);
     buildCompactClusterList();
-    lightCulling();
+    lightCulling(scene);
 
     clearActiveClustersCounter();
     POP_DEBUG_GROUP()
 }
 
-void ClusterBasedLightCullingPass::createClusters()
+void ClusterBasedLightCullingPass::createClusters(const std::shared_ptr<Scene>& scene)
 {
     clusterCreationShader->use();
     clusterCreationShader->setVec2("tileSize", pxTileSize);
+    clusterCreationShader->bindUniformBuffer("Camera", scene->getCamera()->getUbo());
     clusterCreationShader->dispatchCompute(utils::uiCeil(dispatchSize.x, 32u), utils::uiCeil(dispatchSize.y, 32u), dispatchSize.z);
 }
 
-void ClusterBasedLightCullingPass::determineActiveClusters(GLuint depthTexture)
+void ClusterBasedLightCullingPass::determineActiveClusters(GLuint depthTexture, const std::shared_ptr<Scene>& scene)
 {
     determineActiveClustersShader->use();
     determineActiveClustersShader->setVec2("tileSize", pxTileSize);
+    determineActiveClustersShader->bindUniformBuffer("Camera", scene->getCamera()->getUbo());
 
     glBindTextureUnit(0, depthTexture);
     determineActiveClustersShader->dispatchCompute(utils::uiCeil(w, 32u), utils::uiCeil(h, 32u), 1);
@@ -84,9 +81,11 @@ void ClusterBasedLightCullingPass::buildCompactClusterList()
     buildCompactClusterListShader->dispatchCompute(utils::uiCeil(dispatchSize.x, 32u), utils::uiCeil(dispatchSize.y, 32u), dispatchSize.z);
 }
 
-void ClusterBasedLightCullingPass::lightCulling()
+void ClusterBasedLightCullingPass::lightCulling(const std::shared_ptr<Scene>& scene)
 {
     clusterBasedLightCullingShader->use();
+    clusterBasedLightCullingShader->bindUniformBuffer("Camera", scene->getCamera()->getUbo());
+    bindLightBuffers(scene->lightManager);
     clusterBasedLightCullingShader->dispatchComputeIndirect(activeClustersCount.ID);
 }
 

@@ -1,8 +1,10 @@
 #include "Component.h"
-#include "GameObject.h"
 
 #include <iostream>
+
+#include "GameObject.h"
 #include "Logging.h"
+#include "Scene.h"
 
 namespace spark
 {

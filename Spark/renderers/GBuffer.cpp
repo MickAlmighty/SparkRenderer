@@ -13,7 +13,7 @@ GBuffer::GBuffer(unsigned int width, unsigned int height) : w(width), h(height)
     createFrameBuffersAndTextures();
 }
 
-void GBuffer::fill(std::map<ShaderType, std::deque<RenderingRequest>>& renderQueue, const UniformBuffer& cameraUbo)
+void GBuffer::fill(const std::map<ShaderType, std::deque<RenderingRequest>>& renderingQueues, const UniformBuffer& cameraUbo)
 {
     PUSH_DEBUG_GROUP(RENDER_TO_MAIN_FRAMEBUFFER);
 
@@ -28,15 +28,19 @@ void GBuffer::fill(std::map<ShaderType, std::deque<RenderingRequest>>& renderQue
 
     pbrGeometryBufferShader->use();
     pbrGeometryBufferShader->bindUniformBuffer("Camera", cameraUbo);
-    for(auto& request : renderQueue[ShaderType::PBR])
+
+    if(const auto it = renderingQueues.find(ShaderType::PBR); it != renderingQueues.cend())
     {
-        request.mesh->draw(pbrGeometryBufferShader, request.model);
+        for(auto& request : it->second)
+        {
+            request.mesh->draw(pbrGeometryBufferShader, request.model);
+        }
     }
 
     POP_DEBUG_GROUP();
 }
 
-void GBuffer::fill(std::map<ShaderType, std::deque<RenderingRequest>>& renderQueue,
+void GBuffer::fill(const std::map<ShaderType, std::deque<RenderingRequest>>& renderingQueues,
                    const std::function<bool(const RenderingRequest& request)>& filter, const UniformBuffer& cameraUbo)
 {
     PUSH_DEBUG_GROUP(RENDER_TO_MAIN_FRAMEBUFFER_FILTERED);
@@ -52,11 +56,14 @@ void GBuffer::fill(std::map<ShaderType, std::deque<RenderingRequest>>& renderQue
 
     pbrGeometryBufferShader->use();
     pbrGeometryBufferShader->bindUniformBuffer("Camera", cameraUbo);
-    for(auto& request : renderQueue[ShaderType::PBR])
+    if(const auto it = renderingQueues.find(ShaderType::PBR); it != renderingQueues.cend())
     {
-        if(filter(request))
+        for(auto& request : it->second)
         {
-            request.mesh->draw(pbrGeometryBufferShader, request.model);
+            if(filter(request))
+            {
+                request.mesh->draw(pbrGeometryBufferShader, request.model);
+            }
         }
     }
 

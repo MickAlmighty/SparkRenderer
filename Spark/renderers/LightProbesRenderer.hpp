@@ -10,22 +10,20 @@ namespace spark::renderers
 class LightProbesRenderer
 {
     public:
-    LightProbesRenderer(const std::shared_ptr<lights::LightManager>& lightManager);
+    LightProbesRenderer();
     LightProbesRenderer(const LightProbesRenderer&) = delete;
     LightProbesRenderer(LightProbesRenderer&&) = delete;
     LightProbesRenderer& operator=(const LightProbesRenderer&) = delete;
     LightProbesRenderer& operator=(LightProbesRenderer&&) = delete;
     ~LightProbesRenderer() = default;
 
-    void process(std::map<ShaderType, std::deque<RenderingRequest>>& renderQueue, const std::shared_ptr<PbrCubemapTexture>& cubemap,
-                 const std::vector<lights::LightProbe*>& lightProbes);
-    void bindLightBuffers(const std::shared_ptr<lights::LightManager>& lightManager);
+    void process(const std::shared_ptr<Scene>& scene);
 
     private:
     bool checkIfSkyboxChanged(const std::shared_ptr<PbrCubemapTexture>& cubemap) const;
-    void generateLightProbe(std::map<ShaderType, std::deque<RenderingRequest>>& renderQueue, lights::LightProbe* lightProbe,
+    void generateLightProbe(const std::map<ShaderType, std::deque<RenderingRequest>>& renderQueue, lights::LightProbe* lightProbe,
                             const std::shared_ptr<PbrCubemapTexture>& cubemap);
-    void renderSceneToCubemap(std::map<ShaderType, std::deque<RenderingRequest>>& renderQueue, const std::shared_ptr<PbrCubemapTexture>& cubemap);
+    void renderSceneToCubemap(const std::map<ShaderType, std::deque<RenderingRequest>>& renderQueue, const std::shared_ptr<PbrCubemapTexture>& cubemap);
 
     const unsigned int sceneCubemapSize{256};
     GLuint lightProbeSceneCubemap{};

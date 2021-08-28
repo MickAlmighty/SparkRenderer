@@ -1,13 +1,14 @@
 #include "JsonSerializer.h"
-#include "Component.h"
+
+#include <filesystem>
+#include <fstream>
+#include "ReflectionUtils.h"
 
 #include <json/reader.h>
 #include <json/writer.h>
 
-#include <filesystem>
-#include <fstream>
-#include <iostream>
-#include "ReflectionUtils.h"
+#include "Component.h"
+#include "Scene.h"
 
 namespace spark
 {

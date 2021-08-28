@@ -20,20 +20,19 @@ namespace spark::renderers
 class TileBasedDeferredRenderer : public Renderer
 {
     public:
-    TileBasedDeferredRenderer(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo,
-                              const std::shared_ptr<lights::LightManager>& lightManager);
+    TileBasedDeferredRenderer(unsigned int width, unsigned int height);
     TileBasedDeferredRenderer(const TileBasedDeferredRenderer&) = delete;
     TileBasedDeferredRenderer(TileBasedDeferredRenderer&&) = delete;
     TileBasedDeferredRenderer& operator=(const TileBasedDeferredRenderer&) = delete;
     TileBasedDeferredRenderer& operator=(TileBasedDeferredRenderer&&) = delete;
     ~TileBasedDeferredRenderer() override;
 
-    GLuint process(std::map<ShaderType, std::deque<RenderingRequest>>& renderQueue, const std::weak_ptr<PbrCubemapTexture>& pbrCubemap,
-                   const UniformBuffer& cameraUbo) override;
-    void resize(unsigned int width, unsigned int height) override;
-    void bindLightBuffers(const std::shared_ptr<lights::LightManager>& lightManager) override;
+    protected:
+    void renderMeshes(const std::shared_ptr<Scene>& scene) override;
+    void resizeDerived(unsigned int width, unsigned int height) override;
 
     GLuint getDepthTexture() const override;
+    GLuint getLightingTexture() const override;
 
     private:
     void createFrameBuffersAndTextures();

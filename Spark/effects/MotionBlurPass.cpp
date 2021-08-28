@@ -7,10 +7,9 @@
 
 namespace spark::effects
 {
-MotionBlurPass::MotionBlurPass(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo) : w(width), h(height)
+MotionBlurPass::MotionBlurPass(unsigned int width, unsigned int height) : w(width), h(height)
 {
     motionBlurShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("motionBlur.glsl");
-    motionBlurShader->bindUniformBuffer("Camera", cameraUbo);
     createFrameBuffersAndTextures();
 }
 
@@ -43,6 +42,7 @@ std::optional<GLuint> MotionBlurPass::process(const std::shared_ptr<Camera>& cam
         glBindFramebuffer(GL_FRAMEBUFFER, framebuffer1);
 
         motionBlurShader->use();
+        motionBlurShader->bindUniformBuffer("Camera", camera->getUbo());
         motionBlurShader->setMat4("prevViewProj", prevProjectionView);
         motionBlurShader->setFloat("blurScale", static_cast<float>(Clock::getFPS()) / 60.0f);
 

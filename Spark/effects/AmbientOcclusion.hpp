@@ -7,19 +7,24 @@
 #include "Structs.h"
 #include "ScreenQuad.hpp"
 
+namespace spark
+{
+class Camera;
+}
+
 namespace spark::effects
 {
 class AmbientOcclusion
 {
     public:
-    AmbientOcclusion(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo);
+    AmbientOcclusion(unsigned int width, unsigned int height);
     AmbientOcclusion(const AmbientOcclusion&) = delete;
     AmbientOcclusion(AmbientOcclusion&&) = delete;
     AmbientOcclusion& operator=(const AmbientOcclusion&) = delete;
     AmbientOcclusion& operator=(AmbientOcclusion&&) = delete;
     ~AmbientOcclusion();
 
-    GLuint process(GLuint depthTexture, GLuint normalsTexture);
+    GLuint process(GLuint depthTexture, GLuint normalsTexture, const std::shared_ptr<Camera>& camera);
     void resize(unsigned int width, unsigned int height);
 
     int kernelSize = 32;

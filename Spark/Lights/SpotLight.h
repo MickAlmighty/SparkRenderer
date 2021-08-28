@@ -1,10 +1,13 @@
 #pragma once
 
 #include <glm/vec3.hpp>
+#include <glm/vec4.hpp>
 
 #include "Component.h"
+#include "LightManager.h"
 #include "LightStatus.hpp"
 #include "Observable.hpp"
+
 
 namespace spark::lights
 {
@@ -23,7 +26,7 @@ class SpotLight final : public Component, public Observable<LightStatus<SpotLigh
 {
     public:
     SpotLight();
-    ~SpotLight();
+    ~SpotLight() override;
     SpotLight(const SpotLight&) = delete;
     SpotLight(const SpotLight&&) = delete;
     SpotLight& operator=(const SpotLight&) = delete;

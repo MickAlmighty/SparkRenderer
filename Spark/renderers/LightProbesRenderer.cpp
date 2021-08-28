@@ -7,8 +7,7 @@
 
 namespace spark::renderers
 {
-LightProbesRenderer::LightProbesRenderer(const std::shared_ptr<lights::LightManager>& lightManager)
-    : localLightProbeGBuffer(sceneCubemapSize, sceneCubemapSize), skyboxPass(2, 2)
+LightProbesRenderer::LightProbesRenderer() : localLightProbeGBuffer(sceneCubemapSize, sceneCubemapSize), skyboxPass(2, 2)
 {
     cubemapViewMatrices.resizeBuffer(sizeof(glm::mat4) * 6);
     cubemapViewMatrices.updateData(utils::getCubemapViewMatrices(glm::vec3(0)));
@@ -34,23 +33,26 @@ LightProbesRenderer::LightProbesRenderer(const std::shared_ptr<lights::LightMana
     resampleCubemapShader->setMat4("projection", cubemapProjection);
     equirectangularToCubemapShader->use();
     equirectangularToCubemapShader->setMat4("projection", cubemapProjection);
-
-    bindLightBuffers(lightManager);
 }
 
-void LightProbesRenderer::process(std::map<ShaderType, std::deque<RenderingRequest>>& renderQueue, const std::shared_ptr<PbrCubemapTexture>& cubemap,
-                                  const std::vector<lights::LightProbe*>& lightProbes)
+void LightProbesRenderer::process(const std::shared_ptr<Scene>& scene)
 {
+    const auto& lightProbes = scene->lightManager->getLightProbes();
     if(lightProbes.empty())
         return;
 
     const bool renderingNeeded = std::any_of(lightProbes.cbegin(), lightProbes.cend(), [](lights::LightProbe* lp) { return lp->generateLightProbe; });
-    const bool lightProbesRebuildNeeded = checkIfSkyboxChanged(cubemap);
+    const bool lightProbesRebuildNeeded = checkIfSkyboxChanged(scene->getSkyboxCubemap().lock());
     const auto skipRendering = !renderingNeeded && !lightProbesRebuildNeeded;
     if(skipRendering)
         return;
 
     auto t = Timer("Local Light Probe creation");
+
+    localLightProbesLightingShader->bindSSBO("DirLightData", scene->lightManager->getDirLightSSBO());
+    localLightProbesLightingShader->bindSSBO("PointLightData", scene->lightManager->getPointLightSSBO());
+    localLightProbesLightingShader->bindSSBO("SpotLightData", scene->lightManager->getSpotLightSSBO());
+
     utils::createCubemap(lightProbeSceneCubemap, sceneCubemapSize, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR, true);
 
     utils::createFramebuffer(lightProbeLightFbo, {});
@@ -62,19 +64,12 @@ void LightProbesRenderer::process(std::map<ShaderType, std::deque<RenderingReque
         if(!lightProbe->generateLightProbe && skipRendering)
             continue;
 
-        generateLightProbe(renderQueue, lightProbe, cubemap);
+        generateLightProbe(scene->getRenderingQueues(), lightProbe, scene->getSkyboxCubemap().lock());
     }
 
     glDeleteTextures(1, &lightProbeSceneCubemap);
     glDeleteFramebuffers(1, &lightProbeLightFbo);
     glDeleteFramebuffers(1, &lightProbeSkyboxFbo);
-}
-
-void LightProbesRenderer::bindLightBuffers(const std::shared_ptr<lights::LightManager>& lightManager)
-{
-    localLightProbesLightingShader->bindSSBO("DirLightData", lightManager->getDirLightSSBO());
-    localLightProbesLightingShader->bindSSBO("PointLightData", lightManager->getPointLightSSBO());
-    localLightProbesLightingShader->bindSSBO("SpotLightData", lightManager->getSpotLightSSBO());
 }
 
 bool LightProbesRenderer::checkIfSkyboxChanged(const std::shared_ptr<PbrCubemapTexture>& cubemap) const
@@ -96,7 +91,7 @@ bool LightProbesRenderer::checkIfSkyboxChanged(const std::shared_ptr<PbrCubemapT
     return false;
 }
 
-void LightProbesRenderer::generateLightProbe(std::map<ShaderType, std::deque<RenderingRequest>>& renderQueue, lights::LightProbe* lightProbe,
+void LightProbesRenderer::generateLightProbe(const std::map<ShaderType, std::deque<RenderingRequest>>& renderQueue, lights::LightProbe* lightProbe,
                                              const std::shared_ptr<PbrCubemapTexture>& cubemap)
 {
     PUSH_DEBUG_GROUP(SCENE_TO_CUBEMAP);
@@ -142,7 +137,7 @@ void LightProbesRenderer::generateLightProbe(std::map<ShaderType, std::deque<Ren
     POP_DEBUG_GROUP();
 }
 
-void LightProbesRenderer::renderSceneToCubemap(std::map<ShaderType, std::deque<RenderingRequest>>& renderQueue,
+void LightProbesRenderer::renderSceneToCubemap(const std::map<ShaderType, std::deque<RenderingRequest>>& renderQueue,
                                                const std::shared_ptr<PbrCubemapTexture>& cubemap)
 {
     constexpr auto filterStaticObjectsOnly = [](const RenderingRequest& request) { return request.gameObject->isStatic() == true; };

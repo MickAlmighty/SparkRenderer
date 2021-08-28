@@ -1,13 +1,12 @@
 #pragma once
 
-#include "AmbientOcclusion.hpp"
 #include "BloomPass.hpp"
-#include "Buffer.hpp"
 #include "DepthOfFieldPass.h"
 #include "FxaaPass.hpp"
 #include "glad_glfw3.h"
 #include "LightShaftsPass.hpp"
 #include "MotionBlurPass.hpp"
+#include "Scene.h"
 #include "SkyboxPass.hpp"
 #include "ToneMapper.hpp"
 
@@ -16,23 +15,21 @@ namespace spark::effects
 class PostProcessingStack
 {
     public:
-    PostProcessingStack(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo);
+    PostProcessingStack(unsigned int width, unsigned int height);
     PostProcessingStack(const PostProcessingStack&) = delete;
     PostProcessingStack(PostProcessingStack&&) = delete;
     PostProcessingStack& operator=(const PostProcessingStack&) = delete;
     PostProcessingStack& operator=(PostProcessingStack&&) = delete;
     ~PostProcessingStack() = default;
 
-    GLuint process(GLuint lightingTexture, GLuint depthTexture, const std::weak_ptr<PbrCubemapTexture>& pbrCubemap,
-                   const std::shared_ptr<Camera>& camera, const UniformBuffer& cameraUbo);
+    GLuint process(GLuint lightingTexture, GLuint depthTexture, const std::shared_ptr<Scene>& scene);
     void resize(unsigned int width, unsigned int height);
 
     void drawGui();
 
     private:
-    void renderCubemap(GLuint lightingTexture, GLuint depthTexture, const std::weak_ptr<PbrCubemapTexture>& pbrCubemap,
-                       const UniformBuffer& cameraUbo);
-    void depthOfField(GLuint depthTexture);
+    void renderCubemap(GLuint lightingTexture, GLuint depthTexture, const std::shared_ptr<Scene>& scene);
+    void depthOfField(GLuint depthTexture, const std::shared_ptr<Camera>& camera);
     void lightShafts(GLuint depthTexture, const std::shared_ptr<Camera>& camera);
     void bloom(GLuint lightingTexture);
     void motionBlur(GLuint depthTexture, const std::shared_ptr<Camera>& camera);

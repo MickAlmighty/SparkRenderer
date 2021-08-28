@@ -4,12 +4,13 @@
 
 #include <glm/gtx/compatibility.hpp>
 
+#include "Camera.h"
 #include "CommonUtils.h"
 #include "Spark.h"
 
 namespace spark::effects
 {
-AmbientOcclusion::AmbientOcclusion(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo) : w(width), h(height)
+AmbientOcclusion::AmbientOcclusion(unsigned int width, unsigned int height) : w(width), h(height)
 {
     const auto ssaoKernel = generateSsaoSamples();
     samplesUbo.resizeBuffer(ssaoKernel.size() * sizeof(glm::vec4));
@@ -22,7 +23,6 @@ AmbientOcclusion::AmbientOcclusion(unsigned int width, unsigned int height, cons
     ssaoBlurShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("ssaoBlur.glsl");
     colorInversionShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("colorInversion.glsl");
     ssaoShader->bindUniformBuffer("Samples", samplesUbo);
-    ssaoShader->bindUniformBuffer("Camera", cameraUbo);
     createFrameBuffersAndTextures();
 }
 
@@ -34,7 +34,7 @@ AmbientOcclusion::~AmbientOcclusion()
     glDeleteFramebuffers(1, &ssaoFramebuffer);
 }
 
-GLuint AmbientOcclusion::process(GLuint depthTexture, GLuint normalsTexture)
+GLuint AmbientOcclusion::process(GLuint depthTexture, GLuint normalsTexture, const std::shared_ptr<Camera>& camera)
 {
     PUSH_DEBUG_GROUP(SSAO);
 
@@ -51,6 +51,7 @@ GLuint AmbientOcclusion::process(GLuint depthTexture, GLuint normalsTexture)
     ssaoShader->setFloat("bias", bias);
     ssaoShader->setFloat("power", power);
     ssaoShader->setVec2("screenSize", {static_cast<float>(w), static_cast<float>(h)});
+    ssaoShader->bindUniformBuffer("Camera", camera->getUbo());
 
     screenQuad.draw();
     glBindTextures(0, 3, nullptr);

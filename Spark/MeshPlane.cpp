@@ -1,6 +1,5 @@
 #include "MeshPlane.h"
 
-#include "EngineSystems/SparkRenderer.h"
 #include "GameObject.h"
 #include "GUI/SparkGui.h"
 #include "ReflectionUtils.h"
@@ -54,7 +53,7 @@ void MeshPlane::update()
     request.mesh = planeMesh;
     request.model = getGameObject()->transform.world.getMatrix();
 
-    Spark::get().getRenderer().addRenderingRequest(request);
+    getGameObject()->getScene()->addRenderingRequest(request);
 }
 
 void MeshPlane::fixedUpdate() {}

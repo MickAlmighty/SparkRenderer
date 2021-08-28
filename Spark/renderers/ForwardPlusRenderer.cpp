@@ -6,9 +6,7 @@
 
 namespace spark::renderers
 {
-ForwardPlusRenderer::ForwardPlusRenderer(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo,
-                                         const std::shared_ptr<lights::LightManager>& lightManager)
-    : Renderer(width, height, cameraUbo)
+ForwardPlusRenderer::ForwardPlusRenderer(unsigned int width, unsigned int height) : Renderer(width, height)
 {
     brdfLookupTexture = utils::createBrdfLookupTexture(1024);
 
@@ -16,11 +14,6 @@ ForwardPlusRenderer::ForwardPlusRenderer(unsigned int width, unsigned int height
     depthAndNormalsShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("depthAndNormals.glsl");
     lightingShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("forwardPlusPbrLighting.glsl");
 
-    depthOnlyShader->bindUniformBuffer("Camera", cameraUbo);
-    depthAndNormalsShader->bindUniformBuffer("Camera", cameraUbo);
-    lightingShader->bindUniformBuffer("Camera", cameraUbo);
-
-    bindLightBuffers(lightManager);
     createFrameBuffersAndTextures();
 }
 
@@ -33,7 +26,7 @@ ForwardPlusRenderer::~ForwardPlusRenderer()
     glDeleteFramebuffers(1, &lightingFramebuffer);
 }
 
-void ForwardPlusRenderer::depthPrepass(std::map<ShaderType, std::deque<RenderingRequest>>& renderQueue, const UniformBuffer& cameraUbo)
+void ForwardPlusRenderer::depthPrepass(const std::shared_ptr<Scene>& scene)
 {
     PUSH_DEBUG_GROUP(DEPTH_PREPASS)
     glBindFramebuffer(GL_FRAMEBUFFER, depthPrepassFramebuffer);
@@ -55,25 +48,28 @@ void ForwardPlusRenderer::depthPrepass(std::map<ShaderType, std::deque<Rendering
     }
 
     shader->use();
-    shader->bindUniformBuffer("Camera", cameraUbo);
-    for(auto& request : renderQueue[ShaderType::PBR])
+    shader->bindUniformBuffer("Camera", scene->getCamera()->getUbo());
+    if (const auto it = scene->getRenderingQueues().find(ShaderType::PBR); it != scene->getRenderingQueues().cend())
     {
-        request.mesh->draw(shader, request.model);
+        for (auto& request : it->second)
+        {
+            request.mesh->draw(shader, request.model);
+        }
     }
 
     POP_DEBUG_GROUP()
 }
 
-GLuint ForwardPlusRenderer::aoPass()
+GLuint ForwardPlusRenderer::aoPass(const std::shared_ptr<Scene>& scene)
 {
     if(isAmbientOcclusionEnabled)
     {
-        return ao.process(depthTexture, normalsTexture);
+        return ao.process(depthTexture, normalsTexture, scene->getCamera());
     }
     return 0;
 }
 
-void ForwardPlusRenderer::lightingPass(std::map<ShaderType, std::deque<RenderingRequest>>& renderQueue, const std::weak_ptr<PbrCubemapTexture>& pbrCubemap, const UniformBuffer& cameraUbo, const GLuint ssaoTexture)
+void ForwardPlusRenderer::lightingPass(const std::shared_ptr<Scene>& scene, const GLuint ssaoTexture)
 {
     PUSH_DEBUG_GROUP(PBR_LIGHT);
     glBindFramebuffer(GL_FRAMEBUFFER, lightingFramebuffer);
@@ -82,10 +78,10 @@ void ForwardPlusRenderer::lightingPass(std::map<ShaderType, std::deque<Rendering
 
     glDepthFunc(GL_EQUAL);
 
-    if(!pbrCubemap.expired())
+    if(!scene->getSkyboxCubemap().expired())
     {
-        glBindTextureUnit(7, pbrCubemap.lock()->irradianceCubemap);
-        glBindTextureUnit(8, pbrCubemap.lock()->prefilteredCubemap);
+        glBindTextureUnit(7, scene->getSkyboxCubemap().lock()->irradianceCubemap);
+        glBindTextureUnit(8, scene->getSkyboxCubemap().lock()->prefilteredCubemap);
     }
     else
     {
@@ -95,44 +91,46 @@ void ForwardPlusRenderer::lightingPass(std::map<ShaderType, std::deque<Rendering
     glBindTextureUnit(10, ssaoTexture);
 
     lightingShader->use();
-    lightingShader->bindUniformBuffer("Camera", cameraUbo);
-    for(auto& request : renderQueue[ShaderType::PBR])
+    lightingShader->bindUniformBuffer("Camera", scene->getCamera()->getUbo());
+    lightingShader->bindSSBO("DirLightData", scene->lightManager->getDirLightSSBO());
+    lightingShader->bindSSBO("PointLightData", scene->lightManager->getPointLightSSBO());
+    lightingShader->bindSSBO("SpotLightData", scene->lightManager->getSpotLightSSBO());
+    lightingShader->bindSSBO("LightProbeData", scene->lightManager->getLightProbeSSBO());
+
+    if(const auto it = scene->getRenderingQueues().find(ShaderType::PBR); it != scene->getRenderingQueues().cend())
     {
-        request.mesh->draw(lightingShader, request.model);
+        for(auto& request : it->second)
+        {
+            request.mesh->draw(lightingShader, request.model);
+        }
     }
 
     glDepthFunc(GL_GREATER);
     POP_DEBUG_GROUP()
 }
 
-GLuint ForwardPlusRenderer::process(std::map<ShaderType, std::deque<RenderingRequest>>& renderQueue,
-                                    const std::weak_ptr<PbrCubemapTexture>& pbrCubemap, const UniformBuffer& cameraUbo)
+void ForwardPlusRenderer::renderMeshes(const std::shared_ptr<Scene>& scene)
 {
-    depthPrepass(renderQueue, cameraUbo);
-    const GLuint ssaoTexture = aoPass();
-    lightingPass(renderQueue, pbrCubemap, cameraUbo, ssaoTexture);
-    return lightingTexture;
+    depthPrepass(scene);
+    const GLuint ssaoTexture = aoPass(scene);
+    lightingPass(scene, ssaoTexture);
 }
 
-void ForwardPlusRenderer::bindLightBuffers(const std::shared_ptr<lights::LightManager>& lightManager)
-{
-    lightingShader->bindSSBO("DirLightData", lightManager->getDirLightSSBO());
-    lightingShader->bindSSBO("PointLightData", lightManager->getPointLightSSBO());
-    lightingShader->bindSSBO("SpotLightData", lightManager->getSpotLightSSBO());
-    lightingShader->bindSSBO("LightProbeData", lightManager->getLightProbeSSBO());
-}
-
-void ForwardPlusRenderer::resize(unsigned int width, unsigned int height)
+void ForwardPlusRenderer::resizeDerived(unsigned int width, unsigned int height)
 {
     w = width;
     h = height;
-    ao.resize(w, h);
     createFrameBuffersAndTextures();
 }
 
 GLuint ForwardPlusRenderer::getDepthTexture() const
 {
     return depthTexture;
+}
+
+GLuint ForwardPlusRenderer::getLightingTexture() const
+{
+    return lightingTexture;
 }
 
 void ForwardPlusRenderer::createFrameBuffersAndTextures()
@@ -146,4 +144,4 @@ void ForwardPlusRenderer::createFrameBuffersAndTextures()
     utils::recreateFramebuffer(lightingFramebuffer, {lightingTexture});
     utils::bindDepthTexture(lightingFramebuffer, depthTexture);
 }
-}  // namespace spark
+}  // namespace spark::renderers

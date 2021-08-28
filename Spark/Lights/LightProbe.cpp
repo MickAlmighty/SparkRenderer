@@ -3,15 +3,14 @@
 #include <glm/gtx/transform.hpp>
 
 #include "CommonUtils.h"
-#include "EngineSystems/SparkRenderer.h"
 #include "Enums.h"
 #include "GameObject.h"
 #include "Mesh.h"
 #include "renderers/RenderingRequest.h"
 #include "ResourceLibrary.h"
+#include "Scene.h"
 #include "Shader.h"
 #include "ShapeCreator.h"
-#include "Spark.h"
 #include "Texture.h"
 #include "Timer.h"
 
@@ -74,7 +73,7 @@ void LightProbe::update()
             request.mesh = sphere;
             request.model = sphereModel;
 
-            Spark::get().getRenderer().addRenderingRequest(request);
+            getGameObject()->getScene()->addRenderingRequest(request);
         }
     }
 }

@@ -1,22 +1,16 @@
 #include "TileBasedLightCullingPass.hpp"
 
+#include "Camera.h"
 #include "CommonUtils.h"
 #include "Shader.h"
 #include "Spark.h"
 
 namespace spark::renderers
 {
-TileBasedLightCullingPass::TileBasedLightCullingPass(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo,
-                                                     const std::shared_ptr<lights::LightManager>& lightManager)
-    : w(width), h(height)
+TileBasedLightCullingPass::TileBasedLightCullingPass(unsigned int width, unsigned int height) : w(width), h(height)
 {
     tileBasedLightCullingShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("tileBasedLightCulling.glsl");
-    tileBasedLightCullingShader->bindUniformBuffer("Camera", cameraUbo);
 
-    tileBasedLightCullingShader->bindSSBO("PointLightIndices", pointLightIndices);
-    tileBasedLightCullingShader->bindSSBO("SpotLightIndices", spotLightIndices);
-    tileBasedLightCullingShader->bindSSBO("LightProbeIndices", lightProbeIndices);
-    bindLightBuffers(lightManager);
     createFrameBuffersAndTextures();
 }
 
@@ -25,7 +19,7 @@ TileBasedLightCullingPass::~TileBasedLightCullingPass()
     glDeleteTextures(1, &lightsPerTileTexture);
 }
 
-void TileBasedLightCullingPass::process(GLuint depthTexture)
+void TileBasedLightCullingPass::process(GLuint depthTexture, const std::shared_ptr<Scene>& scene)
 {
     PUSH_DEBUG_GROUP(TILE_BASED_LIGHTS_CULLING);
     pointLightIndices.clearData();
@@ -33,6 +27,13 @@ void TileBasedLightCullingPass::process(GLuint depthTexture)
     lightProbeIndices.clearData();
 
     tileBasedLightCullingShader->use();
+    tileBasedLightCullingShader->bindUniformBuffer("Camera", scene->getCamera()->getUbo());
+
+    tileBasedLightCullingShader->bindSSBO("PointLightIndices", pointLightIndices);
+    tileBasedLightCullingShader->bindSSBO("SpotLightIndices", spotLightIndices);
+    tileBasedLightCullingShader->bindSSBO("LightProbeIndices", lightProbeIndices);
+
+    bindLightBuffers(scene->lightManager);
 
     glBindTextureUnit(0, depthTexture);
 

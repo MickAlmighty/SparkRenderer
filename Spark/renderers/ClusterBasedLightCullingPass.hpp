@@ -1,8 +1,10 @@
 #pragma once
+
 #include <memory>
 
 #include "Buffer.hpp"
 #include "Camera.h"
+#include "Scene.h"
 #include "Shader.h"
 #include "lights/LightManager.h"
 
@@ -11,18 +13,15 @@ namespace spark::renderers
 class ClusterBasedLightCullingPass
 {
     public:
-    ClusterBasedLightCullingPass(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo,
-                                 const std::shared_ptr<lights::LightManager>& lightManager);
+    ClusterBasedLightCullingPass(unsigned int width, unsigned int height);
     ClusterBasedLightCullingPass(const ClusterBasedLightCullingPass&) = delete;
     ClusterBasedLightCullingPass(ClusterBasedLightCullingPass&&) = delete;
     ClusterBasedLightCullingPass& operator=(const ClusterBasedLightCullingPass&) = delete;
     ClusterBasedLightCullingPass& operator=(ClusterBasedLightCullingPass&&) = delete;
     ~ClusterBasedLightCullingPass() = default;
 
-    void process(GLuint depthTexture);
+    void process(GLuint depthTexture, const std::shared_ptr<Scene>& scene);
     void resize(unsigned int width, unsigned int height);
-
-    void bindLightBuffers(const std::shared_ptr<lights::LightManager>& lightManager);
 
     SSBO globalPointLightIndices{};
     SSBO globalSpotLightIndices{};
@@ -31,11 +30,12 @@ class ClusterBasedLightCullingPass
     glm::vec2 pxTileSize{1};
 
     private:
-    void createClusters();
-    void determineActiveClusters(GLuint depthTexture);
+    void createClusters(const std::shared_ptr<Scene>& scene);
+    void determineActiveClusters(GLuint depthTexture, const std::shared_ptr<Scene>& scene);
     void buildCompactClusterList();
-    void lightCulling();
+    void lightCulling(const std::shared_ptr<Scene>& scene);
     void clearActiveClustersCounter();
+    void bindLightBuffers(const std::shared_ptr<lights::LightManager>& lightManager);
 
     unsigned int w{}, h{};
 

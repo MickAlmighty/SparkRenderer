@@ -3,10 +3,15 @@
 #include "GUI/SparkGui.h"
 #include "OpenGLContext.hpp"
 #include "ResourceLibrary.h"
-#include "EngineSystems/SparkRenderer.h"
+#include "EngineSystems/SceneManager.h"
 
 namespace spark
 {
+namespace renderers
+{
+    class Renderer;
+}
+
 struct SparkConfig;
 
 class Spark
@@ -19,10 +24,10 @@ class Spark
 
     static Spark& get();
     static void run(const SparkConfig& config);
+    void drawGui();
 
     virtual OpenGLContext& getRenderingContext() const;
     virtual resourceManagement::ResourceLibrary& getResourceLibrary() const;
-    virtual SparkRenderer& getRenderer() const;
     virtual SceneManager& getSceneManager() const;
 
     unsigned int WIDTH{1280};
@@ -33,7 +38,6 @@ class Spark
     Spark() = default;
     virtual ~Spark() = default;
 
-    private:
     void loadConfig(const SparkConfig& config);
     void setup();
     void runLoop();
@@ -46,7 +50,7 @@ class Spark
 
     std::unique_ptr<OpenGLContext> renderingContext{};
     std::unique_ptr<resourceManagement::ResourceLibrary> resourceLibrary{};
-    std::unique_ptr<SparkRenderer> renderer{};
+    std::unique_ptr<renderers::Renderer> renderer{};
     std::unique_ptr<SceneManager> sceneManager{};
     SparkGui sparkGui{};
     std::filesystem::path pathToResources{};

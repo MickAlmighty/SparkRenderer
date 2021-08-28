@@ -66,7 +66,10 @@ void Shader::linkProgram(const std::vector<GLuint>& ids)
     if(!success)
     {
         glGetProgramInfoLog(program, 512, NULL, infoLog);
-        SPARK_ERROR("PROGRAM::LINKAGE_FAILED: {}", infoLog);
+        std::string fullInfo = getPath().string();
+        fullInfo.append("\n\rPROGRAM::LINKAGE_FAILED, cause: ");
+        fullInfo.append(infoLog);
+        SPARK_ERROR(fullInfo);
     }
     ID = program;
 

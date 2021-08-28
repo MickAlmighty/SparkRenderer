@@ -4,6 +4,7 @@
 
 #include "Buffer.hpp"
 #include "BlurPass.h"
+#include "Camera.h"
 #include "glad_glfw3.h"
 #include "ScreenQuad.hpp"
 
@@ -19,10 +20,10 @@ class BlurPass;
 class DepthOfFieldPass
 {
     public:
-    GLuint process(GLuint lightPassTexture, GLuint depthTexture) const;
+    GLuint process(GLuint lightPassTexture, GLuint depthTexture, const std::shared_ptr<Camera>& camera) const;
     void resize(unsigned int width, unsigned int height);
 
-    DepthOfFieldPass(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo);
+    DepthOfFieldPass(unsigned int width, unsigned int height);
     DepthOfFieldPass& operator=(const DepthOfFieldPass& blurPass) = delete;
     DepthOfFieldPass& operator=(const DepthOfFieldPass&& blurPass) = delete;
     DepthOfFieldPass(const DepthOfFieldPass& blurPass) = delete;
@@ -35,7 +36,7 @@ class DepthOfFieldPass
     private:
     void createFrameBuffersAndTextures();
 
-    void calculateCircleOfConfusion(GLuint depthTexture) const;
+    void calculateCircleOfConfusion(GLuint depthTexture, const std::shared_ptr<Camera>& camera) const;
     void blurLightPassTexture(GLuint lightPassTexture) const;
     inline void detectBokehPositions(GLuint lightPassTexture) const;
     inline void renderBokehShapes() const;

@@ -34,7 +34,7 @@ TEST(ReflectionTest, CameraValidAndAccessible)
     ASSERT_TRUE(variant.is_valid());
     ASSERT_TRUE(variant.is_type<std::shared_ptr<spark::Camera>>());
     std::shared_ptr<spark::Camera> camera{type.create().get_value<std::shared_ptr<spark::Camera>>()};
-    ASSERT_EQ(14 + rttr::type::get<spark::Component>().get_properties().size(), type.get_properties().size());
+    ASSERT_EQ(rttr::type::get<spark::Camera>().get_properties().size(), type.get_properties().size());
     ASSERT_TRUE(type.get_property("cameraTarget").is_valid());
     ASSERT_TRUE(type.get_property("Position").is_valid());
     ASSERT_TRUE(type.get_property("Front").is_valid());
@@ -44,7 +44,6 @@ TEST(ReflectionTest, CameraValidAndAccessible)
     ASSERT_TRUE(type.get_property("Pitch").is_valid());
     ASSERT_TRUE(type.get_property("MovementSpeed").is_valid());
     ASSERT_TRUE(type.get_property("MouseSensitivity").is_valid());
-    ASSERT_TRUE(type.get_property("Zoom").is_valid());
     ASSERT_TRUE(type.get_property("cameraMode").is_valid());
     ASSERT_TRUE(type.get_property("fov").is_valid());
     ASSERT_TRUE(type.get_property("zNear").is_valid());
@@ -58,7 +57,6 @@ TEST(ReflectionTest, CameraValidAndAccessible)
     ASSERT_EQ(camera->getPitch(), type.get_property_value("Pitch", camera).get_value<float>());
     ASSERT_EQ(camera->getMovementSpeed(), type.get_property_value("MovementSpeed", camera).get_value<float>());
     ASSERT_EQ(camera->getMouseSensitivity(), type.get_property_value("MouseSensitivity", camera).get_value<float>());
-    ASSERT_EQ(camera->getZoom(), type.get_property_value("Zoom", camera).get_value<float>());
     ASSERT_EQ(camera->getCameraMode(), type.get_property_value("cameraMode", camera).get_value<spark::CameraMode>());
     ASSERT_EQ(camera->getFov(), type.get_property_value("fov", camera).get_value<float>());
     ASSERT_EQ(camera->getNearPlane(), type.get_property_value("zNear", camera).get_value<float>());

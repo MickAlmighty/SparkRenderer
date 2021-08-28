@@ -1,7 +1,9 @@
 #include "Skybox.h"
 
 #include "Spark.h"
-#include "EngineSystems/SparkRenderer.h"
+#include "GameObject.h"
+#include "Logging.h"
+#include "Scene.h"
 
 namespace spark
 {
@@ -21,8 +23,6 @@ void Skybox::createPbrCubemap(const std::shared_ptr<resources::Texture>& texture
 {
     skyboxName = texture->getPath().filename().string();
     pbrCubemapTexture = std::make_shared<PbrCubemapTexture>(texture->getID());
-    if(activeSkybox)
-        Spark::get().getRenderer().setCubemap(pbrCubemapTexture);
 }
 
 void Skybox::drawGUI()
@@ -46,31 +46,44 @@ void Skybox::drawGUI()
     removeComponentGUI<Skybox>();
 }
 
+void Skybox::setSkyboxInScene(const std::shared_ptr<PbrCubemapTexture>& skyboxCubemap) const
+{
+    if(const auto gameObject = getGameObject(); gameObject)
+    {
+        gameObject->getScene()->setCubemap(skyboxCubemap);
+    }
+}
+
 void Skybox::setActiveSkybox(bool isActive)
 {
     if(isActive)
     {
-        if(activeSkyboxPtr)
+        if(const bool isThisSkyboxActive = isSkyboxActive(); isThisSkyboxActive)
+        {
+            return;
+        }
+
+        if(const bool isOtherSkyboxActive = activeSkyboxPtr != nullptr; isOtherSkyboxActive)
+        {
             activeSkyboxPtr->setActiveSkybox(false);
+        }
 
         activeSkyboxPtr = this;
-        activeSkybox = true;
-        Spark::get().getRenderer().setCubemap(pbrCubemapTexture);
+        setSkyboxInScene(pbrCubemapTexture);
     }
     else
     {
-        if (activeSkyboxPtr == this)
+        if(isSkyboxActive())
         {
-            Spark::get().getRenderer().setCubemap(nullptr);
+            setSkyboxInScene(nullptr);
             activeSkyboxPtr = nullptr;
-            activeSkybox = false;
         }
     }
 }
 
 bool Skybox::isSkyboxActive() const
 {
-    return activeSkybox;
+    return activeSkyboxPtr == this;
 }
 
 Skybox* Skybox::getActiveSkybox()
@@ -82,7 +95,7 @@ void Skybox::onActive()
 {
     if(activeSkyboxPtr == this)
     {
-        Spark::get().getRenderer().setCubemap(pbrCubemapTexture);
+        getGameObject()->getScene()->setCubemap(pbrCubemapTexture);
     }
 }
 
@@ -90,7 +103,7 @@ void Skybox::onInactive()
 {
     if(activeSkyboxPtr == this)
     {
-        Spark::get().getRenderer().setCubemap(nullptr);
+        getGameObject()->getScene()->setCubemap(nullptr);
     }
 }
 

@@ -28,11 +28,13 @@ Scene::Scene(const std::filesystem::path& path_, const std::shared_ptr<Scene>&& 
     camera = std::move(scene_->camera);
     root = std::move(scene_->root);
     lightManager = std::move(scene_->lightManager);
+    skyboxCubemap = std::move(scene_->skyboxCubemap);
     root->setSceneRecursive(this);
 }
 
 Scene::~Scene()
 {
+    root = nullptr;
     SPARK_TRACE("Scene destroyed!");
 }
 
@@ -40,10 +42,9 @@ void Scene::update()
 {
     removeObjectsFromScene();
 
-    camera->processKeyboard();
-    camera->processMouseMovement(HID::mouse.direction.x, -HID::mouse.direction.y);
-    camera->update();
+    clearRenderQueues();
 
+    camera->update();
     root->update();
     lightManager->updateLightBuffers();
 }
@@ -194,9 +195,37 @@ std::string Scene::getName() const
     return getPath().filename().string();
 }
 
+const std::map<ShaderType, std::deque<renderers::RenderingRequest>>& Scene::getRenderingQueues() const
+{
+    return renderingQueues;
+}
+
+const std::weak_ptr<PbrCubemapTexture> Scene::getSkyboxCubemap() const
+{
+    return skyboxCubemap;
+}
+
+void Scene::addRenderingRequest(const renderers::RenderingRequest& request)
+{
+    renderingQueues[request.shaderType].push_back(request);
+}
+
+void Scene::setCubemap(const std::shared_ptr<PbrCubemapTexture>& cubemap)
+{
+    skyboxCubemap = cubemap;
+}
+
 void Scene::setGameObjectToPreview(const std::shared_ptr<GameObject> node)
 {
     gameObjectToPreview = node;
+}
+
+void Scene::clearRenderQueues()
+{
+    for(auto& [shaderType, shaderRenderList] : renderingQueues)
+    {
+        shaderRenderList.clear();
+    }
 }
 }  // namespace spark
 

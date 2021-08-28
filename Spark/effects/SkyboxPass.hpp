@@ -6,6 +6,7 @@
 #include "Buffer.hpp"
 #include "Cube.hpp"
 #include "glad_glfw3.h"
+#include "Scene.h"
 #include "TexturePass.hpp"
 
 namespace spark
@@ -30,8 +31,7 @@ class SkyboxPass
     SkyboxPass& operator=(SkyboxPass&&) = delete;
     ~SkyboxPass();
 
-    std::optional<GLuint> process(const std::weak_ptr<PbrCubemapTexture>& cubemap, GLuint depthTexture, GLuint lightingTexture,
-                                  const UniformBuffer& cameraUbo);
+    std::optional<GLuint> process(GLuint depthTexture, GLuint lightingTexture, const std::shared_ptr<Scene>& scene);
     void processFramebuffer(const std::weak_ptr<PbrCubemapTexture>& cubemap, GLuint framebuffer, unsigned int fboWidth, unsigned int fboHeight,
                             const UniformBuffer& cameraUbo);
     void renderSkybox(GLuint framebuffer, unsigned int fboWidth, unsigned int fboHeight, const std::shared_ptr<PbrCubemapTexture>& cubemapPtr,

@@ -10,14 +10,7 @@ namespace spark
 {
 Camera::Camera() : Component("Camera") {}
 
-Camera::Camera(glm::vec3 position, float yaw, float pitch)
-    : Component("Camera"), Position(position), Front(glm::vec3(0.0f, 0.0f, -1.0f)), Yaw(yaw), Pitch(pitch)
-{
-    updateCameraVectors();
-}
-
-Camera::Camera(float posX, float posY, float posZ, float yaw, float pitch)
-    : Component("Camera"), Position(posX, posY, posZ), Front(glm::vec3(0.0f, 0.0f, -1.0f)), Yaw(yaw), Pitch(pitch)
+Camera::Camera(glm::vec3 position) : Component("Camera"), Position(position), Front(glm::vec3(0.0f, 0.0f, -1.0f))
 {
     updateCameraVectors();
 }
@@ -104,11 +97,6 @@ float Camera::getMouseSensitivity() const
     return MouseSensitivity;
 }
 
-float Camera::getZoom() const
-{
-    return Zoom;
-}
-
 float Camera::getFov() const
 {
     return fov;
@@ -122,6 +110,11 @@ float Camera::getNearPlane() const
 float Camera::getFarPlane() const
 {
     return zFar;
+}
+
+const UniformBuffer& Camera::getUbo()
+{
+    return cameraUbo;
 }
 
 bool Camera::isDirty() const
@@ -157,7 +150,7 @@ void Camera::setRotation(float yaw, float pitch)
 
 void Camera::processKeyboard()
 {
-    //if(cameraMode == CameraMode::FirstPerson)
+    // if(cameraMode == CameraMode::FirstPerson)
     {
         processKeyboardFirstPerson();
     }
@@ -331,16 +324,6 @@ void Camera::processMouseMovementThirdPerson(float xoffset, float yoffset)
     }
 }
 
-void Camera::processMouseScroll(float yoffset)
-{
-    if(Zoom >= 1.0f && Zoom <= 45.0f)
-        Zoom -= yoffset;
-    if(Zoom <= 1.0f)
-        Zoom = 1.0f;
-    if(Zoom >= 45.0f)
-        Zoom = 45.0f;
-}
-
 void Camera::updateCameraVectors()
 {
     if(cameraMode == CameraMode::FirstPerson)
@@ -382,10 +365,16 @@ void Camera::update()
 {
     if(HID::isKeyPressed(Key::NUM_1))
         cameraMode = CameraMode::FirstPerson;
-    //if(HID::isKeyPressed(Key::NUM_2))
+    // if(HID::isKeyPressed(Key::NUM_2))
     //    cameraMode = CameraMode::ThirdPerson;
     // Update Front, Right and Up Vectors using the updated Euler angles
+
+    processKeyboard();
+    processMouseMovement(HID::mouse.direction.x, -HID::mouse.direction.y);
+
     updateCameraVectors();
+
+    utils::updateCameraUBO(cameraUbo, getProjectionReversedZ(), getViewMatrix(), getPosition(), getNearPlane(), getFarPlane());
 }
 
 void Camera::fixedUpdate() {}
@@ -408,7 +397,6 @@ RTTR_REGISTRATION
         .property("Pitch", &spark::Camera::Pitch)
         .property("MovementSpeed", &spark::Camera::MovementSpeed)
         .property("MouseSensitivity", &spark::Camera::MouseSensitivity)
-        .property("Zoom", &spark::Camera::Zoom)
         .property("cameraMode", &spark::Camera::cameraMode)
         .property("fov", &spark::Camera::fov)
         .property("zNear", &spark::Camera::zNear)

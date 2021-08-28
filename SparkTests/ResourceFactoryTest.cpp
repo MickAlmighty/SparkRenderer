@@ -51,7 +51,8 @@ TEST_F(ResourceFactoryTest, AllCreatedResourcesAreValid)
                 continue;
             }
 
-            const std::shared_ptr<Resource> resource = ResourceFactory::loadResource(std::make_shared<resourceManagement::ResourceIdentifier>("", pathMaybeInvalid));
+            const std::shared_ptr<Resource> resource =
+                ResourceFactory::loadResource(std::make_shared<resourceManagement::ResourceIdentifier>("", pathMaybeInvalid));
             if(resource != nullptr)
             {
                 createdResources.push_back(resource);
@@ -71,13 +72,15 @@ TEST_F(ResourceFactoryTest, AllCreatedResourcesAreValid)
 
 TEST_F(ResourceFactoryTest, CreatingResourceFromNonexistentFileReturnsNullptr)
 {
-    const std::shared_ptr<Resource> resource = ResourceFactory::loadResource(std::make_shared<resourceManagement::ResourceIdentifier>("", "tmp123.obj"));
+    const std::shared_ptr<Resource> resource =
+        ResourceFactory::loadResource(std::make_shared<resourceManagement::ResourceIdentifier>("", "tmp123.obj"));
     ASSERT_TRUE(resource == nullptr);
 }
 
 TEST_F(ResourceFactoryTest, CreatingResourceFromFileWithUnsuportedExtensionReturnsNullptr)
 {
-    const std::shared_ptr<Resource> resource = ResourceFactory::loadResource(std::make_shared<resourceManagement::ResourceIdentifier>("", "tmp123.zip"));
+    const std::shared_ptr<Resource> resource =
+        ResourceFactory::loadResource(std::make_shared<resourceManagement::ResourceIdentifier>("", "tmp123.zip"));
     ASSERT_TRUE(resource == nullptr);
 }
 

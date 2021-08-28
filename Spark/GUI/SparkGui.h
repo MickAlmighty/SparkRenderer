@@ -1,9 +1,10 @@
 #pragma once
 
+#include <optional>
+
 #include "Component.h"
 #include "GameObject.h"
-
-#include <optional>
+#include "Resource.h"
 
 namespace spark
 {

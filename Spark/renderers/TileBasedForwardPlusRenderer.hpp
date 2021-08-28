@@ -7,25 +7,24 @@ namespace spark::renderers
 class TileBasedForwardPlusRenderer : public Renderer
 {
     public:
-    TileBasedForwardPlusRenderer(unsigned int width, unsigned int height, const UniformBuffer& cameraUbo,
-                                 const std::shared_ptr<lights::LightManager>& lightManager);
+    TileBasedForwardPlusRenderer(unsigned int width, unsigned int height);
     TileBasedForwardPlusRenderer(const TileBasedForwardPlusRenderer&) = delete;
     TileBasedForwardPlusRenderer(TileBasedForwardPlusRenderer&&) = delete;
     TileBasedForwardPlusRenderer& operator=(const TileBasedForwardPlusRenderer&) = delete;
     TileBasedForwardPlusRenderer& operator=(TileBasedForwardPlusRenderer&&) = delete;
     ~TileBasedForwardPlusRenderer() override;
 
-    GLuint process(std::map<ShaderType, std::deque<RenderingRequest>>& renderQueue, const std::weak_ptr<PbrCubemapTexture>& pbrCubemap,
-                   const UniformBuffer& cameraUbo) override;
-    void bindLightBuffers(const std::shared_ptr<lights::LightManager>& lightManager) override;
-    void resize(unsigned int width, unsigned int height) override;
+    protected:
+    void resizeDerived(unsigned int width, unsigned int height) override;
+    void renderMeshes(const std::shared_ptr<Scene>& scene) override;
+
     GLuint getDepthTexture() const override;
+    GLuint getLightingTexture() const override;
 
     private:
-    void depthPrepass(std::map<ShaderType, std::deque<RenderingRequest>>& renderQueue, const UniformBuffer& cameraUbo);
-    GLuint aoPass();
-    void lightingPass(std::map<ShaderType, std::deque<RenderingRequest>>& renderQueue, const std::weak_ptr<PbrCubemapTexture>& pbrCubemap,
-                      const UniformBuffer& cameraUbo, const GLuint ssaoTexture);
+    void depthPrepass(const std::shared_ptr<Scene>& scene);
+    GLuint aoPass(const std::shared_ptr<Scene>& scene);
+    void lightingPass(const std::shared_ptr<Scene>& scene, const GLuint ssaoTexture);
     void createFrameBuffersAndTextures();
 
     GLuint lightingFramebuffer{}, lightingTexture{};

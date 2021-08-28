@@ -1,6 +1,5 @@
 #include "SparkGui.h"
 
-#include "EngineSystems/SparkRenderer.h"
 #include "ImGuiFileBrowser.h"
 #include "ImGuizmo.h"
 #include "ImGui/imgui_impl_glfw.h"
@@ -44,7 +43,7 @@ void SparkGui::drawGui()
     {
         drawMainMenuGui();
         Spark::get().getSceneManager().drawGui();
-        Spark::get().getRenderer().drawGui();
+        Spark::get().drawGui();
         ImGui::EndMainMenuBar();
     }
 
