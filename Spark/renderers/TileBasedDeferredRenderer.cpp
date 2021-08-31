@@ -37,8 +37,6 @@ void TileBasedDeferredRenderer::renderMeshes(const std::shared_ptr<Scene>& scene
     float clearRgba[] = {0.0f, 0.0f, 0.0f, 0.0f};
     glClearTexImage(lightingTexture, 0, GL_RGBA, GL_FLOAT, &clearRgba);
 
-    const auto cubemap = scene->getSkyboxCubemap().lock();
-
     lightingShader->use();
     lightingShader->bindUniformBuffer("Camera", scene->getCamera()->getUbo());
     lightingShader->bindSSBO("DirLightData", scene->lightManager->getDirLightSSBO());
@@ -48,7 +46,7 @@ void TileBasedDeferredRenderer::renderMeshes(const std::shared_ptr<Scene>& scene
 
     // depth texture as sampler2D
     glBindTextureUnit(0, gBuffer.depthTexture);
-    if(cubemap)
+    if(const auto cubemap = scene->getSkyboxCubemap().lock(); cubemap)
     {
         glBindTextureUnit(1, cubemap->irradianceCubemap);
         glBindTextureUnit(2, cubemap->prefilteredCubemap);

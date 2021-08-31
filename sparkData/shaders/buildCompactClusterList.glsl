@@ -1,10 +1,10 @@
-#type compute
+//#type compute
 #version 450
 layout(local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
 
 layout(std430) buffer ActiveClusters
 {
-    bool activeClusters[];
+    uint activeClusters[];
 };
 
 layout(std430) buffer ActiveClustersCount
@@ -28,10 +28,10 @@ uint calculateIndex()
 void main()
 {
     uint clusterIndex = calculateIndex();
-    if (activeClusters[clusterIndex])
+    if (activeClusters[clusterIndex] != 0)
     {
         uint idx = atomicAdd(globalActiveClusterCount, 1);
         activeClusterIndices[idx] = clusterIndex;
-        activeClusters[clusterIndex] = false;
+        activeClusters[clusterIndex] = 0;
     }
 }

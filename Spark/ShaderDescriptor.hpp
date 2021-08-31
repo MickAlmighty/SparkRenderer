@@ -23,7 +23,6 @@ class ShaderDescriptor
     void acquireBuffers(const GLuint ID);
     static std::string getUniformType(GLenum type);
 
-
     struct Uniform final
     {
         std::string name{};

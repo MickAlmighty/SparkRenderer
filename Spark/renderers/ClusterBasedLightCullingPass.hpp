@@ -35,7 +35,6 @@ class ClusterBasedLightCullingPass
     void buildCompactClusterList();
     void lightCulling(const std::shared_ptr<Scene>& scene);
     void clearActiveClustersCounter();
-    void bindLightBuffers(const std::shared_ptr<lights::LightManager>& lightManager);
 
     unsigned int w{}, h{};
 

@@ -163,7 +163,7 @@ void Buffer<BUFFER_TYPE>::resizeBuffer(size_t sizeInBytes)
 template<GLenum BUFFER_TYPE>
 void Buffer<BUFFER_TYPE>::clearData()
 {
-    glClearNamedBufferData(ID, GL_R8UI, GL_RED, GL_UNSIGNED_BYTE, nullptr);
+    glClearNamedBufferData(ID, GL_R32F, GL_RED, GL_FLOAT, nullptr);
 }
 
 template<GLenum BUFFER_TYPE>

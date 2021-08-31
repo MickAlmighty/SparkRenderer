@@ -85,7 +85,9 @@ void ClusterBasedLightCullingPass::lightCulling(const std::shared_ptr<Scene>& sc
 {
     clusterBasedLightCullingShader->use();
     clusterBasedLightCullingShader->bindUniformBuffer("Camera", scene->getCamera()->getUbo());
-    bindLightBuffers(scene->lightManager);
+    clusterBasedLightCullingShader->bindSSBO("PointLightData", scene->lightManager->getPointLightSSBO());
+    clusterBasedLightCullingShader->bindSSBO("SpotLightData", scene->lightManager->getSpotLightSSBO());
+    clusterBasedLightCullingShader->bindSSBO("LightProbeData", scene->lightManager->getLightProbeSSBO());
     clusterBasedLightCullingShader->dispatchComputeIndirect(activeClustersCount.ID);
 }
 
@@ -100,12 +102,5 @@ void ClusterBasedLightCullingPass::resize(unsigned int width, unsigned int heigh
     w = width;
     h = height;
     pxTileSize = glm::vec2(w, h) / glm::vec2(dispatchSize);
-}
-
-void ClusterBasedLightCullingPass::bindLightBuffers(const std::shared_ptr<lights::LightManager>& lightManager)
-{
-    clusterBasedLightCullingShader->bindSSBO("PointLightData", lightManager->getPointLightSSBO());
-    clusterBasedLightCullingShader->bindSSBO("SpotLightData", lightManager->getSpotLightSSBO());
-    clusterBasedLightCullingShader->bindSSBO("LightProbeData", lightManager->getLightProbeSSBO());
 }
 }  // namespace spark::renderers

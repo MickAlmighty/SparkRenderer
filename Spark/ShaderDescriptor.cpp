@@ -88,12 +88,10 @@ void ShaderDescriptor::acquireUniformBlocks(const GLuint ID)
 
     for(int index = 0; index < numberOfUniformBlocks; ++index)
     {
-        std::string uniformBlockName;
-        uniformBlockName.resize(100);
+        std::string uniformBlockName(256, '0');
         GLsizei size = 0;
         glGetProgramResourceName(ID, GL_UNIFORM_BLOCK, index, static_cast<GLsizei>(uniformBlockName.size()), &size, uniformBlockName.data());
         uniformBlockName = uniformBlockName.substr(0, size);
-
         const GLint uniformBlockIndex = glGetProgramResourceIndex(ID, GL_UNIFORM_BLOCK, uniformBlockName.c_str());
 
         uniformBlocks.insert({uniformBlockName, uniformBlockIndex});
@@ -107,13 +105,11 @@ void ShaderDescriptor::acquireBuffers(const GLuint ID)
 
     for(int index = 0; index < numberOfShaderBuffers; ++index)
     {
-        std::string shaderStorageBufferName;
-        shaderStorageBufferName.resize(100);
+        std::string shaderStorageBufferName(256, '0');
         GLsizei size = 0;
         glGetProgramResourceName(ID, GL_SHADER_STORAGE_BLOCK, index, static_cast<GLsizei>(shaderStorageBufferName.size()), &size,
                                  shaderStorageBufferName.data());
         shaderStorageBufferName = shaderStorageBufferName.substr(0, size);
-
         const GLint uniformBlockIndex = glGetProgramResourceIndex(ID, GL_SHADER_STORAGE_BLOCK, shaderStorageBufferName.c_str());
 
         storageBuffers.insert({shaderStorageBufferName, uniformBlockIndex});

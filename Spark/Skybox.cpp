@@ -23,6 +23,11 @@ void Skybox::createPbrCubemap(const std::shared_ptr<resources::Texture>& texture
 {
     skyboxName = texture->getPath().filename().string();
     pbrCubemapTexture = std::make_shared<PbrCubemapTexture>(texture->getID());
+
+    if(isSkyboxActive())
+    {
+        setSkyboxInScene(pbrCubemapTexture);
+    }
 }
 
 void Skybox::drawGUI()
