@@ -48,10 +48,13 @@ std::map<GLenum, std::string> ShaderParser::preProcess(const std::string& shader
         const size_t begin = pos + typeTokenLength + 1;
         std::string type = shaderSource.substr(begin, eol - begin);
 
-        const size_t nextLinePos = shaderSource.find_first_not_of("\r\n", eol);
-        pos = shaderSource.find(typeToken, nextLinePos);
-        shaderSources[shaderTypeFromString(type)] =
-            shaderSource.substr(nextLinePos, pos - (nextLinePos == std::string::npos ? shaderSource.size() - 1 : nextLinePos));
+        const size_t shaderBodyStartPos = shaderSource.find_first_not_of("\r\n", eol);
+        const size_t shaderBodyEndPos = shaderSource.find(typeToken, shaderBodyStartPos);
+        const size_t shaderBodySize = shaderBodyEndPos - (shaderBodyStartPos == std::string::npos ? shaderSource.size() - 1 : shaderBodyStartPos);
+        auto shaderBody = shaderSource.substr(shaderBodyStartPos, shaderBodySize);
+        shaderSources.emplace(shaderTypeFromString(type), std::move(shaderBody));
+
+        pos = shaderBodyEndPos;
     }
 
     return shaderSources;
@@ -76,6 +79,7 @@ GLenum ShaderParser::shaderTypeFromString(const std::string& type)
         return GL_COMPUTE_SHADER;
     }
 
+    SPARK_ERROR("Unknown shader type! {}", type);
     return 0;
 }
 }  // namespace spark

@@ -6,8 +6,7 @@
 
 namespace spark::renderers
 {
-ClusterBasedLightCullingPass::ClusterBasedLightCullingPass(unsigned int width, unsigned int height)
-    : w(width), h(height)
+ClusterBasedLightCullingPass::ClusterBasedLightCullingPass(unsigned int width, unsigned int height) : w(width), h(height)
 {
     clusterCreationShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("clusterCreation.glsl");
     clusterCreationShader->bindSSBO("ClusterData", clusters);
@@ -58,10 +57,20 @@ void ClusterBasedLightCullingPass::process(GLuint depthTexture, const std::share
 
 void ClusterBasedLightCullingPass::createClusters(const std::shared_ptr<Scene>& scene)
 {
-    clusterCreationShader->use();
-    clusterCreationShader->setVec2("tileSize", pxTileSize);
-    clusterCreationShader->bindUniformBuffer("Camera", scene->getCamera()->getUbo());
-    clusterCreationShader->dispatchCompute(utils::uiCeil(dispatchSize.x, 32u), utils::uiCeil(dispatchSize.y, 32u), dispatchSize.z);
+    const auto camera = scene->getCamera();
+    const bool hasNearAndFarPlaneChanged = lastCamNearZ != camera->getNearPlane() || lastCamFarZ != camera->getFarPlane();
+    const bool hasTileDimensionChanged = lastPxTileSize != pxTileSize;
+    if(hasNearAndFarPlaneChanged || hasTileDimensionChanged)
+    {
+        clusterCreationShader->use();
+        clusterCreationShader->setVec2("tileSize", pxTileSize);
+        clusterCreationShader->bindUniformBuffer("Camera", camera->getUbo());
+        clusterCreationShader->dispatchCompute(utils::uiCeil(dispatchSize.x, 32u), utils::uiCeil(dispatchSize.y, 32u), dispatchSize.z);
+
+        lastCamNearZ = camera->getNearPlane();
+        lastCamFarZ = camera->getFarPlane();
+        lastPxTileSize = pxTileSize;
+    }
 }
 
 void ClusterBasedLightCullingPass::determineActiveClusters(GLuint depthTexture, const std::shared_ptr<Scene>& scene)

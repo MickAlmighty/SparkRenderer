@@ -38,6 +38,9 @@ class ClusterBasedLightCullingPass
 
     unsigned int w{}, h{};
 
+    float lastCamNearZ{-1.0f}, lastCamFarZ{-1.0f};
+    glm::vec2 lastPxTileSize{1};
+
     const glm::uvec3 dispatchSize{64, 64, 32};
 
     SSBO clusters{};
