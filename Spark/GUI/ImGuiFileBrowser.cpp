@@ -13,6 +13,7 @@
 #include <cctype>
 #include <algorithm>
 #include <cmath>
+#include <filesystem>
 
 #include <sys/stat.h>
 
@@ -26,6 +27,11 @@
 #else
 #    include <dirent.h>
 #endif  // defined (WIN32) || defined (_WIN32)
+
+namespace
+{
+    constexpr auto pcEntry = "PC";
+}
 
 namespace imgui_addons
 {
@@ -62,7 +68,10 @@ ImGuiFileBrowser::ImGuiFileBrowser()
 #endif
 }
 
-ImGuiFileBrowser::~ImGuiFileBrowser() {}
+ImGuiFileBrowser::ImGuiFileBrowser(const std::string& path) : ImGuiFileBrowser()
+{
+    current_path = path;
+}
 
 void ImGuiFileBrowser::clearFileList()
 {
@@ -110,17 +119,17 @@ void ImGuiFileBrowser::closeDialog()
 bool isFileExtensionValid(const std::string& filename, const std::vector<std::string>& validExtensions)
 {
     const auto it = std::find(filename.rbegin(), filename.rend(), '.');
-    if (it == filename.rend())
+    if(it == filename.rend())
         return false;
 
     const size_t extInFilenameLength = std::distance(filename.rbegin(), it) + 1;
     const size_t dotPos = std::distance(it, filename.rend()) - 1;
-    for (const auto& validExt : validExtensions)
+    for(const auto& validExt : validExtensions)
     {
         const bool isExtensionFound = filename.find(validExt, dotPos) != std::string::npos;
         const bool isLengthValid = validExt.size() == extInFilenameLength;
         const auto isExtensionValid = isExtensionFound && isLengthValid;
-        if (isExtensionValid)
+        if(isExtensionValid)
         {
             return true;
         }
@@ -129,7 +138,7 @@ bool isFileExtensionValid(const std::string& filename, const std::vector<std::st
     return false;
 }
 
-bool ImGuiFileBrowser::showFileDialog(const std::string& label, const DialogMode mode, const ImVec2& sz_xy, const std::string& valid_types)
+bool ImGuiFileBrowser::showFileDialog(const std::string& label, const DialogMode mode, const ImVec2& sz_xy, const std::string& valid_types_)
 {
     dialog_mode = mode;
     ImGuiIO& io = ImGui::GetIO();
@@ -156,7 +165,7 @@ bool ImGuiFileBrowser::showFileDialog(const std::string& label, const DialogMode
             selected_path.clear();
             if(mode != DialogMode::SELECT)
             {
-                this->valid_types = valid_types;
+                this->valid_types = valid_types_;
                 setValidExtTypes(valid_types);
             }
 
@@ -755,7 +764,7 @@ bool ImGuiFileBrowser::onNavigationButtonClick(int idx)
             return false;
         current_path.clear();
         current_dirlist.clear();
-        current_dirlist.push_back("Computer");
+        current_dirlist.push_back(pcEntry);
         return true;
 #else
         new_path = "/";
@@ -798,7 +807,7 @@ bool ImGuiFileBrowser::onDirClick(int idx)
     bool drives_shown = false;
 
 #ifdef OSWIN
-    drives_shown = (current_dirlist.size() == 1 && current_dirlist.back() == "Computer");
+    drives_shown = (current_dirlist.size() == 1 && current_dirlist.back() == pcEntry);
 #endif  // OSWIN
 
     name = filtered_dirs[idx]->name;
@@ -870,6 +879,15 @@ bool ImGuiFileBrowser::readDIR(std::string pathdir)
             // Create a vector of each directory in the file path for the filepath bar. Not Necessary for linux as starting directory is "/"
             parsePathTabs(current_path);
         }
+        else if (current_dirlist.empty() && pathdir != "./")
+        {
+            std::replace(current_path.begin(), current_path.end(), '\\', '/');
+            if (current_path.find_last_of('/') != current_path.size() - 1)
+            {
+                current_path.push_back('/');
+            }
+            parsePathTabs(current_path);
+        }
 #endif  // OSWIN
 
         // store all the files and directories within directory and clear previous entries
@@ -892,7 +910,9 @@ bool ImGuiFileBrowser::readDIR(std::string pathdir)
             if(name != "..")
             {
 #ifdef OSWIN
-                std::string dir = pathdir + std::string(ent->d_name);
+                std::filesystem::path path(pathdir);
+                path /= std::string(ent->d_name);
+                std::string dir = path.string();
                 // IF system file skip it...
                 if(FILE_ATTRIBUTE_SYSTEM & GetFileAttributesA(dir.c_str()))
                     continue;
@@ -1170,10 +1190,9 @@ ImVec2 ImGuiFileBrowser::getButtonSize(std::string button_text)
 void ImGuiFileBrowser::parsePathTabs(std::string path)
 {
     std::string path_element = "";
-    std::string root = "";
 
 #ifdef OSWIN
-    current_dirlist.push_back("Computer");
+    current_dirlist.push_back(pcEntry);
 #else
     if(path[0] == '/')
         current_dirlist.push_back("/");
@@ -1192,7 +1211,7 @@ std::string ImGuiFileBrowser::wStringToString(const wchar_t* wchar_arr)
     std::mbstate_t state = std::mbstate_t();
 
     const std::size_t len_placeholder{600000};
-#ifdef __WIN32   
+#ifdef __WIN32
     // MinGW bug (patched in mingw-w64), wcsrtombs doesn't ignore length parameter when dest = nullptr. Hence the large number.
     size_t len{0};
     wcsrtombs_s(&len, nullptr, 0, &(wchar_arr), len_placeholder, &state);

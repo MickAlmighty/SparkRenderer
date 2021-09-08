@@ -100,6 +100,7 @@ void Spark::setup()
     renderingContext->setupCallbacks();
     const auto resourcePath = std::filesystem::exists(pathToResources) ? pathToResources : findResourceDirectoryPath();
     resourceLibrary = std::make_unique<resourceManagement::ResourceLibrary>(resourcePath);
+    SparkGui::setFilePickerPath(resourcePath.string());
     initImGui();
     sceneManager = std::make_unique<SceneManager>();
     renderer = std::make_unique<renderers::TileBasedDeferredRenderer>(WIDTH, HEIGHT);

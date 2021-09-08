@@ -20,7 +20,8 @@ namespace spark
 {
 using Path = std::filesystem::path;
 
-std::shared_ptr<resourceManagement::Resource> ResourceLoader::createHdrTexture(const std::shared_ptr<resourceManagement::ResourceIdentifier>& resourceIdentifier)
+std::shared_ptr<resourceManagement::Resource> ResourceLoader::createHdrTexture(
+    const std::shared_ptr<resourceManagement::ResourceIdentifier>& resourceIdentifier)
 {
     int width, height, nrComponents;
     float* data = stbi_loadf(resourceIdentifier->getFullPath().string().c_str(), &width, &height, &nrComponents, 0);
@@ -39,7 +40,8 @@ std::shared_ptr<resourceManagement::Resource> ResourceLoader::createHdrTexture(c
     return std::make_shared<resources::Texture>(resourceIdentifier->getRelativePath(), hdrTexture, width, height);
 }
 
-std::shared_ptr<resourceManagement::Resource> ResourceLoader::createCompressedTexture(const std::shared_ptr<resourceManagement::ResourceIdentifier>& resourceIdentifier)
+std::shared_ptr<resourceManagement::Resource> ResourceLoader::createCompressedTexture(
+    const std::shared_ptr<resourceManagement::ResourceIdentifier>& resourceIdentifier)
 {
     const auto gliTexture = gli::load(resourceIdentifier->getFullPath().string());
 
@@ -140,7 +142,8 @@ std::shared_ptr<resourceManagement::Resource> ResourceLoader::createCompressedTe
     return std::make_shared<resources::Texture>(resourceIdentifier->getRelativePath(), textureID, Extent.x, Extent.y);
 }
 
-std::shared_ptr<resourceManagement::Resource> ResourceLoader::createUncompressedTexture(const std::shared_ptr<resourceManagement::ResourceIdentifier>& resourceIdentifier)
+std::shared_ptr<resourceManagement::Resource> ResourceLoader::createUncompressedTexture(
+    const std::shared_ptr<resourceManagement::ResourceIdentifier>& resourceIdentifier)
 {
     unsigned char* pixels = nullptr;
     int width{0}, height{0}, channels{0};
@@ -194,7 +197,8 @@ std::shared_ptr<resourceManagement::Resource> ResourceLoader::createUncompressed
     return std::make_shared<resources::Texture>(resourceIdentifier->getRelativePath(), texId, width, height);
 }
 
-std::shared_ptr<resourceManagement::Resource> ResourceLoader::createModel(const std::shared_ptr<resourceManagement::ResourceIdentifier>& resourceIdentifier)
+std::shared_ptr<resourceManagement::Resource> ResourceLoader::createModel(
+    const std::shared_ptr<resourceManagement::ResourceIdentifier>& resourceIdentifier)
 {
     Assimp::Importer importer;
     const aiScene* scene = nullptr;
@@ -207,10 +211,54 @@ std::shared_ptr<resourceManagement::Resource> ResourceLoader::createModel(const 
         return nullptr;
     }
 
+    std::vector<std::map<TextureTarget, std::string>> materials;
+    for(int i = 0; i < scene->mNumMaterials; ++i)
+    {
+        const aiMaterial* material = scene->mMaterials[i];
+        std::map<TextureTarget, std::string> materialPbr{};
+
+        if (const auto normalTexturesCount = material->GetTextureCount(aiTextureType_NORMALS); normalTexturesCount > 0)
+        {
+            aiString path{};
+            material->GetTexture(aiTextureType_NORMALS, 0, &path);
+            materialPbr.emplace(TextureTarget::NORMAL_TARGET, std::string(path.data, path.length));
+        }
+
+        if(const auto diffuseTexturesCount = material->GetTextureCount(aiTextureType_DIFFUSE); diffuseTexturesCount > 0)
+        {
+            aiString path{};
+            material->GetTexture(aiTextureType_DIFFUSE, 0, &path);
+            materialPbr.emplace(TextureTarget::DIFFUSE_TARGET, std::string(path.data, path.length));
+        }
+
+        if (const auto metalnessTexturesCount = material->GetTextureCount(aiTextureType_METALNESS); metalnessTexturesCount > 0)
+        {
+            aiString path{};
+            material->GetTexture(aiTextureType_METALNESS, 0, &path);
+            materialPbr.emplace(TextureTarget::METALNESS_TARGET, std::string(path.data, path.length));
+        }
+
+        if (const auto roughnessTexturesCount = material->GetTextureCount(aiTextureType_DIFFUSE_ROUGHNESS); roughnessTexturesCount > 0)
+        {
+            aiString path{};
+            material->GetTexture(aiTextureType_DIFFUSE_ROUGHNESS, 0, &path);
+            materialPbr.emplace(TextureTarget::ROUGHNESS_TARGET, std::string(path.data, path.length));
+        }
+
+        if (const auto unknownTypeTexturesCount = material->GetTextureCount(aiTextureType_UNKNOWN); unknownTypeTexturesCount > 0)
+        {
+            /*aiString path{};
+            material->GetTexture(aiTextureType_UNKNOWN, 0, &path);
+            materialPbr.emplace(TextureTarget::AO_TARGET, std::string(path.data, path.length));*/
+        }
+
+        materials.push_back(materialPbr);
+    }
+
     std::vector<std::shared_ptr<Mesh>> meshes;
     for(unsigned int i = 0; i < scene->mNumMeshes; i++)
     {
-        meshes.push_back(loadMesh(scene->mMeshes[i], resourceIdentifier->getFullPath()));
+        meshes.push_back(loadMesh(scene->mMeshes[i], materials, resourceIdentifier->getFullPath()));
     }
 
     return std::make_shared<resources::Model>(resourceIdentifier->getRelativePath(), meshes);
@@ -224,7 +272,8 @@ std::map<TextureTarget, std::shared_ptr<resources::Texture>> findTextures(const 
         size_t size = texture_path.path().string().find("_Diffuse");
         if(size != std::string::npos)
         {
-            std::shared_ptr<resources::Texture> texture = Spark::get().getResourceLibrary().getResourceByFullPath<resources::Texture>(texture_path.path().string());
+            std::shared_ptr<resources::Texture> texture =
+                Spark::get().getResourceLibrary().getResourceByFullPath<resources::Texture>(texture_path.path().string());
             textures.emplace(TextureTarget::DIFFUSE_TARGET, texture);
             continue;
         }
@@ -232,7 +281,8 @@ std::map<TextureTarget, std::shared_ptr<resources::Texture>> findTextures(const 
         size = texture_path.path().string().find("_Normal");
         if(size != std::string::npos)
         {
-            std::shared_ptr<resources::Texture> texture = Spark::get().getResourceLibrary().getResourceByFullPath<resources::Texture>(texture_path.path().string());
+            std::shared_ptr<resources::Texture> texture =
+                Spark::get().getResourceLibrary().getResourceByFullPath<resources::Texture>(texture_path.path().string());
             textures.emplace(TextureTarget::NORMAL_TARGET, texture);
             continue;
         }
@@ -240,7 +290,8 @@ std::map<TextureTarget, std::shared_ptr<resources::Texture>> findTextures(const 
         size = texture_path.path().string().find("_Roughness");
         if(size != std::string::npos)
         {
-            std::shared_ptr<resources::Texture> texture = Spark::get().getResourceLibrary().getResourceByFullPath<resources::Texture>(texture_path.path().string());
+            std::shared_ptr<resources::Texture> texture =
+                Spark::get().getResourceLibrary().getResourceByFullPath<resources::Texture>(texture_path.path().string());
             textures.emplace(TextureTarget::ROUGHNESS_TARGET, texture);
             continue;
         }
@@ -248,7 +299,8 @@ std::map<TextureTarget, std::shared_ptr<resources::Texture>> findTextures(const 
         size = texture_path.path().string().find("_Metalness");
         if(size != std::string::npos)
         {
-            std::shared_ptr<resources::Texture> texture = Spark::get().getResourceLibrary().getResourceByFullPath<resources::Texture>(texture_path.path().string());
+            std::shared_ptr<resources::Texture> texture =
+                Spark::get().getResourceLibrary().getResourceByFullPath<resources::Texture>(texture_path.path().string());
             textures.emplace(TextureTarget::METALNESS_TARGET, texture);
             continue;
         }
@@ -256,7 +308,8 @@ std::map<TextureTarget, std::shared_ptr<resources::Texture>> findTextures(const 
         size = texture_path.path().string().find("_Height");
         if(size != std::string::npos)
         {
-            std::shared_ptr<resources::Texture> texture = Spark::get().getResourceLibrary().getResourceByFullPath<resources::Texture>(texture_path.path().string());
+            std::shared_ptr<resources::Texture> texture =
+                Spark::get().getResourceLibrary().getResourceByFullPath<resources::Texture>(texture_path.path().string());
             textures.emplace(TextureTarget::HEIGHT_TARGET, texture);
             continue;
         }
@@ -264,7 +317,8 @@ std::map<TextureTarget, std::shared_ptr<resources::Texture>> findTextures(const 
         size = texture_path.path().string().find("_AO");
         if(size != std::string::npos)
         {
-            std::shared_ptr<resources::Texture> texture = Spark::get().getResourceLibrary().getResourceByFullPath<resources::Texture>(texture_path.path().string());
+            std::shared_ptr<resources::Texture> texture =
+                Spark::get().getResourceLibrary().getResourceByFullPath<resources::Texture>(texture_path.path().string());
             textures.emplace(TextureTarget::AO_TARGET, texture);
         }
     }
@@ -272,7 +326,7 @@ std::map<TextureTarget, std::shared_ptr<resources::Texture>> findTextures(const 
     return textures;
 }
 
-std::shared_ptr<Mesh> ResourceLoader::loadMesh(aiMesh* assimpMesh, const std::filesystem::path& path)
+std::shared_ptr<Mesh> ResourceLoader::loadMesh(aiMesh* assimpMesh, std::vector<std::map<TextureTarget, std::string>>& materials, const std::filesystem::path& path)
 {
     std::vector<glm::vec3> positions{assimpMesh->mNumVertices};
     std::vector<glm::vec3> normals{assimpMesh->mNumVertices};
@@ -321,7 +375,20 @@ std::shared_ptr<Mesh> ResourceLoader::loadMesh(aiMesh* assimpMesh, const std::fi
             indices.push_back(face.mIndices[j]);
     }
 
-    std::map<TextureTarget, std::shared_ptr<resources::Texture>> textures = findTextures(path.parent_path());
+
+    std::map<TextureTarget, std::shared_ptr<resources::Texture>> textures;
+    if (const auto & materialsPbr = materials.at(assimpMesh->mMaterialIndex); !materialsPbr.empty())
+    {
+        for(const auto& [target, localTexPath] : materialsPbr)
+        {
+            const auto pathToTexture = (path.parent_path() / localTexPath).string();
+            textures.emplace(target, Spark::get().getResourceLibrary().getResourceByFullPath<resources::Texture>(pathToTexture));
+        }
+    }
+    else
+    {
+        textures = findTextures(path.parent_path());
+    }
 
     std::vector<VertexShaderAttribute> attributes;
     attributes.reserve(5);
@@ -335,10 +402,11 @@ std::shared_ptr<Mesh> ResourceLoader::loadMesh(aiMesh* assimpMesh, const std::fi
     return std::make_shared<Mesh>(attributes, indices, textures);
 }
 
-std::shared_ptr<resourceManagement::Resource> ResourceLoader::createScene(const std::shared_ptr<resourceManagement::ResourceIdentifier>& resourceIdentifier)
+std::shared_ptr<resourceManagement::Resource> ResourceLoader::createScene(
+    const std::shared_ptr<resourceManagement::ResourceIdentifier>& resourceIdentifier)
 {
     auto scene = JsonSerializer::getInstance()->loadSceneFromFile(resourceIdentifier->getFullPath());
-    if (scene)
+    if(scene)
     {
         return std::make_shared<Scene>(resourceIdentifier->getRelativePath(), std::move(scene));
     }

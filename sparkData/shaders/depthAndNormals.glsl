@@ -136,9 +136,6 @@ void main()
         tex_coords = parallaxMapping(vs_out.tex_coords, tangentViewDir);
     }
 
-    if (tex_coords.x > 1.0 || tex_coords.x < 0.0 || tex_coords.y > 1.0 || tex_coords.y < 0.0)
-        discard;
-
     vec3 normalFromTexture = vec3(texture(normalTexture, tex_coords).xy, 1.0f);
     normalFromTexture = normalize(normalFromTexture * 2.0 - 1.0);
     vec3 viewNormal = normalize(vs_out.viewTBN_matrix * normalFromTexture);

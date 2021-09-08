@@ -1,6 +1,5 @@
 #include "SparkGui.h"
 
-#include "ImGuiFileBrowser.h"
 #include "ImGuizmo.h"
 #include "ImGui/imgui_impl_glfw.h"
 #include "ImGui/imgui_impl_opengl3.h"
@@ -16,8 +15,6 @@
 #include "Skybox.h"
 #include "Spark.h"
 #include "Texture.h"
-
-imgui_addons::ImGuiFileBrowser file_dialog{};
 
 namespace spark
 {
@@ -205,6 +202,11 @@ std::filesystem::path SparkGui::getRelativePathToSaveSceneByFilePicker()
     }
 
     return filepath;
+}
+
+void SparkGui::setFilePickerPath(const std::string& path)
+{
+    file_dialog = imgui_addons::ImGuiFileBrowser(path);
 }
 
 std::shared_ptr<resourceManagement::Resource> SparkGui::getResourceIdentifierByFilePicker(const char* buttonName,

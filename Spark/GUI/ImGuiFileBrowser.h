@@ -10,7 +10,13 @@ class ImGuiFileBrowser
 {
     public:
     ImGuiFileBrowser();
-    ~ImGuiFileBrowser();
+    ImGuiFileBrowser(const std::string& path);
+
+    ImGuiFileBrowser(const ImGuiFileBrowser&) = default;
+    ImGuiFileBrowser(ImGuiFileBrowser&&) = default;
+    ImGuiFileBrowser& operator=(const ImGuiFileBrowser&) = default;
+    ImGuiFileBrowser& operator=(ImGuiFileBrowser&&) = default;
+    ~ImGuiFileBrowser() = default;
 
     enum class DialogMode
     {
@@ -94,7 +100,7 @@ class ImGuiFileBrowser
 #endif
 
     ImVec2 min_size, max_size, input_combobox_pos, input_combobox_sz;
-    DialogMode dialog_mode;
+    DialogMode dialog_mode{DialogMode::OPEN};
     int filter_mode, col_items_limit, selected_idx, selected_ext_idx;
     float col_width, ext_box_width;
     bool show_hidden, show_inputbar_combobox, is_dir, is_appearing, filter_dirty, validate_file, show_files_with_valid_extensions, show_all_files;

@@ -99,7 +99,7 @@ void LightProbesRenderer::generateLightProbe(const std::map<ShaderType, std::deq
     const glm::vec3 localLightProbePosition = lightProbe->getGameObject()->transform.world.getPosition();
 
     const float nearPlane{0.05f};
-    const float farPlane{100.0f};
+    const float farPlane{10000.0f};
     const auto projection = utils::getProjectionReversedZ(sceneCubemapSize, sceneCubemapSize, 90.0f, nearPlane, farPlane);
     const std::array<glm::mat4, 6> viewMatrices = utils::getCubemapViewMatrices(localLightProbePosition);
 

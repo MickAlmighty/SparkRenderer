@@ -4,6 +4,7 @@
 
 #include "Component.h"
 #include "GameObject.h"
+#include "ImGuiFileBrowser.h"
 #include "Resource.h"
 
 namespace spark
@@ -27,6 +28,7 @@ class SparkGui
     static std::optional<std::shared_ptr<resources::Texture>> selectTextureByFilePicker();
     static std::optional<std::shared_ptr<Scene>> selectSceneByFilePicker();
     static std::filesystem::path getRelativePathToSaveSceneByFilePicker();
+    static void setFilePickerPath(const std::string& path);
 
     template<typename T>
     static std::optional<T> getDraggedObject(std::string&& payloadName);
@@ -43,6 +45,7 @@ class SparkGui
                                                                                            const std::vector<std::string>& fileExtensions);
 
     const static std::map<std::string, std::function<std::shared_ptr<Component>()>> componentCreation;
+    inline static imgui_addons::ImGuiFileBrowser file_dialog{};
 };
 
 template<typename T>

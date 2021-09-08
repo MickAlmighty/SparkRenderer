@@ -1,6 +1,7 @@
 #pragma once
 
 #include <filesystem>
+#include <map>
 
 #include "Resource.h"
 
@@ -8,6 +9,8 @@ struct aiMesh;
 
 namespace spark
 {
+enum class TextureTarget : unsigned char;
+
 namespace resourceManagement {
     class ResourceIdentifier;
 }
@@ -32,7 +35,7 @@ class ResourceLoader final
     ResourceLoader() = default;
     ~ResourceLoader() = default;
 
-    static std::shared_ptr<Mesh> loadMesh(aiMesh* assimpMesh, const std::filesystem::path& path);
+    static std::shared_ptr<Mesh> loadMesh(aiMesh* assimpMesh, std::vector<std::map<TextureTarget, std::string>>& materials, const std::filesystem::path& path);
 };
 
 }  // namespace spark

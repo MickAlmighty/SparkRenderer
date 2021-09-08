@@ -7,19 +7,21 @@
 
 namespace spark::resourceManagement
 {
-std::map<std::string, std::function<std::shared_ptr<Resource>(const std::shared_ptr<ResourceIdentifier>& ri)>> ResourceFactory::resourceCreationFunctions{
-    // TODO: replace with a reflection-based list
-    {".obj", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createModel(ri); }},
-    {".fbx", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createModel(ri); }},
-    {".dds", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createCompressedTexture(ri); }},
-    {".ktx", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createCompressedTexture(ri); }},
-    {".png", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createUncompressedTexture(ri); }},
-    {".jpg", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createUncompressedTexture(ri); }},
-    {".tga", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createUncompressedTexture(ri); }},
-    {".hdr", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createHdrTexture(ri); }},
-    {".glsl", [](const std::shared_ptr<ResourceIdentifier>& ri) { return std::make_shared<resources::Shader>(ri->getFullPath()); }},
-    {".scene", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createScene(ri); }},
-};
+std::map<std::string, std::function<std::shared_ptr<Resource>(const std::shared_ptr<ResourceIdentifier>& ri)>>
+    ResourceFactory::resourceCreationFunctions{
+        // TODO: replace with a reflection-based list
+        {".obj", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createModel(ri); }},
+        {".fbx", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createModel(ri); }},
+        {".gltf", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createModel(ri); }},
+        {".dds", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createCompressedTexture(ri); }},
+        {".ktx", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createCompressedTexture(ri); }},
+        {".png", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createUncompressedTexture(ri); }},
+        {".jpg", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createUncompressedTexture(ri); }},
+        {".tga", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createUncompressedTexture(ri); }},
+        {".hdr", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createHdrTexture(ri); }},
+        {".glsl", [](const std::shared_ptr<ResourceIdentifier>& ri) { return std::make_shared<resources::Shader>(ri->getFullPath()); }},
+        {".scene", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createScene(ri); }},
+    };
 
 std::shared_ptr<Resource> ResourceFactory::loadResource(const std::shared_ptr<ResourceIdentifier>& resourceIdentifier)
 {
@@ -48,7 +50,7 @@ std::string ResourceFactory::extensionToLowerCase(const std::filesystem::path& p
 
 std::vector<std::string> ResourceFactory::supportedModelExtensions()
 {
-    return std::vector<std::string>{".obj", ".fbx"};
+    return std::vector<std::string>{".obj", ".fbx", ".gltf"};
 }
 
 std::vector<std::string> ResourceFactory::supportedTextureExtensions()
