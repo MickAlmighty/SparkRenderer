@@ -19,28 +19,30 @@ layout (std140) uniform Camera
 
 out VS_OUT {
     vec2 tex_coords;
-    mat3 viewTBN_matrix;
+    mat3 viewTBN;
     vec3 tangentFragPos;
     vec3 tangentCamPos;
+    vec3 normalView;
 } vs_out;
 
 void main()
 {
     vec4 worldPosition = model * vec4(position, 1);
 
-    mat3 normalMatrix = transpose(inverse(mat3(model)));
+    mat3 normalMatrix = mat3(transpose(inverse(model)));
     vec3 T = normalize(normalMatrix * tangent);
     vec3 N = normalize(normalMatrix * normal);
     T = normalize(T - dot(T, N) * N);
-    vec3 B = cross(T, N);
+    vec3 B = cross(N, T);
     mat3 TBN = mat3(T, B, N);
-    mat3 viewTBN = mat3(camera.view) * TBN;
     mat3 inverseTBN = transpose(TBN);
 
     vs_out.tangentFragPos = inverseTBN * worldPosition.xyz;
     vs_out.tangentCamPos  = inverseTBN * camera.pos.xyz;
     vs_out.tex_coords = texture_coords;
-    vs_out.viewTBN_matrix = viewTBN;
+    vs_out.viewTBN = mat3(camera.view) * TBN;
+    mat4 viewModel = camera.view * model;
+    vs_out.normalView = vec3(viewModel * vec4(normal, 0));
 
     gl_Position = camera.projection * camera.view * worldPosition;
 }
@@ -54,9 +56,10 @@ layout (binding = 5) uniform sampler2D heightTexture;
 
 in VS_OUT {
     vec2 tex_coords;
-    mat3 viewTBN_matrix;
+    mat3 viewTBN;
     vec3 tangentFragPos;
     vec3 tangentCamPos;
+    vec3 normalView;
 } vs_out;
 
 const float heightScale = 0.05f;
@@ -127,6 +130,30 @@ vec3 accurateSRGBToLinear(vec3 sRGBColor)
     return linearRGB;
 }
 
+vec3 getViewNormal(vec2 tc)
+{
+    vec3 normalFromTexture = texture(normalTexture, tc).xyz;
+    if (normalFromTexture.xy != vec2(0))
+    {
+        if (normalFromTexture.z == 0)
+        {
+            normalFromTexture = normalize(normalFromTexture * 2.0 - 1.0);
+            vec2 nXY = normalFromTexture.xy;
+            normalFromTexture.z = sqrt(1.0f - (nXY.x * nXY.x) - (nXY.y * nXY.y));
+            return normalize(vs_out.viewTBN * normalFromTexture);
+        }
+
+        normalFromTexture = normalize(normalFromTexture * 2.0 - 1.0);
+        vec3 viewNormal = normalize(vs_out.viewTBN * normalFromTexture);
+        return viewNormal;
+    }
+    else
+    {
+        vec3 viewNormal = normalize(vs_out.normalView);
+        return viewNormal;
+    }
+}
+
 void main()
 {
     vec2 tex_coords = vs_out.tex_coords;
@@ -136,9 +163,7 @@ void main()
         tex_coords = parallaxMapping(vs_out.tex_coords, tangentViewDir);
     }
 
-    vec3 normalFromTexture = vec3(texture(normalTexture, tex_coords).xy, 1.0f);
-    normalFromTexture = normalize(normalFromTexture * 2.0 - 1.0);
-    vec3 viewNormal = normalize(vs_out.viewTBN_matrix * normalFromTexture);
+    vec3 viewNormal = getViewNormal(tex_coords);
     vec2 encodedNormal = encodeViewSpaceNormal(viewNormal);
     Normal.rg = encodedNormal;
 }

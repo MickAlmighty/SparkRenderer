@@ -1,5 +1,6 @@
 #include "SparkGui.h"
 
+#include "CommonUtils.h"
 #include "ImGuizmo.h"
 #include "ImGui/imgui_impl_glfw.h"
 #include "ImGui/imgui_impl_opengl3.h"
@@ -30,6 +31,7 @@ const std::map<std::string, std::function<std::shared_ptr<Component>()>> SparkGu
 
 void SparkGui::drawGui()
 {
+    PUSH_DEBUG_GROUP(IMGUI)
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
     ImGuizmo::BeginFrame();
@@ -46,6 +48,7 @@ void SparkGui::drawGui()
 
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+    POP_DEBUG_GROUP()
 }
 
 void SparkGui::drawMainMenuGui()

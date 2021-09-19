@@ -345,6 +345,7 @@ _deps
 
 # Project
 Spark/imgui.ini
+sparkData/cache/**
 !sparkData/*
 /SparkTests/test.json
 /out/

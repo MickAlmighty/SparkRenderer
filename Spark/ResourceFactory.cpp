@@ -1,5 +1,6 @@
 #include "ResourceFactory.h"
 
+#include "GltfLoader.hpp"
 #include "Resource.h"
 #include "ResourceIdentifier.h"
 #include "ResourceLoader.h"
@@ -12,7 +13,7 @@ std::map<std::string, std::function<std::shared_ptr<Resource>(const std::shared_
         // TODO: replace with a reflection-based list
         {".obj", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createModel(ri); }},
         {".fbx", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createModel(ri); }},
-        {".gltf", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createModel(ri); }},
+        {".gltf", [](const std::shared_ptr<ResourceIdentifier>& ri) { return GltfLoader().createModel(ri); }},
         {".dds", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createCompressedTexture(ri); }},
         {".ktx", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createCompressedTexture(ri); }},
         {".png", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createUncompressedTexture(ri); }},

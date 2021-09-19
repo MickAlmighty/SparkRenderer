@@ -81,7 +81,7 @@ glm::vec3 LocalTransform::getRotationDegrees() const
 void LocalTransform::setPosition(float x, float y, float z)
 {
     position.x = x;
-    position.t = y;
+    position.y = y;
     position.z = z;
     dirty = true;
 }

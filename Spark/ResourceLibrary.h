@@ -45,9 +45,10 @@ class ResourceLibrary
     template<class InputIterator, class Functor>
     [[nodiscard]] std::vector<typename std::iterator_traits<InputIterator>::value_type> static filter(const InputIterator& begin,
                                                                                                       const InputIterator& end, Functor f);
-    void createResourceIdentifiers(const std::filesystem::path& pathToResources);
+    void createResourceIdentifiers();
 
     std::set<std::shared_ptr<ResourceIdentifier>> resourceIdentifiers;
+    std::filesystem::path pathToResources;
 };
 
 template<typename T>

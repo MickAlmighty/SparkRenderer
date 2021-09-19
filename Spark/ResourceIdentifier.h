@@ -23,6 +23,7 @@ namespace resourceManagement
         bool operator==(const ResourceIdentifier& identifier) const;
         bool operator<(const ResourceIdentifier& identifier) const;
 
+        std::filesystem::path getResourcesRootPath() const;
         std::filesystem::path getFullPath() const;
         std::filesystem::path getRelativePath() const;
         std::filesystem::path getResourceName(bool withExtension = true) const;

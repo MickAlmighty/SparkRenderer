@@ -19,24 +19,23 @@ layout (std140) uniform Camera
 
 out VS_OUT {
     vec2 tex_coords;
-    mat3 viewTBN_matrix;
+    mat3 TBN;
     vec3 tangentFragPos;
     vec3 tangentCamPos;
     vec3 worldPos;
+    vec3 worldNormal;
 } vs_out;
 
 void main()
 {
     vec4 worldPosition = model * vec4(position, 1);
 
-    mat3 normalMatrix = transpose(inverse(mat3(model)));
+    mat3 normalMatrix = mat3(transpose(inverse(model)));
     vec3 T = normalize(normalMatrix * tangent);
     vec3 N = normalize(normalMatrix * normal);
     T = normalize(T - dot(T, N) * N);
-    vec3 B = cross(T, N);
-    //vec3 B = normalize(normalMatrix * bitangent);
+    vec3 B = cross(N, T);
     mat3 TBN = mat3(T, B, N);
-    mat3 viewTBN = mat3(camera.view) * TBN;
     mat3 inverseTBN = transpose(TBN);
 
     // vec3 T1 = normalize(vec3(model * vec4(tangent, 0.0)));
@@ -45,12 +44,13 @@ void main()
     // vec3 B1 = cross(T1, N1);
     // //vec3 B1 = normalize(vec3(model * vec4(bitangent, 0.0)));
     // mat3 TBN1 = mat3(T1, B1, N1);
-    
+
     vs_out.worldPos = worldPosition.xyz;
     vs_out.tangentFragPos = inverseTBN * worldPosition.xyz;
     vs_out.tangentCamPos  = inverseTBN * camera.pos.xyz;
     vs_out.tex_coords = texture_coords;
-    vs_out.viewTBN_matrix = viewTBN;
+    vs_out.TBN = TBN;
+    vs_out.worldNormal = vec3(model * vec4(normal, 0));
 
     gl_Position = camera.projection * camera.view * worldPosition;
 }
@@ -73,10 +73,11 @@ layout(binding = 10) uniform sampler2D ssaoTexture;
 
 in VS_OUT {
     vec2 tex_coords;
-    mat3 viewTBN_matrix;
+    mat3 TBN;
     vec3 tangentFragPos;
     vec3 tangentCamPos;
     vec3 worldPos;
+    vec3 worldNormal;
 } vs_out;
 
 layout (std140) uniform Camera
@@ -228,6 +229,27 @@ vec3 accurateSRGBToLinear(vec3 sRGBColor)
     return linearRGB;
 }
 
+vec3 getWorldNormal(vec2 tc)
+{
+    vec3 normalFromTexture = texture(normalTexture, tc).xyz;
+    if (normalFromTexture.xy != vec2(0))
+    {
+        if (normalFromTexture.z == 0)
+        {
+            normalFromTexture = normalize(normalFromTexture * 2.0 - 1.0);
+            vec2 nXY = normalFromTexture.xy;
+            normalFromTexture.z = sqrt(1.0f - (nXY.x * nXY.x) - (nXY.y * nXY.y));
+            return normalize(vs_out.TBN * normalFromTexture);
+        }
+        normalFromTexture = normalize(vs_out.TBN * (normalFromTexture * 2.0 - 1.0));
+        return normalFromTexture;
+    }
+    else
+    {
+        return normalize(vs_out.worldNormal);
+    }
+}
+
 void main()
 {
     vec2 tex_coords = vs_out.tex_coords;
@@ -237,13 +259,7 @@ void main()
         tex_coords = parallaxMapping(vs_out.tex_coords, tangentViewDir);
     }
 
-    // if (tex_coords.x > 1.0 || tex_coords.x < 0.0 || tex_coords.y > 1.0 || tex_coords.y < 0.0)
-    //     discard;
-
-    vec3 normalFromTexture = vec3(texture(normalTexture, tex_coords).xy, 1.0f);
-    normalFromTexture = normalize(normalFromTexture * 2.0 - 1.0);
-    vec3 viewNormal = normalize(vs_out.viewTBN_matrix * normalFromTexture);
-    vec3 N = (camera.invertedView * vec4(viewNormal, 0.0f)).xyz;
+    vec3 N = getWorldNormal(tex_coords);
     vec3 P = vs_out.worldPos;
 
     vec3 albedo = accurateSRGBToLinear(texture(diffuseTexture, tex_coords).rgb);

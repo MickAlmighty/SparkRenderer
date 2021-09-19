@@ -15,6 +15,8 @@ list(APPEND SparkSources
     ${CMAKE_CURRENT_SOURCE_DIR}/GameObject.h
     ${CMAKE_CURRENT_SOURCE_DIR}/glad_glfw3.h
     ${CMAKE_CURRENT_SOURCE_DIR}/glad.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/GltfLoader.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/GltfLoader.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/IObserver.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/JsonSerializer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/JsonSerializer.h
@@ -72,6 +74,7 @@ list(APPEND SparkSources
 )
 
 add_library(Spark "")
+
 target_sources(Spark PRIVATE ${SparkSources})
 
 add_subdirectory(EngineSystems)
@@ -87,9 +90,10 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SparkSources})
 target_include_directories(Spark PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(Spark PUBLIC ${CMAKE_SOURCE_DIR}/thirdparty/include)
 
-if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-        add_compile_definitions(DEBUG)
-endif ()
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    target_compile_definitions(Spark PRIVATE DEBUG)
+endif()
+target_compile_definitions(Spark PRIVATE GLM_FORCE_ALIGNED_GENTYPES)
 
 # message("Paths to libraries ${LIB_PATH}")
 target_link_directories(Spark PUBLIC ${CMAKE_SOURCE_DIR}/thirdparty/lib/ReleaseLib ${CMAKE_SOURCE_DIR}/thirdparty/lib/DebugLib)
@@ -127,6 +131,17 @@ FetchContent_MakeAvailable(spdlog)
 # target_include_directories(Spark PUBLIC ${rttr_SOURCE_DIR}/src)
 # target_include_directories(Spark PUBLIC ${rttr_BINARY_DIR}/src)
 
+#TINYGLTF
+set(TINYGLTF_HEADER_ONLY ON CACHE INTERNAL "" FORCE)
+set(TINYGLTF_INSTALL OFF CACHE INTERNAL "" FORCE)
+FetchContent_Declare(
+        tinygltf
+        GIT_REPOSITORY "https://github.com/syoyo/tinygltf"
+        GIT_TAG "19a41d20ec03d35cee68ff85511bc5875f6037b8"
+)
+FetchContent_MakeAvailable(tinygltf)
+target_include_directories(Spark PUBLIC ${tinygltf_SOURCE_DIR})
+
 #JSONCPP
 set(JSONCPP_WITH_POST_BUILD_UNITTEST OFF CACHE INTERNAL "Turn off tests")
 set(JSONCPP_WITH_TESTS OFF CACHE INTERNAL "Turn off tests")
@@ -159,6 +174,6 @@ else()
     target_link_libraries(Spark ${CMAKE_DL_LIBS})
 endif()
 target_link_libraries(Spark assimp)
-target_link_libraries(Spark debug jsoncppd optimized jsoncpp)
+target_link_libraries(Spark debug jsoncpp optimized jsoncpp)
 target_link_libraries(Spark glfw)
 target_link_libraries(Spark spdlog)

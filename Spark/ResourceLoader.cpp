@@ -145,9 +145,8 @@ std::shared_ptr<resourceManagement::Resource> ResourceLoader::createCompressedTe
 std::shared_ptr<resourceManagement::Resource> ResourceLoader::createUncompressedTexture(
     const std::shared_ptr<resourceManagement::ResourceIdentifier>& resourceIdentifier)
 {
-    unsigned char* pixels = nullptr;
     int width{0}, height{0}, channels{0};
-    pixels = stbi_load(resourceIdentifier->getFullPath().string().c_str(), &width, &height, &channels, 0);
+    unsigned char* pixels = stbi_load(resourceIdentifier->getFullPath().string().c_str(), &width, &height, &channels, 0);
 
     if(pixels == nullptr)
     {
@@ -203,7 +202,7 @@ std::shared_ptr<resourceManagement::Resource> ResourceLoader::createModel(
     Assimp::Importer importer;
     const aiScene* scene = nullptr;
 
-    scene = importer.ReadFile(resourceIdentifier->getFullPath().string(), aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
+    scene = importer.ReadFile(resourceIdentifier->getFullPath().string(), aiProcess_Triangulate | aiProcess_CalcTangentSpace);
 
     if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
     {
@@ -217,7 +216,7 @@ std::shared_ptr<resourceManagement::Resource> ResourceLoader::createModel(
         const aiMaterial* material = scene->mMaterials[i];
         std::map<TextureTarget, std::string> materialPbr{};
 
-        if (const auto normalTexturesCount = material->GetTextureCount(aiTextureType_NORMALS); normalTexturesCount > 0)
+        if(const auto normalTexturesCount = material->GetTextureCount(aiTextureType_NORMALS); normalTexturesCount > 0)
         {
             aiString path{};
             material->GetTexture(aiTextureType_NORMALS, 0, &path);
@@ -231,21 +230,21 @@ std::shared_ptr<resourceManagement::Resource> ResourceLoader::createModel(
             materialPbr.emplace(TextureTarget::DIFFUSE_TARGET, std::string(path.data, path.length));
         }
 
-        if (const auto metalnessTexturesCount = material->GetTextureCount(aiTextureType_METALNESS); metalnessTexturesCount > 0)
+        if(const auto metalnessTexturesCount = material->GetTextureCount(aiTextureType_METALNESS); metalnessTexturesCount > 0)
         {
             aiString path{};
             material->GetTexture(aiTextureType_METALNESS, 0, &path);
             materialPbr.emplace(TextureTarget::METALNESS_TARGET, std::string(path.data, path.length));
         }
 
-        if (const auto roughnessTexturesCount = material->GetTextureCount(aiTextureType_DIFFUSE_ROUGHNESS); roughnessTexturesCount > 0)
+        if(const auto roughnessTexturesCount = material->GetTextureCount(aiTextureType_DIFFUSE_ROUGHNESS); roughnessTexturesCount > 0)
         {
             aiString path{};
             material->GetTexture(aiTextureType_DIFFUSE_ROUGHNESS, 0, &path);
             materialPbr.emplace(TextureTarget::ROUGHNESS_TARGET, std::string(path.data, path.length));
         }
 
-        if (const auto unknownTypeTexturesCount = material->GetTextureCount(aiTextureType_UNKNOWN); unknownTypeTexturesCount > 0)
+        if(const auto unknownTypeTexturesCount = material->GetTextureCount(aiTextureType_UNKNOWN); unknownTypeTexturesCount > 0)
         {
             /*aiString path{};
             material->GetTexture(aiTextureType_UNKNOWN, 0, &path);
@@ -326,7 +325,8 @@ std::map<TextureTarget, std::shared_ptr<resources::Texture>> findTextures(const 
     return textures;
 }
 
-std::shared_ptr<Mesh> ResourceLoader::loadMesh(aiMesh* assimpMesh, std::vector<std::map<TextureTarget, std::string>>& materials, const std::filesystem::path& path)
+std::shared_ptr<Mesh> ResourceLoader::loadMesh(aiMesh* assimpMesh, std::vector<std::map<TextureTarget, std::string>>& materials,
+                                               const std::filesystem::path& path)
 {
     std::vector<glm::vec3> positions{assimpMesh->mNumVertices};
     std::vector<glm::vec3> normals{assimpMesh->mNumVertices};
@@ -375,9 +375,8 @@ std::shared_ptr<Mesh> ResourceLoader::loadMesh(aiMesh* assimpMesh, std::vector<s
             indices.push_back(face.mIndices[j]);
     }
 
-
     std::map<TextureTarget, std::shared_ptr<resources::Texture>> textures;
-    if (const auto & materialsPbr = materials.at(assimpMesh->mMaterialIndex); !materialsPbr.empty())
+    if(const auto& materialsPbr = materials.at(assimpMesh->mMaterialIndex); !materialsPbr.empty())
     {
         for(const auto& [target, localTexPath] : materialsPbr)
         {

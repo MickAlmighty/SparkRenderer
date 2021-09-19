@@ -23,6 +23,11 @@ bool ResourceIdentifier::operator<(const ResourceIdentifier& identifier) const
     return relativePathToResource < identifier.relativePathToResource;
 }
 
+std::filesystem::path ResourceIdentifier::getResourcesRootPath() const
+{
+    return pathToResources;
+}
+
 std::filesystem::path ResourceIdentifier::getFullPath() const
 {
     return pathToResources / relativePathToResource;

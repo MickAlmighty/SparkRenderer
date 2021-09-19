@@ -13,9 +13,14 @@ std::function<bool(const std::shared_ptr<ResourceIdentifier>&)> findWithinExtens
     };
 }
 
-ResourceLibrary::ResourceLibrary(const std::filesystem::path& pathToResources)
+ResourceLibrary::ResourceLibrary(const std::filesystem::path& pathToResources) : pathToResources(pathToResources)
 {
-    createResourceIdentifiers(pathToResources);
+    if(const auto cacheDir = pathToResources / "cache"; !std::filesystem::exists(cacheDir))
+    {
+        std::filesystem::create_directory(cacheDir);
+    }
+
+    createResourceIdentifiers();
 }
 
 ResourceLibrary::~ResourceLibrary()
@@ -43,7 +48,7 @@ std::vector<std::shared_ptr<ResourceIdentifier>> ResourceLibrary::getSceneResour
     return getResourceIdentifiers(findWithinExtensions(ResourceFactory::supportedSceneExtensions()));
 }
 
-void ResourceLibrary::createResourceIdentifiers(const std::filesystem::path& pathToResources)
+void ResourceLibrary::createResourceIdentifiers()
 {
     for(const auto& directory_entry : std::filesystem::recursive_directory_iterator(pathToResources))
     {
