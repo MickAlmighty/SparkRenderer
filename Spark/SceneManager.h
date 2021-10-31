@@ -1,6 +1,5 @@
 #pragma once
 
-#include <list>
 #include <memory>
 
 #include "Scene.h"
@@ -12,7 +11,7 @@ class SceneManager final
     public:
     SceneManager();
     ~SceneManager() = default;
-    SceneManager(SceneManager&) = delete;
+    SceneManager(const SceneManager&) = delete;
     SceneManager(SceneManager&&) = delete;
     SceneManager& operator=(const SceneManager&) = delete;
     SceneManager& operator=(SceneManager&&) = delete;

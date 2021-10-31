@@ -3,7 +3,7 @@
 #include "GUI/SparkGui.h"
 #include "OpenGLContext.hpp"
 #include "ResourceLibrary.h"
-#include "EngineSystems/SceneManager.h"
+#include "SceneManager.h"
 
 namespace spark
 {

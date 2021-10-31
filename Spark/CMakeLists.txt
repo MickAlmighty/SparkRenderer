@@ -48,6 +48,8 @@ list(APPEND SparkSources
     ${CMAKE_CURRENT_SOURCE_DIR}/ResourceLoader.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Scene.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Scene.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/SceneManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/SceneManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ScreenQuad.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Shader.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Shader.h
@@ -77,7 +79,6 @@ add_library(Spark "")
 
 target_sources(Spark PRIVATE ${SparkSources})
 
-add_subdirectory(EngineSystems)
 add_subdirectory(GUI)
 add_subdirectory(HID)
 add_subdirectory(lights)

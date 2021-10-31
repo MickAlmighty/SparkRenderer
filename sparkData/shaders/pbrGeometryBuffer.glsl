@@ -38,13 +38,6 @@ void main()
     mat3 viewTBN = mat3(camera.view) * TBN;
     mat3 inverseTBN = transpose(TBN);
 
-    // vec3 T1 = normalize(vec3(model * vec4(tangent, 0.0)));
-    // vec3 N1 = normalize(vec3(model * vec4(normal, 0.0)));
-    // T1 = normalize(T1 - dot(T1, N1) * N1);
-    // vec3 B1 = cross(T1, N1);
-    // //vec3 B1 = normalize(vec3(model * vec4(bitangent, 0.0)));
-    // mat3 TBN1 = mat3(T1, B1, N1);
-
     vs_out.tangentFragPos = inverseTBN * worldPosition.xyz;
     vs_out.tangentCamPos  = inverseTBN * camera.pos.xyz;
     vs_out.tex_coords = texture_coords;

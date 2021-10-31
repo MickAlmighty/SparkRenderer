@@ -242,6 +242,19 @@ auto collectAttributes(const tinygltf::Model& model, const tinygltf::Primitive& 
     return attributes;
 }
 
+template <typename T>
+std::vector<unsigned int> convertIndicesToUInt32Array(T* indicesArray, size_t indicesCount)
+{
+    std::vector<unsigned int> indices(indicesCount);
+
+    for (size_t i = 0; i < indicesCount; ++i)
+    {
+        indices[i] = indicesArray[i];
+    }
+
+    return indices;
+}
+
 std::vector<unsigned int> collectIndices(const tinygltf::Model& model, const tinygltf::Primitive& primitive)
 {
     if(const auto accessorIdxToIndicesBuffer = primitive.indices; accessorIdxToIndicesBuffer != -1)
@@ -250,36 +263,22 @@ std::vector<unsigned int> collectIndices(const tinygltf::Model& model, const tin
         const tinygltf::BufferView& bufferView = model.bufferViews[accessor.bufferView];
 
         const tinygltf::Buffer& buffer = model.buffers[bufferView.buffer];
-        std::vector<unsigned int> indices(accessor.count);
-        if(accessor.componentType == static_cast<unsigned int>(ComponentType::UNSIGNED_BYTE))
-        {
-            const auto* positionArray = buffer.data.data() + bufferView.byteOffset + accessor.byteOffset;
+        const auto* indices = buffer.data.data() + bufferView.byteOffset + accessor.byteOffset;
 
-            for(size_t i = 0; i < accessor.count; ++i)
-            {
-                indices[i] = positionArray[i];
-            }
+        if(accessor.componentType == static_cast<int>(ComponentType::UNSIGNED_BYTE))
+        {
+            return convertIndicesToUInt32Array(indices, accessor.count);
         }
-        else if(accessor.componentType == static_cast<unsigned int>(ComponentType::UNSIGNED_SHORT))
+        if(accessor.componentType == static_cast<int>(ComponentType::UNSIGNED_SHORT))
         {
-            const auto* positionArray = reinterpret_cast<const unsigned short*>(buffer.data.data() + bufferView.byteOffset + accessor.byteOffset);
-
-            for(size_t i = 0; i < accessor.count; ++i)
-            {
-                indices[i] = positionArray[i];
-            }
+            return convertIndicesToUInt32Array(reinterpret_cast<const unsigned short*>(indices), accessor.count);
         }
-        else if(accessor.componentType == static_cast<unsigned int>(ComponentType::UNSIGNED_INT))
+        if(accessor.componentType == static_cast<int>(ComponentType::UNSIGNED_INT))
         {
-            const auto* positionArray = reinterpret_cast<const unsigned int*>(buffer.data.data() + bufferView.byteOffset + accessor.byteOffset);
-
-            for(size_t i = 0; i < accessor.count; ++i)
-            {
-                indices[i] = positionArray[i];
-            }
+            return convertIndicesToUInt32Array(reinterpret_cast<const unsigned int*>(indices), accessor.count);
         }
 
-        return indices;
+        return {};
     }
 
     return {};

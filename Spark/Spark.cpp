@@ -5,7 +5,6 @@
 #include "GUI/ImGui/imgui_impl_opengl3.h"
 
 #include "Clock.h"
-#include "EngineSystems/SceneManager.h"
 #include "HID/HID.h"
 #include "JsonSerializer.h"
 #include "Logging.h"
