@@ -88,18 +88,18 @@ class SerializationComponent2 : public spark::Component
 
 struct SerializationStruct1
 {
-    glm::mat3 mat;
-    double d;
-    glm::vec4 vec;
+    glm::mat3 mat{};
+    double d{};
+    glm::vec4 vec{};
     RTTR_ENABLE();
 };
 
 struct SerializationStruct2
 {
-    int i;
-    float f;
-    glm::ivec2 ivec;
-    SerializationStruct1 s;
+    int i{};
+    float f{};
+    glm::ivec2 ivec{};
+    SerializationStruct1 s{};
     RTTR_ENABLE();
 };
 

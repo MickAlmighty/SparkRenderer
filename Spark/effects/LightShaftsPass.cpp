@@ -55,7 +55,7 @@ glm::vec2 LightShaftsPass::dirLightPositionInScreenSpace(const std::shared_ptr<C
     const glm::mat4 view = camera->getViewMatrix();
     const glm::mat4 projection = camera->getProjectionReversedZ();
 
-    const glm::vec3 camPos = camera->getPosition();
+    const glm::vec3 camPos = camera->position;
 
     const glm::vec3 dirLightPosition = dirLight->getDirection() * -glm::vec3(100);
 
@@ -68,7 +68,7 @@ glm::vec2 LightShaftsPass::dirLightPositionInScreenSpace(const std::shared_ptr<C
 bool LightShaftsPass::isCameraFacingDirectionalLight(glm::vec2 dirLightScreenSpacePosition, const std::shared_ptr<Camera>& camera,
                                                      const lights::DirectionalLight* const dirLight)
 {
-    const bool isCameraFacingDirLight = glm::dot(dirLight->getDirection(), camera->getFront()) < 0.0f;
+    const bool isCameraFacingDirLight = glm::dot(dirLight->getDirection(), camera->front) < 0.0f;
     const float distance = glm::distance(glm::vec2(0.5f), dirLightScreenSpacePosition);
     return distance > 1.0f || !isCameraFacingDirLight;
 }

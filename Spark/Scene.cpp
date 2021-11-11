@@ -87,7 +87,6 @@ void Scene::drawGUI()
             auto gameObject_ptr = getGameObjectToPreview();
             if(gameObject_ptr != nullptr)
             {
-                camera->setCameraTarget(gameObject_ptr->transform.world.getPosition());
                 if(ImGui::Button("Close Preview"))
                 {
                     setGameObjectToPreview(nullptr);
@@ -147,7 +146,7 @@ void Scene::drawTreeNode(std::shared_ptr<GameObject> node, bool isRootNode)
 
         if(ImGui::Button("Add child"))
         {
-            node->addChild(std::make_shared<GameObject>(), node);
+            node->addChild(std::make_shared<GameObject>());
             ImGui::CloseCurrentPopup();
         }
 

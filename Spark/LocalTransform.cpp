@@ -7,7 +7,7 @@
 
 namespace spark
 {
-LocalTransform::LocalTransform(glm::vec3 pos, glm::vec3 scale, glm::vec3 rotation) : position(pos), scale(scale), rotationEuler(rotation) {}
+LocalTransform::LocalTransform(glm::vec3 pos, glm::vec3 scale, glm::vec3 rotation) : position(pos), rotationEuler(rotation), scale(scale) {}
 
 void LocalTransform::drawGUI()
 {
@@ -54,7 +54,7 @@ glm::mat4 LocalTransform::recreateMatrix() const
     const glm::mat4 scaleMatrix = glm::scale(glm::mat4(1), scale);
     const glm::vec3 rotationRadians = glm::radians(rotationEuler);
     // const glm::mat4 rotationMatrix = glm::eulerAngleYXZ(roationRadians.y, roationRadians.x, roationRadians.z);
-    glm::mat4 rot = glm::mat4_cast(glm::quat(rotationRadians));
+    const glm::mat4 rot = glm::mat4_cast(glm::quat(rotationRadians));
     return posMatrix * rot * scaleMatrix;
 }
 

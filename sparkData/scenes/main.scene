@@ -5,53 +5,51 @@
 		{
 			"Content" : 
 			{
-				"Front" : 
-				[
-					0.90356683731079102,
-					-0.21303337812423706,
-					0.37173077464103699
-				],
-				"MouseSensitivity" : 0.10000000149011612,
-				"MovementSpeed" : 23.600114822387695,
-				"Pitch" : -12.300175666809082,
-				"Position" : 
-				[
-					-49.510768890380859,
-					8.5236682891845703,
-					-4.6745576858520508
-				],
-				"Right" : 
-				[
-					-0.3804643452167511,
-					0.0,
-					0.92479556798934937
-				],
-				"Up" : 
-				[
-					0.19701232016086578,
-					0.97704493999481201,
-					0.081051602959632874
-				],
-				"Yaw" : 2902.362548828125,
-				"Zoom" : 45.0,
+				"mouseSensitivity" : 0.10000000149011612,
+				"movementSpeed" : 15.69013500213623,
 				"active" : true,
-				"cameraMode" : "FirstPerson",
 				"cameraTarget" : 
 				[
-					-48.607200622558594,
-					8.3106346130371094,
-					-4.3028268814086914
+					-50.58123779296875,
+					8.664677619934082,
+					-1.1242955923080444
 				],
 				"fov" : 60.0,
+				"front" : 
+				[
+					0.96804404258728027,
+					-0.15298591554164886,
+					0.19871103763580322
+				],
 				"gameObject" : 
 				{
 					"Identifier" : -1
 				},
 				"name" : "Camera",
+				"pitch" : -8.8000049591064453,
+				"position" : 
+				[
+					-51.549282073974609,
+					8.8176631927490234,
+					-1.3230066299438477
+				],
+				"right" : 
+				[
+					-0.20107805728912354,
+					0.0,
+					0.97957527637481689
+				],
+				"up" : 
+				[
+					0.14986121654510498,
+					0.988228440284729,
+					0.030762109905481339
+				],
+				"yaw" : 11.600008010864258,
 				"zFar" : 10000.0,
 				"zNear" : 0.10000000149011612
 			},
-			"Identifier" : 33,
+			"Identifier" : 31,
 			"Type" : "classstd::shared_ptr<classspark::Camera>"
 		},
 		"lightManager" : 
@@ -1389,7 +1387,7 @@
 						{
 							"active" : true,
 							"children" : null,
-							"components" : [],
+							"components" : null,
 							"name" : "lightProbe",
 							"parent" : 
 							{
@@ -1510,12 +1508,12 @@
 										"active" : true,
 										"gameObject" : 
 										{
-											"Identifier" : 25
+											"Identifier" : 24
 										},
 										"modelPath" : "models\\box2\\box2.obj",
 										"name" : "ModelMesh"
 									},
-									"Identifier" : 26,
+									"Identifier" : 25,
 									"Type" : "classstd::shared_ptr<classspark::ModelMesh>"
 								}
 							],
@@ -1623,7 +1621,7 @@
 								"Type" : "Transform"
 							}
 						},
-						"Identifier" : 25,
+						"Identifier" : 24,
 						"Type" : "classstd::shared_ptr<classspark::GameObject>"
 					},
 					{
@@ -1646,12 +1644,12 @@
 										"colorStrength" : 50.0,
 										"gameObject" : 
 										{
-											"Identifier" : 27
+											"Identifier" : 26
 										},
 										"name" : "PointLight",
 										"radius" : 30.399999618530273
 									},
-									"Identifier" : 28,
+									"Identifier" : 27,
 									"Type" : "classstd::shared_ptr<classspark::lights::PointLight>"
 								}
 							],
@@ -1759,7 +1757,7 @@
 								"Type" : "Transform"
 							}
 						},
-						"Identifier" : 27,
+						"Identifier" : 26,
 						"Type" : "classstd::shared_ptr<classspark::GameObject>"
 					},
 					{
@@ -1767,7 +1765,7 @@
 						{
 							"active" : true,
 							"children" : null,
-							"components" : [],
+							"components" : null,
 							"name" : "LightProbe2",
 							"parent" : 
 							{
@@ -1872,7 +1870,7 @@
 								"Type" : "Transform"
 							}
 						},
-						"Identifier" : 29,
+						"Identifier" : 28,
 						"Type" : "classstd::shared_ptr<classspark::GameObject>"
 					},
 					{
@@ -1889,12 +1887,12 @@
 										"activeSkybox" : true,
 										"gameObject" : 
 										{
-											"Identifier" : 31
+											"Identifier" : 29
 										},
 										"name" : "Skybox",
 										"skyboxName" : "evening_road_01_2k.dds"
 									},
-									"Identifier" : 32,
+									"Identifier" : 30,
 									"Type" : "classstd::shared_ptr<classspark::Skybox>"
 								}
 							],
@@ -2002,7 +2000,7 @@
 								"Type" : "Transform"
 							}
 						},
-						"Identifier" : 31,
+						"Identifier" : 29,
 						"Type" : "classstd::shared_ptr<classspark::GameObject>"
 					}
 				],

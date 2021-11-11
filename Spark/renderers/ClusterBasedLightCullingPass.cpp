@@ -58,7 +58,7 @@ void ClusterBasedLightCullingPass::process(GLuint depthTexture, const std::share
 void ClusterBasedLightCullingPass::createClusters(const std::shared_ptr<Scene>& scene)
 {
     const auto camera = scene->getCamera();
-    const bool hasNearAndFarPlaneChanged = lastCamNearZ != camera->getNearPlane() || lastCamFarZ != camera->getFarPlane();
+    const bool hasNearAndFarPlaneChanged = lastCamNearZ != camera->zNear || lastCamFarZ != camera->zFar;
     const bool hasTileDimensionChanged = lastPxTileSize != pxTileSize;
     if(hasNearAndFarPlaneChanged || hasTileDimensionChanged)
     {
@@ -67,8 +67,8 @@ void ClusterBasedLightCullingPass::createClusters(const std::shared_ptr<Scene>& 
         clusterCreationShader->bindUniformBuffer("Camera", camera->getUbo());
         clusterCreationShader->dispatchCompute(utils::uiCeil(dispatchSize.x, 32u), utils::uiCeil(dispatchSize.y, 32u), dispatchSize.z);
 
-        lastCamNearZ = camera->getNearPlane();
-        lastCamFarZ = camera->getFarPlane();
+        lastCamNearZ = camera->zNear;
+        lastCamFarZ = camera->zFar;
         lastPxTileSize = pxTileSize;
     }
 }

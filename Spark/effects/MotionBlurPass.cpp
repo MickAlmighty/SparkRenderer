@@ -21,7 +21,7 @@ MotionBlurPass::~MotionBlurPass()
 
 std::optional<GLuint> MotionBlurPass::process(const std::shared_ptr<Camera>& camera, GLuint colorTexture, GLuint depthTexture)
 {
-    const glm::mat4 projectionView = camera->getProjectionReversedZInfiniteFarPlane() * camera->getViewMatrix();
+    const glm::mat4 projectionView = camera->getProjectionReversedZ() * camera->getViewMatrix();
     static glm::mat4 prevProjectionView = projectionView;
 
     if(projectionView == prevProjectionView)

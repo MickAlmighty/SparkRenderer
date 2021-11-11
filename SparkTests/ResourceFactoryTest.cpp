@@ -41,18 +41,18 @@ TEST_F(ResourceFactoryTest, AllCreatedResourcesAreValid)
         if(!pathMaybeInvalid.is_regular_file())
             continue;
 
-        auto validFile = pathMaybeInvalid.path();
-        const bool fileWithValidExtension = ResourceFactory::isExtensionSupported(validFile);
-        if(fileWithValidExtension)
+        const auto& validFilePath = pathMaybeInvalid.path();
+        if(const bool fileWithValidExtension = ResourceFactory::isExtensionSupported(validFilePath); fileWithValidExtension)
         {
             const auto sceneExts = ResourceFactory::supportedSceneExtensions();
-            if(const auto isScene = std::find(sceneExts.cbegin(), sceneExts.cend(), validFile.extension().string()); isScene != sceneExts.cend())
+            if(const auto isScene = std::find(sceneExts.cbegin(), sceneExts.cend(), validFilePath.extension().string()); isScene != sceneExts.cend())
             {
                 continue;
             }
 
+            
             const std::shared_ptr<Resource> resource =
-                ResourceFactory::loadResource(std::make_shared<resourceManagement::ResourceIdentifier>("", pathMaybeInvalid));
+                ResourceFactory::loadResource(std::make_shared<resourceManagement::ResourceIdentifier>(resPath, validFilePath.lexically_relative(resPath)));
             if(resource != nullptr)
             {
                 createdResources.push_back(resource);

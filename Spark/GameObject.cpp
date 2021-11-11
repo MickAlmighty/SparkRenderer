@@ -73,12 +73,17 @@ Scene* GameObject::getScene() const
 
 void GameObject::setParent(const std::shared_ptr<GameObject> newParent)
 {
-    if(!parent.expired())
+    if(const auto currentParent = parent.lock(); newParent && newParent != currentParent)
     {
-        parent.lock()->removeChild(shared_from_this());
-    }
+        if(currentParent)
+        {
+            currentParent->removeChild(this);
+        }
 
-    parent = newParent;
+        newParent->children.push_back(shared_from_this());
+        scene = newParent->scene;
+        parent = newParent;
+    }
 }
 
 void GameObject::setScene(Scene* newScene)
@@ -86,52 +91,90 @@ void GameObject::setScene(Scene* newScene)
     this->scene = newScene;
 }
 
-void GameObject::addChild(const std::shared_ptr<GameObject>& newChild, const std::shared_ptr<GameObject>& parent)
+void GameObject::addChild(const std::shared_ptr<GameObject>& newChild)
 {
-    newChild->setParent(parent);
-    newChild->setScene(getScene());
+    if(!newChild)
+    {
+        return;
+    }
+
+    const auto gameObjectIt = std::find_if(std::begin(children), std::end(children),
+                                           [&newChild](const std::shared_ptr<GameObject>& gameObject) { return gameObject == newChild; });
+
+    if(gameObjectIt != children.end())
+        return;
+
+    const auto setParentFor = [newParent = shared_from_this()](const std::shared_ptr<GameObject>& newChild)
+    {
+        if(auto currentParent = newChild->parent.lock(); currentParent != newParent)
+        {
+            if(currentParent)
+            {
+                currentParent->removeChild(newChild);
+            }
+
+            newChild->parent = newParent;
+        }
+    };
+
+    setParentFor(newChild);
+    newChild->setScene(scene);
     children.push_back(newChild);
+}
+
+bool GameObject::removeChild(const std::shared_ptr<GameObject>& child)
+{
+    return removeChild(child.get());
+}
+
+bool GameObject::removeChild(GameObject* child)
+{
+    const auto gameObjectIt = std::find_if(std::begin(children), std::end(children),
+                                           [&child](const std::shared_ptr<GameObject>& gameObject) { return gameObject.get() == child; });
+    if(gameObjectIt != children.end())
+    {
+        (*gameObjectIt)->parent.reset();
+        children.erase(gameObjectIt);
+        return true;
+    }
+    return false;
 }
 
 void GameObject::addComponent(const std::shared_ptr<Component>& component)
 {
-    component->setGameObject(shared_from_this());
-    components.push_back(component);
-}
-
-bool GameObject::removeChild(std::string&& gameObjectName)
-{
-    const auto gameObject_it =
-        std::find_if(std::begin(children), std::end(children),
-                     [&gameObjectName](const std::shared_ptr<GameObject>& gameObject) { return gameObject->name == gameObjectName; });
-    if(gameObject_it != children.end())
+    if(component)
     {
-        children.erase(gameObject_it);
-        return true;
+        if(const auto componentIt = std::find_if(std::begin(components), std::end(components),
+                                                 [&component](const std::shared_ptr<Component>& c) { return c == component; });
+           componentIt == components.end())
+        {
+            component->setGameObject(shared_from_this());
+            components.push_back(component);
+        }
     }
-    return false;
-}
-
-bool GameObject::removeChild(std::shared_ptr<GameObject> child)
-{
-    const auto gameObject_it = std::find_if(std::begin(children), std::end(children),
-                                            [&child](const std::shared_ptr<GameObject>& gameObject) { return gameObject == child; });
-    if(gameObject_it != children.end())
-    {
-        children.erase(gameObject_it);
-        return true;
-    }
-    return false;
 }
 
 bool GameObject::removeComponent(const std::shared_ptr<Component>& c)
 {
-    auto component_it = std::find_if(std::begin(components), std::end(components), [&c](const std::shared_ptr<Component>& component) {
-        return component == c;
-    });
-    if(component_it != components.end())
+    auto componentIt =
+        std::find_if(std::begin(components), std::end(components), [&c](const std::shared_ptr<Component>& component) { return component == c; });
+    if(componentIt != components.end())
     {
-        components.erase(component_it);
+        (*componentIt)->setGameObject(nullptr);
+        components.erase(componentIt);
+        return true;
+    }
+    return false;
+}
+
+bool GameObject::removeComponent(const std::string& componentName)
+{
+    auto componentIt = std::find_if(std::begin(components), std::end(components),
+                                    [&componentName](const std::shared_ptr<Component>& component) { return component->getName() == componentName; });
+    if(componentIt != components.end())
+    {
+        (*componentIt)->setGameObject(nullptr);
+        components.erase(componentIt);
         return true;
     }
     return false;
@@ -144,14 +187,10 @@ void GameObject::drawGUI()
     ImGui::InputTextWithHint("", name.c_str(), nameInput, 64, ImGuiInputTextFlags_CharsNoBlank);
     ImGui::SameLine();
 
-    const std::string_view view(nameInput);
-    if(ImGui::Button("Change Name") && !view.empty())
+    if(ImGui::Button("Change Name") && nameInput[0] != '\0')
     {
         name = nameInput;
-        for(int i = 0; i < 64; i++)
-        {
-            nameInput[i] = '\0';
-        }
+        std::fill_n(nameInput, 64, '\0');
     }
 
     ImGui::Checkbox("active", &active);
@@ -199,6 +238,11 @@ void GameObject::setActive(bool active_)
 void GameObject::setStatic(bool static_)
 {
     staticObject = static_;
+}
+
+const std::vector<std::shared_ptr<GameObject>>& GameObject::getChildren() const
+{
+    return children;
 }
 
 void GameObject::drawGizmos()

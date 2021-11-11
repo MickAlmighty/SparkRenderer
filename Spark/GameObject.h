@@ -25,10 +25,14 @@ class GameObject final : public std::enable_shared_from_this<GameObject>
     Scene* getScene() const;
     void setParent(const std::shared_ptr<GameObject> newParent);
     void setScene(Scene* newScene);
-    void addChild(const std::shared_ptr<GameObject>& newChild, const std::shared_ptr<GameObject>& parent);
+    void addChild(const std::shared_ptr<GameObject>& newChild);
+    bool removeChild(const std::shared_ptr<GameObject>& child);
+    bool removeChild(GameObject* child);
+
     void addComponent(const std::shared_ptr<Component>& component);
-    bool removeChild(std::string&& gameObjectName);
-    bool removeChild(std::shared_ptr<GameObject> child);
+    bool removeComponent(const std::shared_ptr<Component>& c);
+    bool removeComponent(const std::string& componentName);
+
     void drawGUI();
 
     std::string getName() const;
@@ -38,22 +42,16 @@ class GameObject final : public std::enable_shared_from_this<GameObject>
     void setActive(bool active_);
     void setStatic(bool static_);
 
+    const std::vector<std::shared_ptr<GameObject>>& getChildren() const;
+
     template<class T>
     std::shared_ptr<T> getComponent();
 
     template<class T>
-    std::shared_ptr<T> getAllComponentsOfType();
-
-    bool removeComponent(const std::shared_ptr<Component>& c);
+    std::vector<std::shared_ptr<T>> getAllComponentsOfType();
 
     template<class T>
-    bool removeComponent(const std::string& name);
-
-    template<class T>
-    bool removeComponent(const std::shared_ptr<T>& c);
-
-    template<class T>
-    bool removeComponentOfType();
+    bool removeComponent();
 
     template<class T>
     void removeAllComponentsOfType();
@@ -61,7 +59,11 @@ class GameObject final : public std::enable_shared_from_this<GameObject>
     Transform transform;
 
     private:
-    friend class Scene;
+    void update();
+    void fixedUpdate();
+    void drawGizmos();
+    void setSceneRecursive(Scene* newScene);
+
     std::string name{"GameObject"};
     bool active{true};
     bool staticObject{false};
@@ -69,10 +71,8 @@ class GameObject final : public std::enable_shared_from_this<GameObject>
     std::weak_ptr<GameObject> parent;
     std::vector<std::shared_ptr<GameObject>> children;
     std::vector<std::shared_ptr<Component>> components;
-    void update();
-    void fixedUpdate();
-    void drawGizmos();
-    void setSceneRecursive(Scene* newScene);
+
+    friend class Scene;
     RTTR_REGISTRATION_FRIEND;
     RTTR_ENABLE();
 };
@@ -81,10 +81,12 @@ template<class T>
 std::shared_ptr<T> GameObject::getComponent()
 {
     // TODO: add RTTR reflection checks in template methods of GameObject, they'll make the code much cleaner
-    auto component_it = std::find_if(std::begin(components), std::end(components), [](const std::shared_ptr<Component>& component) {
-        T* comp_ptr = dynamic_cast<T*>(component.get());
-        return comp_ptr != nullptr;
-    });
+    auto component_it = std::find_if(std::begin(components), std::end(components),
+                                     [](const std::shared_ptr<Component>& component)
+                                     {
+                                         T* comp_ptr = dynamic_cast<T*>(component.get());
+                                         return comp_ptr != nullptr;
+                                     });
     if(component_it != components.end())
     {
         return std::dynamic_pointer_cast<T>(*component_it);
@@ -92,69 +94,42 @@ std::shared_ptr<T> GameObject::getComponent()
     return nullptr;
 }
 
-template<class T>
-std::shared_ptr<T> GameObject::getAllComponentsOfType()
+template<>
+inline std::vector<std::shared_ptr<Component>> GameObject::getAllComponentsOfType()
 {
-    std::vector<std::shared_ptr<T>> components;
+    return components;
+}
+
+template<class T>
+std::vector<std::shared_ptr<T>> GameObject::getAllComponentsOfType()
+{
+    std::vector<std::shared_ptr<T>> componentsOfTypeT;
 
     for(const auto& component : components)
     {
         const auto componentOfTypeT = std::dynamic_pointer_cast<T>(component);
         if(componentOfTypeT != nullptr)
         {
-            components.push_back(componentOfTypeT);
+            componentsOfTypeT.push_back(componentOfTypeT);
         }
     }
 
-    return components;
+    return componentsOfTypeT;
 }
 
 template<class T>
-bool GameObject::removeComponent(const std::string& name)
-{
-    auto component_it = std::find_if(std::begin(components), std::end(components), [&name](const std::shared_ptr<Component>& component) {
-        if(dynamic_cast<T*>(component.get()))
-        {
-            return component->getName() == name;
-        }
-        return false;
-    });
-    if(component_it != components.end())
-    {
-        components.erase(component_it);
-        return true;
-    }
-    return false;
-}
-
-template<class T>
-bool GameObject::removeComponent(const std::shared_ptr<T>& c)
-{
-    auto component_it = std::find_if(std::begin(components), std::end(components), [&c](const std::shared_ptr<Component>& component) {
-        if(dynamic_cast<T*>(component.get()))
-        {
-            return component.get() == c.get();
-        }
-        return false;
-    });
-    if(component_it != components.end())
-    {
-        components.erase(component_it);
-        return true;
-    }
-    return false;
-}
-
-template<class T>
-bool GameObject::removeComponentOfType()
+bool GameObject::removeComponent()
 {
     // TODO: add RTTR reflection checks in template methods of GameObject, they'll make the code much cleaner
-    auto component_it = std::find_if(std::begin(components), std::end(components), [](const std::shared_ptr<Component>& component) {
-        T* comp_ptr = dynamic_cast<T*>(component.get());
-        return comp_ptr != nullptr;
-    });
+    auto component_it = std::find_if(std::begin(components), std::end(components),
+                                     [](const std::shared_ptr<Component>& component)
+                                     {
+                                         T* comp_ptr = dynamic_cast<T*>(component.get());
+                                         return comp_ptr != nullptr;
+                                     });
     if(component_it != components.end())
     {
+        (*component_it)->setGameObject(nullptr);
         components.erase(component_it);
         return true;
     }
@@ -166,9 +141,10 @@ void GameObject::removeAllComponentsOfType()
 {
     for(auto it = components.begin(); it != components.end();)
     {
-        T* component_ptr = dynamic_cast<T*>(*it);
+        T* component_ptr = dynamic_cast<T*>(it->get());
         if(component_ptr != nullptr)
         {
+            component_ptr->setGameObject(nullptr);
             it = components.erase(it);
             continue;
         }
