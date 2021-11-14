@@ -59,16 +59,21 @@ struct Vertex final
     glm::vec3 bitangent;
 };
 
-struct VertexShaderAttribute final
+struct AttributeDescriptor final
 {
     unsigned int location{0};
     unsigned int components{1};  // 1 - 4
     unsigned int stride{};       // in bytes
+};
+
+struct VertexShaderAttribute final
+{
+    AttributeDescriptor descriptor{};
     std::vector<uint8_t> bytes{};
 
     bool operator<(const VertexShaderAttribute& attribute) const
     {
-        return location < attribute.location;
+        return descriptor.location < attribute.descriptor.location;
     }
 
     template<typename T>
@@ -77,9 +82,9 @@ struct VertexShaderAttribute final
         unsigned int elemSize = sizeof(T);
 
         VertexShaderAttribute attribute;
-        attribute.location = location;
-        attribute.components = components;
-        attribute.stride = elemSize;
+        attribute.descriptor.location = location;
+        attribute.descriptor.components = components;
+        attribute.descriptor.stride = elemSize;
         attribute.bytes.resize(elemSize * vertexAttributeData.size());
         std::memcpy(attribute.bytes.data(), vertexAttributeData.data(), vertexAttributeData.size() * elemSize);
 

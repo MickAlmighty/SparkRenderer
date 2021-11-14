@@ -129,7 +129,7 @@ bool GameObject::removeComponent()
                                      });
     if(component_it != components.end())
     {
-        (*component_it)->setGameObject(nullptr);
+        (*component_it)->gameObject.reset();
         components.erase(component_it);
         return true;
     }
@@ -144,7 +144,7 @@ void GameObject::removeAllComponentsOfType()
         T* component_ptr = dynamic_cast<T*>(it->get());
         if(component_ptr != nullptr)
         {
-            component_ptr->setGameObject(nullptr);
+            component_ptr->gameObject.reset();
             it = components.erase(it);
             continue;
         }

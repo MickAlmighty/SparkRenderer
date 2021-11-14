@@ -32,13 +32,9 @@ class Scene final : public std::enable_shared_from_this<Scene>, public resourceM
 
     void update();
     void fixedUpdate();
-    void removeObjectsFromScene();
     std::shared_ptr<Camera> getCamera() const;
     std::shared_ptr<GameObject> getRoot() const;
     void drawGUI();
-    void drawSceneGraph();
-    std::list<std::function<void()>> toRemove;
-    std::shared_ptr<lights::LightManager> lightManager = std::make_unique<lights::LightManager>();
     std::shared_ptr<GameObject> getGameObjectToPreview() const;
     std::string getName() const;
     const std::map<ShaderType, std::deque<renderers::RenderingRequest>>& getRenderingQueues() const;
@@ -46,10 +42,12 @@ class Scene final : public std::enable_shared_from_this<Scene>, public resourceM
     void addRenderingRequest(const renderers::RenderingRequest& request);
     void setCubemap(const std::shared_ptr<PbrCubemapTexture>& cubemap);
 
+    std::shared_ptr<lights::LightManager> lightManager = std::make_unique<lights::LightManager>();
     std::map<ShaderType, std::deque<renderers::RenderingRequest>> renderingQueues{};
 
     private:
     void init();
+    void drawSceneGraph();
     void drawTreeNode(std::shared_ptr<GameObject> node, bool isRootNode);
     void setGameObjectToPreview(const std::shared_ptr<GameObject> node);
     void clearRenderQueues();

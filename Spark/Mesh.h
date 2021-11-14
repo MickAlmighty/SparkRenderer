@@ -27,13 +27,13 @@ class Mesh
     void draw(std::shared_ptr<resources::Shader>& shader, glm::mat4 model);
 
     ShaderType shaderType = ShaderType::PBR;
-    std::vector<std::pair<VertexShaderAttribute, GLuint>> attributesAndVbos;
+    std::vector<std::pair<AttributeDescriptor, GLuint>> descriptorAndVboPairs;
     unsigned int verticesCount{0};
-    std::vector<unsigned int> indices;
+    unsigned int indicesCount{0};
     std::map<TextureTarget, std::shared_ptr<resources::Texture>> textures;
-    
+
     private:
-    void load();
+    void load(std::vector<VertexShaderAttribute>& verticesAttributes, std::vector<unsigned>& indices);
     GLuint vao{};
     GLuint vbo{};
     GLuint ebo{};

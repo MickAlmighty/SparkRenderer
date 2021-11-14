@@ -27,7 +27,7 @@ void GameObject::update()
         transform.world.setMatrix(parent.lock()->transform.world.getMatrix() * transform.local.getMatrix());
     }
 
-    for(auto& component : components)
+    for(const auto& component : components)
     {
         if(component->getActive())
         {
@@ -35,7 +35,7 @@ void GameObject::update()
         }
     }
 
-    for(auto& child : children)
+    for(const auto& child : children)
     {
         if(child->isActive())
         {
@@ -55,7 +55,7 @@ void GameObject::fixedUpdate()
         transform.world.setMatrix(parent.lock()->transform.world.getMatrix() * transform.local.getMatrix());
     }*/
 
-    for(auto& component : components)
+    for(const auto& component : components)
     {
         component->fixedUpdate();
     }
@@ -106,7 +106,7 @@ void GameObject::addChild(const std::shared_ptr<GameObject>& newChild)
 
     const auto setParentFor = [newParent = shared_from_this()](const std::shared_ptr<GameObject>& newChild)
     {
-        if(auto currentParent = newChild->parent.lock(); currentParent != newParent)
+        if(const auto currentParent = newChild->parent.lock(); currentParent != newParent)
         {
             if(currentParent)
             {
@@ -148,7 +148,7 @@ void GameObject::addComponent(const std::shared_ptr<Component>& component)
                                                  [&component](const std::shared_ptr<Component>& c) { return c == component; });
            componentIt == components.end())
         {
-            component->setGameObject(shared_from_this());
+            component->gameObject = shared_from_this();
             components.push_back(component);
         }
     }
@@ -156,11 +156,11 @@ void GameObject::addComponent(const std::shared_ptr<Component>& component)
 
 bool GameObject::removeComponent(const std::shared_ptr<Component>& c)
 {
-    auto componentIt =
+    const auto componentIt =
         std::find_if(std::begin(components), std::end(components), [&c](const std::shared_ptr<Component>& component) { return component == c; });
     if(componentIt != components.end())
     {
-        (*componentIt)->setGameObject(nullptr);
+        (*componentIt)->gameObject.reset();
         components.erase(componentIt);
         return true;
     }
@@ -169,11 +169,11 @@ bool GameObject::removeComponent(const std::shared_ptr<Component>& c)
 
 bool GameObject::removeComponent(const std::string& componentName)
 {
-    auto componentIt = std::find_if(std::begin(components), std::end(components),
+    const auto componentIt = std::find_if(std::begin(components), std::end(components),
                                     [&componentName](const std::shared_ptr<Component>& component) { return component->getName() == componentName; });
     if(componentIt != components.end())
     {
-        (*componentIt)->setGameObject(nullptr);
+        (*componentIt)->gameObject.reset();
         components.erase(componentIt);
         return true;
     }
@@ -279,8 +279,8 @@ void GameObject::drawGizmos()
             mCurrentGizmoMode = ImGuizmo::WORLD;
     }
 
-    ImGuiIO& io = ImGui::GetIO();
-    auto camera = getScene()->getCamera();
+    const ImGuiIO& io = ImGui::GetIO();
+    const auto camera = getScene()->getCamera();
     ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
     ImGuizmo::Manipulate(glm::value_ptr(camera->getViewMatrix()), glm::value_ptr(camera->getProjection()), mCurrentGizmoOperation, mCurrentGizmoMode,
                          &worldMatrix[0][0]);
@@ -309,7 +309,7 @@ void GameObject::setSceneRecursive(Scene* newScene)
 {
     scene = newScene;
 
-    for(auto& child : children)
+    for(const auto& child : children)
         child->setSceneRecursive(newScene);
 }
 

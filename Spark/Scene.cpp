@@ -40,8 +40,6 @@ Scene::~Scene()
 
 void Scene::update()
 {
-    removeObjectsFromScene();
-
     clearRenderQueues();
 
     camera->update();
@@ -52,12 +50,6 @@ void Scene::update()
 void Scene::fixedUpdate()
 {
     root->fixedUpdate();
-}
-
-void Scene::removeObjectsFromScene()
-{
-    std::for_each(std::begin(toRemove), std::end(toRemove), [](std::function<void()>& f) { f(); });
-    toRemove.clear();
 }
 
 std::shared_ptr<Camera> Scene::getCamera() const
@@ -119,9 +111,6 @@ void Scene::drawSceneGraph()
         drawTreeNode(root, true);
     }
     ImGui::End();
-
-    std::for_each(std::begin(toRemove), std::end(toRemove), [](std::function<void()>& f) { f(); });
-    toRemove.clear();
 }
 
 void Scene::drawTreeNode(std::shared_ptr<GameObject> node, bool isRootNode)
@@ -154,8 +143,7 @@ void Scene::drawTreeNode(std::shared_ptr<GameObject> node, bool isRootNode)
         {
             if(ImGui::Button("Delete"))
             {
-                const std::function<void()> remove = [node]() { node->getParent()->removeChild(node); };
-                toRemove.push_back(remove);
+                node->getParent()->removeChild(node);
                 ImGui::CloseCurrentPopup();
             }
         }
@@ -173,9 +161,9 @@ void Scene::drawTreeNode(std::shared_ptr<GameObject> node, bool isRootNode)
         ImGui::SameLine();
         if(ImGui::TreeNode("Children"))
         {
-            for(const auto& gameObject : node->children)
+            for(size_t i = 0; i < node->children.size(); ++i)
             {
-                drawTreeNode(gameObject, false);
+                drawTreeNode(node->children[i], false);
             }
 
             ImGui::TreePop();

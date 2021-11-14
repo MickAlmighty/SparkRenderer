@@ -71,13 +71,22 @@ bool Component::getActive() const
 
 void Component::setGameObject(const std::shared_ptr<GameObject> game_object)
 {
+    if(!gameObject.expired())
+    {
+        gameObject.lock()->removeComponent(shared_from_this());
+    }
+
     gameObject = game_object;
+    if(game_object)
+    {
+        game_object->addComponent(shared_from_this());
+    }
 }
 
 void Component::setActive(bool active_)
 {
     active = active_;
-    if (active)
+    if(active)
     {
         onActive();
     }
@@ -89,8 +98,10 @@ void Component::setActive(bool active_)
 
 void Component::removeComponent()
 {
-    auto remove = [component = shared_from_this()]() { component->getGameObject()->removeComponent(component); };
-    getGameObject()->getScene()->toRemove.push_back(remove);
+    if(const auto go = getGameObject(); go)
+    {
+        go->removeComponent(shared_from_this());
+    }
 }
 
 std::shared_ptr<Component> Component::getComponentPtr()

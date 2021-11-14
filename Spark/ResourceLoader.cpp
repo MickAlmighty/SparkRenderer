@@ -193,6 +193,8 @@ std::shared_ptr<resourceManagement::Resource> ResourceLoader::createUncompressed
     glGenerateMipmap(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, 0);
 
+    stbi_image_free(pixels);
+
     return std::make_shared<resources::Texture>(resourceIdentifier->getRelativePath(), texId, width, height);
 }
 

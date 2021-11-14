@@ -93,6 +93,7 @@ target_include_directories(Spark PUBLIC ${CMAKE_SOURCE_DIR}/thirdparty/include)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_compile_definitions(Spark PRIVATE DEBUG)
+    target_compile_options(Spark PRIVATE "/ZI")
 endif()
 target_compile_definitions(Spark PRIVATE GLM_FORCE_ALIGNED_GENTYPES)
 

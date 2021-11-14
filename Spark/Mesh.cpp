@@ -12,29 +12,15 @@ namespace spark
 Mesh::Mesh(std::vector<VertexShaderAttribute>& verticesAttributes, std::vector<unsigned>& indices,
            std::map<TextureTarget, std::shared_ptr<resources::Texture>>& meshTextures, std::string&& newName_, ShaderType shaderType)
 {
-    this->indices = std::move(indices);
     this->textures = std::move(meshTextures);
     this->shaderType = shaderType;
-
-    for(auto& verticesAttribute : verticesAttributes)
-    {
-        attributesAndVbos.emplace_back(verticesAttribute, 0);
-    }
-
-    load();
+    load(verticesAttributes, indices);
 }
 
 Mesh::Mesh(std::vector<VertexShaderAttribute>& verticesAttributes, std::vector<unsigned>& indices, std::string&& newName_, ShaderType shaderType)
 {
-    this->indices = std::move(indices);
     this->shaderType = shaderType;
-
-    for(auto& verticesAttribute : verticesAttributes)
-    {
-        attributesAndVbos.emplace_back(verticesAttribute, 0);
-    }
-
-    load();
+    load(verticesAttributes, indices);
 }
 
 Mesh::~Mesh()
@@ -43,7 +29,7 @@ Mesh::~Mesh()
     glDeleteBuffers(1, &ebo);
     glDeleteVertexArrays(1, &vao);
 
-    for(auto& [attribute, vbo] : attributesAndVbos)
+    for(auto& [descriptor, vbo] : descriptorAndVboPairs)
     {
         glDeleteBuffers(1, &vbo);
         vbo = 0;
@@ -66,9 +52,9 @@ void Mesh::draw(std::shared_ptr<resources::Shader>& shader, glm::mat4 model)
 
     glBindVertexArray(vao);
 
-    if(!indices.empty())
+    if(indicesCount != 0)
     {
-        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indices.size()), GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indicesCount), GL_UNSIGNED_INT, 0);
     }
     else
     {
@@ -81,30 +67,35 @@ void Mesh::draw(std::shared_ptr<resources::Shader>& shader, glm::mat4 model)
         glBindTextures(static_cast<GLuint>(TextureTarget::DIFFUSE_TARGET), static_cast<GLsizei>(texturesToBind.size()), nullptr);
 }
 
-void Mesh::load()
+void Mesh::load(std::vector<VertexShaderAttribute>& verticesAttributes, std::vector<unsigned>& indices)
 {
     glCreateVertexArrays(1, &vao);
     glBindVertexArray(vao);
 
     std::vector<GLuint> bufferIDs;
-    bufferIDs.resize(attributesAndVbos.size());
+    bufferIDs.resize(verticesAttributes.size());
+    descriptorAndVboPairs.reserve(verticesAttributes.size());
 
-    if(!attributesAndVbos.empty())
+    if(!verticesAttributes.empty())
     {
-        glCreateBuffers(static_cast<GLsizei>(attributesAndVbos.size()), bufferIDs.data());
-        verticesCount = static_cast<unsigned int>(attributesAndVbos[0].first.bytes.size()) / attributesAndVbos[0].first.stride;
+        glCreateBuffers(static_cast<GLsizei>(verticesAttributes.size()), bufferIDs.data());
+        verticesCount = static_cast<unsigned int>(verticesAttributes[0].bytes.size()) / verticesAttributes[0].descriptor.stride;
+        indicesCount = indices.size();
     }
 
     unsigned int bufferIndex = 0;
-    for(auto& [attribute, vboId] : attributesAndVbos)
+    for(size_t i = 0; i < verticesAttributes.size(); ++i)
     {
+        descriptorAndVboPairs.emplace_back(verticesAttributes[i].descriptor, 0);
         glBindBuffer(GL_ARRAY_BUFFER, bufferIDs[bufferIndex]);
-        glBufferData(GL_ARRAY_BUFFER, attribute.bytes.size(), reinterpret_cast<const void*>(attribute.bytes.data()), GL_DYNAMIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, verticesAttributes[i].bytes.size(), reinterpret_cast<const void*>(verticesAttributes[i].bytes.data()),
+                     GL_DYNAMIC_DRAW);
 
-        glEnableVertexAttribArray(attribute.location);
-        glVertexAttribPointer(attribute.location, attribute.components, GL_FLOAT, GL_FALSE, attribute.stride, reinterpret_cast<const void*>(0));
+        const auto& descriptor = verticesAttributes[i].descriptor;
+        glEnableVertexAttribArray(descriptor.location);
+        glVertexAttribPointer(descriptor.location, descriptor.components, GL_FLOAT, GL_FALSE, descriptor.stride, reinterpret_cast<const void*>(0));
 
-        vboId = bufferIDs[bufferIndex];
+        descriptorAndVboPairs[i].second = bufferIDs[bufferIndex];
 
         ++bufferIndex;
     }

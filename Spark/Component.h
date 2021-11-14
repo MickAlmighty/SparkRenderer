@@ -56,6 +56,7 @@ class Component : public std::enable_shared_from_this<Component>
     bool active{true};
     std::string name{"Component"};
     std::weak_ptr<GameObject> gameObject;
+    friend class GameObject;
     RTTR_REGISTRATION_FRIEND;
     RTTR_ENABLE();
 };
