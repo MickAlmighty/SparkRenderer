@@ -55,13 +55,6 @@ void MeshPlane::update()
 
     getGameObject()->getScene()->addRenderingRequest(request);
 }
-
-void MeshPlane::fixedUpdate() {}
-
-void MeshPlane::drawGUI()
-{
-    removeComponentGUI<MeshPlane>();
-}
 }  // namespace spark
 
 RTTR_REGISTRATION

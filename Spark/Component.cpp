@@ -1,7 +1,6 @@
 #include "Component.h"
 
-#include <iostream>
-
+#include "GUI/ImGui/imgui_custom_widgets.h"
 #include "GameObject.h"
 #include "Logging.h"
 #include "Scene.h"
@@ -15,23 +14,21 @@ Component::~Component()
     SPARK_TRACE("Component '{}' destroyed!", name);
 }
 
-void Component::drawComponentGUI()
+void Component::drawUI()
 {
     beginDrawingWindow();
     if(active)
     {
-        drawGUI();
+        drawUIBody();
     }
+    removeComponentFromGameObjectButton();
     endDrawingWindow();
 }
 
 void Component::beginDrawingWindow()
 {
     ImGui::PushID(this);
-    // ImGui::Separator();
-    ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 5.0f);
-    // ImGui::SetNextWindowSizeConstraints(ImVec2(0, 0), ImVec2(FLT_MAX, FLT_MAX));
-    ImGui::BeginChild(name.c_str(), {320, 180}, true, ImGuiWindowFlags_MenuBar);
+    ImGui::BeginGroupPanel(name.c_str(), {-1, 0});
     if(ImGui::BeginMenuBar())
     {
         ImGui::Text(name.c_str());
@@ -46,11 +43,17 @@ void Component::beginDrawingWindow()
     }
 }
 
+void Component::removeComponentFromGameObjectButton()
+{
+    if(ImGui::Button("Delete"))
+    {
+        removeComponent();
+    }
+}
+
 void Component::endDrawingWindow()
 {
-    ImGui::EndChild();
-    ImGui::PopStyleVar();
-    // ImGui::Separator();
+    ImGui::EndGroupPanel();
     ImGui::PopID();
 }
 

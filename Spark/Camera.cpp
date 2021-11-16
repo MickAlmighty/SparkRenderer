@@ -44,21 +44,21 @@ const UniformBuffer& Camera::getUbo() const
 
 void Camera::processKeyboard()
 {
-    if (HID::isKeyPressedOrDown(Key::MOUSE_RIGHT))
+    if(HID::isKeyPressedOrDown(Key::MOUSE_RIGHT))
     {
-        if (HID::mouse.getScrollStatus() == ScrollStatus::POSITIVE)
+        if(HID::mouse.getScrollStatus() == ScrollStatus::POSITIVE)
             movementSpeed *= 1.2f;
-        else if (HID::mouse.getScrollStatus() == ScrollStatus::NEGATIVE)
+        else if(HID::mouse.getScrollStatus() == ScrollStatus::NEGATIVE)
             movementSpeed *= .8f;
 
-        if (movementSpeed < 0.0f)
+        if(movementSpeed < 0.0f)
             movementSpeed = 0.0f;
     }
-    else if (HID::getKeyState(Key::MOUSE_RIGHT) == State::NONE)
+    else if(HID::getKeyState(Key::MOUSE_RIGHT) == State::NONE)
     {
-        if (HID::mouse.getScrollStatus() == ScrollStatus::POSITIVE)
+        if(HID::mouse.getScrollStatus() == ScrollStatus::POSITIVE)
             position += front;
-        else if (HID::mouse.getScrollStatus() == ScrollStatus::NEGATIVE)
+        else if(HID::mouse.getScrollStatus() == ScrollStatus::NEGATIVE)
             position -= front;
     }
 
@@ -69,20 +69,20 @@ void Camera::processKeyboard()
 
     glm::vec3 finalDirection(0);
 
-    if (HID::isKeyPressedOrDown(Key::W))
+    if(HID::isKeyPressedOrDown(Key::W))
         finalDirection += f;
-    if (HID::isKeyPressedOrDown(Key::S))
+    if(HID::isKeyPressedOrDown(Key::S))
         finalDirection -= f;
-    if (HID::isKeyPressedOrDown(Key::A))
+    if(HID::isKeyPressedOrDown(Key::A))
         finalDirection -= r;
-    if (HID::isKeyPressedOrDown(Key::D))
+    if(HID::isKeyPressedOrDown(Key::D))
         finalDirection += r;
-    if (HID::isKeyPressedOrDown(Key::Q))
+    if(HID::isKeyPressedOrDown(Key::Q))
         finalDirection -= WORLD_UP;
-    if (HID::isKeyPressedOrDown(Key::E))
+    if(HID::isKeyPressedOrDown(Key::E))
         finalDirection += WORLD_UP;
 
-    if (finalDirection != glm::vec3(0))
+    if(finalDirection != glm::vec3(0))
     {
         finalDirection = glm::normalize(finalDirection);
         position += finalDirection * velocity;
@@ -147,10 +147,6 @@ void Camera::update()
 
     utils::updateCameraUBO(cameraUbo, getProjectionReversedZ(), getViewMatrix(), position, zNear, zFar);
 }
-
-void Camera::fixedUpdate() {}
-
-void Camera::drawGUI() {}
 }  // namespace spark
 
 RTTR_REGISTRATION

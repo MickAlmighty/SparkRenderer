@@ -22,8 +22,6 @@ class Camera : public Component
     const UniformBuffer& getUbo() const;
 
     void update() override;
-    void fixedUpdate() override;
-    void drawGUI() override;
 
     glm::vec3 cameraTarget{ 0 };
 

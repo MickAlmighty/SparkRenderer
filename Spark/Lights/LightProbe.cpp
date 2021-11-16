@@ -4,6 +4,7 @@
 
 #include "CommonUtils.h"
 #include "Enums.h"
+#include "GUI/ImGui/imgui.h"
 #include "GameObject.h"
 #include "Mesh.h"
 #include "renderers/RenderingRequest.h"
@@ -78,9 +79,7 @@ void LightProbe::update()
     }
 }
 
-void LightProbe::fixedUpdate() {}
-
-void LightProbe::drawGUI()
+void LightProbe::drawUIBody()
 {
     if(ImGui::Button("Generate Light Probe"))
     {
@@ -103,8 +102,6 @@ void LightProbe::drawGUI()
 
     if(fDist != getFadeDistance())
         setFadeDistance(fDist);
-
-    removeComponentGUI<LightProbe>();
 }
 
 LightProbeData LightProbe::getLightData() const

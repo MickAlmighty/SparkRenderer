@@ -1,5 +1,7 @@
 #include "PostProcessingStack.hpp"
 
+#include "GUI/ImGui/imgui.h"
+
 namespace spark::effects
 {
 PostProcessingStack::PostProcessingStack(unsigned int width, unsigned int height)

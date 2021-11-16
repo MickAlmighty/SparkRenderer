@@ -2,6 +2,8 @@ list(APPEND CURRENT_DIR_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/imconfig.h
     ${CMAKE_CURRENT_SOURCE_DIR}/imgui.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/imgui.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/imgui_custom_widgets.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/imgui_custom_widgets.h
     ${CMAKE_CURRENT_SOURCE_DIR}/imgui_demo.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/imgui_draw.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/imgui_impl_glfw.cpp

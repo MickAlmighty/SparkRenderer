@@ -17,8 +17,6 @@ Skybox::~Skybox()
 
 void Skybox::update() {}
 
-void Skybox::fixedUpdate() {}
-
 void Skybox::createPbrCubemap(const std::shared_ptr<resources::Texture>& texture)
 {
     skyboxName = texture->getPath().filename().string();
@@ -30,7 +28,7 @@ void Skybox::createPbrCubemap(const std::shared_ptr<resources::Texture>& texture
     }
 }
 
-void Skybox::drawGUI()
+void Skybox::drawUIBody()
 {
     ImGui::Text("Texture: ");
     ImGui::SameLine();
@@ -47,8 +45,6 @@ void Skybox::drawGUI()
             createPbrCubemap(texture);
         }
     }
-
-    removeComponentGUI<Skybox>();
 }
 
 void Skybox::setSkyboxInScene(const std::shared_ptr<PbrCubemapTexture>& skyboxCubemap) const

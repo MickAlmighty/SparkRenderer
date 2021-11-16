@@ -31,7 +31,6 @@ class Scene final : public std::enable_shared_from_this<Scene>, public resourceM
     Scene& operator=(const Scene&&) = delete;
 
     void update();
-    void fixedUpdate();
     std::shared_ptr<Camera> getCamera() const;
     std::shared_ptr<GameObject> getRoot() const;
     void drawGUI();

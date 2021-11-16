@@ -23,8 +23,6 @@ class MeshPlane final : public Component
     MeshPlane& operator=(const MeshPlane&&) = delete;
 
     void update() override;
-    void fixedUpdate() override;
-    void drawGUI() override;
 
     private:
     std::shared_ptr<Mesh> planeMesh{nullptr};

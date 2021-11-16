@@ -34,8 +34,7 @@ class DirectionalLight final : public Component, public Observable<LightStatus<D
     void setColor(glm::vec3 color_);
     void setColorStrength(float strength);
     void update() override;
-    void fixedUpdate() override;
-    void drawGUI() override;
+    void drawUIBody() override;
 
     bool areLightShaftsEnabled() const;
     void setLightShafts(bool state);

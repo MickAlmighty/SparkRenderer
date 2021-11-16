@@ -44,23 +44,6 @@ void GameObject::update()
     }
 }
 
-void GameObject::fixedUpdate()
-{
-    /*if(parent.lock() == nullptr)
-    {
-        transform.world.setMatrix(transform.local.getMatrix());
-    }
-    else
-    {
-        transform.world.setMatrix(parent.lock()->transform.world.getMatrix() * transform.local.getMatrix());
-    }*/
-
-    for(const auto& component : components)
-    {
-        component->fixedUpdate();
-    }
-}
-
 std::shared_ptr<GameObject> GameObject::getParent() const
 {
     return parent.lock();
@@ -200,7 +183,7 @@ void GameObject::drawGUI()
     transform.local.drawGUI();
     drawGizmos();
     for(auto& component : components)
-        component->drawComponentGUI();
+        component->drawUI();
 
     ImGui::NewLine();
     const std::shared_ptr<Component> componentToAdd = SparkGui::addComponent();

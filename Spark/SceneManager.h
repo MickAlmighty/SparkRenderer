@@ -17,7 +17,6 @@ class SceneManager final
     SceneManager& operator=(SceneManager&&) = delete;
 
     void update() const;
-    void fixedUpdate() const;
     bool setCurrentScene(const std::shared_ptr<Scene>& scene);
     std::shared_ptr<Scene> getCurrentScene() const;
     void drawGui();

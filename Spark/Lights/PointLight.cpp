@@ -5,6 +5,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "Enums.h"
+#include "GUI/ImGui/imgui.h"
 #include "GameObject.h"
 #include "JsonSerializer.h"
 #include "Mesh.h"
@@ -115,9 +116,7 @@ void PointLight::update()
     }
 }
 
-void PointLight::fixedUpdate() {}
-
-void PointLight::drawGUI()
+void PointLight::drawUIBody()
 {
     glm::vec3 colorToEdit = getColor();
     float colorStrengthToEdit = getColorStrength();
@@ -145,7 +144,6 @@ void PointLight::drawGUI()
     {
         setColorStrength(colorStrengthToEdit);
     }
-    removeComponentGUI<PointLight>();
 }
 
 void PointLight::onActive()

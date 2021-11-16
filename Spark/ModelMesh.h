@@ -24,8 +24,7 @@ class ModelMesh final : public Component
 
     void setModel(const std::shared_ptr<resources::Model>& model_);
     void update() override;
-    void fixedUpdate() override;
-    void drawGUI() override;
+    void drawUIBody() override;
     std::string getModelPath() const;
     void setModelPath(const std::string modelPath);
 

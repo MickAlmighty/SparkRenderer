@@ -69,8 +69,6 @@ class SerializationComponent1 : public spark::Component
     public:
     SerializationComponent1() = default;
     void update() override{};
-    void fixedUpdate() override{};
-    void drawGUI() override{};
     RTTR_ENABLE(Component);
 };
 
@@ -79,8 +77,6 @@ class SerializationComponent2 : public spark::Component
     public:
     SerializationComponent2() = default;
     void update() override{};
-    void fixedUpdate() override{};
-    void drawGUI() override{};
     std::shared_ptr<SerializationComponent1> shared{std::make_shared<SerializationComponent1>()};
     std::shared_ptr<Component> sharedComp{shared};
     RTTR_ENABLE(Component);

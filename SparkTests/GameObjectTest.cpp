@@ -8,8 +8,6 @@ class TestComponent1 : public spark::Component
     public:
     TestComponent1(std::string&& name = "TestComponent1") : spark::Component(std::move(name)) {}
     void update() override {}
-    void fixedUpdate() override {}
-    void drawGUI() override {}
 };
 
 class TestComponent2 : public spark::Component
@@ -17,8 +15,6 @@ class TestComponent2 : public spark::Component
     public:
     TestComponent2(std::string&& name = "TestComponent2") : spark::Component(std::move(name)) {}
     void update() override{};
-    void fixedUpdate() override{};
-    void drawGUI() override{};
 };
 
 namespace spark

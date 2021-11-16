@@ -19,11 +19,6 @@ void SceneManager::update() const
     current_scene->update();
 }
 
-void SceneManager::fixedUpdate() const
-{
-    current_scene->fixedUpdate();
-}
-
 bool SceneManager::setCurrentScene(const std::shared_ptr<Scene>& scene)
 {
     bool success{false};

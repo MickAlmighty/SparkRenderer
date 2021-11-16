@@ -43,8 +43,7 @@ class PointLight final : public Component, public Observable<LightStatus<PointLi
     void setColorStrength(float strength);
     void setLightModel(glm::mat4 model);
     void update() override;
-    void fixedUpdate() override;
-    void drawGUI() override;
+    void drawUIBody() override;
 
     private:
     void onActive() override;

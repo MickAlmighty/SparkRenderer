@@ -48,8 +48,7 @@ class SpotLight final : public Component, public Observable<LightStatus<SpotLigh
     void setOuterCutOff(float outerCutOff_);
     void setMaxDistance(float maxDistance_);
     void update() override;
-    void fixedUpdate() override;
-    void drawGUI() override;
+    void drawUIBody() override;
 
     private:
     void onActive() override;

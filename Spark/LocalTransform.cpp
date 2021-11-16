@@ -1,6 +1,6 @@
 #include "LocalTransform.h"
 
-#include "GUI/ImGui/imgui.h"
+#include "GUI/ImGui/imgui_custom_widgets.h"
 
 #include <glm/gtx/euler_angles.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -11,16 +11,7 @@ LocalTransform::LocalTransform(glm::vec3 pos, glm::vec3 scale, glm::vec3 rotatio
 
 void LocalTransform::drawGUI()
 {
-    ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 5.0f);
-    ImGui::SetNextWindowSizeConstraints(ImVec2(250, 100), ImVec2(FLT_MAX, 100));  // Width = 250, Height > 100
-    ImGui::BeginChild(
-        "Local Transform", {0, 0}, true,
-        ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_AlwaysAutoResize);
-    if(ImGui::BeginMenuBar())
-    {
-        ImGui::Text("Transform");
-        ImGui::EndMenuBar();
-    }
+    ImGui::BeginGroupPanel("Local Transform", {-1, 0});
 
     glm::vec3 oldPos = position;
     glm::vec3 oldScale = scale;
@@ -33,8 +24,7 @@ void LocalTransform::drawGUI()
     if(oldPos != position || oldScale != scale || oldRotation != rotationEuler)
         dirty = true;
 
-    ImGui::EndChild();
-    ImGui::PopStyleVar();
+    ImGui::EndGroupPanel();
 }
 
 glm::mat4 LocalTransform::getMatrix()

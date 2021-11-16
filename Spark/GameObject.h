@@ -60,7 +60,6 @@ class GameObject final : public std::enable_shared_from_this<GameObject>
 
     private:
     void update();
-    void fixedUpdate();
     void drawGizmos();
     void setSceneRecursive(Scene* newScene);
 

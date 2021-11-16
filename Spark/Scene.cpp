@@ -47,11 +47,6 @@ void Scene::update()
     lightManager->updateLightBuffers();
 }
 
-void Scene::fixedUpdate()
-{
-    root->fixedUpdate();
-}
-
 std::shared_ptr<Camera> Scene::getCamera() const
 {
     return camera;
@@ -66,29 +61,29 @@ void Scene::drawGUI()
 {
     drawSceneGraph();
     static bool opened = false;
-    ImGuiIO& io = ImGui::GetIO();
 
-    ImGui::SetNextWindowPos({io.DisplaySize.x - 5, 25}, ImGuiCond_Always, {1, 0});
-    ImGui::SetNextWindowSizeConstraints(ImVec2(350, 20), ImVec2(350, io.DisplaySize.y - 50));
-
-    if(getGameObjectToPreview() != nullptr)
+    if((getGameObjectToPreview() != nullptr) && !opened)
     {
+        opened = true;
+    }
+
+    if(opened)
+    {
+        ImGuiIO& io = ImGui::GetIO();
+
+        ImGui::SetNextWindowPos({io.DisplaySize.x - 5, 25}, ImGuiCond_Always, {1, 0});
+        ImGui::SetNextWindowSizeConstraints(ImVec2(350, 20), ImVec2(350, io.DisplaySize.y - 50));
+
         if(ImGui::Begin("GameObject", &opened,
                         ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_AlwaysHorizontalScrollbar | ImGuiWindowFlags_NoCollapse))
         {
-            auto gameObject_ptr = getGameObjectToPreview();
-            if(gameObject_ptr != nullptr)
-            {
-                if(ImGui::Button("Close Preview"))
-                {
-                    setGameObjectToPreview(nullptr);
-                }
-                else
-                {
-                    gameObject_ptr->drawGUI();
-                }
-            }
+            getGameObjectToPreview()->drawGUI();
             ImGui::End();
+        }
+
+        if(!opened)
+        {
+            setGameObjectToPreview(nullptr);
         }
     }
 }

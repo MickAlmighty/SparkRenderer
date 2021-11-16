@@ -2,6 +2,7 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
+#include "GUI/ImGui/imgui.h"
 #include "GameObject.h"
 #include "JsonSerializer.h"
 #include "Scene.h"
@@ -150,9 +151,7 @@ void SpotLight::update()
     }
 }
 
-void SpotLight::fixedUpdate() {}
-
-void SpotLight::drawGUI()
+void SpotLight::drawUIBody()
 {
     glm::vec3 colorToEdit = getColor();
     float colorStrengthToEdit = getColorStrength();
@@ -206,8 +205,6 @@ void SpotLight::drawGUI()
     {
         setMaxDistance(maxDistanceToEdit);
     }
-
-    removeComponentGUI<SpotLight>();
 }
 
 void SpotLight::onActive()

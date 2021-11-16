@@ -42,9 +42,7 @@ void ModelMesh::update()
     }
 }
 
-void ModelMesh::fixedUpdate() {}
-
-void ModelMesh::drawGUI()
+void ModelMesh::drawUIBody()
 {
     std::vector<std::shared_ptr<Mesh>> meshes{};
 
@@ -74,8 +72,6 @@ void ModelMesh::drawGUI()
     {
         setModel(modelOpt.value());
     }
-
-    removeComponentGUI<ModelMesh>();
 }
 
 std::string ModelMesh::getModelPath() const

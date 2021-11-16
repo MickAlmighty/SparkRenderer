@@ -44,8 +44,7 @@ class LightProbe : public Component, public Observable<LightStatus<LightProbe>>
     LightProbe& operator=(const LightProbe&&) = delete;
 
     void update() override;
-    void fixedUpdate() override;
-    void drawGUI() override;
+    void drawUIBody() override;
 
     [[nodiscard]] LightProbeData getLightData() const;
     [[nodiscard]] float getRadius() const;

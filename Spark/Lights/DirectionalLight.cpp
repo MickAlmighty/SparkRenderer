@@ -3,6 +3,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "Scene.h"
+#include "GUI/ImGui/imgui.h"
 #include "GameObject.h"
 #include "JsonSerializer.h"
 
@@ -75,9 +76,7 @@ void DirectionalLight::update()
     }
 }
 
-void DirectionalLight::fixedUpdate() {}
-
-void DirectionalLight::drawGUI()
+void DirectionalLight::drawUIBody()
 {
     glm::vec3 colorToEdit = getColor();
     glm::vec3 directionToEdit = getDirection();
@@ -110,7 +109,6 @@ void DirectionalLight::drawGUI()
     {
         setColorStrength(colorStrengthToEdit);
     }
-    removeComponentGUI<DirectionalLight>();
 }
 
 bool DirectionalLight::areLightShaftsEnabled() const

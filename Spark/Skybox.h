@@ -13,8 +13,7 @@ class Skybox : public Component
     ~Skybox() override;
 
     void update() override;
-    void fixedUpdate() override;
-    void drawGUI() override;
+    void drawUIBody() override;
 
     std::string getSkyboxName() const;
     void loadSkyboxByName(std::string name);

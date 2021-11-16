@@ -80,14 +80,12 @@ void Mesh::load(std::vector<VertexShaderAttribute>& verticesAttributes, std::vec
     {
         glCreateBuffers(static_cast<GLsizei>(verticesAttributes.size()), bufferIDs.data());
         verticesCount = static_cast<unsigned int>(verticesAttributes[0].bytes.size()) / verticesAttributes[0].descriptor.stride;
-        indicesCount = indices.size();
     }
 
-    unsigned int bufferIndex = 0;
     for(size_t i = 0; i < verticesAttributes.size(); ++i)
     {
         descriptorAndVboPairs.emplace_back(verticesAttributes[i].descriptor, 0);
-        glBindBuffer(GL_ARRAY_BUFFER, bufferIDs[bufferIndex]);
+        glBindBuffer(GL_ARRAY_BUFFER, bufferIDs[i]);
         glBufferData(GL_ARRAY_BUFFER, verticesAttributes[i].bytes.size(), reinterpret_cast<const void*>(verticesAttributes[i].bytes.data()),
                      GL_DYNAMIC_DRAW);
 
@@ -95,13 +93,12 @@ void Mesh::load(std::vector<VertexShaderAttribute>& verticesAttributes, std::vec
         glEnableVertexAttribArray(descriptor.location);
         glVertexAttribPointer(descriptor.location, descriptor.components, GL_FLOAT, GL_FALSE, descriptor.stride, reinterpret_cast<const void*>(0));
 
-        descriptorAndVboPairs[i].second = bufferIDs[bufferIndex];
-
-        ++bufferIndex;
+        descriptorAndVboPairs[i].second = bufferIDs[i];
     }
 
     if(!indices.empty())
     {
+        indicesCount = indices.size();
         glCreateBuffers(1, &ebo);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 
