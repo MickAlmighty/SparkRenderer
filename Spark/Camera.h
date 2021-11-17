@@ -40,7 +40,7 @@ class Camera : public Component
     // perspective
     float fov = 60;
     float zNear = 0.1f;
-    float zFar = 10000.0f;
+    float zFar = 1000.0f;
 
     private:
     void processKeyboard();

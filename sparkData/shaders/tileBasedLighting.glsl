@@ -345,7 +345,7 @@ float normalDistributionGGX(vec3 N, vec3 H, float roughness)
 
     float nom = a2;
     float denom = (NdotH * NdotH) * (a2 - 1.0) + 1.0;
-    const float saveValue = 0.00000000001f;
+    const float saveValue = 0.0001f;
     return nom / max((M_PI * denom * denom), saveValue);
 }
 

@@ -36,6 +36,8 @@ list(APPEND SparkSources
     ${CMAKE_CURRENT_SOURCE_DIR}/OpenGLContext.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/OpenGLContext.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ReflectionUtils.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/PbrCubemapTexture.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/PbrCubemapTexture.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Resource.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Resource.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ResourceFactory.cpp
@@ -65,12 +67,13 @@ list(APPEND SparkSources
     ${CMAKE_CURRENT_SOURCE_DIR}/Spark.h
     ${CMAKE_CURRENT_SOURCE_DIR}/SparkConfig.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/stb_image.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Structs.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Structs.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/VertexAttribute.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Texture.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Texture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Timer.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Timer.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Transform.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Transform.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/WorldTransform.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/WorldTransform.h
 )

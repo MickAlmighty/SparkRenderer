@@ -196,22 +196,21 @@ rttr::variant JsonSerializer::tryConvertVar(rttr::variant& variant, const rttr::
     {
         SPARK_TRACE("Using custom wrapped pointer conversion...");
         // this is a temporary solution (or so I hope).
-        // basically using a custom converter to upcast shared pointers of classes deriving from Component
+        // basically using a custom converter to upcast shared pointers of derived classes to base class
         // recreates the shared pointers from raw pointers. Guess it's a RTTR-related problem.
         rttr::type wrapped{variant.get_type().get_wrapped_type()};
-        if(rttr::type::get<std::shared_ptr<Component>>() == type && wrapped.is_derived_from(rttr::type::get<Component*>()))
+        
+        if(wrapped.is_derived_from(type.get_wrapped_type()))
         {
-            rttr::method convMethod{wrapped.get_method("getComponentPtr")};
+            rttr::method convMethod{wrapped.get_method("getSharedPtrBase")};
             rttr::variant wrappedVal{variant.extract_wrapped_value()};
+
             if(convMethod.is_valid() && convMethod.get_return_type() == type)
             {
                 return convMethod.invoke(wrappedVal);
             }
         }
-        else
-        {
-            SPARK_WARN("Custom wrapped pointer conversion unavailable for given type.");
-        }
+        SPARK_WARN("Custom wrapped pointer conversion unavailable for given type. Base type method getSharedPtrBase unavailable!");
     }
     SPARK_WARN("Failed to convert variant of type '{}' to type '{}'.", variant.get_type().get_name().cbegin(), type.get_name().cbegin());
     conversionOk = false;

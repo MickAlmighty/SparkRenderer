@@ -6,15 +6,15 @@
 class TestComponent1 : public spark::Component
 {
     public:
-    TestComponent1(std::string&& name = "TestComponent1") : spark::Component(std::move(name)) {}
+    TestComponent1() : spark::Component() {}
     void update() override {}
 };
 
 class TestComponent2 : public spark::Component
 {
     public:
-    TestComponent2(std::string&& name = "TestComponent2") : spark::Component(std::move(name)) {}
-    void update() override{};
+    TestComponent2() : spark::Component() {}
+    void update() override {}
 };
 
 namespace spark
@@ -26,6 +26,16 @@ TEST(GameObjectTest, AddingNullptrComponentShouldDoNothing)
     ASSERT_EQ(gameObject->getAllComponentsOfType<Component>().size(), 0);
     gameObject->addComponent(nullptr);
     ASSERT_EQ(gameObject->getAllComponentsOfType<Component>().size(), 0);
+}
+
+TEST(GameObjectTest, AddComponentByType)
+{
+    std::shared_ptr<GameObject> gameObject = std::make_shared<GameObject>();
+    gameObject->addComponent<TestComponent1>();
+
+    const auto component = gameObject->getComponent<TestComponent1>();
+    ASSERT_NE(component, nullptr);
+    ASSERT_EQ(component->getGameObject(), gameObject);
 }
 
 TEST(GameObjectTest, AddingTheSameComponentTwiceShouldAddItOnlyOnce)

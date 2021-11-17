@@ -9,7 +9,6 @@
 
 #include "CommonUtils.h"
 #include "JsonSerializer.h"
-#include "Structs.h"
 #include "Logging.h"
 #include "Mesh.h"
 #include "Model.h"
@@ -391,14 +390,14 @@ std::shared_ptr<Mesh> ResourceLoader::loadMesh(aiMesh* assimpMesh, std::vector<s
         textures = findTextures(path.parent_path());
     }
 
-    std::vector<VertexShaderAttribute> attributes;
+    std::vector<VertexAttribute> attributes;
     attributes.reserve(5);
 
-    attributes.push_back(VertexShaderAttribute::createVertexShaderAttributeInfo(0, 3, positions));
-    attributes.push_back(VertexShaderAttribute::createVertexShaderAttributeInfo(1, 3, normals));
-    attributes.push_back(VertexShaderAttribute::createVertexShaderAttributeInfo(2, 2, textureCoords));
-    attributes.push_back(VertexShaderAttribute::createVertexShaderAttributeInfo(3, 3, tangent));
-    attributes.push_back(VertexShaderAttribute::createVertexShaderAttributeInfo(4, 3, biTangent));
+    attributes.push_back(VertexAttribute::createVertexShaderAttributeInfo(0, 3, positions));
+    attributes.push_back(VertexAttribute::createVertexShaderAttributeInfo(1, 3, normals));
+    attributes.push_back(VertexAttribute::createVertexShaderAttributeInfo(2, 2, textureCoords));
+    attributes.push_back(VertexAttribute::createVertexShaderAttributeInfo(3, 3, tangent));
+    attributes.push_back(VertexAttribute::createVertexShaderAttributeInfo(4, 3, biTangent));
 
     return std::make_shared<Mesh>(attributes, indices, textures);
 }

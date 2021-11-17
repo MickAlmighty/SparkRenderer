@@ -1,10 +1,9 @@
 #include "pch.h"
-#include "Camera.h"
 #include "Component.h"
 #include "GameObject.h"
 #include "JsonSerializer.h"
-#include "MeshPlane.h"
 #include "ReflectionUtils.h"
+#include "lights/DirectionalLight.h"
 
 enum class SerializationEnum1
 {
@@ -28,7 +27,6 @@ class SerializationClass1
     glm::mat3 mat3{};
     glm::mat4 mat4{};
     std::vector<int> intVector{};
-    RTTR_ENABLE();
 };
 
 class SerializationClass2
@@ -51,7 +49,6 @@ class SerializationClass2
     SerializationClass1* raw{nullptr};
     std::vector<std::shared_ptr<SerializationClass1>> ptrVector{};
     std::map<int, int> intMap{};
-    RTTR_ENABLE();
 };
 
 class SerializationClass3
@@ -61,15 +58,14 @@ class SerializationClass3
     int unspecifiedInt{};
     int serializableInt{};
     int unserializableInt{};
-    RTTR_ENABLE();
 };
 
 class SerializationComponent1 : public spark::Component
 {
     public:
     SerializationComponent1() = default;
-    void update() override{};
-    RTTR_ENABLE(Component);
+    void update() override{}
+    RTTR_ENABLE(Component)
 };
 
 class SerializationComponent2 : public spark::Component
@@ -79,7 +75,7 @@ class SerializationComponent2 : public spark::Component
     void update() override{};
     std::shared_ptr<SerializationComponent1> shared{std::make_shared<SerializationComponent1>()};
     std::shared_ptr<Component> sharedComp{shared};
-    RTTR_ENABLE(Component);
+    RTTR_ENABLE(Component)
 };
 
 struct SerializationStruct1
@@ -87,7 +83,6 @@ struct SerializationStruct1
     glm::mat3 mat{};
     double d{};
     glm::vec4 vec{};
-    RTTR_ENABLE();
 };
 
 struct SerializationStruct2
@@ -96,7 +91,6 @@ struct SerializationStruct2
     float f{};
     glm::ivec2 ivec{};
     SerializationStruct1 s{};
-    RTTR_ENABLE();
 };
 
 RTTR_REGISTRATION
@@ -268,7 +262,7 @@ TEST(SerializationTest, StructsSerializedProperly)
 
 TEST(SerializationTest, ComponentPointersConvertible)
 {
-    std::shared_ptr<spark::Camera> cam = std::make_shared<spark::Camera>();
+    std::shared_ptr<spark::lights::DirectionalLight> cam = std::make_shared<spark::lights::DirectionalLight>();
     Json::Value root;
     spark::JsonSerializer* serializer{spark::JsonSerializer::getInstance()};
     ASSERT_TRUE(serializer->save(cam, root));
@@ -289,7 +283,7 @@ TEST(SerializationTest, ComponentPointersConvertible)
 TEST(SerializationTest, GameObjectWithComponentSerializedProperly)
 {
     std::shared_ptr<spark::GameObject> obj = std::make_shared<spark::GameObject>("TestObj");
-    obj->addComponent(std::make_shared<spark::Camera>());
+    obj->addComponent(std::make_shared<spark::lights::DirectionalLight>());
     Json::Value root;
     spark::JsonSerializer* serializer{spark::JsonSerializer::getInstance()};
     ASSERT_TRUE(serializer->save(obj, root));
@@ -306,8 +300,8 @@ TEST(SerializationTest, GameObjectWithComponentSerializedProperly)
     ASSERT_NE(nullptr, obj2);
     ASSERT_EQ(obj->getName(), obj2->getName());
     ASSERT_EQ(nullptr, obj2->getScene());
-    ASSERT_NE(nullptr, obj->getComponent<spark::Camera>());
-    ASSERT_NE(nullptr, obj2->getComponent<spark::Camera>());
+    ASSERT_NE(nullptr, obj->getComponent<spark::lights::DirectionalLight>());
+    ASSERT_NE(nullptr, obj2->getComponent<spark::lights::DirectionalLight>());
 }
 
 TEST(SerializationTest, ComponentNullSmartPointersInjectedProperly)

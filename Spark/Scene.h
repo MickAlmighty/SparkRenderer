@@ -8,8 +8,8 @@
 #include <rttr/registration>
 
 #include "Enums.h"
+#include "PbrCubemapTexture.hpp"
 #include "Resource.h"
-#include "Structs.h"
 #include "lights/LightManager.h"
 #include "renderers/RenderingRequest.h"
 
@@ -52,11 +52,10 @@ class Scene final : public std::enable_shared_from_this<Scene>, public resourceM
     void clearRenderQueues();
 
     std::shared_ptr<GameObject> root{};
-    std::weak_ptr<GameObject> gameObjectToPreview;
     std::shared_ptr<Camera> camera;
-
-    
     std::weak_ptr<PbrCubemapTexture> skyboxCubemap;
+    std::weak_ptr<GameObject> gameObjectToPreview;
+    bool isGameObjectPreviewOpened{false};
 
     RTTR_REGISTRATION_FRIEND;
     RTTR_ENABLE()

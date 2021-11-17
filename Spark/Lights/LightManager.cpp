@@ -1,11 +1,9 @@
 #include "LightManager.h"
 
 #include "DirectionalLight.h"
-#include "GameObject.h"
 #include "LightProbe.h"
 #include "PointLight.h"
 #include "SpotLight.h"
-#include "Structs.h"
 
 namespace spark::lights
 {
@@ -143,8 +141,3 @@ void LightManager::update(const LightStatus<LightProbe>* const lightProbeStatus)
 }
 
 }  // namespace spark::lights
-
-RTTR_REGISTRATION
-{
-    rttr::registration::class_<spark::lights::LightManager>("LightManager").constructor()(rttr::policy::ctor::as_std_shared_ptr);
-}

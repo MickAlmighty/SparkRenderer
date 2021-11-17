@@ -1,12 +1,7 @@
 #pragma once
 
 #include <algorithm>
-#include <memory>
 #include <vector>
-#include <optional>
-
-#include <rttr/registration_friend>
-#include <rttr/registration>
 
 #include "Buffer.hpp"
 #include "IObserver.hpp"
@@ -70,9 +65,6 @@ class LightManager : public IObserver<LightStatus<DirectionalLight>>,
 
     template<typename Light>
     void processLightStatus(const LightStatus<Light>* const lightStatus, bool& areLightsDirty, std::vector<Light*>& lights);
-
-    RTTR_REGISTRATION_FRIEND;
-    RTTR_ENABLE();
 };
 
 template<typename LightData, typename LightType>

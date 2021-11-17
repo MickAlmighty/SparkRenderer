@@ -17,7 +17,7 @@
 
 namespace spark::lights
 {
-LightProbe::LightProbe() : Component("LightProbe")
+LightProbe::LightProbe() : Component()
 {
     utils::createCubemap(prefilterCubemap, prefilterCubemapSize, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR, true);
     prefilterCubemapHandle = glGetTextureHandleARB(prefilterCubemap);
@@ -27,11 +27,11 @@ LightProbe::LightProbe() : Component("LightProbe")
     irradianceCubemapHandle = glGetTextureHandleARB(irradianceCubemap);
     glMakeTextureHandleResidentARB(irradianceCubemapHandle);
 
-    const auto attribute = VertexShaderAttribute::createVertexShaderAttributeInfo(0, 3, ShapeCreator::createSphere(1.0f, 10));
-    auto vertexShaderAttributes = std::vector<VertexShaderAttribute>{attribute};
+    const auto attribute = VertexAttribute::createVertexShaderAttributeInfo(0, 3, ShapeCreator::createSphere(1.0f, 10));
+    auto vertexAttributes = std::vector<VertexAttribute>{attribute};
     auto indices = std::vector<unsigned int>{};
     auto textures = std::map<TextureTarget, std::shared_ptr<resources::Texture>>{};
-    sphere = std::make_shared<Mesh>(vertexShaderAttributes, indices, textures, "Mesh", ShaderType::COLOR_ONLY);
+    sphere = std::make_shared<Mesh>(vertexAttributes, indices, textures, "Mesh", ShaderType::COLOR_ONLY);
 }
 
 LightProbe::~LightProbe()

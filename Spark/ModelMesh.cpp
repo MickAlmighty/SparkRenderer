@@ -15,8 +15,6 @@
 
 namespace spark
 {
-ModelMesh::ModelMesh() : Component("ModelMesh") {}
-
 void ModelMesh::setModel(const std::shared_ptr<resources::Model>& model_)
 {
     modelPath = model_->getPath().string();

@@ -6,7 +6,6 @@
 #include "GameObject.h"
 #include "JsonSerializer.h"
 #include "Scene.h"
-#include "Structs.h"
 
 namespace spark::lights
 {
@@ -120,7 +119,7 @@ void SpotLight::setMaxDistance(float maxDistance_)
     notifyAbout(LightCommand::update);
 }
 
-SpotLight::SpotLight() : Component("SpotLight") {}
+SpotLight::SpotLight() : Component() {}
 
 SpotLight::~SpotLight()
 {

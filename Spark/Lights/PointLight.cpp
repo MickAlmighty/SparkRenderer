@@ -12,7 +12,6 @@
 #include "renderers/RenderingRequest.h"
 #include "Scene.h"
 #include "ShapeCreator.h"
-#include "Structs.h"
 
 namespace spark::lights
 {
@@ -70,13 +69,13 @@ void PointLight::setLightModel(glm::mat4 model)
     notifyAbout(LightCommand::update);
 }
 
-PointLight::PointLight() : Component("PointLight")
+PointLight::PointLight() : Component()
 {
-    const auto attribute = VertexShaderAttribute::createVertexShaderAttributeInfo(0, 3, ShapeCreator::createSphere(1.0f, 10));
-    auto vertexShaderAttributes = std::vector<VertexShaderAttribute>{attribute};
+    const auto attribute = VertexAttribute::createVertexShaderAttributeInfo(0, 3, ShapeCreator::createSphere(1.0f, 10));
+    auto vertexAttributes = std::vector<VertexAttribute>{attribute};
     auto indices = std::vector<unsigned int>{};
     auto textures = std::map<TextureTarget, std::shared_ptr<resources::Texture>>{};
-    sphere = std::make_shared<Mesh>(vertexShaderAttributes, indices, textures, "Mesh", ShaderType::COLOR_ONLY);
+    sphere = std::make_shared<Mesh>(vertexAttributes, indices, textures, "Mesh", ShaderType::COLOR_ONLY);
 }
 
 PointLight::~PointLight()

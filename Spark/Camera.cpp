@@ -8,12 +8,12 @@
 
 namespace spark
 {
-Camera::Camera() : Component("Camera")
+Camera::Camera() : Component()
 {
     updateCameraVectors();
 }
 
-Camera::Camera(glm::vec3 position) : Component("Camera"), position(position)
+Camera::Camera(glm::vec3 position) : Component(), position(position)
 {
     updateCameraVectors();
 }

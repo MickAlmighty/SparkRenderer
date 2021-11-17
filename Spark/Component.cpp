@@ -7,11 +7,9 @@
 
 namespace spark
 {
-Component::Component(std::string&& name) : name(std::move(name)) {}
-
 Component::~Component()
 {
-    SPARK_TRACE("Component '{}' destroyed!", name);
+    SPARK_TRACE("Component '{}' destroyed!", getName());
 }
 
 void Component::drawUI()
@@ -28,18 +26,13 @@ void Component::drawUI()
 void Component::beginDrawingWindow()
 {
     ImGui::PushID(this);
-    ImGui::BeginGroupPanel(name.c_str(), {-1, 0});
-    if(ImGui::BeginMenuBar())
+    ImGui::BeginGroupPanel(getName().c_str(), {-1, 0});
+
+    bool currentActive = getActive();
+    ImGui::Checkbox("Enabled", &currentActive);
+    if(currentActive != getActive())
     {
-        ImGui::Text(name.c_str());
-        bool active = getActive();
-        ImGui::SameLine();
-        ImGui::Checkbox("Enabled", &active);
-        if(active != getActive())
-        {
-            setActive(active);
-        }
-        ImGui::EndMenuBar();
+        setActive(currentActive);
     }
 }
 
@@ -64,7 +57,7 @@ std::shared_ptr<GameObject> Component::getGameObject() const
 
 std::string Component::getName() const
 {
-    return name;
+    return get_type().get_name().begin();
 }
 
 bool Component::getActive() const
@@ -107,7 +100,7 @@ void Component::removeComponent()
     }
 }
 
-std::shared_ptr<Component> Component::getComponentPtr()
+std::shared_ptr<Component> Component::getSharedPtrBase()
 {
     return std::static_pointer_cast<Component>(shared_from_this());
 }
@@ -116,8 +109,7 @@ std::shared_ptr<Component> Component::getComponentPtr()
 RTTR_REGISTRATION
 {
     rttr::registration::class_<spark::Component>("Component")
+        .method("getSharedPtrBase", &spark::Component::getSharedPtrBase)
         .property("active", &spark::Component::active)
-        .property("name", &spark::Component::name)
-        .method("getComponentPtr", &spark::Component::getComponentPtr)
         .property("gameObject", &spark::Component::getGameObject, &spark::Component::setGameObject, rttr::registration::public_access);
 }

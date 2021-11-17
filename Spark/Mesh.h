@@ -2,9 +2,14 @@
 
 #include <vector>
 #include <map>
+#include <memory>
+#include <string>
+
+#include <glm/glm.hpp>
 
 #include "Enums.h"
-#include "Structs.h"
+#include "glad_glfw3.h"
+#include "VertexAttribute.hpp"
 
 namespace spark
 {
@@ -17,10 +22,10 @@ namespace resources
 class Mesh
 {
     public:
-    Mesh(std::vector<VertexShaderAttribute>& verticesAttributes, std::vector<unsigned int>& indices,
+    Mesh(std::vector<VertexAttribute>& verticesAttributes, std::vector<unsigned int>& indices,
          std::map<TextureTarget, std::shared_ptr<resources::Texture>>& meshTextures, std::string&& newName_ = "Mesh",
          ShaderType shaderType = ShaderType::PBR);
-    Mesh(std::vector<VertexShaderAttribute>& verticesAttributes, std::vector<unsigned int>& indices, std::string&& newName_ = "Mesh",
+    Mesh(std::vector<VertexAttribute>& verticesAttributes, std::vector<unsigned int>& indices, std::string&& newName_ = "Mesh",
          ShaderType shaderType = ShaderType::PBR);
     ~Mesh();
 
@@ -33,7 +38,7 @@ class Mesh
     std::map<TextureTarget, std::shared_ptr<resources::Texture>> textures;
 
     private:
-    void load(std::vector<VertexShaderAttribute>& verticesAttributes, std::vector<unsigned>& indices);
+    void load(std::vector<VertexAttribute>& verticesAttributes, std::vector<unsigned>& indices);
     GLuint vao{};
     GLuint vbo{};
     GLuint ebo{};

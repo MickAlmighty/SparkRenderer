@@ -47,8 +47,6 @@ void DirectionalLight::setColorStrength(float strength)
     notifyAbout(LightCommand::update);
 }
 
-DirectionalLight::DirectionalLight() : Component("DirectionalLight") {}
-
 DirectionalLight::~DirectionalLight()
 {
     if(areLightShaftsEnabled())

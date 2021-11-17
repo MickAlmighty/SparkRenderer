@@ -1,9 +1,7 @@
-#include "Structs.h"
+#include "PbrCubemapTexture.hpp"
 
 #include "CommonUtils.h"
 #include "Cube.hpp"
-#include "Logging.h"
-#include "ResourceLibrary.h"
 #include "ScreenQuad.hpp"
 #include "Shader.h"
 #include "Spark.h"
@@ -34,7 +32,8 @@ void PbrCubemapTexture::setup(GLuint hdrTexture, unsigned cubemapSize)
     // these shaders are created in SparkRenderer with uniforms and buffers already bound
     const std::shared_ptr<resources::Shader> resampleCubemapShader =
         Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("resampleCubemap.glsl");
-    const auto equirectangularToCubemapShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("equirectangularToCubemap.glsl");
+    const auto equirectangularToCubemapShader =
+        Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("equirectangularToCubemap.glsl");
     const auto irradianceShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("irradiance.glsl");
     const auto prefilterShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("prefilter.glsl");
 
@@ -168,11 +167,3 @@ GLuint PbrCubemapTexture::createCubemapAndCopyDataFromFirstLayerOf(GLuint cubema
     return dstCubemap;
 }
 }  // namespace spark
-
-RTTR_REGISTRATION
-{
-    rttr::registration::class_<spark::Transform>("Transform")
-        .constructor()(rttr::policy::ctor::as_object)
-        .property("local", &spark::Transform::local)
-        .property("world", &spark::Transform::world);
-}

@@ -4,7 +4,6 @@
 
 #include "Buffer.hpp"
 #include "Shader.h"
-#include "Structs.h"
 #include "ScreenQuad.hpp"
 
 namespace spark

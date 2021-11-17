@@ -16,7 +16,7 @@ namespace resources
 class ModelMesh final : public Component
 {
     public:
-    ModelMesh();
+    ModelMesh() = default;
     ModelMesh(const ModelMesh&) = delete;
     ModelMesh(const ModelMesh&&) = delete;
     ModelMesh& operator=(const ModelMesh&) = delete;

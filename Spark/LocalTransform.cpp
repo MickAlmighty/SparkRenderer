@@ -1,9 +1,10 @@
 #include "LocalTransform.h"
 
-#include "GUI/ImGui/imgui_custom_widgets.h"
-
+#include <rttr/registration>
 #include <glm/gtx/euler_angles.hpp>
 #include <glm/gtc/type_ptr.hpp>
+
+#include "GUI/ImGui/imgui_custom_widgets.h"
 
 namespace spark
 {

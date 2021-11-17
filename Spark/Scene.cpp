@@ -9,7 +9,6 @@
 #include "ResourceLoader.h"
 
 #include <iostream>
-#include <list>
 
 namespace spark
 {
@@ -60,28 +59,31 @@ std::shared_ptr<GameObject> Scene::getRoot() const
 void Scene::drawGUI()
 {
     drawSceneGraph();
-    static bool opened = false;
-
-    if((getGameObjectToPreview() != nullptr) && !opened)
+    const auto goToPreview = getGameObjectToPreview();
+    if(goToPreview != nullptr && !isGameObjectPreviewOpened)
     {
-        opened = true;
+        isGameObjectPreviewOpened = true;
+    }
+    else if(goToPreview == nullptr && isGameObjectPreviewOpened)
+    {
+        isGameObjectPreviewOpened = false;
     }
 
-    if(opened)
+    if(isGameObjectPreviewOpened)
     {
         ImGuiIO& io = ImGui::GetIO();
 
         ImGui::SetNextWindowPos({io.DisplaySize.x - 5, 25}, ImGuiCond_Always, {1, 0});
         ImGui::SetNextWindowSizeConstraints(ImVec2(350, 20), ImVec2(350, io.DisplaySize.y - 50));
 
-        if(ImGui::Begin("GameObject", &opened,
+        if(ImGui::Begin("GameObject", &isGameObjectPreviewOpened,
                         ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_AlwaysHorizontalScrollbar | ImGuiWindowFlags_NoCollapse))
         {
-            getGameObjectToPreview()->drawGUI();
+            goToPreview->drawGUI();
             ImGui::End();
         }
 
-        if(!opened)
+        if(!isGameObjectPreviewOpened)
         {
             setGameObjectToPreview(nullptr);
         }
@@ -215,7 +217,6 @@ RTTR_REGISTRATION
 {
     rttr::registration::class_<spark::Scene>("Scene")
         .constructor()(rttr::policy::ctor::as_std_shared_ptr)
-        .property("lightManager", &spark::Scene::lightManager)
         .property("root", &spark::Scene::root)
         .property("camera", &spark::Scene::camera);
 }

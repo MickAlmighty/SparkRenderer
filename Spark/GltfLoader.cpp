@@ -15,7 +15,6 @@
 #include "Model.h"
 #include "ResourceIdentifier.h"
 #include "Spark.h"
-#include "Structs.h"
 #include "Texture.h"
 
 namespace
@@ -231,13 +230,13 @@ auto collectAttributes(const tinygltf::Model& model, const tinygltf::Primitive& 
         }
     }
 
-    std::vector<spark::VertexShaderAttribute> attributes;
+    std::vector<spark::VertexAttribute> attributes;
     attributes.reserve(4);
 
-    attributes.push_back(spark::VertexShaderAttribute::createVertexShaderAttributeInfo(0, 3, positions));
-    attributes.push_back(spark::VertexShaderAttribute::createVertexShaderAttributeInfo(1, 3, normals));
-    attributes.push_back(spark::VertexShaderAttribute::createVertexShaderAttributeInfo(2, 2, textureCoords));
-    attributes.push_back(spark::VertexShaderAttribute::createVertexShaderAttributeInfo(3, 3, tangents));
+    attributes.push_back(spark::VertexAttribute::createVertexShaderAttributeInfo(0, 3, positions));
+    attributes.push_back(spark::VertexAttribute::createVertexShaderAttributeInfo(1, 3, normals));
+    attributes.push_back(spark::VertexAttribute::createVertexShaderAttributeInfo(2, 2, textureCoords));
+    attributes.push_back(spark::VertexAttribute::createVertexShaderAttributeInfo(3, 3, tangents));
 
     return attributes;
 }

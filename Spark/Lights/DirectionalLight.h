@@ -19,7 +19,7 @@ struct DirectionalLightData final
 class DirectionalLight final : public Component, public Observable<LightStatus<DirectionalLight>>
 {
     public:
-    DirectionalLight();
+    DirectionalLight() = default;
     ~DirectionalLight() override;
     DirectionalLight(const DirectionalLight&) = delete;
     DirectionalLight(const DirectionalLight&&) = delete;

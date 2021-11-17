@@ -1,7 +1,6 @@
 #pragma once
 
 #include <rttr/registration_friend>
-#include <rttr/registration>
 #include <glm/glm.hpp>
 
 namespace spark
@@ -9,7 +8,6 @@ namespace spark
 class WorldTransform final
 {
     public:
-    WorldTransform(glm::mat4 mat);
     ~WorldTransform() = default;
 
     glm::mat4 getMatrix() const;
@@ -32,7 +30,6 @@ class WorldTransform final
     glm::mat4 modelMatrix{glm::mat4(1.0f)};
     bool dirty{true};
     RTTR_REGISTRATION_FRIEND;
-    RTTR_ENABLE();
 };
 
 }  // namespace spark

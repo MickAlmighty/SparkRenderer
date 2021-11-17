@@ -1,7 +1,5 @@
 #include "GameObject.h"
 
-#include <algorithm>
-#include <iostream>
 
 #include <glm/gtc/type_ptr.hpp>
 
@@ -152,8 +150,9 @@ bool GameObject::removeComponent(const std::shared_ptr<Component>& c)
 
 bool GameObject::removeComponent(const std::string& componentName)
 {
-    const auto componentIt = std::find_if(std::begin(components), std::end(components),
-                                    [&componentName](const std::shared_ptr<Component>& component) { return component->getName() == componentName; });
+    const auto componentIt =
+        std::find_if(std::begin(components), std::end(components),
+                     [&componentName](const std::shared_ptr<Component>& component) { return component->getName() == componentName; });
     if(componentIt != components.end())
     {
         (*componentIt)->gameObject.reset();
@@ -186,8 +185,7 @@ void GameObject::drawGUI()
         component->drawUI();
 
     ImGui::NewLine();
-    const std::shared_ptr<Component> componentToAdd = SparkGui::addComponent();
-    if(componentToAdd != nullptr)
+    if(const std::shared_ptr<Component> componentToAdd = SparkGui::addComponent(); componentToAdd != nullptr)
     {
         addComponent(componentToAdd);
     }

@@ -3,13 +3,11 @@
 #include <map>
 #include <vector>
 
-#include <glad_glfw3.h>
 #include <glm/glm.hpp>
 
 #include "Buffer.hpp"
 #include "Resource.h"
 #include "ShaderDescriptor.hpp"
-#include "Structs.h"
 
 namespace spark::resources
 {

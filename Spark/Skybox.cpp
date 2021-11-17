@@ -7,8 +7,6 @@
 
 namespace spark
 {
-Skybox::Skybox() : Component("Skybox") {}
-
 Skybox::~Skybox()
 {
     if(isSkyboxActive())

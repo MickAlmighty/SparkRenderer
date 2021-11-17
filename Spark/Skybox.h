@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Component.h"
-#include "Structs.h"
+#include "PbrCubemapTexture.hpp"
 #include "Texture.h"
 
 namespace spark
@@ -9,7 +9,7 @@ namespace spark
 class Skybox : public Component
 {
     public:
-    Skybox();
+    Skybox() = default;
     ~Skybox() override;
 
     void update() override;

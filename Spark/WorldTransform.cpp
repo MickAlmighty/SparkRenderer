@@ -1,15 +1,10 @@
 #include "WorldTransform.h"
 
-#include <iostream>
-
 #include <glm/gtx/euler_angles.hpp>
-
-#include "JsonSerializer.h"
+#include <rttr/registration>
 
 namespace spark
 {
-WorldTransform::WorldTransform(glm::mat4 mat) : modelMatrix(mat) {}
-
 glm::mat4 WorldTransform::getMatrix() const
 {
     return modelMatrix;

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <rttr/registration_friend>
-#include <rttr/registration>
 #include <glm/glm.hpp>
 
 namespace spark
@@ -10,6 +9,7 @@ class LocalTransform final
 {
     public:
     LocalTransform(glm::vec3 pos, glm::vec3 scale, glm::vec3 rotation);
+    LocalTransform() = default;
     ~LocalTransform() = default;
 
     void drawGUI();
@@ -30,8 +30,6 @@ class LocalTransform final
     void setRotationRadians(float x, float y, float z);
     void setRotationRadians(glm::vec3 rotationRadians);
 
-    LocalTransform() = default;
-
     private:
     glm::vec3 position{glm::vec3(0.0f)};
     glm::vec3 rotationEuler{glm::vec3(0.0f)};
@@ -40,7 +38,6 @@ class LocalTransform final
     bool dirty{true};
     glm::mat4 recreateMatrix() const;
     RTTR_REGISTRATION_FRIEND;
-    RTTR_ENABLE();
 };
 
 }  // namespace spark
