@@ -390,14 +390,7 @@ std::shared_ptr<Mesh> ResourceLoader::loadMesh(aiMesh* assimpMesh, std::vector<s
         textures = findTextures(path.parent_path());
     }
 
-    std::vector<VertexAttribute> attributes;
-    attributes.reserve(5);
-
-    attributes.push_back(VertexAttribute::createVertexShaderAttributeInfo(0, 3, positions));
-    attributes.push_back(VertexAttribute::createVertexShaderAttributeInfo(1, 3, normals));
-    attributes.push_back(VertexAttribute::createVertexShaderAttributeInfo(2, 2, textureCoords));
-    attributes.push_back(VertexAttribute::createVertexShaderAttributeInfo(3, 3, tangent));
-    attributes.push_back(VertexAttribute::createVertexShaderAttributeInfo(4, 3, biTangent));
+    std::vector<VertexAttribute> attributes{{0, 3, positions}, {1, 3, normals}, {2, 2, textureCoords}, {3, 3, tangent}, {4, 3, biTangent}};
 
     return std::make_shared<Mesh>(attributes, indices, textures);
 }

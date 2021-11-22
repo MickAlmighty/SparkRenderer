@@ -8,15 +8,15 @@
 
 namespace spark
 {
-Mesh::Mesh(std::vector<VertexAttribute>& verticesAttributes, std::vector<unsigned>& indices,
-           std::map<TextureTarget, std::shared_ptr<resources::Texture>>& meshTextures, std::string&& newName_, ShaderType shaderType)
+Mesh::Mesh(const std::vector<VertexAttribute>& verticesAttributes, const std::vector<unsigned>& indices,
+           const std::map<TextureTarget, std::shared_ptr<resources::Texture>>& meshTextures, std::string&& newName_, ShaderType shaderType)
 {
     this->textures = std::move(meshTextures);
     this->shaderType = shaderType;
     load(verticesAttributes, indices);
 }
 
-Mesh::Mesh(std::vector<VertexAttribute>& verticesAttributes, std::vector<unsigned>& indices, std::string&& newName_, ShaderType shaderType)
+Mesh::Mesh(const std::vector<VertexAttribute>& verticesAttributes, const std::vector<unsigned>& indices, std::string&& newName_, ShaderType shaderType)
 {
     this->shaderType = shaderType;
     load(verticesAttributes, indices);
@@ -66,7 +66,7 @@ void Mesh::draw(std::shared_ptr<resources::Shader>& shader, glm::mat4 model)
         glBindTextures(static_cast<GLuint>(TextureTarget::DIFFUSE_TARGET), static_cast<GLsizei>(texturesToBind.size()), nullptr);
 }
 
-void Mesh::load(std::vector<VertexAttribute>& verticesAttributes, std::vector<unsigned>& indices)
+void Mesh::load(const std::vector<VertexAttribute>& verticesAttributes, const std::vector<unsigned>& indices)
 {
     glCreateVertexArrays(1, &vao);
     glBindVertexArray(vao);

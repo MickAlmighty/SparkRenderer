@@ -22,10 +22,10 @@ namespace resources
 class Mesh
 {
     public:
-    Mesh(std::vector<VertexAttribute>& verticesAttributes, std::vector<unsigned int>& indices,
-         std::map<TextureTarget, std::shared_ptr<resources::Texture>>& meshTextures, std::string&& newName_ = "Mesh",
+    Mesh(const std::vector<VertexAttribute>& verticesAttributes, const std::vector<unsigned int>& indices,
+         const std::map<TextureTarget, std::shared_ptr<resources::Texture>>& meshTextures, std::string&& newName_ = "Mesh",
          ShaderType shaderType = ShaderType::PBR);
-    Mesh(std::vector<VertexAttribute>& verticesAttributes, std::vector<unsigned int>& indices, std::string&& newName_ = "Mesh",
+    Mesh(const std::vector<VertexAttribute>& verticesAttributes, const std::vector<unsigned int>& indices, std::string&& newName_ = "Mesh",
          ShaderType shaderType = ShaderType::PBR);
     ~Mesh();
 
@@ -38,7 +38,7 @@ class Mesh
     std::map<TextureTarget, std::shared_ptr<resources::Texture>> textures;
 
     private:
-    void load(std::vector<VertexAttribute>& verticesAttributes, std::vector<unsigned>& indices);
+    void load(const std::vector<VertexAttribute>& verticesAttributes, const std::vector<unsigned>& indices);
     GLuint vao{};
     GLuint vbo{};
     GLuint ebo{};

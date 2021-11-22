@@ -230,23 +230,16 @@ auto collectAttributes(const tinygltf::Model& model, const tinygltf::Primitive& 
         }
     }
 
-    std::vector<spark::VertexAttribute> attributes;
-    attributes.reserve(4);
-
-    attributes.push_back(spark::VertexAttribute::createVertexShaderAttributeInfo(0, 3, positions));
-    attributes.push_back(spark::VertexAttribute::createVertexShaderAttributeInfo(1, 3, normals));
-    attributes.push_back(spark::VertexAttribute::createVertexShaderAttributeInfo(2, 2, textureCoords));
-    attributes.push_back(spark::VertexAttribute::createVertexShaderAttributeInfo(3, 3, tangents));
-
-    return attributes;
+    return std::vector{spark::VertexAttribute(0, 3, positions), spark::VertexAttribute(1, 3, normals), spark::VertexAttribute(2, 2, textureCoords),
+                       spark::VertexAttribute(3, 3, tangents)};
 }
 
-template <typename T>
+template<typename T>
 std::vector<unsigned int> convertIndicesToUInt32Array(T* indicesArray, size_t indicesCount)
 {
     std::vector<unsigned int> indices(indicesCount);
 
-    for (size_t i = 0; i < indicesCount; ++i)
+    for(size_t i = 0; i < indicesCount; ++i)
     {
         indices[i] = indicesArray[i];
     }

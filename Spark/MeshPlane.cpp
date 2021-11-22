@@ -15,9 +15,9 @@ void MeshPlane::setup()
 
     const std::vector<glm::vec2> texCoords{{0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f}, {0.0f, 0.0f}};
 
-    const auto positionAttribute = VertexAttribute::createVertexShaderAttributeInfo(0, 3, vertices);
-    const auto texCoordsAttribute = VertexAttribute::createVertexShaderAttributeInfo(1, 2, texCoords);
-    auto vertexAttributes = std::vector<VertexAttribute>{positionAttribute, texCoordsAttribute};
+    const auto positionAttribute = VertexAttribute(0, 3, vertices);
+    const auto texCoordsAttribute = VertexAttribute(1, 2, texCoords);
+    auto vertexAttributes = std::vector{positionAttribute, texCoordsAttribute};
     std::vector<unsigned int> indices{0, 1, 2, 2, 3, 0};
     auto textures = std::map<TextureTarget, std::shared_ptr<resources::Texture>>{};
     planeMesh = std::make_shared<Mesh>(vertexAttributes, indices, textures, "Mesh", ShaderType::COLOR_ONLY);

@@ -11,30 +11,27 @@ struct AttributeDescriptor final
     unsigned int stride{};       // in bytes
 };
 
-struct VertexAttribute final
+class VertexAttribute final
 {
-    AttributeDescriptor descriptor{};
-    std::vector<uint8_t> bytes{};
+    public:
+    template<typename T>
+    VertexAttribute(unsigned int location, unsigned int components, std::vector<T> vertexAttributeData)
+    {
+        unsigned int elemSize = sizeof(T);
+        descriptor.location = location;
+        descriptor.components = components;
+        descriptor.stride = elemSize;
+        bytes.resize(elemSize * vertexAttributeData.size());
+        std::memcpy(bytes.data(), vertexAttributeData.data(), vertexAttributeData.size() * elemSize);
+    }
 
     bool operator<(const VertexAttribute& attribute) const
     {
         return descriptor.location < attribute.descriptor.location;
     }
 
-    template<typename T>
-    static VertexAttribute createVertexShaderAttributeInfo(unsigned int location, unsigned int components, std::vector<T> vertexAttributeData)
-    {
-        unsigned int elemSize = sizeof(T);
-
-        VertexAttribute attribute;
-        attribute.descriptor.location = location;
-        attribute.descriptor.components = components;
-        attribute.descriptor.stride = elemSize;
-        attribute.bytes.resize(elemSize * vertexAttributeData.size());
-        std::memcpy(attribute.bytes.data(), vertexAttributeData.data(), vertexAttributeData.size() * elemSize);
-
-        return attribute;
-    }
+    AttributeDescriptor descriptor{};
+    std::vector<uint8_t> bytes{};
 };
 
 }  // namespace spark

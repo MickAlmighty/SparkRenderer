@@ -26,7 +26,7 @@ class Component : public std::enable_shared_from_this<Component>
     void setActive(bool active_);
 
     protected:
-    virtual void drawUIBody(){};
+    virtual void drawUIBody() {}
 
     std::shared_ptr<Component> getSharedPtrBase();
 

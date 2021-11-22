@@ -27,8 +27,8 @@ LightProbe::LightProbe() : Component()
     irradianceCubemapHandle = glGetTextureHandleARB(irradianceCubemap);
     glMakeTextureHandleResidentARB(irradianceCubemapHandle);
 
-    const auto attribute = VertexAttribute::createVertexShaderAttributeInfo(0, 3, ShapeCreator::createSphere(1.0f, 10));
-    auto vertexAttributes = std::vector<VertexAttribute>{attribute};
+    const auto attribute = VertexAttribute(0, 3, ShapeCreator::createSphere(1.0f, 10));
+    auto vertexAttributes = std::vector{attribute};
     auto indices = std::vector<unsigned int>{};
     auto textures = std::map<TextureTarget, std::shared_ptr<resources::Texture>>{};
     sphere = std::make_shared<Mesh>(vertexAttributes, indices, textures, "Mesh", ShaderType::COLOR_ONLY);

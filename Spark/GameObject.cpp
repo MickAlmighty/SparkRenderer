@@ -1,6 +1,5 @@
 #include "GameObject.h"
 
-
 #include <glm/gtc/type_ptr.hpp>
 
 #include "Camera.h"
@@ -133,6 +132,11 @@ void GameObject::addComponent(const std::shared_ptr<Component>& component)
             components.push_back(component);
         }
     }
+}
+
+const std::vector<std::shared_ptr<Component>>& GameObject::getComponents() const
+{
+    return components;
 }
 
 bool GameObject::removeComponent(const std::shared_ptr<Component>& c)

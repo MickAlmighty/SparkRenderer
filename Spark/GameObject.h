@@ -46,6 +46,8 @@ class GameObject final : public std::enable_shared_from_this<GameObject>
     template<class T>
     std::shared_ptr<T> getComponent();
 
+    const std::vector<std::shared_ptr<Component>>& getComponents() const;
+
     template<class T>
     std::vector<std::shared_ptr<T>> getAllComponentsOfType();
 
