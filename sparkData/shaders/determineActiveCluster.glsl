@@ -75,15 +75,14 @@ void main()
 
     const float depth = texelFetch(depthTexture, texCoords, 0).x;
 
-    if (depth == 0.0f)
-        return;
+    if (depth != 0.0f)
+    {
+        const float viewSpaceDepth = fromPxToViewSpace(texCoords, texSize, depth).z;
 
-    const float viewSpaceDepth = fromPxToViewSpace(texCoords, texSize, depth).z;
+        const uint clusterZ = getZSlice(viewSpaceDepth);
+        const uint clusterIndex = calculateClusterIndex(clusterZ);
 
-    const uint clusterZ = getZSlice(viewSpaceDepth);
-    uint clusterIndex = calculateClusterIndex(clusterZ);
-
-    activeClusters[clusterIndex] = true;
-
-    lightIndicesBufferMetadata[clusterIndex] = clearDataObject;
+        activeClusters[clusterIndex] = true;
+        lightIndicesBufferMetadata[clusterIndex] = clearDataObject;
+    }
 }

@@ -87,7 +87,7 @@ void ClusterBasedLightCullingPass::determineActiveClusters(GLuint depthTexture, 
 void ClusterBasedLightCullingPass::buildCompactClusterList()
 {
     buildCompactClusterListShader->use();
-    buildCompactClusterListShader->dispatchCompute(utils::uiCeil(dispatchSize.x, 32u), utils::uiCeil(dispatchSize.y, 32u), dispatchSize.z);
+    buildCompactClusterListShader->dispatchCompute(utils::uiCeil(dispatchSize.x, 16u), utils::uiCeil(dispatchSize.y, 16u), dispatchSize.z);
 }
 
 void ClusterBasedLightCullingPass::lightCulling(const std::shared_ptr<Scene>& scene)

@@ -38,7 +38,7 @@ class PostProcessingStack
 
     bool isDofEnabled = false;
     bool isBloomEnabled = false;
-    bool isLightShaftsPassEnabled = true;
+    bool isLightShaftsPassEnabled = false;
     bool isMotionBlurEnabled = true;
 
     GLuint textureHandle{};
