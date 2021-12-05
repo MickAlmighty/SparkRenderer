@@ -103,6 +103,7 @@ void Spark::setup()
     initImGui();
     sceneManager = std::make_unique<SceneManager>();
     renderer = std::make_unique<renderers::TileBasedDeferredRenderer>(WIDTH, HEIGHT);
+    animationCreator = std::make_unique<AnimationCreator>();
 
     renderingContext->addOnWindowSizeChangedCallback([this](auto width, auto height) {
         WIDTH = width;
@@ -132,6 +133,7 @@ void Spark::runLoop()
 
 void Spark::destroy()
 {
+    animationCreator.reset();
     sceneManager.reset();
     renderer.reset();
     resourceLibrary.reset();
@@ -185,6 +187,11 @@ resourceManagement::ResourceLibrary& Spark::getResourceLibrary() const
 SceneManager& Spark::getSceneManager() const
 {
     return *sceneManager;
+}
+
+AnimationCreator& Spark::getAnimationCreator() const
+{
+    return *animationCreator;
 }
 
 void Spark::initImGui()

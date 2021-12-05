@@ -2,28 +2,40 @@
 
 #include <rttr/registration>
 #include <glm/gtx/euler_angles.hpp>
+#include <glm/gtx/orthonormalize.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "Logging.h"
 #include "GUI/ImGui/imgui_custom_widgets.h"
 
 namespace spark
 {
-LocalTransform::LocalTransform(glm::vec3 pos, glm::vec3 scale, glm::vec3 rotation) : position(pos), rotationEuler(rotation), scale(scale) {}
+LocalTransform::LocalTransform(glm::vec3 pos, glm::vec3 scale, glm::vec3 rot) : position(pos), rotation(rot), scale(scale) {}
 
 void LocalTransform::drawGUI()
 {
     ImGui::BeginGroupPanel("Local Transform", {-1, 0});
 
-    glm::vec3 oldPos = position;
-    glm::vec3 oldScale = scale;
-    glm::vec3 oldRotation = rotationEuler;
+    glm::vec3 newPosition = position;
+    glm::vec3 newScale = scale;
+    glm::quat newRotation = rotation;
 
-    ImGui::DragFloat3("Position", glm::value_ptr(position), 0.005f);
-    ImGui::DragFloat3("Scale", glm::value_ptr(scale), 0.005f);
-    ImGui::DragFloat3("Rotation", glm::value_ptr(rotationEuler), 0.1f);
-    // setRotationDegrees(rotation);
-    if(oldPos != position || oldScale != scale || oldRotation != rotationEuler)
-        dirty = true;
+    ImGui::DragFloat3("Position", glm::value_ptr(newPosition), 0.005f);
+    ImGui::DragFloat3("Scale", glm::value_ptr(newScale), 0.005f);
+    ImGui::DragFloat4("Rotation", glm::value_ptr(newRotation), 0.1f);
+
+    if(newRotation != rotation)
+    {
+        setRotation(newRotation);
+    }
+    if(newPosition != position)
+    {
+        setPosition(newPosition);
+    }
+    if(newScale != scale)
+    {
+        setScale(newScale);
+    }
 
     ImGui::EndGroupPanel();
 }
@@ -41,12 +53,10 @@ glm::mat4 LocalTransform::getMatrix()
 
 glm::mat4 LocalTransform::recreateMatrix() const
 {
-    const glm::mat4 posMatrix = glm::translate(glm::mat4(1), position);
-    const glm::mat4 scaleMatrix = glm::scale(glm::mat4(1), scale);
-    const glm::vec3 rotationRadians = glm::radians(rotationEuler);
-    // const glm::mat4 rotationMatrix = glm::eulerAngleYXZ(roationRadians.y, roationRadians.x, roationRadians.z);
-    const glm::mat4 rot = glm::mat4_cast(glm::quat(rotationRadians));
-    return posMatrix * rot * scaleMatrix;
+    const glm::mat4 positionMat = glm::translate(glm::mat4(1), position);
+    const glm::mat4 scaleMat = glm::scale(glm::mat4(1), scale);
+    const glm::mat4 rotationMat = glm::mat4_cast(glm::normalize(rotation));
+    return positionMat * rotationMat * scaleMat;
 }
 
 glm::vec3 LocalTransform::getPosition() const
@@ -61,12 +71,17 @@ glm::vec3 LocalTransform::getScale() const
 
 glm::vec3 LocalTransform::getRotationRadians() const
 {
-    return glm::radians(rotationEuler);
+    return glm::eulerAngles(rotation);
 }
 
 glm::vec3 LocalTransform::getRotationDegrees() const
 {
-    return rotationEuler;
+    return glm::degrees(glm::eulerAngles(rotation));
+}
+
+glm::quat LocalTransform::getRotation() const
+{
+    return rotation;
 }
 
 void LocalTransform::setPosition(float x, float y, float z)
@@ -113,30 +128,33 @@ void LocalTransform::setScale(glm::vec3 scale)
 
 void LocalTransform::setRotationDegrees(float x, float y, float z)
 {
-    rotationEuler.x = x;
-    rotationEuler.y = y;
-    rotationEuler.z = z;
+    rotation = glm::quat(glm::radians(glm::vec3(x, y, z)));
     dirty = true;
 }
 
 void LocalTransform::setRotationDegrees(glm::vec3 rotationDegrees)
 {
-    rotationEuler = rotationDegrees;
+    rotation = glm::quat(glm::radians(rotationDegrees));
     dirty = true;
 }
 
 void LocalTransform::setRotationRadians(float x, float y, float z)
 {
-    rotationEuler = glm::degrees(glm::vec3(x, y, z));
+    rotation = glm::quat(glm::vec3(x, y, z));
     dirty = true;
 }
 
 void LocalTransform::setRotationRadians(glm::vec3 rotationRadians)
 {
-    rotationEuler = glm::degrees(rotationRadians);
+    rotation = glm::quat(rotationRadians);
     dirty = true;
 }
 
+void LocalTransform::setRotation(glm::quat q)
+{
+    rotation = q;
+    dirty = true;
+}
 }  // namespace spark
 
 RTTR_REGISTRATION
@@ -144,7 +162,6 @@ RTTR_REGISTRATION
     rttr::registration::class_<spark::LocalTransform>("LocalTransform")
         .constructor()(rttr::policy::ctor::as_object)
         .property("position", &spark::LocalTransform::position)
-        .property("rotationEuler", &spark::LocalTransform::rotationEuler)
-        .property("scale", &spark::LocalTransform::scale)
-        .property("modelMatrix", &spark::LocalTransform::modelMatrix);
+        .property("rotation", &spark::LocalTransform::rotation)
+        .property("scale", &spark::LocalTransform::scale);
 }

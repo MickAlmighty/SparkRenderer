@@ -2,7 +2,6 @@
 
 #include "Spark.h"
 #include "GameObject.h"
-#include "Logging.h"
 #include "Scene.h"
 
 namespace spark

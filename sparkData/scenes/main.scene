@@ -5,8 +5,6 @@
 		{
 			"Content" : 
 			{
-				"mouseSensitivity" : 0.10000000149011612,
-				"movementSpeed" : 15.69013500213623,
 				"active" : true,
 				"cameraTarget" : 
 				[
@@ -25,7 +23,8 @@
 				{
 					"Identifier" : -1
 				},
-				"name" : "Camera",
+				"mouseSensitivity" : 0.10000000149011612,
+				"movementSpeed" : 15.69013500213623,
 				"pitch" : -8.8000049591064453,
 				"position" : 
 				[
@@ -49,14 +48,8 @@
 				"zFar" : 10000.0,
 				"zNear" : 0.10000000149011612
 			},
-			"Identifier" : 31,
+			"Identifier" : 30,
 			"Type" : "classstd::shared_ptr<classspark::Camera>"
-		},
-		"lightManager" : 
-		{
-			"Content" : null,
-			"Identifier" : 1,
-			"Type" : "classstd::shared_ptr<classspark::lights::LightManager>"
 		},
 		"root" : 
 		{
@@ -86,24 +79,23 @@
 										"direction" : 
 										[
 											0.0,
-											-0.71550428867340088,
-											0.69860833883285522
+											-1.0,
+											0.0
 										],
 										"gameObject" : 
 										{
-											"Identifier" : 3
+											"Identifier" : 2
 										},
-										"lightShaftsActive" : true,
-										"name" : "DirectionalLight"
+										"lightShaftsActive" : true
 									},
-									"Identifier" : 4,
+									"Identifier" : 3,
 									"Type" : "classstd::shared_ptr<classspark::lights::DirectionalLight>"
 								}
 							],
 							"name" : "dirLight",
 							"parent" : 
 							{
-								"Identifier" : 2
+								"Identifier" : 1
 							},
 							"scene" : 
 							{
@@ -118,43 +110,17 @@
 									{
 										"Content" : 
 										{
-											"modelMatrix" : 
-											[
-												[
-													1.0,
-													0.0,
-													0.0,
-													0.0
-												],
-												[
-													0.0,
-													0.71550428867340088,
-													-0.69860833883285522,
-													0.0
-												],
-												[
-													0.0,
-													0.69860833883285522,
-													0.71550428867340088,
-													0.0
-												],
-												[
-													0.0,
-													0.0,
-													0.0,
-													1.0
-												]
-											],
 											"position" : 
 											[
 												0.0,
 												0.0,
 												0.0
 											],
-											"rotationEuler" : 
+											"rotation" : 
 											[
-												-44.315456390380859,
-												-0.0,
+												0.0,
+												0.0,
+												0.0,
 												0.0
 											],
 											"scale" : 
@@ -180,14 +146,14 @@
 												],
 												[
 													0.0,
-													0.71550428867340088,
-													-0.69860833883285522,
+													1.0,
+													0.0,
 													0.0
 												],
 												[
 													0.0,
-													0.69860833883285522,
-													0.71550428867340088,
+													0.0,
+													1.0,
 													0.0
 												],
 												[
@@ -204,7 +170,7 @@
 								"Type" : "Transform"
 							}
 						},
-						"Identifier" : 3,
+						"Identifier" : 2,
 						"Type" : "classstd::shared_ptr<classspark::GameObject>"
 					},
 					{
@@ -220,19 +186,18 @@
 										"active" : true,
 										"gameObject" : 
 										{
-											"Identifier" : 5
+											"Identifier" : 4
 										},
-										"modelPath" : "models\\sphere\\sphere.obj",
-										"name" : "ModelMesh"
+										"modelPath" : "models\\sphere\\sphere.obj"
 									},
-									"Identifier" : 6,
+									"Identifier" : 5,
 									"Type" : "classstd::shared_ptr<classspark::ModelMesh>"
 								}
 							],
 							"name" : "sphere",
 							"parent" : 
 							{
-								"Identifier" : 2
+								"Identifier" : 1
 							},
 							"scene" : 
 							{
@@ -247,41 +212,15 @@
 									{
 										"Content" : 
 										{
-											"modelMatrix" : 
-											[
-												[
-													1.0,
-													0.0,
-													0.0,
-													0.0
-												],
-												[
-													0.0,
-													1.0,
-													0.0,
-													0.0
-												],
-												[
-													0.0,
-													0.0,
-													1.0,
-													0.0
-												],
-												[
-													-33.258052825927734,
-													2.633115291595459,
-													5.1106390953063965,
-													1.0
-												]
-											],
 											"position" : 
 											[
 												-33.258052825927734,
 												2.633115291595459,
 												5.1106390953063965
 											],
-											"rotationEuler" : 
+											"rotation" : 
 											[
+												0.0,
 												0.0,
 												0.0,
 												0.0
@@ -333,7 +272,7 @@
 								"Type" : "Transform"
 							}
 						},
-						"Identifier" : 5,
+						"Identifier" : 4,
 						"Type" : "classstd::shared_ptr<classspark::GameObject>"
 					},
 					{
@@ -356,19 +295,18 @@
 										"colorStrength" : 200.0,
 										"gameObject" : 
 										{
-											"Identifier" : 7
+											"Identifier" : 6
 										},
-										"name" : "PointLight",
 										"radius" : 22.399999618530273
 									},
-									"Identifier" : 8,
+									"Identifier" : 7,
 									"Type" : "classstd::shared_ptr<classspark::lights::PointLight>"
 								}
 							],
 							"name" : "point",
 							"parent" : 
 							{
-								"Identifier" : 2
+								"Identifier" : 1
 							},
 							"scene" : 
 							{
@@ -383,41 +321,15 @@
 									{
 										"Content" : 
 										{
-											"modelMatrix" : 
-											[
-												[
-													11.100000381469727,
-													0.0,
-													0.0,
-													0.0
-												],
-												[
-													0.0,
-													11.100000381469727,
-													0.0,
-													0.0
-												],
-												[
-													0.0,
-													0.0,
-													11.100000381469727,
-													0.0
-												],
-												[
-													21.705434799194336,
-													4.9221677780151367,
-													5.7060174942016602,
-													1.0
-												]
-											],
 											"position" : 
 											[
 												21.705434799194336,
 												4.9221677780151367,
 												5.7060174942016602
 											],
-											"rotationEuler" : 
+											"rotation" : 
 											[
+												0.0,
 												0.0,
 												0.0,
 												0.0
@@ -469,7 +381,7 @@
 								"Type" : "Transform"
 							}
 						},
-						"Identifier" : 7,
+						"Identifier" : 6,
 						"Type" : "classstd::shared_ptr<classspark::GameObject>"
 					},
 					{
@@ -485,19 +397,18 @@
 										"active" : true,
 										"gameObject" : 
 										{
-											"Identifier" : 9
+											"Identifier" : 8
 										},
-										"modelPath" : "models\\sphere2\\sphere2.obj",
-										"name" : "ModelMesh"
+										"modelPath" : "models\\sphere2\\sphere2.obj"
 									},
-									"Identifier" : 10,
+									"Identifier" : 9,
 									"Type" : "classstd::shared_ptr<classspark::ModelMesh>"
 								}
 							],
 							"name" : "GameObject",
 							"parent" : 
 							{
-								"Identifier" : 2
+								"Identifier" : 1
 							},
 							"scene" : 
 							{
@@ -512,41 +423,15 @@
 									{
 										"Content" : 
 										{
-											"modelMatrix" : 
-											[
-												[
-													1.0,
-													0.0,
-													0.0,
-													0.0
-												],
-												[
-													0.0,
-													1.0,
-													0.0,
-													0.0
-												],
-												[
-													0.0,
-													0.0,
-													1.0,
-													0.0
-												],
-												[
-													-2.5259876251220703,
-													-0.20928496122360229,
-													6.1385679244995117,
-													1.0
-												]
-											],
 											"position" : 
 											[
 												-2.5259876251220703,
 												-0.20928496122360229,
 												6.1385679244995117
 											],
-											"rotationEuler" : 
+											"rotation" : 
 											[
+												0.0,
 												0.0,
 												0.0,
 												0.0
@@ -598,7 +483,7 @@
 								"Type" : "Transform"
 							}
 						},
-						"Identifier" : 9,
+						"Identifier" : 8,
 						"Type" : "classstd::shared_ptr<classspark::GameObject>"
 					},
 					{
@@ -614,19 +499,18 @@
 										"active" : true,
 										"gameObject" : 
 										{
-											"Identifier" : 11
+											"Identifier" : 10
 										},
-										"modelPath" : "models\\sphere4\\sphere4.obj",
-										"name" : "ModelMesh"
+										"modelPath" : "models\\sphere4\\sphere4.obj"
 									},
-									"Identifier" : 12,
+									"Identifier" : 11,
 									"Type" : "classstd::shared_ptr<classspark::ModelMesh>"
 								}
 							],
 							"name" : "GameObject",
 							"parent" : 
 							{
-								"Identifier" : 2
+								"Identifier" : 1
 							},
 							"scene" : 
 							{
@@ -641,41 +525,15 @@
 									{
 										"Content" : 
 										{
-											"modelMatrix" : 
-											[
-												[
-													1.0,
-													0.0,
-													0.0,
-													0.0
-												],
-												[
-													0.0,
-													1.0,
-													0.0,
-													0.0
-												],
-												[
-													0.0,
-													0.0,
-													1.0,
-													0.0
-												],
-												[
-													3.2155346870422363,
-													2.673759937286377,
-													6.1002650260925293,
-													1.0
-												]
-											],
 											"position" : 
 											[
 												3.2155346870422363,
 												2.673759937286377,
 												6.1002650260925293
 											],
-											"rotationEuler" : 
+											"rotation" : 
 											[
+												0.0,
 												0.0,
 												0.0,
 												0.0
@@ -727,7 +585,7 @@
 								"Type" : "Transform"
 							}
 						},
-						"Identifier" : 11,
+						"Identifier" : 10,
 						"Type" : "classstd::shared_ptr<classspark::GameObject>"
 					},
 					{
@@ -743,19 +601,18 @@
 										"active" : true,
 										"gameObject" : 
 										{
-											"Identifier" : 13
+											"Identifier" : 12
 										},
-										"modelPath" : "models\\sphere5\\sphere5.obj",
-										"name" : "ModelMesh"
+										"modelPath" : "models\\sphere5\\sphere5.obj"
 									},
-									"Identifier" : 14,
+									"Identifier" : 13,
 									"Type" : "classstd::shared_ptr<classspark::ModelMesh>"
 								}
 							],
 							"name" : "GameObject",
 							"parent" : 
 							{
-								"Identifier" : 2
+								"Identifier" : 1
 							},
 							"scene" : 
 							{
@@ -770,44 +627,18 @@
 									{
 										"Content" : 
 										{
-											"modelMatrix" : 
-											[
-												[
-													9.4681673049926758,
-													-0.18610459566116333,
-													-0.0090738767758011818,
-													0.0
-												],
-												[
-													-0.0074630454182624817,
-													-0.027664331719279289,
-													-7.2199430465698242,
-													0.0
-												],
-												[
-													0.014343168586492538,
-													0.72985309362411499,
-													-0.0028113559819757938,
-													0.0
-												],
-												[
-													1.4368470907211304,
-													-2.6623148918151855,
-													5.2356624603271484,
-													1.0
-												]
-											],
 											"position" : 
 											[
 												1.4368470907211304,
 												-2.6623148918151855,
 												5.2356624603271484
 											],
-											"rotationEuler" : 
+											"rotation" : 
 											[
-												-90.220657348632813,
-												0.054899144917726517,
-												-1.126050591468811
+												-0.7071068286895752,
+												-0.0,
+												0.0,
+												0.7071068286895752
 											],
 											"scale" : 
 											[
@@ -825,21 +656,21 @@
 											"modelMatrix" : 
 											[
 												[
-													9.4681673049926758,
-													-0.18610459566116333,
-													-0.0090738767758011818,
+													9.4700002670288086,
+													0.0,
+													0.0,
 													0.0
 												],
 												[
-													-0.0074630454182624817,
-													-0.027664331719279289,
-													-7.2199430465698242,
+													0.0,
+													-8.6069104554553633e-07,
+													-7.2200007438659668,
 													0.0
 												],
 												[
-													0.014343168586492538,
-													0.72985309362411499,
-													-0.0028113559819757938,
+													0.0,
+													0.72999954223632812,
+													-8.7022719696960849e-08,
 													0.0
 												],
 												[
@@ -856,7 +687,7 @@
 								"Type" : "Transform"
 							}
 						},
-						"Identifier" : 13,
+						"Identifier" : 12,
 						"Type" : "classstd::shared_ptr<classspark::GameObject>"
 					},
 					{
@@ -879,19 +710,18 @@
 										"colorStrength" : 150.0,
 										"gameObject" : 
 										{
-											"Identifier" : 15
+											"Identifier" : 14
 										},
-										"name" : "PointLight",
 										"radius" : 27.700000762939453
 									},
-									"Identifier" : 16,
+									"Identifier" : 15,
 									"Type" : "classstd::shared_ptr<classspark::lights::PointLight>"
 								}
 							],
 							"name" : "point2",
 							"parent" : 
 							{
-								"Identifier" : 2
+								"Identifier" : 1
 							},
 							"scene" : 
 							{
@@ -906,41 +736,15 @@
 									{
 										"Content" : 
 										{
-											"modelMatrix" : 
-											[
-												[
-													5.1999998092651367,
-													0.0,
-													0.0,
-													0.0
-												],
-												[
-													0.0,
-													5.1999998092651367,
-													0.0,
-													0.0
-												],
-												[
-													0.0,
-													0.0,
-													5.1999998092651367,
-													0.0
-												],
-												[
-													-25.652885437011719,
-													11.007516860961914,
-													5.4135627746582031,
-													1.0
-												]
-											],
 											"position" : 
 											[
 												-25.652885437011719,
 												11.007516860961914,
 												5.4135627746582031
 											],
-											"rotationEuler" : 
+											"rotation" : 
 											[
+												0.0,
 												0.0,
 												0.0,
 												0.0
@@ -992,7 +796,7 @@
 								"Type" : "Transform"
 							}
 						},
-						"Identifier" : 15,
+						"Identifier" : 14,
 						"Type" : "classstd::shared_ptr<classspark::GameObject>"
 					},
 					{
@@ -1008,19 +812,18 @@
 										"active" : true,
 										"gameObject" : 
 										{
-											"Identifier" : 17
+											"Identifier" : 16
 										},
-										"modelPath" : "models\\box\\box.obj",
-										"name" : "ModelMesh"
+										"modelPath" : "models\\box\\box.obj"
 									},
-									"Identifier" : 18,
+									"Identifier" : 17,
 									"Type" : "classstd::shared_ptr<classspark::ModelMesh>"
 								}
 							],
 							"name" : "GameObject",
 							"parent" : 
 							{
-								"Identifier" : 2
+								"Identifier" : 1
 							},
 							"scene" : 
 							{
@@ -1035,41 +838,15 @@
 									{
 										"Content" : 
 										{
-											"modelMatrix" : 
-											[
-												[
-													60.0,
-													0.0,
-													0.0,
-													0.0
-												],
-												[
-													0.0,
-													40.0,
-													0.0,
-													0.0
-												],
-												[
-													0.0,
-													0.0,
-													1.0,
-													0.0
-												],
-												[
-													0.0,
-													0.0,
-													-9.7147483825683594,
-													1.0
-												]
-											],
 											"position" : 
 											[
 												0.0,
 												0.0,
 												-9.7147483825683594
 											],
-											"rotationEuler" : 
+											"rotation" : 
 											[
+												0.0,
 												0.0,
 												0.0,
 												0.0
@@ -1121,7 +898,7 @@
 								"Type" : "Transform"
 							}
 						},
-						"Identifier" : 17,
+						"Identifier" : 16,
 						"Type" : "classstd::shared_ptr<classspark::GameObject>"
 					},
 					{
@@ -1137,19 +914,18 @@
 										"active" : true,
 										"gameObject" : 
 										{
-											"Identifier" : 19
+											"Identifier" : 18
 										},
-										"modelPath" : "models\\box\\box.obj",
-										"name" : "ModelMesh"
+										"modelPath" : "models\\box\\box.obj"
 									},
-									"Identifier" : 20,
+									"Identifier" : 19,
 									"Type" : "classstd::shared_ptr<classspark::ModelMesh>"
 								}
 							],
 							"name" : "GameObject",
 							"parent" : 
 							{
-								"Identifier" : 2
+								"Identifier" : 1
 							},
 							"scene" : 
 							{
@@ -1164,44 +940,18 @@
 									{
 										"Content" : 
 										{
-											"modelMatrix" : 
-											[
-												[
-													60.0,
-													0.0,
-													0.0,
-													0.0
-												],
-												[
-													0.0,
-													-3.3439350128173828,
-													39.859981536865234,
-													0.0
-												],
-												[
-													0.0,
-													-0.99649953842163086,
-													-0.08359837532043457,
-													0.0
-												],
-												[
-													0.0,
-													19.295000076293945,
-													0.81630730628967285,
-													1.0
-												]
-											],
 											"position" : 
 											[
 												0.0,
 												19.295000076293945,
 												0.81630730628967285
 											],
-											"rotationEuler" : 
+											"rotation" : 
 											[
-												94.795433044433594,
+												-0.7071068286895752,
 												-0.0,
-												0.0
+												0.0,
+												0.7071068286895752
 											],
 											"scale" : 
 											[
@@ -1226,14 +976,14 @@
 												],
 												[
 													0.0,
-													-3.3439350128173828,
-													39.859981536865234,
+													-4.76837158203125e-06,
+													-40.000003814697266,
 													0.0
 												],
 												[
 													0.0,
-													-0.99649953842163086,
-													-0.08359837532043457,
+													1.0000001192092896,
+													-1.1920928955078125e-07,
 													0.0
 												],
 												[
@@ -1250,7 +1000,7 @@
 								"Type" : "Transform"
 							}
 						},
-						"Identifier" : 19,
+						"Identifier" : 18,
 						"Type" : "classstd::shared_ptr<classspark::GameObject>"
 					},
 					{
@@ -1266,19 +1016,18 @@
 										"active" : true,
 										"gameObject" : 
 										{
-											"Identifier" : 21
+											"Identifier" : 20
 										},
-										"modelPath" : "models\\box\\box.obj",
-										"name" : "ModelMesh"
+										"modelPath" : "models\\box\\box.obj"
 									},
-									"Identifier" : 22,
+									"Identifier" : 21,
 									"Type" : "classstd::shared_ptr<classspark::ModelMesh>"
 								}
 							],
 							"name" : "GameObject",
 							"parent" : 
 							{
-								"Identifier" : 2
+								"Identifier" : 1
 							},
 							"scene" : 
 							{
@@ -1293,41 +1042,15 @@
 									{
 										"Content" : 
 										{
-											"modelMatrix" : 
-											[
-												[
-													60.0,
-													0.0,
-													0.0,
-													0.0
-												],
-												[
-													0.0,
-													40.0,
-													0.0,
-													0.0
-												],
-												[
-													0.0,
-													0.0,
-													1.0,
-													0.0
-												],
-												[
-													0.0,
-													0.0,
-													19.531000137329102,
-													1.0
-												]
-											],
 											"position" : 
 											[
 												0.0,
 												0.0,
 												19.531000137329102
 											],
-											"rotationEuler" : 
+											"rotation" : 
 											[
+												0.0,
 												0.0,
 												0.0,
 												0.0
@@ -1379,7 +1102,7 @@
 								"Type" : "Transform"
 							}
 						},
-						"Identifier" : 21,
+						"Identifier" : 20,
 						"Type" : "classstd::shared_ptr<classspark::GameObject>"
 					},
 					{
@@ -1391,7 +1114,7 @@
 							"name" : "lightProbe",
 							"parent" : 
 							{
-								"Identifier" : 2
+								"Identifier" : 1
 							},
 							"scene" : 
 							{
@@ -1406,41 +1129,15 @@
 									{
 										"Content" : 
 										{
-											"modelMatrix" : 
-											[
-												[
-													1.0,
-													0.0,
-													0.0,
-													0.0
-												],
-												[
-													0.0,
-													1.0,
-													0.0,
-													0.0
-												],
-												[
-													0.0,
-													0.0,
-													1.0,
-													0.0
-												],
-												[
-													0.0,
-													-0.29972553253173828,
-													5.8778133392333984,
-													1.0
-												]
-											],
 											"position" : 
 											[
 												0.0,
 												-0.29972553253173828,
 												5.8778133392333984
 											],
-											"rotationEuler" : 
+											"rotation" : 
 											[
+												0.0,
 												0.0,
 												0.0,
 												0.0
@@ -1482,6 +1179,108 @@
 													0.0,
 													-0.29972553253173828,
 													5.8778133392333984,
+													1.0
+												]
+											]
+										},
+										"Type" : "WorldTransform"
+									}
+								},
+								"Type" : "Transform"
+							}
+						},
+						"Identifier" : 22,
+						"Type" : "classstd::shared_ptr<classspark::GameObject>"
+					},
+					{
+						"Content" : 
+						{
+							"active" : true,
+							"children" : null,
+							"components" : 
+							[
+								{
+									"Content" : 
+									{
+										"active" : true,
+										"gameObject" : 
+										{
+											"Identifier" : 23
+										},
+										"modelPath" : "models\\box2\\box2.obj"
+									},
+									"Identifier" : 24,
+									"Type" : "classstd::shared_ptr<classspark::ModelMesh>"
+								}
+							],
+							"name" : "bark",
+							"parent" : 
+							{
+								"Identifier" : 1
+							},
+							"scene" : 
+							{
+								"Identifier" : 0
+							},
+							"staticObject" : true,
+							"transform" : 
+							{
+								"Content" : 
+								{
+									"local" : 
+									{
+										"Content" : 
+										{
+											"position" : 
+											[
+												-30.860904693603516,
+												-3.9456396102905273,
+												4.3380618095397949
+											],
+											"rotation" : 
+											[
+												0.0,
+												0.0,
+												0.0,
+												0.0
+											],
+											"scale" : 
+											[
+												7.7599997520446777,
+												7.7599997520446777,
+												7.7599997520446777
+											]
+										},
+										"Type" : "LocalTransform"
+									},
+									"world" : 
+									{
+										"Content" : 
+										{
+											"modelMatrix" : 
+											[
+												[
+													7.7599997520446777,
+													0.0,
+													0.0,
+													0.0
+												],
+												[
+													0.0,
+													7.7599997520446777,
+													0.0,
+													0.0
+												],
+												[
+													0.0,
+													0.0,
+													7.7599997520446777,
+													0.0
+												],
+												[
+													-30.860904693603516,
+													-3.9456396102905273,
+													4.3380618095397949,
 													1.0
 												]
 											]
@@ -1506,135 +1305,6 @@
 									"Content" : 
 									{
 										"active" : true,
-										"gameObject" : 
-										{
-											"Identifier" : 24
-										},
-										"modelPath" : "models\\box2\\box2.obj",
-										"name" : "ModelMesh"
-									},
-									"Identifier" : 25,
-									"Type" : "classstd::shared_ptr<classspark::ModelMesh>"
-								}
-							],
-							"name" : "bark",
-							"parent" : 
-							{
-								"Identifier" : 2
-							},
-							"scene" : 
-							{
-								"Identifier" : 0
-							},
-							"staticObject" : true,
-							"transform" : 
-							{
-								"Content" : 
-								{
-									"local" : 
-									{
-										"Content" : 
-										{
-											"modelMatrix" : 
-											[
-												[
-													1.8913679122924805,
-													-2.2222747802734375,
-													-7.1903972625732422,
-													0.0
-												],
-												[
-													5.9094552993774414,
-													5.029505729675293,
-													1.1563300859052106e-06,
-													0.0
-												],
-												[
-													4.6603274345397949,
-													-5.4756879806518555,
-													2.9181807041168213,
-													0.0
-												],
-												[
-													-30.860904693603516,
-													-3.9456396102905273,
-													4.3380618095397949,
-													1.0
-												]
-											],
-											"position" : 
-											[
-												-30.860904693603516,
-												-3.9456396102905273,
-												4.3380618095397949
-											],
-											"rotationEuler" : 
-											[
-												2.2718058971804567e-05,
-												67.910514831542969,
-												-49.599056243896484
-											],
-											"scale" : 
-											[
-												7.7599997520446777,
-												7.7599997520446777,
-												7.7599997520446777
-											]
-										},
-										"Type" : "LocalTransform"
-									},
-									"world" : 
-									{
-										"Content" : 
-										{
-											"modelMatrix" : 
-											[
-												[
-													1.8913679122924805,
-													-2.2222747802734375,
-													-7.1903972625732422,
-													0.0
-												],
-												[
-													5.9094552993774414,
-													5.029505729675293,
-													1.1563300859052106e-06,
-													0.0
-												],
-												[
-													4.6603274345397949,
-													-5.4756879806518555,
-													2.9181807041168213,
-													0.0
-												],
-												[
-													-30.860904693603516,
-													-3.9456396102905273,
-													4.3380618095397949,
-													1.0
-												]
-											]
-										},
-										"Type" : "WorldTransform"
-									}
-								},
-								"Type" : "Transform"
-							}
-						},
-						"Identifier" : 24,
-						"Type" : "classstd::shared_ptr<classspark::GameObject>"
-					},
-					{
-						"Content" : 
-						{
-							"active" : true,
-							"children" : null,
-							"components" : 
-							[
-								{
-									"Content" : 
-									{
-										"active" : true,
 										"color" : 
 										[
 											1.0,
@@ -1644,19 +1314,18 @@
 										"colorStrength" : 50.0,
 										"gameObject" : 
 										{
-											"Identifier" : 26
+											"Identifier" : 25
 										},
-										"name" : "PointLight",
 										"radius" : 30.399999618530273
 									},
-									"Identifier" : 27,
+									"Identifier" : 26,
 									"Type" : "classstd::shared_ptr<classspark::lights::PointLight>"
 								}
 							],
 							"name" : "pointLight3",
 							"parent" : 
 							{
-								"Identifier" : 2
+								"Identifier" : 1
 							},
 							"scene" : 
 							{
@@ -1671,41 +1340,15 @@
 									{
 										"Content" : 
 										{
-											"modelMatrix" : 
-											[
-												[
-													1.0,
-													0.0,
-													0.0,
-													0.0
-												],
-												[
-													0.0,
-													1.0,
-													0.0,
-													0.0
-												],
-												[
-													0.0,
-													0.0,
-													1.0,
-													0.0
-												],
-												[
-													0.31675100326538086,
-													9.8196287155151367,
-													5.069983959197998,
-													1.0
-												]
-											],
 											"position" : 
 											[
 												0.31675100326538086,
 												9.8196287155151367,
 												5.069983959197998
 											],
-											"rotationEuler" : 
+											"rotation" : 
 											[
+												0.0,
 												0.0,
 												0.0,
 												0.0
@@ -1757,7 +1400,7 @@
 								"Type" : "Transform"
 							}
 						},
-						"Identifier" : 26,
+						"Identifier" : 25,
 						"Type" : "classstd::shared_ptr<classspark::GameObject>"
 					},
 					{
@@ -1769,7 +1412,7 @@
 							"name" : "LightProbe2",
 							"parent" : 
 							{
-								"Identifier" : 2
+								"Identifier" : 1
 							},
 							"scene" : 
 							{
@@ -1784,41 +1427,15 @@
 									{
 										"Content" : 
 										{
-											"modelMatrix" : 
-											[
-												[
-													1.0,
-													0.0,
-													0.0,
-													0.0
-												],
-												[
-													0.0,
-													1.0,
-													0.0,
-													0.0
-												],
-												[
-													0.0,
-													0.0,
-													1.0,
-													0.0
-												],
-												[
-													-32.572628021240234,
-													0.89315211772918701,
-													4.1601419448852539,
-													1.0
-												]
-											],
 											"position" : 
 											[
 												-32.572628021240234,
 												0.89315211772918701,
 												4.1601419448852539
 											],
-											"rotationEuler" : 
+											"rotation" : 
 											[
+												0.0,
 												0.0,
 												0.0,
 												0.0
@@ -1870,7 +1487,7 @@
 								"Type" : "Transform"
 							}
 						},
-						"Identifier" : 28,
+						"Identifier" : 27,
 						"Type" : "classstd::shared_ptr<classspark::GameObject>"
 					},
 					{
@@ -1887,19 +1504,18 @@
 										"activeSkybox" : true,
 										"gameObject" : 
 										{
-											"Identifier" : 29
+											"Identifier" : 28
 										},
-										"name" : "Skybox",
 										"skyboxName" : "evening_road_01_2k.dds"
 									},
-									"Identifier" : 30,
+									"Identifier" : 29,
 									"Type" : "classstd::shared_ptr<classspark::Skybox>"
 								}
 							],
 							"name" : "Skybox",
 							"parent" : 
 							{
-								"Identifier" : 2
+								"Identifier" : 1
 							},
 							"scene" : 
 							{
@@ -1914,41 +1530,15 @@
 									{
 										"Content" : 
 										{
-											"modelMatrix" : 
-											[
-												[
-													1.0,
-													0.0,
-													0.0,
-													0.0
-												],
-												[
-													0.0,
-													1.0,
-													0.0,
-													0.0
-												],
-												[
-													0.0,
-													0.0,
-													1.0,
-													0.0
-												],
-												[
-													0.0,
-													0.0,
-													0.0,
-													1.0
-												]
-											],
 											"position" : 
 											[
 												0.0,
 												0.0,
 												0.0
 											],
-											"rotationEuler" : 
+											"rotation" : 
 											[
+												0.0,
 												0.0,
 												0.0,
 												0.0
@@ -2000,7 +1590,7 @@
 								"Type" : "Transform"
 							}
 						},
-						"Identifier" : 29,
+						"Identifier" : 28,
 						"Type" : "classstd::shared_ptr<classspark::GameObject>"
 					}
 				],
@@ -2023,41 +1613,15 @@
 						{
 							"Content" : 
 							{
-								"modelMatrix" : 
-								[
-									[
-										1.0,
-										0.0,
-										0.0,
-										0.0
-									],
-									[
-										0.0,
-										1.0,
-										0.0,
-										0.0
-									],
-									[
-										0.0,
-										0.0,
-										1.0,
-										0.0
-									],
-									[
-										0.0,
-										0.0,
-										0.0,
-										1.0
-									]
-								],
 								"position" : 
 								[
 									0.0,
 									0.0,
 									0.0
 								],
-								"rotationEuler" : 
+								"rotation" : 
 								[
+									0.0,
 									0.0,
 									0.0,
 									0.0
@@ -2109,7 +1673,7 @@
 					"Type" : "Transform"
 				}
 			},
-			"Identifier" : 2,
+			"Identifier" : 1,
 			"Type" : "classstd::shared_ptr<classspark::GameObject>"
 		}
 	},

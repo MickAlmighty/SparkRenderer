@@ -1,5 +1,6 @@
 #include "SparkGui.h"
 
+#include "Animation.hpp"
 #include "CommonUtils.h"
 #include "ImGuizmo.h"
 #include "ImGui/imgui_impl_glfw.h"
@@ -27,7 +28,8 @@ const std::map<std::string, std::function<std::shared_ptr<Component>()>> SparkGu
     {"PointLight", [] { return std::make_shared<lights::PointLight>(); }},
     {"SpotLight", [] { return std::make_shared<lights::SpotLight>(); }},
     {"LightProbe", [] { return std::make_shared<lights::LightProbe>(); }},
-    {"Skybox", [] { return std::make_shared<Skybox>(); }}};
+    {"Skybox", [] { return std::make_shared<Skybox>(); }},
+    {"Animation", [] { return std::make_shared<Animation>(); }}};
 
 void SparkGui::drawGui()
 {
@@ -54,9 +56,11 @@ void SparkGui::drawGui()
 void SparkGui::drawMainMenuGui()
 {
     static bool showEngineSettings = false;
+    static bool animationCreator = false;
     if(ImGui::BeginMenu("Engine"))
     {
         ImGui::MenuItem("Spark Settings", NULL, &showEngineSettings);
+        ImGui::MenuItem("Animation Creator", NULL, &animationCreator);
         ImGui::Separator();
         if(ImGui::MenuItem("Exit", "Esc"))
         {
@@ -67,6 +71,9 @@ void SparkGui::drawMainMenuGui()
 
     if(showEngineSettings)
         drawSparkSettings(&showEngineSettings);
+
+    if(animationCreator)
+        drawAnimationCreatorWindow(&animationCreator);
 }
 
 void SparkGui::drawSparkSettings(bool* p_open)
@@ -107,6 +114,19 @@ void SparkGui::drawSparkSettings(bool* p_open)
             Spark::get().getRenderingContext().resizeWindow(1920, 1055);
         }
     }
+
+    ImGui::End();
+}
+
+void SparkGui::drawAnimationCreatorWindow(bool* p_open)
+{
+    if(!ImGui::Begin("Animation Creator", p_open, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        ImGui::End();
+        return;
+    }
+
+    Spark::get().getAnimationCreator().drawGui();
 
     ImGui::End();
 }
@@ -155,9 +175,7 @@ std::optional<std::shared_ptr<resources::Model>> SparkGui::selectModelByFilePick
     constexpr auto buttonName = "Select Model";
     const auto fileExtensions = resourceManagement::ResourceFactory::supportedModelExtensions();
 
-    const auto resource = getResourceIdentifierByFilePicker(buttonName, fileExtensions);
-
-    if(resource)
+    if(const auto resource = getResourceIdentifierByFilePicker(buttonName, fileExtensions); resource)
         return {std::static_pointer_cast<resources::Model>(resource)};
 
     return std::nullopt;
@@ -168,10 +186,19 @@ std::optional<std::shared_ptr<resources::Texture>> SparkGui::selectTextureByFile
     constexpr auto buttonName = "Select Texture";
     const auto fileExtensions = resourceManagement::ResourceFactory::supportedTextureExtensions();
 
-    const auto resource = getResourceIdentifierByFilePicker(buttonName, fileExtensions);
-
-    if(resource)
+    if(const auto resource = getResourceIdentifierByFilePicker(buttonName, fileExtensions); resource)
         return {std::static_pointer_cast<resources::Texture>(resource)};
+
+    return std::nullopt;
+}
+
+std::optional<std::shared_ptr<resources::AnimationData>> SparkGui::selectAnimationDataByFilePicker()
+{
+    constexpr auto buttonName = "Select Animation";
+    const auto fileExtensions = resourceManagement::ResourceFactory::supportedAnimationExtensions();
+
+    if(const auto resource = getResourceIdentifierByFilePicker(buttonName, fileExtensions); resource)
+        return {std::static_pointer_cast<resources::AnimationData>(resource)};
 
     return std::nullopt;
 }
@@ -181,9 +208,7 @@ std::optional<std::shared_ptr<Scene>> SparkGui::selectSceneByFilePicker()
     constexpr auto buttonName = "Select Scene";
     const auto fileExtensions = resourceManagement::ResourceFactory::supportedSceneExtensions();
 
-    const auto resource = getResourceIdentifierByFilePicker(buttonName, fileExtensions);
-
-    if(resource)
+    if(const auto resource = getResourceIdentifierByFilePicker(buttonName, fileExtensions); resource)
         return {std::static_pointer_cast<Scene>(resource)};
 
     return std::nullopt;
@@ -198,6 +223,24 @@ std::filesystem::path SparkGui::getRelativePathToSaveSceneByFilePicker()
 
     std::filesystem::path filepath;
     const auto extensions = putExtensionsInOneStringSeparatedByCommas(resourceManagement::ResourceFactory::supportedSceneExtensions());
+
+    if(file_dialog.showFileDialog("Save File", imgui_addons::ImGuiFileBrowser::DialogMode::SAVE, ImVec2(700, 310), extensions))
+    {
+        filepath = file_dialog.selected_path;
+    }
+
+    return filepath;
+}
+
+std::filesystem::path SparkGui::getRelativePathToSaveAnimationByFilePicker()
+{
+    if(ImGui::Button("Save Animation"))
+    {
+        ImGui::OpenPopup("Save File");
+    }
+
+    std::filesystem::path filepath;
+    const auto extensions = putExtensionsInOneStringSeparatedByCommas(resourceManagement::ResourceFactory::supportedAnimationExtensions());
 
     if(file_dialog.showFileDialog("Save File", imgui_addons::ImGuiFileBrowser::DialogMode::SAVE, ImVec2(700, 310), extensions))
     {

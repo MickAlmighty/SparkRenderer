@@ -53,12 +53,6 @@ Json::Value JsonSerializer::readFromFile(const std::filesystem::path& filePath)
     return root;
 }
 
-JsonSerializer* JsonSerializer::getInstance()
-{
-    static JsonSerializer serializer;
-    return &serializer;
-}
-
 bool JsonSerializer::isPtr(const rttr::type& type)
 {
     return type.is_pointer() || isWrappedPtr(type);
@@ -348,6 +342,14 @@ void JsonSerializer::writePropertyToJson(Json::Value& root, const rttr::type& ty
                 for(int i = 0; i < 4; i++)
                 {
                     root[i] = vec[i];
+                }
+            }
+            else if(type == rttr::type::get<glm::quat>())
+            {
+                const glm::quat quat{var.get_value<glm::quat>()};
+                for(int i = 0; i < 4; i++)
+                {
+                    root[i] = quat[i];
                 }
             }
             else if(type == rttr::type::get<glm::ivec2>())
@@ -837,6 +839,33 @@ rttr::variant JsonSerializer::readPropertyFromJson(const Json::Value& root, cons
                     if(status == 0)
                     {
                         return vec;
+                    }
+                }
+                else
+                {
+                    status = 2;
+                }
+            }
+            else if(type == rttr::type::get<glm::quat>())
+            {
+                if(root.size() == 4)
+                {
+                    glm::quat quat{};
+                    for(int i = 0; i < 4; i++)
+                    {
+                        if(root[i].isDouble())
+                        {
+                            quat[i] = static_cast<float>(root[i].asDouble());
+                        }
+                        else
+                        {
+                            status = 2;
+                            break;
+                        }
+                    }
+                    if(status == 0)
+                    {
+                        return quat;
                     }
                 }
                 else

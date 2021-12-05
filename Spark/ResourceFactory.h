@@ -16,6 +16,7 @@ class ResourceFactory
     static std::shared_ptr<Resource> loadResource(const std::shared_ptr<ResourceIdentifier>& resourceIdentifier);
     static bool isExtensionSupported(const std::filesystem::path& filePath);
 
+    static std::vector<std::string> supportedAnimationExtensions();
     static std::vector<std::string> supportedModelExtensions();
     static std::vector<std::string> supportedTextureExtensions();
     static std::vector<std::string> supportedShaderExtensions();

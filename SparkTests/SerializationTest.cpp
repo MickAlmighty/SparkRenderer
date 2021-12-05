@@ -191,10 +191,10 @@ TEST(SerializationTest, PointersSerializedProperly)
     class2->intMap = {{4, 7}, {8, 12}, {99, 100}};
     class2->ptrVector = {class1, class1, class1};
     Json::Value root;
-    spark::JsonSerializer* serializer{spark::JsonSerializer::getInstance()};
-    ASSERT_TRUE(serializer->save(class2, root));
+    spark::JsonSerializer serializer{};
+    ASSERT_TRUE(serializer.save(class2, root));
     spark::JsonSerializer::writeToFile("test.json", root);
-    rttr::variant var{serializer->loadVariant(root)};
+    rttr::variant var{serializer.loadVariant(root)};
     ASSERT_TRUE(var.is_valid());
     ASSERT_TRUE(var.is_type<std::shared_ptr<SerializationClass2>>());
     std::shared_ptr<SerializationClass2> deserializedClass2{var.get_value<std::shared_ptr<SerializationClass2>>()};
@@ -239,14 +239,14 @@ TEST(SerializationTest, StructsSerializedProperly)
     source.s.d = 0.1234f;
     source.s.vec = {0.1f, 0.2f, 0.3f, 0.4f};
     source.s.mat = {{1.0f, 2.0f, 3.0f}, {4.0f, 5.0f, 6.0f}, {7.0f, 8.0f, 9.0f}};
-    spark::JsonSerializer* serializer{spark::JsonSerializer::getInstance()};
+    spark::JsonSerializer serializer{};
     Json::Value root;
-    ASSERT_TRUE(serializer->save(source, root));
+    ASSERT_TRUE(serializer.save(source, root));
     spark::JsonSerializer::writeToFile("test2.json", root);
     SerializationStruct2 target;
     try
     {
-        target = serializer->loadJson<SerializationStruct2>(root);
+        target = serializer.loadJson<SerializationStruct2>(root);
     }
     catch(std::exception&)
     {
@@ -264,12 +264,12 @@ TEST(SerializationTest, ComponentPointersConvertible)
 {
     std::shared_ptr<spark::lights::DirectionalLight> cam = std::make_shared<spark::lights::DirectionalLight>();
     Json::Value root;
-    spark::JsonSerializer* serializer{spark::JsonSerializer::getInstance()};
-    ASSERT_TRUE(serializer->save(cam, root));
+    spark::JsonSerializer serializer{};
+    ASSERT_TRUE(serializer.save(cam, root));
     std::shared_ptr<spark::Component> comp1{cam}, comp2;
     try
     {
-        comp2 = serializer->loadJsonShared<spark::Component>(root);
+        comp2 = serializer.loadJsonShared<spark::Component>(root);
     }
     catch(std::exception&)
     {
@@ -285,13 +285,13 @@ TEST(SerializationTest, GameObjectWithComponentSerializedProperly)
     std::shared_ptr<spark::GameObject> obj = std::make_shared<spark::GameObject>("TestObj");
     obj->addComponent(std::make_shared<spark::lights::DirectionalLight>());
     Json::Value root;
-    spark::JsonSerializer* serializer{spark::JsonSerializer::getInstance()};
-    ASSERT_TRUE(serializer->save(obj, root));
+    spark::JsonSerializer serializer{};
+    ASSERT_TRUE(serializer.save(obj, root));
     spark::JsonSerializer::writeToFile("test3.json", root);
     std::shared_ptr<spark::GameObject> obj2;
     try
     {
-        obj2 = serializer->loadJsonShared<spark::GameObject>(root);
+        obj2 = serializer.loadJsonShared<spark::GameObject>(root);
     }
     catch(std::exception&)
     {
@@ -314,12 +314,12 @@ TEST(SerializationTest, ComponentNullSmartPointersInjectedProperly)
     ASSERT_EQ(nullptr, source->shared.get());
     ASSERT_EQ(nullptr, source->sharedComp.get());
     Json::Value root;
-    spark::JsonSerializer* serializer{spark::JsonSerializer::getInstance()};
-    ASSERT_TRUE(serializer->save(source, root));
+    spark::JsonSerializer serializer{};
+    ASSERT_TRUE(serializer.save(source, root));
     spark::JsonSerializer::writeToFile("test4.json", root);
     try
     {
-        target = serializer->loadJsonShared<SerializationComponent2>(root);
+        target = serializer.loadJsonShared<SerializationComponent2>(root);
     }
     catch(std::exception&)
     {
@@ -337,12 +337,12 @@ TEST(SerializationTest, SerializableMetadataUsedProperly)
     source->serializableInt = 234;
     source->unserializableInt = 345;
     Json::Value root;
-    spark::JsonSerializer* serializer{spark::JsonSerializer::getInstance()};
-    ASSERT_TRUE(serializer->save(source, root));
+    spark::JsonSerializer serializer{};
+    ASSERT_TRUE(serializer.save(source, root));
     spark::JsonSerializer::writeToFile("test4.json", root);
     try
     {
-        target = serializer->loadJsonShared<SerializationClass3>(root);
+        target = serializer.loadJsonShared<SerializationClass3>(root);
     }
     catch(std::exception&)
     {

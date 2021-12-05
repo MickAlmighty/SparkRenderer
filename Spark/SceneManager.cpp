@@ -77,7 +77,7 @@ void SceneManager::drawGui()
     {
         if(const auto scenePath = SparkGui::getRelativePathToSaveSceneByFilePicker(); !scenePath.empty())
         {
-            if(!JsonSerializer::getInstance()->saveSceneToFile(current_scene, scenePath))
+            if(!JsonSerializer().saveSceneToFile(current_scene, scenePath))
             {
                 SPARK_ERROR("Scene serialization failed!");
             }

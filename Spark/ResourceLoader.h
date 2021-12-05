@@ -24,7 +24,9 @@ class ResourceLoader final
     static std::shared_ptr<resourceManagement::Resource> createCompressedTexture(const std::shared_ptr<resourceManagement::ResourceIdentifier>& resourceIdentifier);
     static std::shared_ptr<resourceManagement::Resource> createUncompressedTexture(const std::shared_ptr<resourceManagement::ResourceIdentifier>& resourceIdentifier);
     static std::shared_ptr<resourceManagement::Resource> createModel(const std::shared_ptr<resourceManagement::ResourceIdentifier>& resourceIdentifier);
+    static std::shared_ptr<resourceManagement::Resource> createShader(const std::shared_ptr<resourceManagement::ResourceIdentifier>& resourceIdentifier);
     static std::shared_ptr<resourceManagement::Resource> createScene(const std::shared_ptr<resourceManagement::ResourceIdentifier>& resourceIdentifier);
+    static std::shared_ptr<resourceManagement::Resource> createAnimation(const std::shared_ptr<resourceManagement::ResourceIdentifier>& resourceIdentifier);
 
     ResourceLoader(const ResourceLoader&) = delete;
     ResourceLoader(const ResourceLoader&&) = delete;

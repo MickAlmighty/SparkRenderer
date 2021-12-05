@@ -118,9 +118,10 @@ void Scene::drawTreeNode(std::shared_ptr<GameObject> node, bool isRootNode)
 
     if(ImGui::BeginDragDropSource(ImGuiDragDropFlags_None) && !isRootNode)
     {
-        ImGui::SetDragDropPayload("OBJECT_DRAG_AND_DROP", &node,
-                                  sizeof(std::shared_ptr<GameObject>));  // Set payload to carry the index of our item (could be anything)
-        ImGui::Text("Getting reference to %s", node->name.c_str());
+        std::weak_ptr gameObjectWeak = node;
+        ImGui::SetDragDropPayload("GAME_OBJECT", &gameObjectWeak,
+                                  sizeof(std::weak_ptr<GameObject>));  // Set payload to carry the index of our item (could be anything)
+        ImGui::Text("Getting reference to %s %d", node->name.c_str(), node.use_count());
         ImGui::EndDragDropSource();
     }
 

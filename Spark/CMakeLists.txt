@@ -1,4 +1,12 @@
 list(APPEND SparkSources
+    ${CMAKE_CURRENT_SOURCE_DIR}/Animation.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Animation.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AnimationCreator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AnimationCreator.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AnimationData.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AnimationData.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AnimationPlayer.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AnimationPlayer.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Buffer.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Camera.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Camera.h
@@ -65,6 +73,7 @@ list(APPEND SparkSources
     ${CMAKE_CURRENT_SOURCE_DIR}/Skybox.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Spark.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Spark.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/SparkConfig.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/SparkConfig.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/stb_image.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/VertexAttribute.hpp

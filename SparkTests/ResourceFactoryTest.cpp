@@ -50,9 +50,8 @@ TEST_F(ResourceFactoryTest, AllCreatedResourcesAreValid)
                 continue;
             }
 
-            
-            const std::shared_ptr<Resource> resource =
-                ResourceFactory::loadResource(std::make_shared<resourceManagement::ResourceIdentifier>(resPath, validFilePath.lexically_relative(resPath)));
+            const std::shared_ptr<Resource> resource = ResourceFactory::loadResource(
+                std::make_shared<resourceManagement::ResourceIdentifier>(resPath, validFilePath.lexically_relative(resPath)));
             if(resource != nullptr)
             {
                 createdResources.push_back(resource);
@@ -104,7 +103,8 @@ TEST_F(ResourceFactoryTest, NumberOfSupportedExtensionsForDistinctResourcesAreSu
     const auto numberOfAllSupportedExtensions = ResourceFactory::supportedExtensions().size();
     const auto summedNumberOfSupportedExtensions =
         ResourceFactory::supportedModelExtensions().size() + ResourceFactory::supportedTextureExtensions().size() +
-        ResourceFactory::supportedShaderExtensions().size() + ResourceFactory::supportedSceneExtensions().size();
+        ResourceFactory::supportedShaderExtensions().size() + ResourceFactory::supportedSceneExtensions().size() +
+        ResourceFactory::supportedAnimationExtensions().size();
     ASSERT_EQ(numberOfAllSupportedExtensions, summedNumberOfSupportedExtensions);
 }
 

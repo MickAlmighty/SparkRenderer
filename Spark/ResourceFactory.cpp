@@ -4,13 +4,13 @@
 #include "Resource.h"
 #include "ResourceIdentifier.h"
 #include "ResourceLoader.h"
-#include "Shader.h"
 
 namespace spark::resourceManagement
 {
 std::map<std::string, std::function<std::shared_ptr<Resource>(const std::shared_ptr<ResourceIdentifier>& ri)>>
     ResourceFactory::resourceCreationFunctions{
         // TODO: replace with a reflection-based list
+        {".anim", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createAnimation(ri); }},
         {".obj", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createModel(ri); }},
         {".fbx", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createModel(ri); }},
         {".gltf", [](const std::shared_ptr<ResourceIdentifier>& ri) { return GltfLoader().createModel(ri); }},
@@ -20,7 +20,7 @@ std::map<std::string, std::function<std::shared_ptr<Resource>(const std::shared_
         {".jpg", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createUncompressedTexture(ri); }},
         {".tga", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createUncompressedTexture(ri); }},
         {".hdr", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createHdrTexture(ri); }},
-        {".glsl", [](const std::shared_ptr<ResourceIdentifier>& ri) { return std::make_shared<resources::Shader>(ri->getFullPath()); }},
+        {".glsl", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createShader(ri); }},
         {".scene", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createScene(ri); }},
     };
 
@@ -47,6 +47,11 @@ std::string ResourceFactory::extensionToLowerCase(const std::filesystem::path& p
     std::for_each(ext.begin(), ext.end(), [](char& c) { c = static_cast<char>(std::tolower(c)); });
 
     return ext;
+}
+
+std::vector<std::string> ResourceFactory::supportedAnimationExtensions()
+{
+    return std::vector<std::string>{".anim"};
 }
 
 std::vector<std::string> ResourceFactory::supportedModelExtensions()

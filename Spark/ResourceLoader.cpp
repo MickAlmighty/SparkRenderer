@@ -14,6 +14,7 @@
 #include "Model.h"
 #include "Spark.h"
 #include "Texture.h"
+#include "Shader.h"
 
 namespace spark
 {
@@ -264,6 +265,12 @@ std::shared_ptr<resourceManagement::Resource> ResourceLoader::createModel(
     return std::make_shared<resources::Model>(resourceIdentifier->getRelativePath(), meshes);
 }
 
+std::shared_ptr<resourceManagement::Resource> ResourceLoader::createShader(
+    const std::shared_ptr<resourceManagement::ResourceIdentifier>& resourceIdentifier)
+{
+    return std::make_shared<resources::Shader>(resourceIdentifier->getFullPath());
+}
+
 std::map<TextureTarget, std::shared_ptr<resources::Texture>> findTextures(const std::filesystem::path& modelDirectory)
 {
     std::map<TextureTarget, std::shared_ptr<resources::Texture>> textures;
@@ -398,10 +405,21 @@ std::shared_ptr<Mesh> ResourceLoader::loadMesh(aiMesh* assimpMesh, std::vector<s
 std::shared_ptr<resourceManagement::Resource> ResourceLoader::createScene(
     const std::shared_ptr<resourceManagement::ResourceIdentifier>& resourceIdentifier)
 {
-    auto scene = JsonSerializer::getInstance()->loadSceneFromFile(resourceIdentifier->getFullPath());
-    if(scene)
+    if(auto scene = JsonSerializer().loadSceneFromFile(resourceIdentifier->getFullPath()); scene)
     {
         return std::make_shared<Scene>(resourceIdentifier->getRelativePath(), std::move(scene));
+    }
+
+    return nullptr;
+}
+
+std::shared_ptr<resourceManagement::Resource> ResourceLoader::createAnimation(
+    const std::shared_ptr<resourceManagement::ResourceIdentifier>& resourceIdentifier)
+{
+    if(const auto animation = JsonSerializer().loadShared<resources::AnimationData>(resourceIdentifier->getFullPath()); animation)
+    {
+        animation->setPath(resourceIdentifier->getRelativePath());
+        return animation;
     }
 
     return nullptr;

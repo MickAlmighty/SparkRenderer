@@ -17,6 +17,7 @@ class Scene;
 class JsonSerializer final
 {
     public:
+    JsonSerializer() = default;
     ~JsonSerializer() = default;
     JsonSerializer(const JsonSerializer&) = delete;
     JsonSerializer(JsonSerializer&&) = delete;
@@ -24,7 +25,6 @@ class JsonSerializer final
     JsonSerializer& operator=(JsonSerializer&&) = delete;
     static bool writeToFile(const std::filesystem::path& filePath, Json::Value& root);
     static Json::Value readFromFile(const std::filesystem::path& filePath);
-    static JsonSerializer* getInstance();
     static bool isPtr(const rttr::type& type);
     static bool isWrappedPtr(const rttr::type& type);
     static bool areVariantsEqualPointers(const rttr::variant& var1, const rttr::variant& var2);
@@ -50,7 +50,6 @@ class JsonSerializer final
     rttr::variant readPropertyFromJson(const Json::Value& root, const rttr::type& type, rttr::variant& currentValue, bool& ok);
     void serialize(const rttr::variant& var, Json::Value& root);
     rttr::variant deserialize(const Json::Value& root);
-    JsonSerializer() = default;
     bool bindObject(const rttr::variant& var, int id);
     bool isVarBound(const rttr::variant& var);
     int getBoundId(const rttr::variant& var);

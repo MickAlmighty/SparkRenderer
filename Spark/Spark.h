@@ -1,5 +1,6 @@
 #pragma once
 
+#include "AnimationCreator.hpp"
 #include "GUI/SparkGui.h"
 #include "OpenGLContext.hpp"
 #include "ResourceLibrary.h"
@@ -7,6 +8,8 @@
 
 namespace spark
 {
+class AnimationCreator;
+
 namespace renderers
 {
     class Renderer;
@@ -29,6 +32,7 @@ class Spark
     virtual OpenGLContext& getRenderingContext() const;
     virtual resourceManagement::ResourceLibrary& getResourceLibrary() const;
     virtual SceneManager& getSceneManager() const;
+    virtual AnimationCreator& getAnimationCreator() const;
 
     unsigned int WIDTH{1280};
     unsigned int HEIGHT{720};
@@ -52,6 +56,7 @@ class Spark
     std::unique_ptr<resourceManagement::ResourceLibrary> resourceLibrary{};
     std::unique_ptr<renderers::Renderer> renderer{};
     std::unique_ptr<SceneManager> sceneManager{};
+    std::unique_ptr<AnimationCreator> animationCreator{};
     SparkGui sparkGui{};
     std::filesystem::path pathToResources{};
 

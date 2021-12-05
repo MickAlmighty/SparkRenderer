@@ -8,11 +8,11 @@ int main()
     spark::SparkConfig config{};
     try
     {
-        config = spark::JsonSerializer::getInstance()->load<spark::SparkConfig>("settings.json");
+        config = spark::JsonSerializer().load<spark::SparkConfig>("settings.json");
     }
     catch(std::exception&)
     {
-        spark::JsonSerializer::getInstance()->save(config, "settings.json");
+        spark::JsonSerializer().save(config, "settings.json");
     }
 
     try
