@@ -22,12 +22,8 @@ MotionBlurPass::~MotionBlurPass()
 std::optional<GLuint> MotionBlurPass::process(const std::shared_ptr<Camera>& camera, GLuint colorTexture, GLuint depthTexture)
 {
     const glm::mat4 projectionView = camera->getProjectionReversedZ() * camera->getViewMatrix();
-    static glm::mat4 prevProjectionView = projectionView;
 
-    if(projectionView == prevProjectionView)
-        return {};
-
-    if(static bool initialized = false; !initialized)
+    if(!initialized)
     {
         // it is necessary when the scene has been loaded and
         // the difference between current VP and last frame VP matrices generates huge velocities for all pixels
@@ -35,6 +31,9 @@ std::optional<GLuint> MotionBlurPass::process(const std::shared_ptr<Camera>& cam
         prevProjectionView = projectionView;
         initialized = true;
     }
+
+    if(projectionView == prevProjectionView)
+        return {};
 
     PUSH_DEBUG_GROUP(MOTION_BLUR);
     {

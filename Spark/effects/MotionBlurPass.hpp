@@ -25,6 +25,9 @@ class MotionBlurPass
     private:
     void createFrameBuffersAndTextures();
 
+    bool initialized = false;
+    glm::mat4 prevProjectionView{1};
+
     unsigned int w{}, h{};
     ScreenQuad screenQuad;
     GLuint framebuffer1{};
