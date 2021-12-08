@@ -24,6 +24,7 @@ TileBasedForwardPlusRenderer::~TileBasedForwardPlusRenderer()
     glDeleteTextures(1, &depthTexture);
     glDeleteTextures(1, &brdfLookupTexture);
     glDeleteFramebuffers(1, &lightingFramebuffer);
+    glDeleteFramebuffers(1, &depthPrepassFramebuffer);
 }
 
 void TileBasedForwardPlusRenderer::depthPrepass(const std::shared_ptr<Scene>& scene)

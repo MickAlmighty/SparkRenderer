@@ -23,6 +23,7 @@ ClusterBasedForwardPlusRenderer::~ClusterBasedForwardPlusRenderer()
     glDeleteTextures(1, &depthTexture);
     glDeleteTextures(1, &brdfLookupTexture);
     glDeleteFramebuffers(1, &lightingFramebuffer);
+    glDeleteFramebuffers(1, &depthPrepassFramebuffer);
 }
 
 void ClusterBasedForwardPlusRenderer::depthPrepass(const std::shared_ptr<Scene>& scene)
