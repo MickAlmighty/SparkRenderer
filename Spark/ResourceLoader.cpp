@@ -407,7 +407,8 @@ std::shared_ptr<resourceManagement::Resource> ResourceLoader::createScene(
 {
     if(auto scene = JsonSerializer().loadSceneFromFile(resourceIdentifier->getFullPath()); scene)
     {
-        return std::make_shared<Scene>(resourceIdentifier->getRelativePath(), std::move(scene));
+        scene->setPath(resourceIdentifier->getRelativePath());
+        return scene;
     }
 
     return nullptr;

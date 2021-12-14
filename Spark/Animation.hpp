@@ -7,8 +7,10 @@ namespace spark
 class Animation : public Component
 {
     public:
-    void update() override;
+    Animation() = default;
     ~Animation() override = default;
+
+    void update() override;
 
     void play(bool isLooped = false);
     void pause();
@@ -23,6 +25,7 @@ class Animation : public Component
     private:
     AnimationPlayer animationPlayer{};
     std::shared_ptr<const resources::AnimationData> animationData;
+
     RTTR_REGISTRATION_FRIEND
     RTTR_ENABLE(Component)
 };

@@ -26,6 +26,10 @@ class DirectionalLight final : public Component, public Observable<LightStatus<D
     DirectionalLight& operator=(const DirectionalLight&) = delete;
     DirectionalLight& operator=(const DirectionalLight&&) = delete;
 
+    void update() override;
+    void start() override;
+    void drawUIBody() override;
+
     DirectionalLightData getLightData() const;
     glm::vec3 getDirection() const;
     glm::vec3 getColor() const;
@@ -33,8 +37,6 @@ class DirectionalLight final : public Component, public Observable<LightStatus<D
     void setDirection(glm::vec3 direction_);
     void setColor(glm::vec3 color_);
     void setColorStrength(float strength);
-    void update() override;
-    void drawUIBody() override;
 
     bool areLightShaftsEnabled() const;
     void setLightShafts(bool state);
@@ -49,15 +51,15 @@ class DirectionalLight final : public Component, public Observable<LightStatus<D
     void activateLightShafts();
     void deactivateLightShafts();
 
-    inline static DirectionalLight* dirLightForLightShafts{ nullptr };
+    inline static DirectionalLight* dirLightForLightShafts{nullptr};
 
-    std::shared_ptr<LightManager> lightManager{nullptr};
     glm::vec3 dirLightFront{0.0f, -1.0f, 0.0f};
     glm::vec3 direction{0.0f, -1.0f, 0.0f};
     glm::vec3 color{1};
     float colorStrength{1};
 
-    bool lightShaftsActive{ false };
+    bool lightShaftsActive{false};
+    RTTR_REGISTRATION_FRIEND
     RTTR_ENABLE(Component)
 };
-}  // namespace spark
+}  // namespace spark::lights

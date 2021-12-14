@@ -128,14 +128,6 @@ SpotLight::~SpotLight()
 
 void SpotLight::update()
 {
-    if(!lightManager)
-    {
-        lightManager = getGameObject()->getScene()->lightManager;
-        add(lightManager);
-
-        notifyAbout(LightCommand::add);
-    }
-
     static glm::vec3 pos{};
     if(pos != getPosition())
     {
@@ -204,6 +196,12 @@ void SpotLight::drawUIBody()
     {
         setMaxDistance(maxDistanceToEdit);
     }
+}
+
+void SpotLight::start()
+{
+    add(getGameObject()->getScene()->lightManager);
+    notifyAbout(LightCommand::add);
 }
 
 void SpotLight::onActive()

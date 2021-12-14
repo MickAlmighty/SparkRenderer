@@ -148,6 +148,7 @@ FetchContent_MakeAvailable(spdlog)
 #TINYGLTF
 set(TINYGLTF_HEADER_ONLY ON CACHE INTERNAL "" FORCE)
 set(TINYGLTF_INSTALL OFF CACHE INTERNAL "" FORCE)
+set(TINYGLTF_BUILD_LOADER_EXAMPLE OFF CACHE INTERNAL "" FORCE)
 FetchContent_Declare(
         tinygltf
         GIT_REPOSITORY "https://github.com/syoyo/tinygltf"
@@ -157,8 +158,8 @@ FetchContent_MakeAvailable(tinygltf)
 target_include_directories(Spark PUBLIC ${tinygltf_SOURCE_DIR})
 
 #JSONCPP
-set(JSONCPP_WITH_POST_BUILD_UNITTEST OFF CACHE INTERNAL "Turn off tests")
-set(JSONCPP_WITH_TESTS OFF CACHE INTERNAL "Turn off tests")
+set(JSONCPP_WITH_POST_BUILD_UNITTEST OFF CACHE INTERNAL "Turn off tests" FORCE)
+set(JSONCPP_WITH_TESTS OFF CACHE INTERNAL "Turn off tests" FORCE)
 
 FetchContent_Declare(
         jsoncpp
@@ -188,6 +189,6 @@ else()
     target_link_libraries(Spark ${CMAKE_DL_LIBS})
 endif()
 target_link_libraries(Spark assimp)
-target_link_libraries(Spark debug jsoncpp optimized jsoncpp)
+target_link_libraries(Spark debug jsoncppd optimized jsoncpp)
 target_link_libraries(Spark glfw)
 target_link_libraries(Spark spdlog)

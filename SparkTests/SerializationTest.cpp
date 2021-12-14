@@ -2,7 +2,9 @@
 #include "Component.h"
 #include "GameObject.h"
 #include "JsonSerializer.h"
+#include "OpenGLContext.hpp"
 #include "ReflectionUtils.h"
+#include "Scene.h"
 #include "lights/DirectionalLight.h"
 
 enum class SerializationEnum1
@@ -262,7 +264,10 @@ TEST(SerializationTest, StructsSerializedProperly)
 
 TEST(SerializationTest, ComponentPointersConvertible)
 {
-    std::shared_ptr<spark::lights::DirectionalLight> cam = std::make_shared<spark::lights::DirectionalLight>();
+    spark::OpenGLContext oglContext{1280, 720, true, true};
+    const auto scene = std::make_shared<spark::Scene>();
+    auto obj = scene->spawnGameObject("TestObj");
+    const auto cam = obj->addComponent<spark::lights::DirectionalLight>();
     Json::Value root;
     spark::JsonSerializer serializer{};
     ASSERT_TRUE(serializer.save(cam, root));
@@ -282,8 +287,10 @@ TEST(SerializationTest, ComponentPointersConvertible)
 
 TEST(SerializationTest, GameObjectWithComponentSerializedProperly)
 {
-    std::shared_ptr<spark::GameObject> obj = std::make_shared<spark::GameObject>("TestObj");
-    obj->addComponent(std::make_shared<spark::lights::DirectionalLight>());
+    spark::OpenGLContext oglContext{1280, 720, true, true};
+    const auto scene = std::make_shared<spark::Scene>();
+    const auto obj = scene->spawnGameObject("TestObj");
+    obj->addComponent<spark::lights::DirectionalLight>();
     Json::Value root;
     spark::JsonSerializer serializer{};
     ASSERT_TRUE(serializer.save(obj, root));
@@ -299,7 +306,7 @@ TEST(SerializationTest, GameObjectWithComponentSerializedProperly)
     }
     ASSERT_NE(nullptr, obj2);
     ASSERT_EQ(obj->getName(), obj2->getName());
-    ASSERT_EQ(nullptr, obj2->getScene());
+    ASSERT_NE(nullptr, obj2->getScene());
     ASSERT_NE(nullptr, obj->getComponent<spark::lights::DirectionalLight>());
     ASSERT_NE(nullptr, obj2->getComponent<spark::lights::DirectionalLight>());
 }

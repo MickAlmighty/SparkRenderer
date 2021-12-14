@@ -4,11 +4,6 @@
 
 namespace spark
 {
-namespace resources
-{
-    class Shader;
-}
-
 class Mesh;
 
 class MeshPlane final : public Component
@@ -24,12 +19,12 @@ class MeshPlane final : public Component
     void update() override;
 
     private:
-    std::shared_ptr<Mesh> planeMesh{nullptr};
-
     void setup();
 
-    RTTR_REGISTRATION_FRIEND;
-    RTTR_ENABLE(Component);
+    std::shared_ptr<Mesh> planeMesh{nullptr};
+
+    RTTR_REGISTRATION_FRIEND
+    RTTR_ENABLE(Component)
 };
 
 }  // namespace spark

@@ -9,7 +9,14 @@
       "installRoot": "${projectDir}\\out\\install\\${name}",
       "cmakeCommandArgs": "",
       "buildCommandArgs": "",
-      "ctestCommandArgs": ""
+      "ctestCommandArgs": "",
+      "variables": [
+        {
+          "name": "CMAKE_EXE_LINKER_FLAGS",
+          "value": "/machine:x64",
+          "type": "STRING"
+        }
+      ]
     },
     {
       "name": "x64-Release",

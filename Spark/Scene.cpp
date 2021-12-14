@@ -14,21 +14,9 @@ namespace spark
 {
 Scene::Scene() : Resource("NewScene.scene")
 {
-    init();
-}
-
-Scene::Scene(const std::filesystem::path& path_) : Resource(path_)
-{
-    init();
-}
-
-Scene::Scene(const std::filesystem::path& path_, const std::shared_ptr<Scene>&& scene_) : Resource(path_)
-{
-    camera = std::move(scene_->camera);
-    root = std::move(scene_->root);
-    lightManager = std::move(scene_->lightManager);
-    skyboxCubemap = std::move(scene_->skyboxCubemap);
-    root->setSceneRecursive(this);
+    root = std::shared_ptr<GameObject>(new GameObject("Root"));
+    root->setScene(this);
+    camera = std::make_shared<Camera>(glm::vec3(0, 0, 5));
 }
 
 Scene::~Scene()
@@ -46,14 +34,17 @@ void Scene::update()
     lightManager->updateLightBuffers();
 }
 
+std::shared_ptr<GameObject> Scene::spawnGameObject(std::string&& name)
+{
+    auto gameObject = std::shared_ptr<GameObject>(new GameObject(std::move(name)));
+    gameObject->setScene(this);
+    root->addChild(gameObject);
+    return gameObject;
+}
+
 std::shared_ptr<Camera> Scene::getCamera() const
 {
     return camera;
-}
-
-std::shared_ptr<GameObject> Scene::getRoot() const
-{
-    return root;
 }
 
 void Scene::drawGUI()
@@ -90,13 +81,6 @@ void Scene::drawGUI()
     }
 }
 
-void Scene::init()
-{
-    root = std::make_shared<GameObject>("Root");
-    root->setScene(this);
-    camera = std::make_shared<Camera>(glm::vec3(0, 0, 5));
-}
-
 void Scene::drawSceneGraph()
 {
     ImGuiIO& io = ImGui::GetIO();
@@ -114,14 +98,14 @@ void Scene::drawTreeNode(std::shared_ptr<GameObject> node, bool isRootNode)
 {
     ImGui::PushID(node.get());
     bool opened = node == getGameObjectToPreview();
-    ImGui::Selectable(node->name.c_str(), opened, 0, {node->name.length() * 7.1f, 0.0f});
+    ImGui::Selectable(node->getName().c_str(), opened, 0, {node->getName().length() * 7.1f, 0.0f});
 
     if(ImGui::BeginDragDropSource(ImGuiDragDropFlags_None) && !isRootNode)
     {
         std::weak_ptr gameObjectWeak = node;
         ImGui::SetDragDropPayload("GAME_OBJECT", &gameObjectWeak,
                                   sizeof(std::weak_ptr<GameObject>));  // Set payload to carry the index of our item (could be anything)
-        ImGui::Text("Getting reference to %s %d", node->name.c_str(), node.use_count());
+        ImGui::Text("Getting reference to %s %d", node->getName().c_str(), node.use_count());
         ImGui::EndDragDropSource();
     }
 
@@ -133,7 +117,7 @@ void Scene::drawTreeNode(std::shared_ptr<GameObject> node, bool isRootNode)
 
         if(ImGui::Button("Add child"))
         {
-            node->addChild(std::make_shared<GameObject>());
+            node->addChild(spawnGameObject());
             ImGui::CloseCurrentPopup();
         }
 
@@ -142,6 +126,10 @@ void Scene::drawTreeNode(std::shared_ptr<GameObject> node, bool isRootNode)
             if(ImGui::Button("Delete"))
             {
                 node->getParent()->removeChild(node);
+                if(getGameObjectToPreview() == node)
+                {
+                    setGameObjectToPreview(nullptr);
+                }
                 ImGui::CloseCurrentPopup();
             }
         }
@@ -151,17 +139,17 @@ void Scene::drawTreeNode(std::shared_ptr<GameObject> node, bool isRootNode)
     if(ImGui::IsItemHovered() && ImGui::IsMouseClicked(0) && !isRootNode)
     {
         setGameObjectToPreview(node);
-        SPARK_DEBUG("GameObject {} clicked!", node->name);
+        SPARK_DEBUG("GameObject {} clicked!", node->getName());
     }
 
-    if(!node->children.empty())
+    if(!node->getChildren().empty())
     {
         ImGui::SameLine();
         if(ImGui::TreeNode("Children"))
         {
-            for(size_t i = 0; i < node->children.size(); ++i)
+            for(const auto& child : node->getChildren())
             {
-                drawTreeNode(node->children[i], false);
+                drawTreeNode(child, false);
             }
 
             ImGui::TreePop();
@@ -185,7 +173,7 @@ const std::map<ShaderType, std::deque<renderers::RenderingRequest>>& Scene::getR
     return renderingQueues;
 }
 
-const std::weak_ptr<PbrCubemapTexture> Scene::getSkyboxCubemap() const
+std::weak_ptr<PbrCubemapTexture> Scene::getSkyboxCubemap() const
 {
     return skyboxCubemap;
 }

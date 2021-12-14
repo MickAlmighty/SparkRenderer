@@ -26,7 +26,7 @@ class PointLight final : public Component, public Observable<LightStatus<PointLi
 {
     public:
     PointLight();
-    ~PointLight();
+    ~PointLight() override;
     PointLight(const PointLight&) = delete;
     PointLight(const PointLight&&) = delete;
     PointLight& operator=(const PointLight&) = delete;
@@ -42,8 +42,10 @@ class PointLight final : public Component, public Observable<LightStatus<PointLi
     void setColor(glm::vec3 color_);
     void setColorStrength(float strength);
     void setLightModel(glm::mat4 model);
+
     void update() override;
     void drawUIBody() override;
+    void start() override;
 
     private:
     void onActive() override;
@@ -51,13 +53,13 @@ class PointLight final : public Component, public Observable<LightStatus<PointLi
     void notifyAbout(LightCommand command);
 
     std::shared_ptr<Mesh> sphere{nullptr};
-    std::shared_ptr<LightManager> lightManager{nullptr};
 
     glm::vec3 color{1};
     float radius{1.0f};
     float colorStrength{1};
     glm::mat4 lightModel{1};
 
+    RTTR_REGISTRATION_FRIEND
     RTTR_ENABLE(Component)
 };
 }  // namespace spark::lights

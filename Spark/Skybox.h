@@ -9,7 +9,6 @@ namespace spark
 class Skybox : public Component
 {
     public:
-    Skybox() = default;
     ~Skybox() override;
 
     void update() override;
@@ -24,6 +23,8 @@ class Skybox : public Component
     static Skybox* getActiveSkybox();
 
     private:
+    Skybox() = default;
+
     void onActive() override;
     void onInactive() override;
 
@@ -35,6 +36,8 @@ class Skybox : public Component
 
     std::string skyboxName{};
     std::shared_ptr<PbrCubemapTexture> pbrCubemapTexture{nullptr};
+
+    RTTR_REGISTRATION_FRIEND
     RTTR_ENABLE(Component)
 };
 }  // namespace spark

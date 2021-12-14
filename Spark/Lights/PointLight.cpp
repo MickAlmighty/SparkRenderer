@@ -7,7 +7,6 @@
 #include "Enums.h"
 #include "GUI/ImGui/imgui.h"
 #include "GameObject.h"
-#include "JsonSerializer.h"
 #include "Mesh.h"
 #include "renderers/RenderingRequest.h"
 #include "Scene.h"
@@ -85,14 +84,6 @@ PointLight::~PointLight()
 
 void PointLight::update()
 {
-    if(!lightManager)
-    {
-        lightManager = getGameObject()->getScene()->lightManager;
-        add(lightManager);
-
-        notifyAbout(LightCommand::add);
-    }
-
     glm::mat4 sphereModel(1);
     sphereModel = glm::scale(sphereModel, glm::vec3(radius));
     sphereModel[3] = glm::vec4(getPosition(), 1.0f);
@@ -143,6 +134,12 @@ void PointLight::drawUIBody()
     {
         setColorStrength(colorStrengthToEdit);
     }
+}
+
+void PointLight::start()
+{
+    add(getGameObject()->getScene()->lightManager);
+    notifyAbout(LightCommand::add);
 }
 
 void PointLight::onActive()

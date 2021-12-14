@@ -33,8 +33,6 @@ struct LightProbeData final
 class LightProbe : public Component, public Observable<LightStatus<LightProbe>>
 {
     public:
-    bool generateLightProbe{true};
-
     LightProbe();
     ~LightProbe() override;
 
@@ -45,6 +43,7 @@ class LightProbe : public Component, public Observable<LightStatus<LightProbe>>
 
     void update() override;
     void drawUIBody() override;
+    void start() override;
 
     [[nodiscard]] LightProbeData getLightData() const;
     [[nodiscard]] float getRadius() const;
@@ -60,6 +59,8 @@ class LightProbe : public Component, public Observable<LightStatus<LightProbe>>
     void setRadius(float radius_);
     void setFadeDistance(float fadeDistance_);
 
+    bool generateLightProbe{true};
+
     private:
     void onActive() override;
     void onInactive() override;
@@ -72,13 +73,13 @@ class LightProbe : public Component, public Observable<LightStatus<LightProbe>>
     glm::vec3 position{0.0f};
     float radius{1};
     float fadeDistance{1};
-    std::shared_ptr<LightManager> lightManager{nullptr};
 
     const GLuint irradianceCubemapSize = 32;
     const GLuint prefilterCubemapSize = 128;
 
     std::shared_ptr<Mesh> sphere{nullptr};
 
+    RTTR_REGISTRATION_FRIEND
     RTTR_ENABLE(Component)
 };
 }  // namespace spark::lights

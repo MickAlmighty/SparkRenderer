@@ -13,7 +13,6 @@
 #include "Shader.h"
 #include "ShapeCreator.h"
 #include "Texture.h"
-#include "Timer.h"
 
 namespace spark::lights
 {
@@ -45,14 +44,6 @@ LightProbe::~LightProbe()
 
 void LightProbe::update()
 {
-    if(!lightManager)
-    {
-        lightManager = getGameObject()->getScene()->lightManager;
-        add(lightManager);
-
-        notifyAbout(LightCommand::add);
-    }
-
     const glm::vec3 gameObjPosition = getGameObject()->transform.world.getPosition();
     if(position != gameObjPosition)
     {
@@ -102,6 +93,12 @@ void LightProbe::drawUIBody()
 
     if(fDist != getFadeDistance())
         setFadeDistance(fDist);
+}
+
+void LightProbe::start()
+{
+    add(getGameObject()->getScene()->lightManager);
+    notifyAbout(LightCommand::add);
 }
 
 LightProbeData LightProbe::getLightData() const

@@ -2,6 +2,8 @@
 
 #include "Component.h"
 #include "GameObject.h"
+#include "OpenGLContext.hpp"
+#include "Scene.h"
 
 class TestComponent1 : public spark::Component
 {
@@ -17,295 +19,250 @@ class TestComponent2 : public spark::Component
     void update() override {}
 };
 
+class GameObjectTest : public ::testing::Test
+{
+    public:
+    std::shared_ptr<spark::Scene> scene{nullptr};
+    std::shared_ptr<spark::GameObject> sut{nullptr};
+
+    private:
+    spark::OpenGLContext oglContext{1280, 720, true, true};
+
+    void SetUp() override
+    {
+        scene = std::make_shared<spark::Scene>();
+        sut = scene->spawnGameObject();
+    }
+};
+
 namespace spark
 {
-TEST(GameObjectTest, AddingNullptrComponentShouldDoNothing)
+TEST_F(GameObjectTest, AddingComponentByNullptrTypeNameShouldDoNothing)
 {
-    std::shared_ptr<GameObject> gameObject = std::make_shared<GameObject>();
-
-    ASSERT_EQ(gameObject->getAllComponentsOfType<Component>().size(), 0);
-    gameObject->addComponent(nullptr);
-    ASSERT_EQ(gameObject->getAllComponentsOfType<Component>().size(), 0);
+    ASSERT_EQ(sut->getAllComponentsOfType<Component>().size(), 0);
+    sut->addComponent(nullptr);
+    ASSERT_EQ(sut->getAllComponentsOfType<Component>().size(), 0);
 }
 
-TEST(GameObjectTest, AddComponentByType)
+TEST_F(GameObjectTest, AddComponentByType)
 {
-    std::shared_ptr<GameObject> gameObject = std::make_shared<GameObject>();
-    gameObject->addComponent<TestComponent1>();
-
-    const auto component = gameObject->getComponent<TestComponent1>();
+    const auto component = sut->addComponent<TestComponent1>();
     ASSERT_NE(component, nullptr);
-    ASSERT_EQ(component->getGameObject(), gameObject);
+    ASSERT_EQ(component->getGameObject(), sut);
+    ASSERT_EQ(sut->getComponent<TestComponent1>(), component);
 }
 
-TEST(GameObjectTest, AddingTheSameComponentTwiceShouldAddItOnlyOnce)
+TEST_F(GameObjectTest, AddingTwoComponentsAndTakingOneByTheTypeShouldReturnComponent)
 {
-    std::shared_ptr<GameObject> gameObject = std::make_shared<GameObject>();
-    const auto component = std::make_shared<TestComponent1>();
+    sut->addComponent<TestComponent1>();
+    sut->addComponent<TestComponent2>();
 
-    gameObject->addComponent(component);
-    gameObject->addComponent(component);
-
-    ASSERT_EQ(gameObject->getAllComponentsOfType<Component>().size(), 1);
+    ASSERT_NE(sut->getComponent<TestComponent2>(), nullptr);
 }
 
-TEST(GameObjectTest, AddingComponentAndTakingItByTheTypeShouldReturnComponent)
+TEST_F(GameObjectTest, AddingTwoComponentsOfTheSameTypeAndTakingAllOfThemByTheTypeShouldReturnVectorWithBoth)
 {
-    std::shared_ptr<GameObject> gameObject = std::make_shared<GameObject>();
-    const auto component = std::make_shared<TestComponent1>();
+    sut->addComponent<TestComponent2>();
+    sut->addComponent<TestComponent2>();
 
-    gameObject->addComponent(component);
-
-    ASSERT_NE(gameObject->getComponent<TestComponent1>(), nullptr);
+    ASSERT_EQ(sut->getAllComponentsOfType<TestComponent2>().size(), 2);
 }
 
-TEST(GameObjectTest, AddingTwoComponentsAndTakingOneByTheTypeShouldReturnComponent)
+TEST_F(GameObjectTest, TakingComponentByTheTypeWhenThereIsNoComponentsShouldReturnNullptr)
 {
-    std::shared_ptr<GameObject> gameObject = std::make_shared<GameObject>();
-    const auto component = std::make_shared<TestComponent1>();
-    const auto component2 = std::make_shared<TestComponent2>();
-
-    gameObject->addComponent(component);
-    gameObject->addComponent(component2);
-
-    ASSERT_NE(gameObject->getComponent<TestComponent2>(), nullptr);
+    ASSERT_EQ(sut->getComponent<TestComponent2>(), nullptr);
 }
 
-TEST(GameObjectTest, AddingTwoComponentsOfTheSameTypeAndTakingAllOfThemByTheTypeShouldReturnVectorWithBoth)
+TEST_F(GameObjectTest, TakingComponentWithMissmathedTypeShouldReturnNullptr)
 {
-    std::shared_ptr<GameObject> gameObject = std::make_shared<GameObject>();
-    const auto component = std::make_shared<TestComponent2>();
-    const auto component2 = std::make_shared<TestComponent2>();
-
-    gameObject->addComponent(component);
-    gameObject->addComponent(component2);
-
-    ASSERT_EQ(gameObject->getAllComponentsOfType<TestComponent2>().size(), 2);
+    sut->addComponent<TestComponent1>();
+    ASSERT_EQ(sut->getComponent<TestComponent2>(), nullptr);
 }
 
-TEST(GameObjectTest, TakingComponentByTheTypeWhenThereIsNoComponentsShouldReturnNullptr)
+TEST_F(GameObjectTest, RemovingComponentByNameShouldRemoveComponent)
 {
-    std::shared_ptr<GameObject> gameObject = std::make_shared<GameObject>();
+    const auto component = sut->addComponent<TestComponent1>();
 
-    ASSERT_EQ(gameObject->getComponent<TestComponent2>(), nullptr);
+    ASSERT_TRUE(sut->removeComponent(component->getName()));
+    ASSERT_EQ(sut->getComponent<TestComponent1>(), nullptr);
 }
 
-TEST(GameObjectTest, TakingComponentWithMissmathedTypeShouldReturnNullptr)
+TEST_F(GameObjectTest, RemovedComponentByNameShouldHaveNullptrGameObject)
 {
-    std::shared_ptr<GameObject> gameObject = std::make_shared<GameObject>();
-    const auto component = std::make_shared<TestComponent1>();
-    gameObject->addComponent(component);
+    const auto component = sut->addComponent<TestComponent1>();
 
-    ASSERT_EQ(gameObject->getComponent<TestComponent2>(), nullptr);
-}
-
-TEST(GameObjectTest, RemovingComponentByNameShouldRemoveComponent)
-{
-    std::shared_ptr<GameObject> gameObject = std::make_shared<GameObject>();
-    const auto component = std::make_shared<TestComponent1>();
-    gameObject->addComponent(component);
-
-    ASSERT_TRUE(gameObject->removeComponent(component->getName()));
-    ASSERT_EQ(gameObject->getComponent<TestComponent1>(), nullptr);
-}
-
-TEST(GameObjectTest, RemovedComponentByNameShouldHaveNullptrGameObject)
-{
-    std::shared_ptr<GameObject> gameObject = std::make_shared<GameObject>();
-    const auto component = std::make_shared<TestComponent1>();
-    gameObject->addComponent(component);
-
-    ASSERT_TRUE(gameObject->removeComponent(component->getName()));
+    ASSERT_TRUE(sut->removeComponent(component->getName()));
     ASSERT_EQ(component->getGameObject(), nullptr);
 }
 
-TEST(GameObjectTest, RemovingExactComponentShouldRemoveIt)
+TEST_F(GameObjectTest, RemovingExactComponentShouldRemoveIt)
 {
-    std::shared_ptr<GameObject> gameObject = std::make_shared<GameObject>();
-    const auto component = std::make_shared<TestComponent1>();
-    gameObject->addComponent(component);
+    const auto component = sut->addComponent<TestComponent1>();
 
-    ASSERT_TRUE(gameObject->removeComponent(component));
-    ASSERT_EQ(gameObject->getComponent<TestComponent1>(), nullptr);
+    ASSERT_TRUE(sut->removeComponent(component));
+    ASSERT_EQ(sut->getComponent<TestComponent1>(), nullptr);
 }
 
-TEST(GameObjectTest, RemovedExactComponentShouldHaveNullptrGameObject)
+TEST_F(GameObjectTest, RemovedExactComponentShouldHaveNullptrGameObject)
 {
-    std::shared_ptr<GameObject> gameObject = std::make_shared<GameObject>();
-    const auto component = std::make_shared<TestComponent1>();
-    gameObject->addComponent(component);
+    const auto component = sut->addComponent<TestComponent1>();
 
-    ASSERT_TRUE(gameObject->removeComponent(component));
+    ASSERT_TRUE(sut->removeComponent(component));
     ASSERT_EQ(component->getGameObject(), nullptr);
 }
 
-TEST(GameObjectTest, RemovedComponentOfTypeShouldHaveNullptrGameObject)
+TEST_F(GameObjectTest, RemovedComponentOfTypeShouldHaveNullptrGameObject)
 {
-    std::shared_ptr<GameObject> gameObject = std::make_shared<GameObject>();
-    const auto component = std::make_shared<TestComponent1>();
-    gameObject->addComponent(component);
+    const auto component = sut->addComponent<TestComponent1>();
 
-    ASSERT_TRUE(gameObject->removeComponent<TestComponent1>());
+    ASSERT_TRUE(sut->removeComponent<TestComponent1>());
     ASSERT_EQ(component->getGameObject(), nullptr);
 }
 
-TEST(GameObjectTest, RemovingAllComponentsByTypeShouldRemoveItAll)
+TEST_F(GameObjectTest, RemovingAllComponentsByTypeShouldRemoveItAll)
 {
-    std::shared_ptr<GameObject> gameObject = std::make_shared<GameObject>();
-    const auto component = std::make_shared<TestComponent1>();
-    const auto component2 = std::make_shared<TestComponent1>();
-    const auto component3 = std::make_shared<TestComponent2>();
-    gameObject->addComponent(component);
-    gameObject->addComponent(component2);
-    gameObject->addComponent(component3);
+    sut->addComponent<TestComponent1>();
+    sut->addComponent<TestComponent1>();
+    const auto component = sut->addComponent<TestComponent2>();
 
-    ASSERT_EQ(gameObject->getAllComponentsOfType<TestComponent1>().size(), 2);
-    gameObject->removeAllComponentsOfType<TestComponent1>();
-    ASSERT_EQ(gameObject->getAllComponentsOfType<TestComponent1>().size(), 0);
-    ASSERT_EQ(gameObject->getComponent<TestComponent2>(), component3);
+    ASSERT_EQ(sut->getAllComponentsOfType<TestComponent1>().size(), 2);
+    sut->removeAllComponentsOfType<TestComponent1>();
+    ASSERT_EQ(sut->getAllComponentsOfType<TestComponent1>().size(), 0);
+    ASSERT_EQ(sut->getComponent<TestComponent2>(), component);
 }
 
-TEST(GameObjectTest, AllComponentsRemovedByTypeShouldRemoveItAllShouldHaveNullptrGameObject)
+TEST_F(GameObjectTest, AllComponentsRemovedByTypeShouldRemoveItAllShouldHaveNullptrGameObject)
 {
-    std::shared_ptr<GameObject> gameObject = std::make_shared<GameObject>();
-    const auto component = std::make_shared<TestComponent1>();
-    const auto component2 = std::make_shared<TestComponent1>();
-    const auto component3 = std::make_shared<TestComponent2>();
-    gameObject->addComponent(component);
-    gameObject->addComponent(component2);
-    gameObject->addComponent(component3);
+    const auto component = sut->addComponent<TestComponent1>();
+    const auto component2 = sut->addComponent<TestComponent1>();
+    const auto component3 = sut->addComponent<TestComponent2>();
 
-    ASSERT_EQ(gameObject->getAllComponentsOfType<TestComponent1>().size(), 2);
-    gameObject->removeAllComponentsOfType<TestComponent1>();
-    ASSERT_EQ(gameObject->getAllComponentsOfType<TestComponent1>().size(), 0);
-    ASSERT_EQ(gameObject->getComponent<TestComponent2>(), component3);
+    ASSERT_EQ(sut->getAllComponentsOfType<TestComponent1>().size(), 2);
+    sut->removeAllComponentsOfType<TestComponent1>();
+    ASSERT_EQ(sut->getAllComponentsOfType<TestComponent1>().size(), 0);
+    ASSERT_EQ(sut->getComponent<TestComponent2>(), component3);
     ASSERT_EQ(component->getGameObject(), nullptr);
     ASSERT_EQ(component2->getGameObject(), nullptr);
-    ASSERT_EQ(component3->getGameObject(), gameObject);
+    ASSERT_EQ(component3->getGameObject(), sut);
 }
 
-TEST(GameObjectTest, GettingParentOfGameObjectWhenGameObjectHasNoParentShouldReturnNullptr)
+TEST_F(GameObjectTest, GameObjectSpawnedInSceneShouldHaveParent)
 {
-    const std::shared_ptr<GameObject> gameObject = std::make_shared<GameObject>();
-    ASSERT_EQ(gameObject->getParent(), nullptr);
+    ASSERT_NE(sut->getParent(), nullptr);
 }
 
-TEST(GameObjectTest, GettingParentOfGameObjectWhenGameObjectHasParentShouldReturnParent)
+TEST_F(GameObjectTest, GameObjectCantBeTheParentOfItself)
 {
-    std::shared_ptr<GameObject> gameObject = std::make_shared<GameObject>();
-    const std::shared_ptr<GameObject> parent = std::make_shared<GameObject>();
-
-    gameObject->setParent(parent);
-
-    ASSERT_EQ(gameObject->getParent(), parent);
+    const auto parent = sut->getParent();
+    sut->setParent(sut);
+    ASSERT_EQ(sut->getParent(), parent);
+    ASSERT_NE(sut->getParent(), sut);
 }
 
-TEST(GameObjectTest, ChangingParentShouldRemoveGameObjectFromItsChildrenAndAddItToTheNextParentChildrensList)
+TEST_F(GameObjectTest, ChangingParentShouldRemoveGameObjectFromItsChildrenAndAddItToTheNextParentChildrensList)
 {
-    std::shared_ptr<GameObject> gameObject = std::make_shared<GameObject>();
-    const std::shared_ptr<GameObject> parent = std::make_shared<GameObject>();
+    const auto parent = sut->getParent();
 
-    ASSERT_EQ(parent->getChildren().size(), 0);
-    gameObject->setParent(parent);
     ASSERT_EQ(parent->getChildren().size(), 1);
-    ASSERT_EQ(parent->getChildren()[0], gameObject);
-    ASSERT_EQ(gameObject->getParent(), parent);
+    ASSERT_EQ(parent->getChildren()[0], sut);
+    ASSERT_EQ(sut->getParent(), parent);
 
-    const std::shared_ptr<GameObject> parent2 = std::make_shared<GameObject>();
-    gameObject->setParent(parent2);
-    ASSERT_EQ(parent->getChildren().size(), 0);
+    const std::shared_ptr<GameObject> parent2 = scene->spawnGameObject();
+    ASSERT_EQ(parent->getChildren().size(), 2);
+    ASSERT_EQ(parent2->getChildren().size(), 0);
+    sut->setParent(parent2);
+    ASSERT_EQ(parent->getChildren().size(), 1);
     ASSERT_EQ(parent2->getChildren().size(), 1);
-    ASSERT_EQ(parent2->getChildren()[0], gameObject);
-    ASSERT_EQ(gameObject->getParent(), parent2);
+    ASSERT_EQ(parent2->getChildren()[0], sut);
+    ASSERT_EQ(sut->getParent(), parent2);
 }
 
-TEST(GameObjectTest, ChangingParentToNullptrShouldNotChangeIt)
+TEST_F(GameObjectTest, ChangingParentToNullptrShouldNotChangeIt)
 {
-    std::shared_ptr<GameObject> gameObject = std::make_shared<GameObject>();
-    const std::shared_ptr<GameObject> parent = std::make_shared<GameObject>();
-
-    ASSERT_EQ(parent->getChildren().size(), 0);
-    ASSERT_EQ(gameObject->getParent(), nullptr);
-    gameObject->setParent(parent);
+    const auto parent = sut->getParent();
     ASSERT_EQ(parent->getChildren().size(), 1);
-    ASSERT_EQ(gameObject->getParent(), parent);
-    gameObject->setParent(nullptr);
+    ASSERT_EQ(sut->getParent(), parent);
+    sut->setParent(nullptr);
     ASSERT_EQ(parent->getChildren().size(), 1);
-    ASSERT_EQ(gameObject->getParent(), parent);
+    ASSERT_EQ(sut->getParent(), parent);
 }
 
-TEST(GameObjectTest, ChangingParentToTheSameParentShouldNotChangeIt)
+TEST_F(GameObjectTest, ChangingParentToTheSameParentShouldNotChangeIt)
 {
-    std::shared_ptr<GameObject> gameObject = std::make_shared<GameObject>();
-    const std::shared_ptr<GameObject> parent = std::make_shared<GameObject>();
+    const auto parent = sut->getParent();
 
-    ASSERT_EQ(parent->getChildren().size(), 0);
-    gameObject->setParent(parent);
     ASSERT_EQ(parent->getChildren().size(), 1);
-    ASSERT_EQ(gameObject->getParent(), parent);
-    gameObject->setParent(parent);
-    ASSERT_EQ(gameObject->getParent(), parent);
+    sut->setParent(parent);
+    ASSERT_EQ(parent->getChildren().size(), 1);
+    ASSERT_EQ(sut->getParent(), parent);
 }
 
-TEST(GameObjectTest, AddingNullptrAsAChildShouldDoNothing)
+TEST_F(GameObjectTest, AddingNullptrAsAChildShouldDoNothing)
 {
-    std::shared_ptr<GameObject> gameObject = std::make_shared<GameObject>();
-
-    ASSERT_EQ(gameObject->getChildren().size(), 0);
-    gameObject->addChild(nullptr);
-    const auto& children = gameObject->getChildren();
+    ASSERT_EQ(sut->getChildren().size(), 0);
+    sut->addChild(nullptr);
+    const auto& children = sut->getChildren();
     ASSERT_EQ(children.size(), 0);
 }
 
-TEST(GameObjectTest, AddingChildTwiceShouldAddChildOnlyOnce)
+TEST_F(GameObjectTest, AddingChildShouldIncreaseChildrenCountByOne)
 {
-    std::shared_ptr<GameObject> gameObject = std::make_shared<GameObject>();
-    const std::shared_ptr<GameObject> child = std::make_shared<GameObject>();
+    const auto child = scene->spawnGameObject();
 
-    ASSERT_EQ(gameObject->getChildren().size(), 0);
-    gameObject->addChild(child);
-    gameObject->addChild(child);
-    ASSERT_EQ(gameObject->getChildren().size(), 1);
-}
-
-TEST(GameObjectTest, AddingChildShouldIncreaseChildrenCountByOne)
-{
-    std::shared_ptr<GameObject> gameObject = std::make_shared<GameObject>();
-    const std::shared_ptr<GameObject> child = std::make_shared<GameObject>();
-
-    ASSERT_EQ(gameObject->getChildren().size(), 0);
-    gameObject->addChild(child);
-    const auto& children = gameObject->getChildren();
+    ASSERT_EQ(sut->getChildren().size(), 0);
+    sut->addChild(child);
+    const auto& children = sut->getChildren();
     ASSERT_EQ(children.size(), 1);
     ASSERT_EQ(children[0], child);
 }
 
-TEST(GameObjectTest, ChildRemoval)
+TEST_F(GameObjectTest, AddingChildTwiceShouldAddChildOnlyOnce)
 {
-    std::shared_ptr<GameObject> gameObject = std::make_shared<GameObject>();
-    const std::shared_ptr<GameObject> child = std::make_shared<GameObject>();
+    const auto child = scene->spawnGameObject();
 
-    ASSERT_EQ(gameObject->getChildren().size(), 0);
-    gameObject->addChild(child);
-    const auto& children = gameObject->getChildren();
-    ASSERT_EQ(children.size(), 1);
-    ASSERT_EQ(children[0], child);
-
-    ASSERT_TRUE(gameObject->removeChild(child));
-    ASSERT_EQ(children.size(), 0);
+    ASSERT_EQ(sut->getChildren().size(), 0);
+    sut->addChild(child);
+    sut->addChild(child);
+    ASSERT_EQ(sut->getChildren().size(), 1);
 }
 
-TEST(GameObjectTest, NullptrChildRemoval)
+TEST_F(GameObjectTest, AddingGameObjectAsChildShouldRemoveItFromPreviousParentAndAddToNewParrent)
 {
-    std::shared_ptr<GameObject> gameObject = std::make_shared<GameObject>();
-    const std::shared_ptr<GameObject> child = std::make_shared<GameObject>();
+    const auto parent = sut->getParent();
+    ASSERT_EQ(parent->getChildren().size(), 1);
+    ASSERT_EQ(sut->getChildren().size(), 0);
+    const auto child = sut->getScene()->spawnGameObject();
+    ASSERT_EQ(child->getParent(), parent);
+    ASSERT_EQ(parent->getChildren().size(), 2);
+    sut->addChild(child);
+    ASSERT_EQ(parent->getChildren().size(), 1);
+    ASSERT_EQ(sut->getChildren().size(), 1);
+    ASSERT_EQ(child->getParent(), sut);
+}
 
-    ASSERT_EQ(gameObject->getChildren().size(), 0);
-    gameObject->addChild(child);
-    const auto& children = gameObject->getChildren();
+TEST_F(GameObjectTest, ChildRemoval)
+{
+    const std::shared_ptr<GameObject> child = scene->spawnGameObject();
+
+    ASSERT_EQ(sut->getChildren().size(), 0);
+    sut->addChild(child);
+    const auto& children = sut->getChildren();
+
+    ASSERT_TRUE(sut->removeChild(child));
+    ASSERT_EQ(children.size(), 0);
+    ASSERT_EQ(child->getParent(), nullptr);
+}
+
+TEST_F(GameObjectTest, NullptrChildRemoval)
+{
+    const std::shared_ptr<GameObject> child = scene->spawnGameObject();
+
+    ASSERT_EQ(sut->getChildren().size(), 0);
+    sut->addChild(child);
+    const auto& children = sut->getChildren();
     ASSERT_EQ(children.size(), 1);
 
-    ASSERT_FALSE(gameObject->removeChild(nullptr));
+    ASSERT_FALSE(sut->removeChild(nullptr));
     ASSERT_EQ(children.size(), 1);
 }
 }  // namespace spark

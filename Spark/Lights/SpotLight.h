@@ -49,6 +49,7 @@ class SpotLight final : public Component, public Observable<LightStatus<SpotLigh
     void setMaxDistance(float maxDistance_);
     void update() override;
     void drawUIBody() override;
+    void start() override;
 
     private:
     void onActive() override;
@@ -61,8 +62,8 @@ class SpotLight final : public Component, public Observable<LightStatus<SpotLigh
     float softCutOffRatio{0.2f};
     float outerCutOff{45.0f};
     float maxDistance{1.0f};
-    std::shared_ptr<LightManager> lightManager{nullptr};
 
+    RTTR_REGISTRATION_FRIEND
     RTTR_ENABLE(Component)
 };
 }  // namespace spark::lights

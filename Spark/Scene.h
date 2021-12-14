@@ -22,8 +22,6 @@ class Scene final : public std::enable_shared_from_this<Scene>, public resourceM
 {
     public:
     Scene();
-    Scene(const std::filesystem::path& path_);
-    Scene(const std::filesystem::path& path_, const std::shared_ptr<Scene>&& scene_);
     ~Scene() override;
     Scene(Scene&) = delete;
     Scene(Scene&&) = delete;
@@ -31,13 +29,14 @@ class Scene final : public std::enable_shared_from_this<Scene>, public resourceM
     Scene& operator=(const Scene&&) = delete;
 
     void update();
+    std::shared_ptr<GameObject> spawnGameObject(std::string&& name = "GameObject");
     std::shared_ptr<Camera> getCamera() const;
-    std::shared_ptr<GameObject> getRoot() const;
+
     void drawGUI();
     std::shared_ptr<GameObject> getGameObjectToPreview() const;
     std::string getName() const;
     const std::map<ShaderType, std::deque<renderers::RenderingRequest>>& getRenderingQueues() const;
-    const std::weak_ptr<PbrCubemapTexture> getSkyboxCubemap() const;
+    std::weak_ptr<PbrCubemapTexture> getSkyboxCubemap() const;
     void addRenderingRequest(const renderers::RenderingRequest& request);
     void setCubemap(const std::shared_ptr<PbrCubemapTexture>& cubemap);
 
@@ -45,7 +44,6 @@ class Scene final : public std::enable_shared_from_this<Scene>, public resourceM
     std::map<ShaderType, std::deque<renderers::RenderingRequest>> renderingQueues{};
 
     private:
-    void init();
     void drawSceneGraph();
     void drawTreeNode(std::shared_ptr<GameObject> node, bool isRootNode);
     void setGameObjectToPreview(const std::shared_ptr<GameObject> node);
@@ -57,7 +55,7 @@ class Scene final : public std::enable_shared_from_this<Scene>, public resourceM
     std::weak_ptr<GameObject> gameObjectToPreview;
     bool isGameObjectPreviewOpened{false};
 
-    RTTR_REGISTRATION_FRIEND;
+    RTTR_REGISTRATION_FRIEND
     RTTR_ENABLE()
 };
 

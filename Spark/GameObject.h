@@ -12,14 +12,13 @@ class Scene;
 class GameObject final : public std::enable_shared_from_this<GameObject>
 {
     public:
-    GameObject() = default;
-    explicit GameObject(std::string&& name);
     ~GameObject();
     GameObject(GameObject&) = delete;
     GameObject(GameObject&&) = delete;
     GameObject& operator=(const GameObject&) = delete;
     GameObject& operator=(GameObject&&) = delete;
 
+    void update();
     void drawGUI();
 
     std::string getName() const;
@@ -39,9 +38,9 @@ class GameObject final : public std::enable_shared_from_this<GameObject>
     bool removeChild(GameObject* child);
 
     template<typename T>
-    void addComponent();
-
-    void addComponent(const std::shared_ptr<Component>& component);
+    std::shared_ptr<T> addComponent();
+    std::shared_ptr<Component> addComponent(const char* componentTypeName);
+    std::shared_ptr<Component> addComponent(const std::string& componentTypeName);
 
     template<class T>
     std::shared_ptr<T> getComponent();
@@ -52,7 +51,7 @@ class GameObject final : public std::enable_shared_from_this<GameObject>
     std::vector<std::shared_ptr<T>> getAllComponentsOfType();
 
     bool removeComponent(const std::shared_ptr<Component>& c);
-    bool removeComponent(const std::string& componentName);
+    bool removeComponent(const std::string& componentTypeName);
 
     template<class T>
     bool removeComponent();
@@ -63,9 +62,9 @@ class GameObject final : public std::enable_shared_from_this<GameObject>
     Transform transform;
 
     private:
-    void update();
+    GameObject() = default;
+    explicit GameObject(std::string&& name);
     void drawGizmos();
-    void setSceneRecursive(Scene* newScene);
 
     std::weak_ptr<GameObject> parent;
     std::string name{"GameObject"};
@@ -80,11 +79,12 @@ class GameObject final : public std::enable_shared_from_this<GameObject>
 };
 
 template<typename T>
-void GameObject::addComponent()
+std::shared_ptr<T> GameObject::addComponent()
 {
     const auto component = std::make_shared<T>();
-    component->gameObject = shared_from_this();
+    component->setGameObject(shared_from_this());
     components.emplace_back(component);
+    return component;
 }
 
 template<class T>

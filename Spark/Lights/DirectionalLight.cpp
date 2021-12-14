@@ -58,14 +58,6 @@ DirectionalLight::~DirectionalLight()
 
 void DirectionalLight::update()
 {
-    if(!lightManager)
-    {
-        lightManager = getGameObject()->getScene()->lightManager;
-        add(lightManager);
-
-        notifyAbout(LightCommand::add);
-    }
-
     glm::vec3 lightDirection = getGameObject()->transform.local.getMatrix() * glm::vec4(dirLightFront, 0.0f);
     lightDirection = glm::normalize(lightDirection);
     if(lightDirection != direction)
@@ -154,6 +146,13 @@ void DirectionalLight::deactivateLightShafts()
         dirLightForLightShafts = nullptr;
         lightShaftsActive = false;
     }
+}
+
+void DirectionalLight::start()
+{
+    add(getGameObject()->getScene()->lightManager);
+
+    notifyAbout(LightCommand::add);
 }
 
 void DirectionalLight::onActive()

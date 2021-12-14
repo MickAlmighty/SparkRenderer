@@ -65,20 +65,6 @@ bool Component::getActive() const
     return active;
 }
 
-void Component::setGameObject(const std::shared_ptr<GameObject> game_object)
-{
-    if(!gameObject.expired())
-    {
-        gameObject.lock()->removeComponent(shared_from_this());
-    }
-
-    gameObject = game_object;
-    if(game_object)
-    {
-        game_object->addComponent(shared_from_this());
-    }
-}
-
 void Component::setActive(bool active_)
 {
     active = active_;
@@ -104,6 +90,15 @@ std::shared_ptr<Component> Component::getSharedPtrBase()
 {
     return std::static_pointer_cast<Component>(shared_from_this());
 }
+
+void Component::setGameObject(std::shared_ptr<GameObject> game_object)
+{
+    if(game_object)
+    {
+        gameObject = game_object;
+        start();
+    }
+}
 }  // namespace spark
 
 RTTR_REGISTRATION
@@ -111,5 +106,5 @@ RTTR_REGISTRATION
     rttr::registration::class_<spark::Component>("Component")
         .method("getSharedPtrBase", &spark::Component::getSharedPtrBase)
         .property("active", &spark::Component::active)
-        .property("gameObject", &spark::Component::getGameObject, &spark::Component::setGameObject, rttr::registration::public_access);
+        .property("gameObject", &spark::Component::getGameObject, &spark::Component::setGameObject);
 }

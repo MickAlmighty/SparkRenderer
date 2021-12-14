@@ -17,9 +17,9 @@ class Component : public std::enable_shared_from_this<Component>
     Component& operator=(Component&&) = delete;
 
     virtual void update() = 0;
+    virtual void start() {}
     void drawUI();
 
-    void setGameObject(const std::shared_ptr<GameObject> game_object);
     std::shared_ptr<GameObject> getGameObject() const;
     std::string getName() const;
     bool getActive() const;
@@ -33,6 +33,7 @@ class Component : public std::enable_shared_from_this<Component>
     private:
     virtual void onActive() {}
     virtual void onInactive() {}
+    void setGameObject(std::shared_ptr<GameObject> game_object);
 
     void beginDrawingWindow();
     void removeComponentFromGameObjectButton();
@@ -42,7 +43,7 @@ class Component : public std::enable_shared_from_this<Component>
     std::weak_ptr<GameObject> gameObject;
     bool active{true};
     friend class GameObject;
-    RTTR_REGISTRATION_FRIEND;
-    RTTR_ENABLE();
+    RTTR_REGISTRATION_FRIEND
+    RTTR_ENABLE()
 };
 }  // namespace spark

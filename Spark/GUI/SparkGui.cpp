@@ -6,31 +6,13 @@
 #include "ImGui/imgui_impl_glfw.h"
 #include "ImGui/imgui_impl_opengl3.h"
 #include "JsonSerializer.h"
-#include "lights/DirectionalLight.h"
-#include "lights/LightProbe.h"
-#include "lights/PointLight.h"
-#include "lights/SpotLight.h"
-#include "MeshPlane.h"
 #include "Model.h"
-#include "ModelMesh.h"
 #include "ResourceLibrary.h"
-#include "Skybox.h"
 #include "Spark.h"
 #include "Texture.h"
 
 namespace spark
 {
-const std::map<std::string, std::function<std::shared_ptr<Component>()>> SparkGui::componentCreation{
-    // TODO: replace with a reflection-based list
-    {"ModelMesh", [] { return std::make_shared<ModelMesh>(); }},
-    {"MeshPlane", [] { return std::make_shared<MeshPlane>(); }},
-    {"DirectionalLight", [] { return std::make_shared<lights::DirectionalLight>(); }},
-    {"PointLight", [] { return std::make_shared<lights::PointLight>(); }},
-    {"SpotLight", [] { return std::make_shared<lights::SpotLight>(); }},
-    {"LightProbe", [] { return std::make_shared<lights::LightProbe>(); }},
-    {"Skybox", [] { return std::make_shared<Skybox>(); }},
-    {"Animation", [] { return std::make_shared<Animation>(); }}};
-
 void SparkGui::drawGui()
 {
     PUSH_DEBUG_GROUP(IMGUI)
@@ -143,9 +125,9 @@ int SparkGui::checkCurrentItem(const char** items) const
     return 0;
 }
 
-std::shared_ptr<Component> SparkGui::addComponent()
+std::optional<std::string> SparkGui::addComponent()
 {
-    std::shared_ptr<Component> component = nullptr;
+    std::optional<std::string> componentTypeNameOpt{std::nullopt};
     if(ImGui::Button("Add Component"))
     {
         ImGui::OpenPopup("Components");
@@ -153,12 +135,21 @@ std::shared_ptr<Component> SparkGui::addComponent()
 
     if(ImGui::BeginPopupModal("Components", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
     {
-        for(const auto& componentType : componentCreation)
+        for(auto& type : rttr::type::get_types())
         {
-            if(ImGui::Button(componentType.first.c_str()))
+            //SPARK_INFO("{}", type.get_name().begin());
+            if(type.is_wrapper())
             {
-                component = componentType.second();
-                ImGui::CloseCurrentPopup();
+                if(auto rawType = type.get_wrapped_type().get_raw_type();
+                   rawType.is_derived_from<Component>() && rawType != rttr::type::get<Component>())
+                {
+                    std::string componentTypeName{rawType.get_name().begin()};
+                    if(ImGui::Button(componentTypeName.c_str()))
+                    {
+                        componentTypeNameOpt = componentTypeName;
+                        ImGui::CloseCurrentPopup();
+                    }
+                }
             }
         }
         if(ImGui::Button("Close"))
@@ -167,7 +158,7 @@ std::shared_ptr<Component> SparkGui::addComponent()
         }
         ImGui::EndPopup();
     }
-    return component;
+    return componentTypeNameOpt;
 }
 
 std::optional<std::shared_ptr<resources::Model>> SparkGui::selectModelByFilePicker()

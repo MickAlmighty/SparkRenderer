@@ -1,7 +1,13 @@
 add_executable(SparkExec main.cpp)
 
 target_include_directories(SparkExec PUBLIC ${CMAKE_SOURCE_DIR}/Spark)
-target_link_libraries(SparkExec Spark)
+
+if (MSVC_VERSION GREATER_EQUAL "1900")
+    #https://github.com/headupinclouds/cmake_whole_archive
+    target_link_libraries(SparkExec Spark -WHOLEARCHIVE:$<TARGET_FILE:Spark>)
+else()
+    target_link_libraries(SparkExec Spark)
+endif()
 
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
     file(GLOB DYNAMIC_LIBS  ${CMAKE_SOURCE_DIR}/thirdparty/lib/ReleaseLib/*.dll

@@ -31,8 +31,9 @@ class ModelMesh final : public Component
     private:
     std::string modelPath;
     std::shared_ptr<resources::Model> model{nullptr};
-    RTTR_REGISTRATION_FRIEND;
-    RTTR_ENABLE(Component);
+
+    RTTR_REGISTRATION_FRIEND
+    RTTR_ENABLE(Component)
 };
 
 }  // namespace spark

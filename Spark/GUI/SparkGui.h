@@ -24,10 +24,10 @@ class SparkGui
     SparkGui() = default;
     ~SparkGui() = default;
 
-    static std::shared_ptr<Component> addComponent();
+    static std::optional<std::string> addComponent();
     static std::optional<std::shared_ptr<resources::Model>> selectModelByFilePicker();
     static std::optional<std::shared_ptr<resources::Texture>> selectTextureByFilePicker();
-    static std::optional<std::shared_ptr<resources::AnimationData>> SparkGui::selectAnimationDataByFilePicker();
+    static std::optional<std::shared_ptr<resources::AnimationData>> selectAnimationDataByFilePicker();
     static std::optional<std::shared_ptr<Scene>> selectSceneByFilePicker();
     static std::filesystem::path getRelativePathToSaveSceneByFilePicker();
     static std::filesystem::path getRelativePathToSaveAnimationByFilePicker();
@@ -42,7 +42,6 @@ class SparkGui
     static std::shared_ptr<resourceManagement::Resource> getResourceIdentifierByFilePicker(const char* buttonName,
                                                                                            const std::vector<std::string>& fileExtensions);
 
-    const static std::map<std::string, std::function<std::shared_ptr<Component>()>> componentCreation;
     inline static imgui_addons::ImGuiFileBrowser file_dialog{};
 };
 }  // namespace spark

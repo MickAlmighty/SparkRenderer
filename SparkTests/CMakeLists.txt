@@ -22,7 +22,7 @@ target_sources(SparkTests PRIVATE
 "SerializationTest.cpp"
 "MockSpark.hpp"
 "GameObjectTest.cpp"
-"ComponentTest.cpp")
+)
 
 target_include_directories(SparkTests PUBLIC ${CMAKE_SOURCE_DIR}/Spark)
 message(${googletest_SOURCE_DIR})

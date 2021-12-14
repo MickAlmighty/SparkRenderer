@@ -6,7 +6,6 @@
 #include "Component.h"
 #include "GUI/ImGui/imgui.h"
 #include "GUI/ImGuizmo.h"
-#include "JsonSerializer.h"
 #include "Scene.h"
 #include "GUI/SparkGui.h"
 #include "Logging.h"
@@ -53,7 +52,7 @@ Scene* GameObject::getScene() const
 
 void GameObject::setParent(const std::shared_ptr<GameObject> newParent)
 {
-    if(const auto currentParent = parent.lock(); newParent && newParent != currentParent)
+    if(const auto currentParent = parent.lock(); newParent && newParent != currentParent && newParent.get() != this)
     {
         if(currentParent)
         {
@@ -78,11 +77,12 @@ void GameObject::addChild(const std::shared_ptr<GameObject>& newChild)
         return;
     }
 
-    const auto gameObjectIt = std::find_if(std::begin(children), std::end(children),
-                                           [&newChild](const std::shared_ptr<GameObject>& gameObject) { return gameObject == newChild; });
-
-    if(gameObjectIt != children.end())
+    if(const auto gameObjectIt = std::find_if(std::begin(children), std::end(children),
+                                              [&newChild](const std::shared_ptr<GameObject>& gameObject) { return gameObject == newChild; });
+       gameObjectIt != children.end())
+    {
         return;
+    }
 
     const auto setParentFor = [newParent = shared_from_this()](const std::shared_ptr<GameObject>& newChild)
     {
@@ -120,18 +120,39 @@ bool GameObject::removeChild(GameObject* child)
     return false;
 }
 
-void GameObject::addComponent(const std::shared_ptr<Component>& component)
+std::shared_ptr<Component> GameObject::addComponent(const char* componentTypeName)
 {
-    if(component)
+    if(componentTypeName)
     {
-        if(const auto componentIt = std::find_if(std::begin(components), std::end(components),
-                                                 [&component](const std::shared_ptr<Component>& c) { return c == component; });
-           componentIt == components.end())
+        return addComponent(componentTypeName);
+    }
+
+    return nullptr;
+}
+
+std::shared_ptr<Component> GameObject::addComponent(const std::string& componentTypeName)
+{
+    std::shared_ptr<Component> component{nullptr};
+
+    if(const auto type = rttr::type::get_by_name(componentTypeName); type.is_derived_from(rttr::type::get<Component>()))
+    {
+        const auto constructComponentByTypeName = [&type](const rttr::variant& variant)
         {
-            component->gameObject = shared_from_this();
+            const rttr::method convMethod{type.get_method("getSharedPtrBase")};
+
+            const rttr::variant wrappedVal{variant.extract_wrapped_value()};
+            return convMethod.invoke(wrappedVal).get_value<std::shared_ptr<Component>>();
+        };
+
+        if(const auto variant = type.create(); variant.is_valid())
+        {
+            component = constructComponentByTypeName(variant);
+            component->setGameObject(shared_from_this());
             components.push_back(component);
         }
     }
+
+    return component;
 }
 
 const std::vector<std::shared_ptr<Component>>& GameObject::getComponents() const
@@ -152,11 +173,11 @@ bool GameObject::removeComponent(const std::shared_ptr<Component>& c)
     return false;
 }
 
-bool GameObject::removeComponent(const std::string& componentName)
+bool GameObject::removeComponent(const std::string& componentTypeName)
 {
     const auto componentIt =
         std::find_if(std::begin(components), std::end(components),
-                     [&componentName](const std::shared_ptr<Component>& component) { return component->getName() == componentName; });
+                     [&componentTypeName](const std::shared_ptr<Component>& component) { return component->getName() == componentTypeName; });
     if(componentIt != components.end())
     {
         (*componentIt)->gameObject.reset();
@@ -189,9 +210,9 @@ void GameObject::drawGUI()
         component->drawUI();
 
     ImGui::NewLine();
-    if(const std::shared_ptr<Component> componentToAdd = SparkGui::addComponent(); componentToAdd != nullptr)
+    if(const auto componentNameOpt = SparkGui::addComponent(); componentNameOpt.has_value())
     {
-        addComponent(componentToAdd);
+        addComponent(componentNameOpt.value());
     }
 }
 
@@ -288,14 +309,6 @@ void GameObject::drawGizmos()
     {
         transform.local.setRotationDegrees(rotation);
     }
-}
-
-void GameObject::setSceneRecursive(Scene* newScene)
-{
-    scene = newScene;
-
-    for(const auto& child : children)
-        child->setSceneRecursive(newScene);
 }
 
 GameObject::GameObject(std::string&& name) : name(std::move(name)) {}
