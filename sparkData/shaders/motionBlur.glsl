@@ -35,18 +35,12 @@ layout (std140) uniform Camera
     mat4 invertedProjection;
 } camera;
 
-#define MAX_SAMPLES 32
-
 vec4 worldPosFromDepth(float depth, mat4 invProj, mat4 invView) {
     float z = depth;
-    // if (z == 0.0f)
-    // {
-    //     z = 0.01f;
-    // }
-    vec4 clipSpacePosition = vec4(texCoords * 2.0 - 1.0, z, 1.0);
-    vec4 viewSpacePosition = invProj * clipSpacePosition;
+    vec4 ndcPosition = vec4(texCoords * 2.0 - 1.0, z, 1.0);
+    vec4 viewSpacePosition = invProj * ndcPosition;
 
-    // Perspective division
+    // inverse of perspective division
     viewSpacePosition /= viewSpacePosition.w;
 
     vec4 worldSpacePosition = invView * viewSpacePosition;
@@ -54,46 +48,29 @@ vec4 worldPosFromDepth(float depth, mat4 invProj, mat4 invView) {
     return worldSpacePosition;
 }
 
-vec4 viewPosFromDepth(float depth, mat4 invProj) {
-    float z = depth;
-    if (z == 0.0f)
-    {
-        z = 0.05f;
-    }
-    vec4 clipSpacePosition = vec4(texCoords * 2.0 - 1.0, z, 1.0);
-    vec4 viewSpacePosition = invProj * clipSpacePosition;
-
-    // Perspective division
-    viewSpacePosition /= viewSpacePosition.w;
-
-    return viewSpacePosition;
-}
+#define MAX_SAMPLES 16
+#define ONE_BY_MAX_SAMPLES 1.0 / float(MAX_SAMPLES)
 
 void main()
 {
-    float depthValue = texture(depthTexture, texCoords).x;
-    vec3 color = texture(colorTexture, texCoords).rgb;
-    
-    vec4 worldPos = worldPosFromDepth(depthValue, camera.invertedProjection, camera.invertedView);
-    vec4 previousViewPos = prevViewProj * worldPos;
-    previousViewPos.xyz /= previousViewPos.w;
+    const float depthValue = texture(depthTexture, texCoords).x;
+	vec3 color = texture(colorTexture, texCoords).rgb;
+
+    const vec4 worldPos = worldPosFromDepth(depthValue, camera.invertedProjection, camera.invertedView);
+    const vec4 previousClipSpacePos = prevViewProj * worldPos;
+    const vec2 previousNdcPos = (previousClipSpacePos.xyz / previousClipSpacePos.w).xy;
 
     //screen space vectors
-    vec2 currentPos = texCoords;
-    vec2 previousPos = previousViewPos.xy * 0.5 + 0.5;
-    
-    vec2 velocity = (previousPos.xy - currentPos.xy);
-    velocity *= blurScale;
-    
-    float speed = length(velocity / texelSize);
-    
-    int numSamples = clamp(int(speed), 1, MAX_SAMPLES);
-    for ( uint i = 1; i < numSamples; ++i)
+    const vec2 currentPos = texCoords;
+    const vec2 previousPos = previousNdcPos.xy * 0.5 + 0.5;
+
+    const vec2 velocity = (previousPos.xy - currentPos.xy) * blurScale;
+
+    for (uint i = 1; i < MAX_SAMPLES; ++i)
     {
-        vec2 offset = velocity * (float(i) / float(numSamples - 1) - 0.5);
-        vec3 currentColor = texture(colorTexture, texCoords + offset).rgb;
-        color += currentColor;
+        const vec2 offset = velocity * (float(i) * ONE_BY_MAX_SAMPLES - 0.5);
+        color += texture(colorTexture, texCoords + offset).rgb;
     }
-    //FragColor = vec3(velocity.xyy);
-    FragColor = color / float(numSamples);
+    //FragColor = vec3(velocity.xy, 0);
+    FragColor = color * ONE_BY_MAX_SAMPLES;
 }

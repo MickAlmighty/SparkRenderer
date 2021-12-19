@@ -16,9 +16,9 @@ GLuint PostProcessingStack::process(GLuint lightingTexture, GLuint depthTexture,
     renderCubemap(lightingTexture, depthTexture, scene);
     depthOfField(depthTexture, scene->getCamera());
     lightShafts(depthTexture, scene->getCamera());
-    motionBlur(depthTexture, scene->getCamera());
     bloom(lightingTexture);
     toneMapping();
+    motionBlur(depthTexture, scene->getCamera());
     fxaa();
 
     return textureHandle;

@@ -2,6 +2,7 @@
 
 #include "Clock.h"
 #include "CommonUtils.h"
+#include "Logging.h"
 #include "Shader.h"
 #include "Spark.h"
 
@@ -21,7 +22,9 @@ MotionBlurPass::~MotionBlurPass()
 
 std::optional<GLuint> MotionBlurPass::process(const std::shared_ptr<Camera>& camera, GLuint colorTexture, GLuint depthTexture)
 {
-    const glm::mat4 projectionView = camera->getProjectionReversedZ() * camera->getViewMatrix();
+    const glm::f64mat4 viewMatrix = camera->getViewMatrix();
+    const glm::f64mat4 projectionMatrix = camera->getProjectionReversedZ();
+    const glm::f64mat4 projectionView = projectionMatrix * viewMatrix;
 
     if(!initialized)
     {
@@ -35,15 +38,24 @@ std::optional<GLuint> MotionBlurPass::process(const std::shared_ptr<Camera>& cam
     if(projectionView == prevProjectionView)
         return {};
 
-    PUSH_DEBUG_GROUP(MOTION_BLUR);
+    PUSH_DEBUG_GROUP(MOTION_BLUR)
     {
+        constexpr double deltaTarget = 1.0 / 60.0;
         glViewport(0, 0, w, h);
         glBindFramebuffer(GL_FRAMEBUFFER, framebuffer1);
 
         motionBlurShader->use();
         motionBlurShader->bindUniformBuffer("Camera", camera->getUbo());
         motionBlurShader->setMat4("prevViewProj", prevProjectionView);
-        motionBlurShader->setFloat("blurScale", static_cast<float>(Clock::getFPS()) / 60.0f);
+
+        if(const auto blurScaleBase = static_cast<float>(deltaTarget / Clock::getDeltaTime()); blurScaleBase < 1.0f)
+        {
+            motionBlurShader->setFloat("blurScale", blurScaleBase);
+        }
+        else
+        {
+            motionBlurShader->setFloat("blurScale", 1.0f + glm::log2(blurScaleBase));
+        }
 
         const glm::vec2 texelSize = {1.0f / static_cast<float>(w), 1.0f / static_cast<float>(h)};
         motionBlurShader->setVec2("texelSize", texelSize);
@@ -56,7 +68,7 @@ std::optional<GLuint> MotionBlurPass::process(const std::shared_ptr<Camera>& cam
     glBindTextures(0, 2, nullptr);
     prevProjectionView = projectionView;
 
-    POP_DEBUG_GROUP();
+    POP_DEBUG_GROUP()
     return texture1;
 }
 
@@ -69,7 +81,7 @@ void MotionBlurPass::resize(unsigned int width, unsigned int height)
 
 void MotionBlurPass::createFrameBuffersAndTextures()
 {
-    utils::recreateTexture2D(texture1, w, h, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::recreateTexture2D(texture1, w, h, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
     utils::recreateFramebuffer(framebuffer1, {texture1});
 }
 }  // namespace spark::effects

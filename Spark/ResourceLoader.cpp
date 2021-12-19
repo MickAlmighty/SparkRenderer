@@ -61,6 +61,8 @@ std::shared_ptr<resourceManagement::Resource> ResourceLoader::createCompressedTe
     float maxAnisotropicFiltering{1.0f};
     glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &maxAnisotropicFiltering);
     glTexParameterf(Target, GL_TEXTURE_MAX_ANISOTROPY, maxAnisotropicFiltering);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
     glm::tvec3<GLsizei> const Extent(gliTexture.extent());
     GLsizei const FaceTotal = static_cast<GLsizei>(gliTexture.layers() * gliTexture.faces());
