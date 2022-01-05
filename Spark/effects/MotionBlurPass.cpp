@@ -36,11 +36,25 @@ std::optional<GLuint> MotionBlurPass::process(const std::shared_ptr<Camera>& cam
     }
 
     if(projectionView == prevProjectionView)
+    {
         return {};
+    }
+
+    const auto blurScale = []
+    {
+        constexpr double deltaTarget = 1.0 / 60.0;
+        if(const auto blurScaleBase = static_cast<float>(deltaTarget / Clock::getDeltaTime()); blurScaleBase < 1.0f)
+        {
+            return blurScaleBase;
+        }
+        else
+        {
+            return 1.0f + glm::log2(blurScaleBase);
+        }
+    }();
 
     PUSH_DEBUG_GROUP(MOTION_BLUR)
     {
-        constexpr double deltaTarget = 1.0 / 60.0;
         glViewport(0, 0, w, h);
         glBindFramebuffer(GL_FRAMEBUFFER, framebuffer1);
 
@@ -48,14 +62,7 @@ std::optional<GLuint> MotionBlurPass::process(const std::shared_ptr<Camera>& cam
         motionBlurShader->bindUniformBuffer("Camera", camera->getUbo());
         motionBlurShader->setMat4("prevViewProj", prevProjectionView);
 
-        if(const auto blurScaleBase = static_cast<float>(deltaTarget / Clock::getDeltaTime()); blurScaleBase < 1.0f)
-        {
-            motionBlurShader->setFloat("blurScale", blurScaleBase);
-        }
-        else
-        {
-            motionBlurShader->setFloat("blurScale", 1.0f + glm::log2(blurScaleBase));
-        }
+        motionBlurShader->setFloat("blurScale", blurScale);
 
         const glm::vec2 texelSize = {1.0f / static_cast<float>(w), 1.0f / static_cast<float>(h)};
         motionBlurShader->setVec2("texelSize", texelSize);
@@ -81,7 +88,7 @@ void MotionBlurPass::resize(unsigned int width, unsigned int height)
 
 void MotionBlurPass::createFrameBuffersAndTextures()
 {
-    utils::recreateTexture2D(texture1, w, h, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::recreateTexture2D(texture1, w, h, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
     utils::recreateFramebuffer(framebuffer1, {texture1});
 }
 }  // namespace spark::effects

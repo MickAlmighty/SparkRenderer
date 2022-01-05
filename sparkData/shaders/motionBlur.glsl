@@ -48,13 +48,12 @@ vec4 worldPosFromDepth(float depth, mat4 invProj, mat4 invView) {
     return worldSpacePosition;
 }
 
-#define MAX_SAMPLES 16
+#define MAX_SAMPLES 12
 #define ONE_BY_MAX_SAMPLES 1.0 / float(MAX_SAMPLES)
 
 void main()
 {
     const float depthValue = texture(depthTexture, texCoords).x;
-	vec3 color = texture(colorTexture, texCoords).rgb;
 
     const vec4 worldPos = worldPosFromDepth(depthValue, camera.invertedProjection, camera.invertedView);
     const vec4 previousClipSpacePos = prevViewProj * worldPos;
@@ -64,13 +63,16 @@ void main()
     const vec2 currentPos = texCoords;
     const vec2 previousPos = previousNdcPos.xy * 0.5 + 0.5;
 
-    const vec2 velocity = (previousPos.xy - currentPos.xy) * blurScale;
+    const vec2 velocityNotScaled = previousPos - currentPos;
+    const vec2 velocity = velocityNotScaled * blurScale;
 
-    for (uint i = 1; i < MAX_SAMPLES; ++i)
+    const vec2 blurStartTexCoords = texCoords - velocity * 0.5f;
+
+    vec3 color = vec3(0);
+    for (uint i = 0; i < MAX_SAMPLES; ++i)
     {
-        const vec2 offset = velocity * (float(i) * ONE_BY_MAX_SAMPLES - 0.5);
-        color += texture(colorTexture, texCoords + offset).rgb;
+        color += texture(colorTexture, blurStartTexCoords + velocity * (float(i) * ONE_BY_MAX_SAMPLES)).rgb;
     }
-    //FragColor = vec3(velocity.xy, 0);
+
     FragColor = color * ONE_BY_MAX_SAMPLES;
 }

@@ -5,8 +5,8 @@
 namespace spark::effects
 {
 PostProcessingStack::PostProcessingStack(unsigned int width, unsigned int height)
-    : toneMapper(width, height), bloomPass(width, height), dofPass(width, height), lightShaftsPass(width, height),
-      skyboxPass(width, height), motionBlurPass(width, height), fxaaPass(width, height)
+    : toneMapper(width, height), bloomPass(width, height), dofPass(width, height), lightShaftsPass(width, height), skyboxPass(width, height),
+      motionBlurPass(width, height), fxaaPass(width, height)
 {
 }
 
@@ -18,8 +18,8 @@ GLuint PostProcessingStack::process(GLuint lightingTexture, GLuint depthTexture,
     lightShafts(depthTexture, scene->getCamera());
     bloom(lightingTexture);
     toneMapping();
-    motionBlur(depthTexture, scene->getCamera());
     fxaa();
+    motionBlur(depthTexture, scene->getCamera());
 
     return textureHandle;
 }
@@ -128,7 +128,7 @@ void PostProcessingStack::bloom(GLuint lightingTexture)
 
 void PostProcessingStack::motionBlur(GLuint depthTexture, const std::shared_ptr<Camera>& camera)
 {
-    if(auto outputTextureOpt = motionBlurPass.process(camera, textureHandle, depthTexture); outputTextureOpt.has_value() && isMotionBlurEnabled)
+    if(const auto outputTextureOpt = motionBlurPass.process(camera, textureHandle, depthTexture); isMotionBlurEnabled && outputTextureOpt.has_value())
     {
         textureHandle = outputTextureOpt.value();
     }
