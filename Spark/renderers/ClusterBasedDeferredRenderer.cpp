@@ -1,6 +1,7 @@
 #include "ClusterBasedDeferredRenderer.hpp"
 
 #include "CommonUtils.h"
+#include "ICamera.hpp"
 #include "Shader.h"
 #include "Spark.h"
 
@@ -20,15 +21,15 @@ ClusterBasedDeferredRenderer::~ClusterBasedDeferredRenderer()
     glDeleteTextures(1, &lightingTexture);
 }
 
-void ClusterBasedDeferredRenderer::renderMeshes(const std::shared_ptr<Scene>& scene)
+void ClusterBasedDeferredRenderer::renderMeshes(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera)
 {
-    gBuffer.fill(scene->getRenderingQueues(), scene->getCamera()->getUbo());
+    gBuffer.fill(scene->getRenderingQueues(), camera->getUbo());
 
-    lightCullingPass.process(gBuffer.depthTexture, scene);
+    lightCullingPass.process(gBuffer.depthTexture, scene, camera);
 
     GLuint ssaoTexture{0};
     if(isAmbientOcclusionEnabled)
-        ssaoTexture = ao.process(gBuffer.depthTexture, gBuffer.normalsTexture, scene->getCamera());
+        ssaoTexture = ao.process(gBuffer.depthTexture, gBuffer.normalsTexture, camera);
 
     PUSH_DEBUG_GROUP(TILE_BASED_DEFERRED)
     float clearRgba[] = {0.0f, 0.0f, 0.0f, 0.0f};
@@ -38,7 +39,7 @@ void ClusterBasedDeferredRenderer::renderMeshes(const std::shared_ptr<Scene>& sc
 
     lightingShader->use();
     lightingShader->setVec2("tileSize", lightCullingPass.pxTileSize);
-    lightingShader->bindUniformBuffer("Camera", scene->getCamera()->getUbo());
+    lightingShader->bindUniformBuffer("Camera", camera->getUbo());
     lightingShader->bindSSBO("DirLightData", scene->lightManager->getDirLightSSBO());
     lightingShader->bindSSBO("PointLightData", scene->lightManager->getPointLightSSBO());
     lightingShader->bindSSBO("SpotLightData", scene->lightManager->getSpotLightSSBO());

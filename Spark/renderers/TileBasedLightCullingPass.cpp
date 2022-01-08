@@ -1,7 +1,8 @@
 #include "TileBasedLightCullingPass.hpp"
 
-#include "Camera.h"
+#include "EditorCamera.hpp"
 #include "CommonUtils.h"
+#include "Scene.h"
 #include "Shader.h"
 #include "Spark.h"
 
@@ -19,7 +20,7 @@ TileBasedLightCullingPass::~TileBasedLightCullingPass()
     glDeleteTextures(1, &lightsPerTileTexture);
 }
 
-void TileBasedLightCullingPass::process(GLuint depthTexture, const std::shared_ptr<Scene>& scene)
+void TileBasedLightCullingPass::process(GLuint depthTexture, const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera)
 {
     PUSH_DEBUG_GROUP(TILE_BASED_LIGHTS_CULLING);
     pointLightIndices.clearData();
@@ -27,7 +28,7 @@ void TileBasedLightCullingPass::process(GLuint depthTexture, const std::shared_p
     lightProbeIndices.clearData();
 
     tileBasedLightCullingShader->use();
-    tileBasedLightCullingShader->bindUniformBuffer("Camera", scene->getCamera()->getUbo());
+    tileBasedLightCullingShader->bindUniformBuffer("Camera", camera->getUbo());
 
     tileBasedLightCullingShader->bindSSBO("PointLightIndices", pointLightIndices);
     tileBasedLightCullingShader->bindSSBO("SpotLightIndices", spotLightIndices);

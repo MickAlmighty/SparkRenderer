@@ -2,17 +2,14 @@
 
 #include <memory>
 
-#include "Buffer.hpp"
 #include "GBuffer.hpp"
 #include "glad_glfw3.h"
 #include "Renderer.hpp"
 #include "TileBasedLightCullingPass.hpp"
-#include "effects/AmbientOcclusion.hpp"
-#include "lights/LightManager.h"
 
 namespace spark
 {
-struct PbrCubemapTexture;
+class PbrCubemapTexture;
 }
 
 namespace spark::renderers
@@ -28,7 +25,7 @@ class TileBasedDeferredRenderer : public Renderer
     ~TileBasedDeferredRenderer() override;
 
     protected:
-    void renderMeshes(const std::shared_ptr<Scene>& scene) override;
+    void renderMeshes(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera) override;
     void resizeDerived(unsigned int width, unsigned int height) override;
 
     GLuint getDepthTexture() const override;

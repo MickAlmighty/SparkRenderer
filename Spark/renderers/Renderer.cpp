@@ -1,8 +1,10 @@
 #include "Renderer.hpp"
 
 #include "CommonUtils.h"
+#include "ICamera.hpp"
 #include "effects/PostProcessingStack.hpp"
 #include "LightProbesRenderer.hpp"
+#include "Logging.h"
 #include "RenderingRequest.h"
 #include "Spark.h"
 
@@ -21,15 +23,29 @@ Renderer::~Renderer()
     glDeleteFramebuffers(1, &uiShapesFramebuffer);
 }
 
-void Renderer::render(const std::shared_ptr<Scene>& scene)
+void Renderer::render(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera, unsigned int width, unsigned int height,
+                      unsigned int outputFramebuffer)
 {
-    lightProbesRenderer.process(scene);
-    renderMeshes(scene);
-    postProcessingPass(scene);
+    render(scene, camera, 0, 0, width, height, outputFramebuffer);
+}
 
-    helperShapes(scene);
-    renderToScreen();
-    // render to screen
+void Renderer::render(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera, unsigned x, unsigned y, unsigned width, unsigned height, unsigned outputFramebuffer)
+{
+    if(scene && camera)
+    {
+        lightProbesRenderer.process(scene);
+        renderMeshes(scene, camera);
+        postProcessingPass(scene, camera);
+
+        helperShapes(scene, camera);
+
+        renderToFramebuffer(outputFramebuffer, x, y, width, height);
+    }
+    else
+    {
+        clearFramebuffer(outputFramebuffer, width, height);
+        SPARK_WARN("Missing Scene or Camera! Clearing framebufer!");
+    }
 }
 
 void Renderer::resize(unsigned int width, unsigned int height)
@@ -54,9 +70,9 @@ void Renderer::drawGui()
     postProcessingStack.drawGui();
 }
 
-void Renderer::postProcessingPass(const std::shared_ptr<Scene>& scene)
+void Renderer::postProcessingPass(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera)
 {
-    textureHandle = postProcessingStack.process(getLightingTexture(), getDepthTexture(), scene);
+    textureHandle = postProcessingStack.process(getLightingTexture(), getDepthTexture(), scene, camera);
 }
 
 void Renderer::resizeBase(unsigned int width, unsigned int height)
@@ -67,7 +83,7 @@ void Renderer::resizeBase(unsigned int width, unsigned int height)
     postProcessingStack.resize(w, h);
 }
 
-void Renderer::helperShapes(const std::shared_ptr<Scene>& scene)
+void Renderer::helperShapes(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera)
 {
     const auto it = scene->getRenderingQueues().find(ShaderType::COLOR_ONLY);
     if(it == scene->getRenderingQueues().end())
@@ -89,7 +105,7 @@ void Renderer::helperShapes(const std::shared_ptr<Scene>& scene)
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     // light texture must be bound here
     solidColorShader->use();
-    solidColorShader->bindUniformBuffer("Camera", scene->getCamera()->getUbo());
+    solidColorShader->bindUniformBuffer("Camera", camera->getUbo());
 
     for(auto& request : renderingQueue)
     {
@@ -102,10 +118,11 @@ void Renderer::helperShapes(const std::shared_ptr<Scene>& scene)
     POP_DEBUG_GROUP()
 }
 
-void Renderer::renderToScreen()
+void Renderer::renderToFramebuffer(unsigned int outputFramebuffer, unsigned int x, unsigned int y, unsigned int width, unsigned int height) const
 {
     PUSH_DEBUG_GROUP(RENDER_TO_SCREEN)
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glViewport(x, y, width, height);
+    glBindFramebuffer(GL_FRAMEBUFFER, outputFramebuffer);
 
     glDisable(GL_DEPTH_TEST);
 
@@ -116,7 +133,25 @@ void Renderer::renderToScreen()
     screenQuad.draw();
 
     glEnable(GL_DEPTH_TEST);
+
     glDepthFunc(GL_LESS);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glViewport(0, 0, w, h);
+    POP_DEBUG_GROUP()
+}
+
+void Renderer::clearFramebuffer(unsigned outputFramebuffer, unsigned width, unsigned height) const
+{
+    PUSH_DEBUG_GROUP(CLEAR_OUTPUT_INVALID_SCENE)
+    glViewport(0, 0, width, height);
+    glBindFramebuffer(GL_FRAMEBUFFER, outputFramebuffer);
+
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glViewport(0, 0, w, h);
     POP_DEBUG_GROUP()
 }
 }  // namespace spark::renderers

@@ -4,9 +4,13 @@
 
 #include "Buffer.hpp"
 #include "BlurPass.h"
-#include "Camera.h"
 #include "glad_glfw3.h"
 #include "ScreenQuad.hpp"
+
+namespace spark
+{
+class ICamera;
+}
 
 namespace spark::resources
 {
@@ -20,7 +24,7 @@ class BlurPass;
 class DepthOfFieldPass
 {
     public:
-    GLuint process(GLuint lightPassTexture, GLuint depthTexture, const std::shared_ptr<Camera>& camera) const;
+    GLuint process(GLuint lightPassTexture, GLuint depthTexture, const std::shared_ptr<ICamera>& camera) const;
     void resize(unsigned int width, unsigned int height);
 
     DepthOfFieldPass(unsigned int width, unsigned int height);
@@ -36,7 +40,7 @@ class DepthOfFieldPass
     private:
     void createFrameBuffersAndTextures();
 
-    void calculateCircleOfConfusion(GLuint depthTexture, const std::shared_ptr<Camera>& camera) const;
+    void calculateCircleOfConfusion(GLuint depthTexture, const std::shared_ptr<ICamera>& camera) const;
     void blurLightPassTexture(GLuint lightPassTexture) const;
     inline void detectBokehPositions(GLuint lightPassTexture) const;
     inline void renderBokehShapes() const;

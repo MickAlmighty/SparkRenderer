@@ -1,7 +1,9 @@
 #include "SkyboxPass.hpp"
 
-#include "Camera.h"
+#include "ICamera.hpp"
 #include "CommonUtils.h"
+#include "PbrCubemapTexture.hpp"
+#include "Scene.h"
 #include "Shader.h"
 #include "Spark.h"
 
@@ -19,7 +21,7 @@ SkyboxPass::~SkyboxPass()
     glDeleteTextures(1, &cubemapTexture);
 }
 
-std::optional<GLuint> SkyboxPass::process(GLuint depthTexture, GLuint lightingTexture, const std::shared_ptr<Scene>& scene)
+std::optional<GLuint> SkyboxPass::process(GLuint depthTexture, GLuint lightingTexture, const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera)
 {
     const auto cubemapPtr = scene->getSkyboxCubemap().lock();
     if(!cubemapPtr)
@@ -28,7 +30,7 @@ std::optional<GLuint> SkyboxPass::process(GLuint depthTexture, GLuint lightingTe
     PUSH_DEBUG_GROUP(RENDER_CUBEMAP);
     texturePass.process(w, h, lightingTexture, cubemapTexture);
     utils::bindDepthTexture(cubemapFramebuffer, depthTexture);
-    renderSkybox(cubemapFramebuffer, w, h, cubemapPtr, scene->getCamera()->getUbo());
+    renderSkybox(cubemapFramebuffer, w, h, cubemapPtr, camera->getUbo());
     POP_DEBUG_GROUP()
     return cubemapTexture;
 }

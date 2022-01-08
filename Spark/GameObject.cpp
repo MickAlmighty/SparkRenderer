@@ -2,7 +2,7 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
-#include "Camera.h"
+#include "EditorCamera.hpp"
 #include "Component.h"
 #include "GUI/ImGui/imgui.h"
 #include "GUI/ImGuizmo.h"
@@ -286,7 +286,7 @@ void GameObject::drawGizmos()
     }
 
     const ImGuiIO& io = ImGui::GetIO();
-    const auto camera = getScene()->getCamera();
+    const auto camera = getScene()->editorCamera;
     ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
     ImGuizmo::Manipulate(glm::value_ptr(camera->getViewMatrix()), glm::value_ptr(camera->getProjection()), mCurrentGizmoOperation, mCurrentGizmoMode,
                          &worldMatrix[0][0]);

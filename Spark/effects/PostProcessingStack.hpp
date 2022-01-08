@@ -6,7 +6,6 @@
 #include "glad_glfw3.h"
 #include "LightShaftsPass.hpp"
 #include "MotionBlurPass.hpp"
-#include "Scene.h"
 #include "SkyboxPass.hpp"
 #include "ToneMapper.hpp"
 
@@ -22,17 +21,17 @@ class PostProcessingStack
     PostProcessingStack& operator=(PostProcessingStack&&) = delete;
     ~PostProcessingStack() = default;
 
-    GLuint process(GLuint lightingTexture, GLuint depthTexture, const std::shared_ptr<Scene>& scene);
+    GLuint process(GLuint lightingTexture, GLuint depthTexture, const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera);
     void resize(unsigned int width, unsigned int height);
 
     void drawGui();
 
     private:
-    void renderCubemap(GLuint lightingTexture, GLuint depthTexture, const std::shared_ptr<Scene>& scene);
-    void depthOfField(GLuint depthTexture, const std::shared_ptr<Camera>& camera);
-    void lightShafts(GLuint depthTexture, const std::shared_ptr<Camera>& camera);
+    void renderCubemap(GLuint lightingTexture, GLuint depthTexture, const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera);
+    void depthOfField(GLuint depthTexture, const std::shared_ptr<ICamera>& camera);
+    void lightShafts(GLuint depthTexture, const std::shared_ptr<ICamera>& camera);
     void bloom(GLuint lightingTexture);
-    void motionBlur(GLuint depthTexture, const std::shared_ptr<Camera>& camera);
+    void motionBlur(GLuint depthTexture, const std::shared_ptr<ICamera>& camera);
     void toneMapping();
     void fxaa();
 

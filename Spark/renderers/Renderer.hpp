@@ -17,7 +17,10 @@ class Renderer
     Renderer& operator=(Renderer&&) = delete;
     virtual ~Renderer();
 
-    void render(const std::shared_ptr<Scene>& scene);
+    void render(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera, unsigned int width, unsigned int height,
+                unsigned int outputFramebuffer = 0);
+    void render(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera, unsigned int x, unsigned int y, unsigned int width,
+                unsigned int height, unsigned int outputFramebuffer = 0);
     void resize(unsigned int width, unsigned int height);
 
     void drawGui();
@@ -25,8 +28,8 @@ class Renderer
     bool isAmbientOcclusionEnabled{false};
 
     protected:
-    virtual void renderMeshes(const std::shared_ptr<Scene>& scene) = 0;
-    void postProcessingPass(const std::shared_ptr<Scene>& scene);
+    virtual void renderMeshes(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera) = 0;
+    void postProcessingPass(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera);
 
     virtual void resizeDerived(unsigned int width, unsigned int height) = 0;
     void resizeBase(unsigned int width, unsigned int height);
@@ -38,8 +41,9 @@ class Renderer
     effects::AmbientOcclusion ao;
 
     private:
-    void helperShapes(const std::shared_ptr<Scene>& scene);
-    void renderToScreen();
+    void helperShapes(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera);
+    void renderToFramebuffer(unsigned int outputFramebuffer, unsigned int x, unsigned int y, unsigned int width, unsigned int height) const;
+    void clearFramebuffer(unsigned int outputFramebuffer, unsigned int width, unsigned int height) const;
 
     effects::PostProcessingStack postProcessingStack;
     renderers::LightProbesRenderer lightProbesRenderer;

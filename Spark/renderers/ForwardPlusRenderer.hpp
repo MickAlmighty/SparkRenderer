@@ -21,16 +21,16 @@ class ForwardPlusRenderer : public Renderer
     ~ForwardPlusRenderer() override;
 
     protected:
-    void renderMeshes(const std::shared_ptr<Scene>& scene) override;
+    void renderMeshes(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera) override;
     void resizeDerived(unsigned int width, unsigned int height) override;
 
     GLuint getDepthTexture() const override;
     GLuint getLightingTexture() const override;
 
     private:
-    void depthPrepass(const std::shared_ptr<Scene>& scene);
-    GLuint aoPass(const std::shared_ptr<Scene>& scene);
-    void lightingPass(const std::shared_ptr<Scene>& scene, const GLuint ssaoTexture);
+    void depthPrepass(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera);
+    GLuint aoPass(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera);
+    void lightingPass(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera, const GLuint ssaoTexture);
     void createFrameBuffersAndTextures();
 
     GLuint lightingFramebuffer{}, lightingTexture{};

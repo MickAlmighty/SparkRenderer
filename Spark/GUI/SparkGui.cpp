@@ -15,7 +15,6 @@ namespace spark
 {
 void SparkGui::drawGui()
 {
-    PUSH_DEBUG_GROUP(IMGUI)
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
     ImGuizmo::BeginFrame();
@@ -30,6 +29,7 @@ void SparkGui::drawGui()
         ImGui::EndMainMenuBar();
     }
 
+    PUSH_DEBUG_GROUP(IMGUI)
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     POP_DEBUG_GROUP()
@@ -115,7 +115,8 @@ void SparkGui::drawAnimationCreatorWindow(bool* p_open)
 
 int SparkGui::checkCurrentItem(const char** items) const
 {
-    const std::string resolution = std::to_string(Spark::get().WIDTH) + "x" + std::to_string(Spark::get().HEIGHT);
+    const std::string resolution =
+        std::to_string(Spark::get().getRenderingContext().width) + "x" + std::to_string(Spark::get().getRenderingContext().height);
     for(int i = 0; i < 4; i++)
     {
         std::string item(items[i]);
@@ -148,6 +149,7 @@ std::optional<std::string> SparkGui::addComponent()
                     {
                         componentTypeNameOpt = componentTypeName;
                         ImGui::CloseCurrentPopup();
+                        break;
                     }
                 }
             }

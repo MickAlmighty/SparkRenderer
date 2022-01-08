@@ -4,10 +4,13 @@
 #include <optional>
 
 #include "BlurPass.h"
-#include "Camera.h"
 #include "glad_glfw3.h"
 #include "ScreenQuad.hpp"
 #include "lights/DirectionalLight.h"
+
+namespace spark {
+class ICamera;
+}
 
 namespace spark::resources
 {
@@ -26,7 +29,7 @@ class LightShaftsPass
     LightShaftsPass& operator=(LightShaftsPass&&) = delete;
     ~LightShaftsPass();
 
-    std::optional<GLuint> process(const std::shared_ptr<Camera>& camera, GLuint depthTexture, GLuint lightingTexture);
+    std::optional<GLuint> process(const std::shared_ptr<ICamera>& camera, GLuint depthTexture, GLuint lightingTexture);
     void resize(unsigned int width, unsigned int height);
 
     float exposure = 0.004f;
@@ -40,8 +43,8 @@ class LightShaftsPass
                                     const glm::vec2 lightScreenPos) const;
     void blurLightShafts() const;
     void blendLightShafts(GLuint lightingTexture) const;
-    static glm::vec2 dirLightPositionInScreenSpace(const std::shared_ptr<Camera>& camera, const lights::DirectionalLight* const dirLight);
-    static bool isCameraFacingDirectionalLight(glm::vec2 dirLightScreenSpacePosition, const std::shared_ptr<Camera>& camera,
+    static glm::vec2 dirLightPositionInScreenSpace(const std::shared_ptr<ICamera>& camera, const lights::DirectionalLight* const dirLight);
+    static bool isCameraFacingDirectionalLight(glm::vec2 dirLightScreenSpacePosition, const std::shared_ptr<ICamera>& camera,
                                                const lights::DirectionalLight* const dirLight);
 
     unsigned int w{}, h{};

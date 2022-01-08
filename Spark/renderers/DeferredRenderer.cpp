@@ -1,6 +1,7 @@
 #include "DeferredRenderer.hpp"
 
 #include "CommonUtils.h"
+#include "ICamera.hpp"
 #include "ResourceLibrary.h"
 #include "Scene.h"
 #include "Shader.h"
@@ -23,14 +24,14 @@ DeferredRenderer::~DeferredRenderer()
     glDeleteFramebuffers(1, &framebuffer);
 }
 
-void DeferredRenderer::renderMeshes(const std::shared_ptr<Scene>& scene)
+void DeferredRenderer::renderMeshes(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera)
 {
-    gBuffer.fill(scene->getRenderingQueues(), scene->getCamera()->getUbo());
+    gBuffer.fill(scene->getRenderingQueues(), camera->getUbo());
 
     GLuint aoTexture{0};
     if(isAmbientOcclusionEnabled)
     {
-        aoTexture = ao.process(gBuffer.depthTexture, gBuffer.normalsTexture, scene->getCamera());
+        aoTexture = ao.process(gBuffer.depthTexture, gBuffer.normalsTexture, camera);
     }
 
     PUSH_DEBUG_GROUP(PBR_LIGHT);
@@ -40,7 +41,7 @@ void DeferredRenderer::renderMeshes(const std::shared_ptr<Scene>& scene)
     glClear(GL_COLOR_BUFFER_BIT);
 
     lightingShader->use();
-    lightingShader->bindUniformBuffer("Camera", scene->getCamera()->getUbo());
+    lightingShader->bindUniformBuffer("Camera", camera->getUbo());
     lightingShader->bindSSBO("DirLightData", scene->lightManager->getDirLightSSBO());
     lightingShader->bindSSBO("PointLightData", scene->lightManager->getPointLightSSBO());
     lightingShader->bindSSBO("SpotLightData", scene->lightManager->getSpotLightSSBO());

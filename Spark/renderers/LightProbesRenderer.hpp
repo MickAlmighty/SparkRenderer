@@ -5,6 +5,11 @@
 #include "glad_glfw3.h"
 #include "effects/SkyboxPass.hpp"
 
+namespace spark::lights
+{
+class LightProbe;
+}
+
 namespace spark::renderers
 {
 class LightProbesRenderer
@@ -23,7 +28,8 @@ class LightProbesRenderer
     bool checkIfSkyboxChanged(const std::shared_ptr<PbrCubemapTexture>& cubemap) const;
     void generateLightProbe(const std::map<ShaderType, std::deque<RenderingRequest>>& renderQueue, lights::LightProbe* lightProbe,
                             const std::shared_ptr<PbrCubemapTexture>& cubemap);
-    void renderSceneToCubemap(const std::map<ShaderType, std::deque<RenderingRequest>>& renderQueue, const std::shared_ptr<PbrCubemapTexture>& cubemap);
+    void renderSceneToCubemap(const std::map<ShaderType, std::deque<RenderingRequest>>& renderQueue,
+                              const std::shared_ptr<PbrCubemapTexture>& cubemap);
 
     const unsigned int sceneCubemapSize{256};
     GLuint lightProbeSceneCubemap{};

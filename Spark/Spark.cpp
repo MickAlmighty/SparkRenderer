@@ -4,7 +4,11 @@
 #include "GUI/ImGui/imgui_impl_glfw.h"
 #include "GUI/ImGui/imgui_impl_opengl3.h"
 
+#include "Camera.hpp"
+#include "CameraManager.hpp"
 #include "Clock.h"
+#include "CommonUtils.h"
+#include "EditorCamera.hpp"
 #include "HID/HID.h"
 #include "JsonSerializer.h"
 #include "Logging.h"
@@ -46,36 +50,37 @@ void Spark::drawGui()
         if(ImGui::BeginMenu(renderingAlgorithmTypeMenu.c_str()))
         {
             static int mode = 2;
+            unsigned int width = renderingContext->width, height = renderingContext->height;
 
             if(ImGui::RadioButton("Deferred", mode == 0))
             {
                 mode = 0;
-                renderer = std::make_unique<DeferredRenderer>(WIDTH, HEIGHT);
+                renderer = std::make_unique<DeferredRenderer>(width, height);
             }
             if(ImGui::RadioButton("Forward Plus", mode == 1))
             {
                 mode = 1;
-                renderer = std::make_unique<ForwardPlusRenderer>(WIDTH, HEIGHT);
+                renderer = std::make_unique<ForwardPlusRenderer>(width, height);
             }
             if(ImGui::RadioButton("Tile Based Deferred", mode == 2))
             {
                 mode = 2;
-                renderer = std::make_unique<TileBasedDeferredRenderer>(WIDTH, HEIGHT);
+                renderer = std::make_unique<TileBasedDeferredRenderer>(width, height);
             }
             if(ImGui::RadioButton("Tile Based Forward Plus", mode == 3))
             {
                 mode = 3;
-                renderer = std::make_unique<TileBasedForwardPlusRenderer>(WIDTH, HEIGHT);
+                renderer = std::make_unique<TileBasedForwardPlusRenderer>(width, height);
             }
             if(ImGui::RadioButton("Cluster Based Deferred", mode == 4))
             {
                 mode = 4;
-                renderer = std::make_unique<ClusterBasedDeferredRenderer>(WIDTH, HEIGHT);
+                renderer = std::make_unique<ClusterBasedDeferredRenderer>(width, height);
             }
             if(ImGui::RadioButton("Cluster Based Forward Plus", mode == 5))
             {
                 mode = 5;
-                renderer = std::make_unique<ClusterBasedForwardPlusRenderer>(WIDTH, HEIGHT);
+                renderer = std::make_unique<ClusterBasedForwardPlusRenderer>(width, height);
             }
             ImGui::EndMenu();
         }
@@ -87,28 +92,22 @@ void Spark::drawGui()
 
 void Spark::loadConfig(const SparkConfig& config)
 {
-    WIDTH = config.width;
-    HEIGHT = config.height;
+    renderingContext = std::make_unique<OpenGLContext>(config.width, config.height, vsync, false);
     pathToResources = config.pathToResources;
     vsync = config.vsync;
 }
 
 void Spark::setup()
 {
-    renderingContext = std::make_unique<OpenGLContext>(WIDTH, HEIGHT, vsync, false);
     renderingContext->setupCallbacks();
     const auto resourcePath = std::filesystem::exists(pathToResources) ? pathToResources : findResourceDirectoryPath();
     resourceLibrary = std::make_unique<resourceManagement::ResourceLibrary>(resourcePath);
     SparkGui::setFilePickerPath(resourcePath.string());
     initImGui();
     sceneManager = std::make_unique<SceneManager>();
-    renderer = std::make_unique<renderers::TileBasedDeferredRenderer>(WIDTH, HEIGHT);
+    renderer = std::make_unique<renderers::TileBasedDeferredRenderer>(renderingContext->width, renderingContext->height);
     animationCreator = std::make_unique<AnimationCreator>();
 
-    renderingContext->addOnWindowSizeChangedCallback([this](auto width, auto height) {
-        WIDTH = width;
-        HEIGHT = height;
-    });
     renderingContext->addOnWindowSizeChangedCallback([this](auto width, auto height) { renderer->resize(width, height); });
 }
 
@@ -120,11 +119,35 @@ void Spark::runLoop()
         glfwPollEvents();
 
         if(HID::isKeyPressed(Key::ESC))
+        {
             renderingContext->closeWindow();
+        }
+        if(HID::isKeyPressed(Key::F1))
+        {
+            isEditorEnabled = !isEditorEnabled;
+            if (isEditorEnabled)
+            {
+                glfwSetInputMode(renderingContext->window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+            }
+            else
+            {
+                glfwSetInputMode(renderingContext->window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            }
+        }
 
         sceneManager->update();
-        renderer->render(sceneManager->getCurrentScene());
-        sparkGui.drawGui();
+        if(isEditorEnabled)
+        {
+            const auto scene = sceneManager->getCurrentScene();
+            renderer->render(scene, scene->editorCamera, renderingContext->width, renderingContext->height);
+            sparkGui.drawGui();
+        }
+        else
+        {
+            const auto scene = sceneManager->getCurrentScene();
+            renderer->render(scene, scene->getCameraManager()->getMainCamera(), renderingContext->width, renderingContext->height);
+        }
+        
         renderingContext->swapBuffers();
 
         HID::updateStates();
@@ -192,6 +215,11 @@ SceneManager& Spark::getSceneManager() const
 AnimationCreator& Spark::getAnimationCreator() const
 {
     return *animationCreator;
+}
+
+renderers::Renderer& Spark::getRenderer() const
+{
+    return *renderer;
 }
 
 void Spark::initImGui()

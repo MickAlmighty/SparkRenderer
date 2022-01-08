@@ -3,9 +3,9 @@
 #include <functional>
 #include <memory>
 
+#include "Buffer.hpp"
 #include "Enums.h"
 #include "glad_glfw3.h"
-#include "lights/LightManager.h"
 #include "RenderingRequest.h"
 
 namespace spark::resources

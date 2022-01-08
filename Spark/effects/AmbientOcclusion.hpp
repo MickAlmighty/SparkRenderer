@@ -8,7 +8,7 @@
 
 namespace spark
 {
-class Camera;
+class ICamera;
 }
 
 namespace spark::effects
@@ -23,7 +23,7 @@ class AmbientOcclusion
     AmbientOcclusion& operator=(AmbientOcclusion&&) = delete;
     ~AmbientOcclusion();
 
-    GLuint process(GLuint depthTexture, GLuint normalsTexture, const std::shared_ptr<Camera>& camera);
+    GLuint process(GLuint depthTexture, GLuint normalsTexture, const std::shared_ptr<ICamera>& camera);
     void resize(unsigned int width, unsigned int height);
 
     int kernelSize = 32;

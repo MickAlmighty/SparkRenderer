@@ -2,10 +2,12 @@
 
 #include <optional>
 
-#include "Buffer.hpp"
-#include "Camera.h"
 #include "ScreenQuad.hpp"
 #include "Shader.h"
+
+namespace spark {
+class ICamera;
+}
 
 namespace spark::effects
 {
@@ -19,7 +21,7 @@ class MotionBlurPass
     MotionBlurPass& operator=(MotionBlurPass&&) = delete;
     ~MotionBlurPass();
 
-    std::optional<GLuint> process(const std::shared_ptr<Camera>& camera, GLuint colorTexture, GLuint depthTexture);
+    std::optional<GLuint> process(const std::shared_ptr<ICamera>& camera, GLuint colorTexture, GLuint depthTexture);
     void resize(unsigned int width, unsigned int height);
 
     private:

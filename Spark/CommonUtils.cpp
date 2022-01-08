@@ -49,7 +49,10 @@ void recreateTexture2D(GLuint& texture, GLuint width, GLuint height, GLenum inte
                        GLenum textureSampling, bool mipMaps, void* data)
 {
     if(texture != 0)
+    {
         glDeleteTextures(1, &texture);
+        texture = 0;
+    }
 
     createTexture2D(texture, width, height, internalFormat, format, pixelFormat, textureWrapping, textureSampling, mipMaps, data);
 }
@@ -90,7 +93,10 @@ void recreateCubemap(GLuint& texture, unsigned int size, GLenum internalFormat, 
                      GLenum textureSampling, bool mipMaps)
 {
     if(texture != 0)
+    {
         glDeleteTextures(1, &texture);
+        texture = 0;
+    }
 
     createCubemap(texture, size, internalFormat, format, pixelFormat, textureWrapping, textureSampling, mipMaps);
 }
@@ -171,7 +177,10 @@ void createFramebuffer(GLuint& framebuffer, std::vector<GLuint>&& colorTextures,
 void recreateFramebuffer(GLuint& framebuffer, std::vector<GLuint>&& colorTextures, GLuint renderbuffer)
 {
     if(framebuffer != 0)
+    {
         glDeleteFramebuffers(1, &framebuffer);
+        framebuffer = 0;
+    }
 
     createFramebuffer(framebuffer, std::move(colorTextures), renderbuffer);
 }

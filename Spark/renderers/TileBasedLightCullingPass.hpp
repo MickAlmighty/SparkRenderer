@@ -2,13 +2,21 @@
 #include <memory>
 
 #include "Buffer.hpp"
-#include "Scene.h"
-#include "lights/LightManager.h"
+#include "ICamera.hpp"
 
-namespace spark::resources
+namespace spark
 {
-class Shader;
+namespace lights
+{
+    class LightManager;
 }
+namespace resources
+{
+    class Shader;
+}
+class Scene;
+}  // namespace spark
+
 namespace spark::renderers
 {
 class TileBasedLightCullingPass
@@ -21,7 +29,7 @@ class TileBasedLightCullingPass
     TileBasedLightCullingPass& operator=(TileBasedLightCullingPass&&) = delete;
     ~TileBasedLightCullingPass();
 
-    void process(GLuint depthTexture, const std::shared_ptr<Scene>& scene);
+    void process(GLuint depthTexture, const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera);
     void resize(unsigned int width, unsigned int height);
 
     SSBO pointLightIndices{};

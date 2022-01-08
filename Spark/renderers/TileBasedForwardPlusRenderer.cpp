@@ -1,6 +1,7 @@
 #include "TileBasedForwardPlusRenderer.hpp"
 
 #include "CommonUtils.h"
+#include "ICamera.hpp"
 #include "Spark.h"
 
 namespace spark::renderers
@@ -27,9 +28,10 @@ TileBasedForwardPlusRenderer::~TileBasedForwardPlusRenderer()
     glDeleteFramebuffers(1, &depthPrepassFramebuffer);
 }
 
-void TileBasedForwardPlusRenderer::depthPrepass(const std::shared_ptr<Scene>& scene)
+void TileBasedForwardPlusRenderer::depthPrepass(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera)
 {
     PUSH_DEBUG_GROUP(DEPTH_PREPASS)
+    glViewport(0, 0, w, h);
     glBindFramebuffer(GL_FRAMEBUFFER, depthPrepassFramebuffer);
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_GREATER);
@@ -49,7 +51,7 @@ void TileBasedForwardPlusRenderer::depthPrepass(const std::shared_ptr<Scene>& sc
     }
 
     shader->use();
-    shader->bindUniformBuffer("Camera", scene->getCamera()->getUbo());
+    shader->bindUniformBuffer("Camera", camera->getUbo());
     if(const auto it = scene->getRenderingQueues().find(ShaderType::PBR); it != scene->getRenderingQueues().cend())
     {
         for(auto& request : it->second)
@@ -61,16 +63,16 @@ void TileBasedForwardPlusRenderer::depthPrepass(const std::shared_ptr<Scene>& sc
     POP_DEBUG_GROUP()
 }
 
-GLuint TileBasedForwardPlusRenderer::aoPass(const std::shared_ptr<Scene>& scene)
+GLuint TileBasedForwardPlusRenderer::aoPass(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera)
 {
     if(isAmbientOcclusionEnabled)
     {
-        return ao.process(depthTexture, normalsTexture, scene->getCamera());
+        return ao.process(depthTexture, normalsTexture, camera);
     }
     return 0;
 }
 
-void TileBasedForwardPlusRenderer::lightingPass(const std::shared_ptr<Scene>& scene, const GLuint ssaoTexture)
+void TileBasedForwardPlusRenderer::lightingPass(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera, const GLuint ssaoTexture)
 {
     PUSH_DEBUG_GROUP(PBR_LIGHT)
     glBindFramebuffer(GL_FRAMEBUFFER, lightingFramebuffer);
@@ -92,7 +94,7 @@ void TileBasedForwardPlusRenderer::lightingPass(const std::shared_ptr<Scene>& sc
     glBindTextureUnit(10, ssaoTexture);
 
     lightingShader->use();
-    lightingShader->bindUniformBuffer("Camera", scene->getCamera()->getUbo());
+    lightingShader->bindUniformBuffer("Camera", camera->getUbo());
     lightingShader->bindSSBO("DirLightData", scene->lightManager->getDirLightSSBO());
     lightingShader->bindSSBO("PointLightData", scene->lightManager->getPointLightSSBO());
     lightingShader->bindSSBO("SpotLightData", scene->lightManager->getSpotLightSSBO());
@@ -114,12 +116,12 @@ void TileBasedForwardPlusRenderer::lightingPass(const std::shared_ptr<Scene>& sc
     POP_DEBUG_GROUP()
 }
 
-void TileBasedForwardPlusRenderer::renderMeshes(const std::shared_ptr<Scene>& scene)
+void TileBasedForwardPlusRenderer::renderMeshes(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera)
 {
-    depthPrepass(scene);
-    const GLuint ssaoTexture = aoPass(scene);
-    lightCullingPass.process(depthTexture, scene);
-    lightingPass(scene, ssaoTexture);
+    depthPrepass(scene, camera);
+    const GLuint ssaoTexture = aoPass(scene, camera);
+    lightCullingPass.process(depthTexture, scene, camera);
+    lightingPass(scene, camera, ssaoTexture);
 }
 
 void TileBasedForwardPlusRenderer::resizeDerived(unsigned int width, unsigned int height)

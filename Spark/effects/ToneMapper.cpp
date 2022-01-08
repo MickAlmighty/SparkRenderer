@@ -14,9 +14,6 @@ ToneMapper::ToneMapper(unsigned int width, unsigned int height): w(width), h(hei
     luminanceHistogramComputeShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("luminanceHistogramCompute.glsl");
     averageLuminanceComputeShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("averageLuminanceCompute.glsl");
 
-    luminanceHistogramComputeShader->bindSSBO("LuminanceHistogram", luminanceHistogram);
-    averageLuminanceComputeShader->bindSSBO("LuminanceHistogram", luminanceHistogram);
-
     luminanceHistogram.resizeBuffer(256 * sizeof(uint32_t));
     utils::recreateTexture2D(averageLuminanceTexture, 1, 1, GL_R16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
     createFrameBuffersAndTextures();
@@ -75,7 +72,7 @@ void ToneMapper::calculateAverageLuminance()
 
     // first compute dispatch
     luminanceHistogramComputeShader->use();
-
+    luminanceHistogramComputeShader->bindSSBO("LuminanceHistogram", luminanceHistogram);
     luminanceHistogramComputeShader->setIVec2("inputTextureSize", glm::ivec2(w, h));
     luminanceHistogramComputeShader->setFloat("minLogLuminance", minLogLuminance);
     luminanceHistogramComputeShader->setFloat("oneOverLogLuminanceRange", oneOverLogLuminanceRange);
@@ -86,7 +83,7 @@ void ToneMapper::calculateAverageLuminance()
 
     // second compute dispatch
     averageLuminanceComputeShader->use();
-
+    averageLuminanceComputeShader->bindSSBO("LuminanceHistogram", luminanceHistogram);
     averageLuminanceComputeShader->setUInt("pixelCount", w * h);
     averageLuminanceComputeShader->setFloat("minLogLuminance", minLogLuminance);
     averageLuminanceComputeShader->setFloat("logLuminanceRange", logLuminanceRange);

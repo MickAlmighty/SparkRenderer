@@ -1,6 +1,7 @@
 #include "DepthOfFieldPass.h"
 
 #include "CommonUtils.h"
+#include "ICamera.hpp"
 #include "Shader.h"
 #include "Spark.h"
 
@@ -45,7 +46,7 @@ DepthOfFieldPass::DepthOfFieldPass(unsigned int width, unsigned int height)
     // glTexBuffer(GL_TEXTURE_BUFFER, GL_RGBA32F, bokehColorBuffer.ID);
 }
 
-GLuint DepthOfFieldPass::process(GLuint lightPassTexture, GLuint depthTexture, const std::shared_ptr<Camera>& camera) const
+GLuint DepthOfFieldPass::process(GLuint lightPassTexture, GLuint depthTexture, const std::shared_ptr<ICamera>& camera) const
 {
     PUSH_DEBUG_GROUP(DEPTH_OF_FIELD)
     calculateCircleOfConfusion(depthTexture, camera);
@@ -105,7 +106,7 @@ DepthOfFieldPass::~DepthOfFieldPass()
     glDeleteTextures(1, &bokehColorTexture);*/
 }
 
-void DepthOfFieldPass::calculateCircleOfConfusion(GLuint depthTexture, const std::shared_ptr<Camera>& camera) const
+void DepthOfFieldPass::calculateCircleOfConfusion(GLuint depthTexture, const std::shared_ptr<ICamera>& camera) const
 {
     PUSH_DEBUG_GROUP(COC_COMPUTING)
 

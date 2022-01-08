@@ -4,7 +4,7 @@
 
 #include <glm/gtx/compatibility.hpp>
 
-#include "Camera.h"
+#include "ICamera.hpp"
 #include "CommonUtils.h"
 #include "Spark.h"
 
@@ -34,7 +34,7 @@ AmbientOcclusion::~AmbientOcclusion()
     glDeleteFramebuffers(1, &ssaoFramebuffer);
 }
 
-GLuint AmbientOcclusion::process(GLuint depthTexture, GLuint normalsTexture, const std::shared_ptr<Camera>& camera)
+GLuint AmbientOcclusion::process(GLuint depthTexture, GLuint normalsTexture, const std::shared_ptr<ICamera>& camera)
 {
     PUSH_DEBUG_GROUP(SSAO);
 

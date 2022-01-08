@@ -9,7 +9,11 @@ list(APPEND SparkSources
     ${CMAKE_CURRENT_SOURCE_DIR}/AnimationPlayer.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Buffer.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Camera.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Camera.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Camera.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CameraManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CameraManager.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/EditorCamera.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/EditorCamera.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Clock.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Cube.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Clock.h
@@ -26,6 +30,8 @@ list(APPEND SparkSources
     ${CMAKE_CURRENT_SOURCE_DIR}/GltfLoader.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/GltfLoader.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/IObserver.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ICamera.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ICamera.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/JsonSerializer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/JsonSerializer.h
     ${CMAKE_CURRENT_SOURCE_DIR}/LocalTransform.cpp
@@ -105,7 +111,9 @@ target_include_directories(Spark PUBLIC ${CMAKE_SOURCE_DIR}/thirdparty/include)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_compile_definitions(Spark PRIVATE DEBUG)
-    target_compile_options(Spark PRIVATE "/ZI")
+    if(MSVC_VERSION GREATER_EQUAL "1930")
+        target_compile_options(Spark PRIVATE "/ZI")
+    endif()
 endif()
 target_compile_definitions(Spark PRIVATE GLM_FORCE_ALIGNED_GENTYPES)
 

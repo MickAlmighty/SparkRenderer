@@ -1,6 +1,7 @@
 #include "PostProcessingStack.hpp"
 
 #include "GUI/ImGui/imgui.h"
+#include "Scene.h"
 
 namespace spark::effects
 {
@@ -10,16 +11,16 @@ PostProcessingStack::PostProcessingStack(unsigned int width, unsigned int height
 {
 }
 
-GLuint PostProcessingStack::process(GLuint lightingTexture, GLuint depthTexture, const std::shared_ptr<Scene>& scene)
+GLuint PostProcessingStack::process(GLuint lightingTexture, GLuint depthTexture, const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera)
 {
     textureHandle = lightingTexture;
-    renderCubemap(lightingTexture, depthTexture, scene);
-    depthOfField(depthTexture, scene->getCamera());
-    lightShafts(depthTexture, scene->getCamera());
+    renderCubemap(lightingTexture, depthTexture, scene, camera);
+    depthOfField(depthTexture, camera);
+    lightShafts(depthTexture, camera);
     bloom(lightingTexture);
     toneMapping();
     fxaa();
-    motionBlur(depthTexture, scene->getCamera());
+    motionBlur(depthTexture, camera);
 
     return textureHandle;
 }
@@ -91,15 +92,15 @@ void PostProcessingStack::drawGui()
     }
 }
 
-void PostProcessingStack::renderCubemap(GLuint lightingTexture, GLuint depthTexture, const std::shared_ptr<Scene>& scene)
+void PostProcessingStack::renderCubemap(GLuint lightingTexture, GLuint depthTexture, const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera)
 {
-    if(auto outputOpt = skyboxPass.process(depthTexture, lightingTexture, scene); outputOpt.has_value())
+    if(const auto outputOpt = skyboxPass.process(depthTexture, lightingTexture, scene, camera); outputOpt.has_value())
     {
         textureHandle = outputOpt.value();
     }
 }
 
-void PostProcessingStack::depthOfField(GLuint depthTexture, const std::shared_ptr<Camera>& camera)
+void PostProcessingStack::depthOfField(GLuint depthTexture, const std::shared_ptr<ICamera>& camera)
 {
     if(!isDofEnabled)
         return;
@@ -107,11 +108,11 @@ void PostProcessingStack::depthOfField(GLuint depthTexture, const std::shared_pt
     textureHandle = dofPass.process(textureHandle, depthTexture, camera);
 }
 
-void PostProcessingStack::lightShafts(GLuint depthTexture, const std::shared_ptr<Camera>& camera)
+void PostProcessingStack::lightShafts(GLuint depthTexture, const std::shared_ptr<ICamera>& camera)
 {
     if(isLightShaftsPassEnabled)
     {
-        if(auto outputOpt = lightShaftsPass.process(camera, depthTexture, textureHandle); outputOpt.has_value())
+        if(const auto outputOpt = lightShaftsPass.process(camera, depthTexture, textureHandle); outputOpt.has_value())
         {
             textureHandle = outputOpt.value();
         }
@@ -126,7 +127,7 @@ void PostProcessingStack::bloom(GLuint lightingTexture)
     }
 }
 
-void PostProcessingStack::motionBlur(GLuint depthTexture, const std::shared_ptr<Camera>& camera)
+void PostProcessingStack::motionBlur(GLuint depthTexture, const std::shared_ptr<ICamera>& camera)
 {
     if(const auto outputTextureOpt = motionBlurPass.process(camera, textureHandle, depthTexture); isMotionBlurEnabled && outputTextureOpt.has_value())
     {

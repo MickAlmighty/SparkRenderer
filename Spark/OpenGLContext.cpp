@@ -5,9 +5,9 @@
 
 namespace spark
 {
-OpenGLContext::OpenGLContext(unsigned int width, unsigned int height, bool vsyncEnabled, bool isContextOffscreen)
+OpenGLContext::OpenGLContext(unsigned int width_, unsigned int height_, bool vsyncEnabled, bool isContextOffscreen): width(width_), height(height_)
 {
-    if(!init(width, height, vsyncEnabled, isContextOffscreen))
+    if(!init(vsyncEnabled, isContextOffscreen))
     {
         SPARK_CRITICAL("renderingContext init failed");
         throw std::runtime_error("renderingContext init failed");
@@ -19,7 +19,7 @@ OpenGLContext::~OpenGLContext()
     destroy();
 }
 
-bool OpenGLContext::init(unsigned int width, unsigned int height, bool vsyncEnabled, bool isContextOffscreen)
+bool OpenGLContext::init(bool vsyncEnabled, bool isContextOffscreen)
 {
     if(!glfwInit())
     {
@@ -96,6 +96,8 @@ void OpenGLContext::windowSizeCallback(GLFWwindow* window, int width, int height
     if(width != 0 && height != 0)
     {
         auto& context = *static_cast<OpenGLContext*>(glfwGetWindowUserPointer(window));
+        context.width = width;
+        context.height = height;
         for (auto& callback : context.onSizeChangedCallbacks)
         {
             callback(width, height);

@@ -11,6 +11,7 @@ message("Build files directory ${CMAKE_BINARY_DIR}")
 include(FetchContent)
 
 if (MSVC_VERSION GREATER_EQUAL "1900")
+    message("MSVC_VERSION ${MSVC_VERSION}")
     include(CheckCXXCompilerFlag)
     # CHECK_CXX_COMPILER_FLAG("/std:c++latest" _cpp_latest_flag_supported)
     # if (_cpp_latest_flag_supported)

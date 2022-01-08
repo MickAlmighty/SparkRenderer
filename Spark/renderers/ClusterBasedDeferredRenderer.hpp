@@ -28,7 +28,7 @@ class ClusterBasedDeferredRenderer : public Renderer
     ~ClusterBasedDeferredRenderer() override;
 
     protected:
-    void renderMeshes(const std::shared_ptr<Scene>& scene) override;
+    void renderMeshes(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera) override;
     void resizeDerived(unsigned int width, unsigned int height) override;
 
     GLuint getDepthTexture() const override;

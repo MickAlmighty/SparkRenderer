@@ -10,7 +10,7 @@ namespace spark
 class OpenGLContext
 {
     public:
-    OpenGLContext(unsigned int width, unsigned int height, bool vsyncEnabled, bool isContextOffscreen = false);
+    OpenGLContext(unsigned int width_, unsigned int height_, bool vsyncEnabled, bool isContextOffscreen = false);
     ~OpenGLContext();
     OpenGLContext(const OpenGLContext&) = delete;
     OpenGLContext(OpenGLContext&&) = delete;
@@ -27,8 +27,10 @@ class OpenGLContext
 
     GLFWwindow* window{nullptr};
 
+    unsigned int width{}, height{};
+
     private:
-    bool init(unsigned int width, unsigned int height, bool vsyncEnabled, bool isContextOffscreen);
+    bool init(bool vsyncEnabled, bool isContextOffscreen);
     void destroy();
     static void windowSizeCallback(GLFWwindow* window, int width, int height);
     static void glDebugOutput(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam);

@@ -1,6 +1,7 @@
 #include "ForwardPlusRenderer.hpp"
 
 #include "CommonUtils.h"
+#include "ICamera.hpp"
 #include "Shader.h"
 #include "Spark.h"
 
@@ -27,9 +28,10 @@ ForwardPlusRenderer::~ForwardPlusRenderer()
     glDeleteFramebuffers(1, &depthPrepassFramebuffer);
 }
 
-void ForwardPlusRenderer::depthPrepass(const std::shared_ptr<Scene>& scene)
+void ForwardPlusRenderer::depthPrepass(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera)
 {
     PUSH_DEBUG_GROUP(DEPTH_PREPASS)
+    glViewport(0, 0, w, h);
     glBindFramebuffer(GL_FRAMEBUFFER, depthPrepassFramebuffer);
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_GREATER);
@@ -49,7 +51,7 @@ void ForwardPlusRenderer::depthPrepass(const std::shared_ptr<Scene>& scene)
     }
 
     shader->use();
-    shader->bindUniformBuffer("Camera", scene->getCamera()->getUbo());
+    shader->bindUniformBuffer("Camera", camera->getUbo());
     if (const auto it = scene->getRenderingQueues().find(ShaderType::PBR); it != scene->getRenderingQueues().cend())
     {
         for (auto& request : it->second)
@@ -61,16 +63,16 @@ void ForwardPlusRenderer::depthPrepass(const std::shared_ptr<Scene>& scene)
     POP_DEBUG_GROUP()
 }
 
-GLuint ForwardPlusRenderer::aoPass(const std::shared_ptr<Scene>& scene)
+GLuint ForwardPlusRenderer::aoPass(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera)
 {
     if(isAmbientOcclusionEnabled)
     {
-        return ao.process(depthTexture, normalsTexture, scene->getCamera());
+        return ao.process(depthTexture, normalsTexture, camera);
     }
     return 0;
 }
 
-void ForwardPlusRenderer::lightingPass(const std::shared_ptr<Scene>& scene, const GLuint ssaoTexture)
+void ForwardPlusRenderer::lightingPass(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera, const GLuint ssaoTexture)
 {
     PUSH_DEBUG_GROUP(PBR_LIGHT);
     glBindFramebuffer(GL_FRAMEBUFFER, lightingFramebuffer);
@@ -92,7 +94,7 @@ void ForwardPlusRenderer::lightingPass(const std::shared_ptr<Scene>& scene, cons
     glBindTextureUnit(10, ssaoTexture);
 
     lightingShader->use();
-    lightingShader->bindUniformBuffer("Camera", scene->getCamera()->getUbo());
+    lightingShader->bindUniformBuffer("Camera", camera->getUbo());
     lightingShader->bindSSBO("DirLightData", scene->lightManager->getDirLightSSBO());
     lightingShader->bindSSBO("PointLightData", scene->lightManager->getPointLightSSBO());
     lightingShader->bindSSBO("SpotLightData", scene->lightManager->getSpotLightSSBO());
@@ -110,11 +112,11 @@ void ForwardPlusRenderer::lightingPass(const std::shared_ptr<Scene>& scene, cons
     POP_DEBUG_GROUP()
 }
 
-void ForwardPlusRenderer::renderMeshes(const std::shared_ptr<Scene>& scene)
+void ForwardPlusRenderer::renderMeshes(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera)
 {
-    depthPrepass(scene);
-    const GLuint ssaoTexture = aoPass(scene);
-    lightingPass(scene, ssaoTexture);
+    depthPrepass(scene, camera);
+    const GLuint ssaoTexture = aoPass(scene, camera);
+    lightingPass(scene, camera, ssaoTexture);
 }
 
 void ForwardPlusRenderer::resizeDerived(unsigned int width, unsigned int height)

@@ -2,7 +2,7 @@
 
 #include "Clock.h"
 #include "CommonUtils.h"
-#include "Logging.h"
+#include "ICamera.hpp"
 #include "Shader.h"
 #include "Spark.h"
 
@@ -20,7 +20,7 @@ MotionBlurPass::~MotionBlurPass()
     glDeleteFramebuffers(1, &framebuffer1);
 }
 
-std::optional<GLuint> MotionBlurPass::process(const std::shared_ptr<Camera>& camera, GLuint colorTexture, GLuint depthTexture)
+std::optional<GLuint> MotionBlurPass::process(const std::shared_ptr<ICamera>& camera, GLuint colorTexture, GLuint depthTexture)
 {
     const glm::f64mat4 viewMatrix = camera->getViewMatrix();
     const glm::f64mat4 projectionMatrix = camera->getProjectionReversedZ();
@@ -36,9 +36,7 @@ std::optional<GLuint> MotionBlurPass::process(const std::shared_ptr<Camera>& cam
     }
 
     if(projectionView == prevProjectionView)
-    {
         return {};
-    }
 
     const auto blurScale = []
     {

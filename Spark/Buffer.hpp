@@ -5,7 +5,7 @@
 #include <set>
 #include <vector>
 
-#include <glad/glad.h>
+#include "glad_glfw3.h"
 
 template<GLenum BUFFER_TYPE>
 class Buffer
@@ -193,7 +193,18 @@ void Buffer<BUFFER_TYPE>::cleanup()
 template<GLenum BUFFER_TYPE>
 void Buffer<BUFFER_TYPE>::getBinding()
 {
-    constexpr auto findFreeBindingBetweenAdjacentBindings = [](const uint32_t& binding1, const uint32_t& binding2) {
+    if(bindings.begin() != bindings.end())
+    {
+        if(*bindings.begin() > 0)
+        {
+            binding = *bindings.begin() - 1;
+            bindings.insert(binding);
+            return;
+        }
+    }
+
+    constexpr auto findFreeBindingBetweenAdjacentBindings = [](const uint32_t& binding1, const uint32_t& binding2)
+    {
         constexpr auto allowedDistanceBetweenBindings = 1;
         return (binding2 - binding1) > allowedDistanceBetweenBindings;
     };

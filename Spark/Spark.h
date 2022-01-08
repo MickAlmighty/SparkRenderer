@@ -34,9 +34,10 @@ class Spark
     virtual SceneManager& getSceneManager() const;
     virtual AnimationCreator& getAnimationCreator() const;
 
-    unsigned int WIDTH{1280};
-    unsigned int HEIGHT{720};
+    renderers::Renderer& getRenderer() const;
+
     bool vsync = true;
+    bool isEditorEnabled{true};
 
     protected:
     Spark() = default;

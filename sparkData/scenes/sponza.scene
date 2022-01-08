@@ -49,7 +49,7 @@
 				"zNear" : 0.10000000149011612
 			},
 			"Identifier" : 36,
-			"Type" : "classstd::shared_ptr<classspark::Camera>"
+			"Type" : "classstd::shared_ptr<classspark::EditorCamera>"
 		},
 		"root" : 
 		{

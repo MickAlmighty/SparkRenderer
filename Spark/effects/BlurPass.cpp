@@ -27,7 +27,7 @@ void BlurPass::blurTexture(GLuint texture) const
 
     screenQuad.draw();
     glBindTextures(0, 1, nullptr);
-    glViewport(0, 0, Spark::get().WIDTH, Spark::get().HEIGHT);
+    glViewport(0, 0, Spark::get().getRenderingContext().width, Spark::get().getRenderingContext().height);
 
     POP_DEBUG_GROUP();
 }
@@ -40,7 +40,7 @@ GLuint BlurPass::getBlurredTexture() const
 void BlurPass::resize(unsigned int width, unsigned int height)
 {
     w = width;
-    w = height;
+    h = height;
     createGlObjects();
 }
 

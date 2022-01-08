@@ -1,7 +1,7 @@
 #include "ClusterBasedLightCullingPass.hpp"
 
 #include "CommonUtils.h"
-#include "Logging.h"
+#include "EditorCamera.hpp"
 #include "Spark.h"
 
 namespace spark::renderers
@@ -9,24 +9,9 @@ namespace spark::renderers
 ClusterBasedLightCullingPass::ClusterBasedLightCullingPass(unsigned int width, unsigned int height) : w(width), h(height)
 {
     clusterCreationShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("clusterCreation.glsl");
-    clusterCreationShader->bindSSBO("ClusterData", clusters);
-
     determineActiveClustersShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("determineActiveCluster.glsl");
-    determineActiveClustersShader->bindSSBO("ActiveClusters", activeClusters);
-    determineActiveClustersShader->bindSSBO("PerClusterGlobalLightIndicesBufferMetadata", perClusterGlobalLightIndicesBufferMetadata);
-
     buildCompactClusterListShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("buildCompactClusterList.glsl");
-    buildCompactClusterListShader->bindSSBO("ActiveClusters", activeClusters);
-    buildCompactClusterListShader->bindSSBO("ActiveClustersCount", activeClustersCount);
-    buildCompactClusterListShader->bindSSBO("ActiveClusterIndices", activeClusterIndices);
-
     clusterBasedLightCullingShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("clusterBasedLightCulling.glsl");
-    clusterBasedLightCullingShader->bindSSBO("ActiveClusterIndices", activeClusterIndices);
-    clusterBasedLightCullingShader->bindSSBO("ClusterData", clusters);
-    clusterBasedLightCullingShader->bindSSBO("PerClusterGlobalLightIndicesBufferMetadata", perClusterGlobalLightIndicesBufferMetadata);
-    clusterBasedLightCullingShader->bindSSBO("GlobalPointLightIndices", globalPointLightIndices);
-    clusterBasedLightCullingShader->bindSSBO("GlobalSpotLightIndices", globalSpotLightIndices);
-    clusterBasedLightCullingShader->bindSSBO("GlobalLightProbeIndices", globalLightProbeIndices);
 
     clusters.resizeBuffer(dispatchSize.x * dispatchSize.y * dispatchSize.z * sizeof(glm::vec4) * 2);
     activeClusters.resizeBuffer(dispatchSize.x * dispatchSize.y * dispatchSize.z * sizeof(GLuint));
@@ -42,28 +27,28 @@ ClusterBasedLightCullingPass::ClusterBasedLightCullingPass(unsigned int width, u
     resize(w, h);
 }
 
-void ClusterBasedLightCullingPass::process(GLuint depthTexture, const std::shared_ptr<Scene>& scene)
+void ClusterBasedLightCullingPass::process(GLuint depthTexture, const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera)
 {
     PUSH_DEBUG_GROUP(CLUSTER_BASED_LIGHT_CULLING)
 
-    createClusters(scene);
-    determineActiveClusters(depthTexture, scene);
+    createClusters(scene, camera);
+    determineActiveClusters(depthTexture, scene, camera);
     buildCompactClusterList();
-    lightCulling(scene);
+    lightCulling(scene, camera);
 
     clearActiveClustersCounter();
     POP_DEBUG_GROUP()
 }
 
-void ClusterBasedLightCullingPass::createClusters(const std::shared_ptr<Scene>& scene)
+void ClusterBasedLightCullingPass::createClusters(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera)
 {
-    const auto camera = scene->getCamera();
     const bool hasNearAndFarPlaneChanged = lastCamNearZ != camera->zNear || lastCamFarZ != camera->zFar;
     const bool hasTileDimensionChanged = lastPxTileSize != pxTileSize;
     if(hasNearAndFarPlaneChanged || hasTileDimensionChanged)
     {
         clusterCreationShader->use();
         clusterCreationShader->setVec2("tileSize", pxTileSize);
+        clusterCreationShader->bindSSBO("ClusterData", clusters);
         clusterCreationShader->bindUniformBuffer("Camera", camera->getUbo());
         clusterCreationShader->dispatchCompute(utils::uiCeil(dispatchSize.x, 32u), utils::uiCeil(dispatchSize.y, 32u), dispatchSize.z);
 
@@ -73,11 +58,13 @@ void ClusterBasedLightCullingPass::createClusters(const std::shared_ptr<Scene>& 
     }
 }
 
-void ClusterBasedLightCullingPass::determineActiveClusters(GLuint depthTexture, const std::shared_ptr<Scene>& scene)
+void ClusterBasedLightCullingPass::determineActiveClusters(GLuint depthTexture, const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera)
 {
     determineActiveClustersShader->use();
     determineActiveClustersShader->setVec2("tileSize", pxTileSize);
-    determineActiveClustersShader->bindUniformBuffer("Camera", scene->getCamera()->getUbo());
+    determineActiveClustersShader->bindUniformBuffer("Camera", camera->getUbo());
+    determineActiveClustersShader->bindSSBO("ActiveClusters", activeClusters);
+    determineActiveClustersShader->bindSSBO("PerClusterGlobalLightIndicesBufferMetadata", perClusterGlobalLightIndicesBufferMetadata);
 
     glBindTextureUnit(0, depthTexture);
     determineActiveClustersShader->dispatchCompute(utils::uiCeil(w, 32u), utils::uiCeil(h, 32u), 1);
@@ -87,13 +74,22 @@ void ClusterBasedLightCullingPass::determineActiveClusters(GLuint depthTexture, 
 void ClusterBasedLightCullingPass::buildCompactClusterList()
 {
     buildCompactClusterListShader->use();
+    buildCompactClusterListShader->bindSSBO("ActiveClusters", activeClusters);
+    buildCompactClusterListShader->bindSSBO("ActiveClustersCount", activeClustersCount);
+    buildCompactClusterListShader->bindSSBO("ActiveClusterIndices", activeClusterIndices);
     buildCompactClusterListShader->dispatchCompute(utils::uiCeil(dispatchSize.x, 16u), utils::uiCeil(dispatchSize.y, 16u), dispatchSize.z);
 }
 
-void ClusterBasedLightCullingPass::lightCulling(const std::shared_ptr<Scene>& scene)
+void ClusterBasedLightCullingPass::lightCulling(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera)
 {
     clusterBasedLightCullingShader->use();
-    clusterBasedLightCullingShader->bindUniformBuffer("Camera", scene->getCamera()->getUbo());
+    clusterBasedLightCullingShader->bindUniformBuffer("Camera", camera->getUbo());
+    clusterBasedLightCullingShader->bindSSBO("ActiveClusterIndices", activeClusterIndices);
+    clusterBasedLightCullingShader->bindSSBO("ClusterData", clusters);
+    clusterBasedLightCullingShader->bindSSBO("PerClusterGlobalLightIndicesBufferMetadata", perClusterGlobalLightIndicesBufferMetadata);
+    clusterBasedLightCullingShader->bindSSBO("GlobalPointLightIndices", globalPointLightIndices);
+    clusterBasedLightCullingShader->bindSSBO("GlobalSpotLightIndices", globalSpotLightIndices);
+    clusterBasedLightCullingShader->bindSSBO("GlobalLightProbeIndices", globalLightProbeIndices);
     clusterBasedLightCullingShader->bindSSBO("PointLightData", scene->lightManager->getPointLightSSBO());
     clusterBasedLightCullingShader->bindSSBO("SpotLightData", scene->lightManager->getSpotLightSSBO());
     clusterBasedLightCullingShader->bindSSBO("LightProbeData", scene->lightManager->getLightProbeSSBO());

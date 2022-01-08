@@ -1,14 +1,16 @@
-#include "Scene.h"
+﻿#include "Scene.h"
 
-#include "Camera.h"
+#include "Camera.hpp"
+#include "CameraManager.hpp"
+#include "CommonUtils.h"
+#include "EditorCamera.hpp"
 #include "GameObject.h"
 #include "GUI/ImGui/imgui.h"
 #include "HID/HID.h"
-#include "JsonSerializer.h"
 #include "Logging.h"
 #include "ResourceLoader.h"
-
-#include <iostream>
+#include "Spark.h"
+#include "renderers/ClusterBasedForwardPlusRenderer.hpp"
 
 namespace spark
 {
@@ -16,7 +18,8 @@ Scene::Scene() : Resource("NewScene.scene")
 {
     root = std::shared_ptr<GameObject>(new GameObject("Root"));
     root->setScene(this);
-    camera = std::make_shared<Camera>(glm::vec3(0, 0, 5));
+    editorCamera = std::make_shared<EditorCamera>(glm::vec3(0, 0, 5));
+    cameraManager = std::make_shared<CameraManager>();
 }
 
 Scene::~Scene()
@@ -29,7 +32,7 @@ void Scene::update()
 {
     clearRenderQueues();
 
-    camera->update();
+    editorCamera->update();
     root->update();
     lightManager->updateLightBuffers();
 }
@@ -42,14 +45,55 @@ std::shared_ptr<GameObject> Scene::spawnGameObject(std::string&& name)
     return gameObject;
 }
 
-std::shared_ptr<Camera> Scene::getCamera() const
+void Scene::renderGameThroughMainCamera()
 {
-    return camera;
+    const auto camera = cameraManager->getMainCamera();
+    if(!camera)
+        return;
+
+    PUSH_DEBUG_GROUP(RENDER_SCENE_MAIN_CAMERA_VIEW)
+
+    const unsigned int width = 640, height = 360;
+    if(!renderer)
+    {
+        renderer = std::make_unique<renderers::ClusterBasedForwardPlusRenderer>(width, height);
+    }
+
+    const auto lastW = Spark::get().getRenderingContext().width;
+    const auto lastH = Spark::get().getRenderingContext().height;
+
+    PUSH_DEBUG_GROUP(CLEAR_FBO_FOR_MAIN_CAMERA_VIEW)
+    const glm::vec2 scale = glm::vec2(lastW / 1280.0f, lastH / 720.0f);
+    const unsigned int scissorWidth = 160.0f * scale.x, scissorHeight = 90.0f * scale.y;
+    const auto scissorX = lastW / 2 - scissorWidth / 2 - 5;
+    const auto scissorY = lastH - (scissorHeight + 25);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glEnable(GL_SCISSOR_TEST);
+    glScissor(scissorX, scissorY, scissorWidth, scissorHeight);
+    glViewport(0, 0, lastW, lastH);
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glScissor(0, 0, lastW, lastH);
+    glDisable(GL_SCISSOR_TEST);
+    POP_DEBUG_GROUP()
+
+    Spark::get().getRenderingContext().width = width;
+    Spark::get().getRenderingContext().height = height;
+
+    camera->update();
+    renderer->render(shared_from_this(), camera, scissorX + 5, scissorY + 5, scissorWidth - 10, scissorHeight - 10);
+
+    Spark::get().getRenderingContext().width = lastW;
+    Spark::get().getRenderingContext().height = lastH;
+    POP_DEBUG_GROUP()
 }
 
 void Scene::drawGUI()
 {
     drawSceneGraph();
+    renderGameThroughMainCamera();
+
     const auto goToPreview = getGameObjectToPreview();
     if(goToPreview != nullptr && !isGameObjectPreviewOpened)
     {
@@ -131,6 +175,9 @@ void Scene::drawTreeNode(std::shared_ptr<GameObject> node, bool isRootNode)
                     setGameObjectToPreview(nullptr);
                 }
                 ImGui::CloseCurrentPopup();
+                ImGui::EndPopup();
+                ImGui::PopID();
+                return;
             }
         }
         ImGui::EndPopup();
@@ -147,9 +194,11 @@ void Scene::drawTreeNode(std::shared_ptr<GameObject> node, bool isRootNode)
         ImGui::SameLine();
         if(ImGui::TreeNode("Children"))
         {
-            for(const auto& child : node->getChildren())
+            for(auto i = 0; i < node->getChildren().size(); ++i)
+            //for(const auto& child : node->getChildren())
             {
-                drawTreeNode(child, false);
+                //drawTreeNode(child, false);
+                drawTreeNode(node->getChildren()[i], false);
             }
 
             ImGui::TreePop();
@@ -161,6 +210,11 @@ void Scene::drawTreeNode(std::shared_ptr<GameObject> node, bool isRootNode)
 std::shared_ptr<GameObject> Scene::getGameObjectToPreview() const
 {
     return gameObjectToPreview.lock();
+}
+
+std::shared_ptr<CameraManager> Scene::getCameraManager() const
+{
+    return cameraManager;
 }
 
 std::string Scene::getName() const
@@ -200,12 +254,22 @@ void Scene::clearRenderQueues()
         shaderRenderList.clear();
     }
 }
+
+std::shared_ptr<GameObject> Scene::getRoot() const
+{
+    return root;
+}
+
+void Scene::setRoot(std::shared_ptr<GameObject> r)
+{
+    root = std::move(r);
+}
 }  // namespace spark
 
 RTTR_REGISTRATION
 {
     rttr::registration::class_<spark::Scene>("Scene")
         .constructor()(rttr::policy::ctor::as_std_shared_ptr)
-        .property("root", &spark::Scene::root)
-        .property("camera", &spark::Scene::camera);
+        .property("root", &spark::Scene::getRoot, &spark::Scene::setRoot)
+        .property("camera", &spark::Scene::editorCamera);
 }

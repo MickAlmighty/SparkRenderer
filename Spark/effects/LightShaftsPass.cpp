@@ -1,6 +1,7 @@
 #include "LightShaftsPass.hpp"
 
 #include "CommonUtils.h"
+#include "ICamera.hpp"
 #include "Shader.h"
 #include "Spark.h"
 
@@ -21,7 +22,7 @@ LightShaftsPass::~LightShaftsPass()
     glDeleteFramebuffers(2, framebuffers);
 }
 
-std::optional<GLuint> LightShaftsPass::process(const std::shared_ptr<Camera>& camera, GLuint depthTexture, GLuint lightingTexture)
+std::optional<GLuint> LightShaftsPass::process(const std::shared_ptr<ICamera>& camera, GLuint depthTexture, GLuint lightingTexture)
 {
     const auto* const dirLight = lights::DirectionalLight::getDirLightForLightShafts();
     if(dirLight == nullptr)
@@ -50,7 +51,7 @@ void LightShaftsPass::resize(unsigned int width, unsigned int height)
     createFrameBuffersAndTextures();
 }
 
-glm::vec2 LightShaftsPass::dirLightPositionInScreenSpace(const std::shared_ptr<Camera>& camera, const lights::DirectionalLight* const dirLight)
+glm::vec2 LightShaftsPass::dirLightPositionInScreenSpace(const std::shared_ptr<ICamera>& camera, const lights::DirectionalLight* const dirLight)
 {
     const glm::mat4 view = camera->getViewMatrix();
     const glm::mat4 projection = camera->getProjectionReversedZ();
@@ -65,7 +66,7 @@ glm::vec2 LightShaftsPass::dirLightPositionInScreenSpace(const std::shared_ptr<C
     return glm::vec2((dirLightNDCpos.x + 1.0f) * 0.5f, (dirLightNDCpos.y + 1.0f) * 0.5f);
 }
 
-bool LightShaftsPass::isCameraFacingDirectionalLight(glm::vec2 dirLightScreenSpacePosition, const std::shared_ptr<Camera>& camera,
+bool LightShaftsPass::isCameraFacingDirectionalLight(glm::vec2 dirLightScreenSpacePosition, const std::shared_ptr<ICamera>& camera,
                                                      const lights::DirectionalLight* const dirLight)
 {
     const bool isCameraFacingDirLight = glm::dot(dirLight->getDirection(), camera->front) < 0.0f;

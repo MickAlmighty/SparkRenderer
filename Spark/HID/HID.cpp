@@ -9,9 +9,9 @@ Mouse HID::mouse{};
 
 void HID::scroll_callback(double xoffset, double yoffset)
 {
-    if (yoffset < 0.0)
+    if(yoffset < 0.0)
         mouse.scroll = ScrollStatus::NEGATIVE;
-    else if (yoffset > 0.0)
+    else if(yoffset > 0.0)
         mouse.scroll = ScrollStatus::POSITIVE;
 }
 
@@ -27,7 +27,8 @@ void HID::mouse_button_callback(int button, int action, int mods)
 
 void HID::cursor_position_callback(double xpos, double ypos)
 {
-    static double lastXpos = static_cast<double>(Spark::get().WIDTH) * 0.5, lastYPos = static_cast<double>(Spark::get().HEIGHT) * 0.5;
+    static double lastXpos = static_cast<double>(Spark::get().getRenderingContext().width) * 0.5,
+                  lastYPos = static_cast<double>(Spark::get().getRenderingContext().height) * 0.5;
 
     mouse.direction.x = static_cast<float>(xpos - lastXpos);
     mouse.direction.y = static_cast<float>(ypos - lastYPos);
