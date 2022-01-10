@@ -8,9 +8,13 @@ class Clock
     static void tick();
     static double getDeltaTime();
     static double getFPS();
+    static void enableFixedDelta(double deltaInSeconds);
+    static void disableFixedDelta();
 
     private:
-    static double deltaTime;
+    inline static double deltaTime{0.0};
+    inline static double fixedDelta{0.0};
+    inline static bool isDeltaFixed{false};
     Clock() = default;
     ~Clock() = default;
 };

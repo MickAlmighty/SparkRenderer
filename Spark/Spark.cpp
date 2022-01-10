@@ -45,43 +45,27 @@ void Spark::drawGui()
 {
     if(ImGui::BeginMenu("Renderer"))
     {
-        using namespace renderers;
-        const std::string renderingAlgorithmTypeMenu = "Rendering Algorithms";
-        if(ImGui::BeginMenu(renderingAlgorithmTypeMenu.c_str()))
+        if(ImGui::BeginMenu("Rendering Algorithms"))
         {
-            static int mode = 2;
-            unsigned int width = renderingContext->width, height = renderingContext->height;
+            using RendererType = renderers::RendererType;
+            const unsigned int width = renderingContext->width, height = renderingContext->height;
 
-            if(ImGui::RadioButton("Deferred", mode == 0))
+            constexpr std::array<const std::pair<const char*, const RendererType>, 6> radioButtonsData{
+                std::make_pair("Deferred", RendererType::DEFERRED),
+                std::make_pair("Forward Plus", RendererType::FORWARD_PLUS),
+                std::make_pair("Tile Based Deferred", RendererType::TILE_BASED_DEFERRED),
+                std::make_pair("Tile Based Forward Plus", RendererType::TILE_BASED_FORWARD_PLUS),
+                std::make_pair("Cluster Based Deferred", RendererType::CLUSTER_BASED_DEFERRED),
+                std::make_pair("Cluster Based Forward Plus", RendererType::CLUSTER_BASED_FORWARD_PLUS)};
+
+            for(const auto& [radioButtonName, type] : radioButtonsData)
             {
-                mode = 0;
-                renderer = std::make_unique<DeferredRenderer>(width, height);
+                if(ImGui::RadioButton(radioButtonName, rendererType == type))
+                {
+                    selectRenderer(type, width, height);
+                }
             }
-            if(ImGui::RadioButton("Forward Plus", mode == 1))
-            {
-                mode = 1;
-                renderer = std::make_unique<ForwardPlusRenderer>(width, height);
-            }
-            if(ImGui::RadioButton("Tile Based Deferred", mode == 2))
-            {
-                mode = 2;
-                renderer = std::make_unique<TileBasedDeferredRenderer>(width, height);
-            }
-            if(ImGui::RadioButton("Tile Based Forward Plus", mode == 3))
-            {
-                mode = 3;
-                renderer = std::make_unique<TileBasedForwardPlusRenderer>(width, height);
-            }
-            if(ImGui::RadioButton("Cluster Based Deferred", mode == 4))
-            {
-                mode = 4;
-                renderer = std::make_unique<ClusterBasedDeferredRenderer>(width, height);
-            }
-            if(ImGui::RadioButton("Cluster Based Forward Plus", mode == 5))
-            {
-                mode = 5;
-                renderer = std::make_unique<ClusterBasedForwardPlusRenderer>(width, height);
-            }
+
             ImGui::EndMenu();
         }
 
@@ -105,10 +89,30 @@ void Spark::setup()
     SparkGui::setFilePickerPath(resourcePath.string());
     initImGui();
     sceneManager = std::make_unique<SceneManager>();
-    renderer = std::make_unique<renderers::TileBasedDeferredRenderer>(renderingContext->width, renderingContext->height);
+    selectRenderer(rendererType, renderingContext->width, renderingContext->height);
     animationCreator = std::make_unique<AnimationCreator>();
 
     renderingContext->addOnWindowSizeChangedCallback([this](auto width, auto height) { renderer->resize(width, height); });
+}
+
+void Spark::processKeys()
+{
+    if(HID::isKeyPressed(Key::ESC))
+    {
+        renderingContext->closeWindow();
+    }
+    if(HID::isKeyPressed(Key::F1))
+    {
+        isEditorEnabled = !isEditorEnabled;
+        if(isEditorEnabled)
+        {
+            glfwSetInputMode(renderingContext->window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        }
+        else
+        {
+            glfwSetInputMode(renderingContext->window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        }
+    }
 }
 
 void Spark::runLoop()
@@ -118,22 +122,7 @@ void Spark::runLoop()
         Clock::tick();
         glfwPollEvents();
 
-        if(HID::isKeyPressed(Key::ESC))
-        {
-            renderingContext->closeWindow();
-        }
-        if(HID::isKeyPressed(Key::F1))
-        {
-            isEditorEnabled = !isEditorEnabled;
-            if (isEditorEnabled)
-            {
-                glfwSetInputMode(renderingContext->window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-            }
-            else
-            {
-                glfwSetInputMode(renderingContext->window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-            }
-        }
+        processKeys();
 
         sceneManager->update();
         if(isEditorEnabled)
@@ -147,7 +136,7 @@ void Spark::runLoop()
             const auto scene = sceneManager->getCurrentScene();
             renderer->render(scene, scene->getCameraManager()->getMainCamera(), renderingContext->width, renderingContext->height);
         }
-        
+
         renderingContext->swapBuffers();
 
         HID::updateStates();
@@ -220,6 +209,51 @@ AnimationCreator& Spark::getAnimationCreator() const
 renderers::Renderer& Spark::getRenderer() const
 {
     return *renderer;
+}
+
+void Spark::selectRenderer(renderers::RendererType type, unsigned int width, unsigned int height)
+{
+    using namespace renderers;
+    if(renderer)
+    {
+        if(type == rendererType && width == renderer->getWidth() && height == renderer->getHeight())
+        {
+            return;
+        }
+    }
+
+    switch(type)
+    {
+        case RendererType::FORWARD_PLUS:
+            rendererType = RendererType::FORWARD_PLUS;
+            renderer = std::make_unique<ForwardPlusRenderer>(width, height);
+            break;
+        case RendererType::TILE_BASED_FORWARD_PLUS:
+            rendererType = RendererType::TILE_BASED_FORWARD_PLUS;
+            renderer = std::make_unique<TileBasedForwardPlusRenderer>(width, height);
+            break;
+        case RendererType::CLUSTER_BASED_FORWARD_PLUS:
+            rendererType = RendererType::CLUSTER_BASED_FORWARD_PLUS;
+            renderer = std::make_unique<ClusterBasedForwardPlusRenderer>(width, height);
+            break;
+        case RendererType::DEFERRED:
+            rendererType = RendererType::DEFERRED;
+            renderer = std::make_unique<DeferredRenderer>(width, height);
+            break;
+        case RendererType::TILE_BASED_DEFERRED:
+            rendererType = RendererType::TILE_BASED_DEFERRED;
+            renderer = std::make_unique<TileBasedDeferredRenderer>(width, height);
+            break;
+        case RendererType::CLUSTER_BASED_DEFERRED:
+            rendererType = RendererType::CLUSTER_BASED_DEFERRED;
+            renderer = std::make_unique<ClusterBasedDeferredRenderer>(width, height);
+            break;
+    }
+}
+
+renderers::RendererType Spark::getRendererType() const
+{
+    return rendererType;
 }
 
 void Spark::initImGui()

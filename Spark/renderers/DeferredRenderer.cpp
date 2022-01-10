@@ -2,6 +2,7 @@
 
 #include "CommonUtils.h"
 #include "ICamera.hpp"
+#include "Logging.h"
 #include "ResourceLibrary.h"
 #include "Scene.h"
 #include "Shader.h"
@@ -24,16 +25,8 @@ DeferredRenderer::~DeferredRenderer()
     glDeleteFramebuffers(1, &framebuffer);
 }
 
-void DeferredRenderer::renderMeshes(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera)
+void DeferredRenderer::processLighting(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera, GLuint aoTexture)
 {
-    gBuffer.fill(scene->getRenderingQueues(), camera->getUbo());
-
-    GLuint aoTexture{0};
-    if(isAmbientOcclusionEnabled)
-    {
-        aoTexture = ao.process(gBuffer.depthTexture, gBuffer.normalsTexture, camera);
-    }
-
     PUSH_DEBUG_GROUP(PBR_LIGHT);
 
     glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
@@ -68,6 +61,25 @@ void DeferredRenderer::renderMeshes(const std::shared_ptr<Scene>& scene, const s
     POP_DEBUG_GROUP();
 }
 
+void DeferredRenderer::renderMeshes(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera)
+{
+    if(isProfilingEnabled)
+    {
+        timer.measure(0, [this, scene, camera] { gBuffer.fill(scene->getRenderingQueues(), camera->getUbo()); });
+        const GLuint aoTexture = processAo(camera);
+        timer.measure(1, [this, scene, camera, &aoTexture] { processLighting(scene, camera, aoTexture); });
+
+        auto m = timer.getMeasurementsInUs();
+        SPARK_RENDERER_INFO("{}, {}", m[0], m[1]);
+    }
+    else
+    {
+        gBuffer.fill(scene->getRenderingQueues(), camera->getUbo());
+        const GLuint aoTexture = processAo(camera);
+        processLighting(scene, camera, aoTexture);
+    }
+}
+
 void DeferredRenderer::resizeDerived(unsigned int width, unsigned int height)
 {
     w = width;
@@ -80,6 +92,15 @@ void DeferredRenderer::createFrameBuffersAndTextures()
 {
     utils::recreateTexture2D(lightingTexture, w, h, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
     utils::recreateFramebuffer(framebuffer, {lightingTexture});
+}
+
+GLuint DeferredRenderer::processAo(const std::shared_ptr<ICamera>& camera)
+{
+    if(isAmbientOcclusionEnabled)
+    {
+        return ao.process(gBuffer.depthTexture, gBuffer.normalsTexture, camera);
+    }
+    return 0;
 }
 
 GLuint DeferredRenderer::getDepthTexture() const

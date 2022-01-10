@@ -1,12 +1,10 @@
 #pragma once
 #include <memory>
 
-#include "Buffer.hpp"
 #include "GBuffer.hpp"
+#include "profiling/GpuTimer.hpp"
 #include "Renderer.hpp"
-#include "lights/LightManager.h"
 #include "ScreenQuad.hpp"
-#include "effects/AmbientOcclusion.hpp"
 
 namespace spark::resources
 {
@@ -34,11 +32,14 @@ class DeferredRenderer : public Renderer
 
     private:
     void createFrameBuffersAndTextures();
+    GLuint processAo(const std::shared_ptr<ICamera>& camera);
+    void processLighting(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera, GLuint aoTexture);
 
     GBuffer gBuffer;
     GLuint framebuffer{}, lightingTexture{};
     GLuint brdfLookupTexture{};
     ScreenQuad screenQuad{};
     std::shared_ptr<resources::Shader> lightingShader{nullptr};
+    profiling::GpuTimer<2> timer;
 };
 }  // namespace spark::renderers

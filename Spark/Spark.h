@@ -5,6 +5,7 @@
 #include "OpenGLContext.hpp"
 #include "ResourceLibrary.h"
 #include "SceneManager.h"
+#include "renderers/RendererType.hpp"
 
 namespace spark
 {
@@ -35,6 +36,8 @@ class Spark
     virtual AnimationCreator& getAnimationCreator() const;
 
     renderers::Renderer& getRenderer() const;
+    void selectRenderer(renderers::RendererType type, unsigned int width, unsigned int height);
+    renderers::RendererType getRendererType() const;
 
     bool vsync = true;
     bool isEditorEnabled{true};
@@ -50,6 +53,7 @@ class Spark
 
     std::filesystem::path findResourceDirectoryPath() const;
 
+    void processKeys();
     void initImGui();
     void destroyImGui();
 
@@ -60,6 +64,7 @@ class Spark
     std::unique_ptr<AnimationCreator> animationCreator{};
     SparkGui sparkGui{};
     std::filesystem::path pathToResources{};
+    renderers::RendererType rendererType = renderers::RendererType::CLUSTER_BASED_FORWARD_PLUS;
 
     inline static Spark* ptr{nullptr};
 

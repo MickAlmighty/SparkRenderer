@@ -1,4 +1,5 @@
 #pragma once
+#include "profiling/GpuTimer.hpp"
 #include "Renderer.hpp"
 #include "TileBasedLightCullingPass.hpp"
 
@@ -35,5 +36,7 @@ class TileBasedForwardPlusRenderer : public Renderer
     std::shared_ptr<resources::Shader> depthOnlyShader{nullptr};
     std::shared_ptr<resources::Shader> depthAndNormalsShader{nullptr};
     std::shared_ptr<resources::Shader> lightingShader{nullptr};
+
+    profiling::GpuTimer<3> timer;
 };
 }  // namespace spark::renderers

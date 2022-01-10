@@ -1,0 +1,631 @@
+{
+	"Content" : 
+	{
+		"camera" : 
+		{
+			"Content" : 
+			{
+				"cameraTarget" : 
+				[
+					-172.73516845703125,
+					14.835469245910645,
+					61.690944671630859
+				],
+				"fov" : 60.0,
+				"front" : 
+				[
+					0.97153568267822266,
+					-0.23683851957321167,
+					0.0050961240194737911
+				],
+				"mouseSensitivity" : 0.10000000149011612,
+				"movementSpeed" : 37.886302947998047,
+				"pitch" : -13.70002269744873,
+				"position" : 
+				[
+					-173.70671081542969,
+					15.072307586669922,
+					61.685848236083984
+				],
+				"right" : 
+				[
+					-0.0052453596144914627,
+					0.0,
+					0.99998623132705688
+				],
+				"up" : 
+				[
+					0.23683525621891022,
+					0.97154903411865234,
+					0.001242303173057735
+				],
+				"yaw" : 360.300537109375,
+				"zFar" : 10000.0,
+				"zNear" : 0.10000000149011612
+			},
+			"Identifier" : 12,
+			"Type" : "classstd::shared_ptr<classspark::EditorCamera>"
+		},
+		"root" : 
+		{
+			"Content" : 
+			{
+				"active" : true,
+				"children" : 
+				[
+					{
+						"Content" : 
+						{
+							"active" : true,
+							"children" : null,
+							"components" : 
+							[
+								{
+									"Content" : 
+									{
+										"active" : true,
+										"color" : 
+										[
+											0.9999995231628418,
+											1.0,
+											0.99998998641967773
+										],
+										"colorStrength" : 1.0,
+										"direction" : 
+										[
+											0.0,
+											-1.0,
+											0.0
+										],
+										"gameObject" : 
+										{
+											"Identifier" : 2
+										},
+										"lightShaftsActive" : true
+									},
+									"Identifier" : 3,
+									"Type" : "classstd::shared_ptr<classspark::lights::DirectionalLight>"
+								}
+							],
+							"name" : "dirLight",
+							"parent" : 
+							{
+								"Identifier" : 1
+							},
+							"scene" : 
+							{
+								"Identifier" : 0
+							},
+							"staticObject" : false,
+							"transform" : 
+							{
+								"Content" : 
+								{
+									"local" : 
+									{
+										"Content" : 
+										{
+											"position" : 
+											[
+												0.0,
+												0.0,
+												0.0
+											],
+											"rotation" : 
+											[
+												0.0,
+												0.0,
+												0.0,
+												1.0
+											],
+											"scale" : 
+											[
+												1.0,
+												1.0,
+												1.0
+											]
+										},
+										"Type" : "LocalTransform"
+									},
+									"world" : 
+									{
+										"Content" : 
+										{
+											"modelMatrix" : 
+											[
+												[
+													1.0,
+													0.0,
+													0.0,
+													0.0
+												],
+												[
+													0.0,
+													1.0,
+													0.0,
+													0.0
+												],
+												[
+													0.0,
+													0.0,
+													1.0,
+													0.0
+												],
+												[
+													0.0,
+													0.0,
+													0.0,
+													1.0
+												]
+											]
+										},
+										"Type" : "WorldTransform"
+									}
+								},
+								"Type" : "Transform"
+							}
+						},
+						"Identifier" : 2,
+						"Type" : "classstd::shared_ptr<classspark::GameObject>"
+					},
+					{
+						"Content" : 
+						{
+							"active" : true,
+							"children" : null,
+							"components" : 
+							[
+								{
+									"Content" : 
+									{
+										"active" : true,
+										"activeSkybox" : true,
+										"gameObject" : 
+										{
+											"Identifier" : 4
+										},
+										"skyboxName" : "evening_road_01_2k.dds"
+									},
+									"Identifier" : 5,
+									"Type" : "classstd::shared_ptr<classspark::Skybox>"
+								}
+							],
+							"name" : "Skybox",
+							"parent" : 
+							{
+								"Identifier" : 1
+							},
+							"scene" : 
+							{
+								"Identifier" : 0
+							},
+							"staticObject" : false,
+							"transform" : 
+							{
+								"Content" : 
+								{
+									"local" : 
+									{
+										"Content" : 
+										{
+											"position" : 
+											[
+												0.0,
+												0.0,
+												0.0
+											],
+											"rotation" : 
+											[
+												0.0,
+												0.0,
+												0.0,
+												1.0
+											],
+											"scale" : 
+											[
+												1.0,
+												1.0,
+												1.0
+											]
+										},
+										"Type" : "LocalTransform"
+									},
+									"world" : 
+									{
+										"Content" : 
+										{
+											"modelMatrix" : 
+											[
+												[
+													1.0,
+													0.0,
+													0.0,
+													0.0
+												],
+												[
+													0.0,
+													1.0,
+													0.0,
+													0.0
+												],
+												[
+													0.0,
+													0.0,
+													1.0,
+													0.0
+												],
+												[
+													0.0,
+													0.0,
+													0.0,
+													1.0
+												]
+											]
+										},
+										"Type" : "WorldTransform"
+									}
+								},
+								"Type" : "Transform"
+							}
+						},
+						"Identifier" : 4,
+						"Type" : "classstd::shared_ptr<classspark::GameObject>"
+					},
+					{
+						"Content" : 
+						{
+							"active" : true,
+							"children" : null,
+							"components" : 
+							[
+								{
+									"Content" : 
+									{
+										"active" : true,
+										"gameObject" : 
+										{
+											"Identifier" : 6
+										},
+										"modelPath" : "models\\sponza\\Sponza.gltf"
+									},
+									"Identifier" : 7,
+									"Type" : "classstd::shared_ptr<classspark::ModelMesh>"
+								}
+							],
+							"name" : "sponza",
+							"parent" : 
+							{
+								"Identifier" : 1
+							},
+							"scene" : 
+							{
+								"Identifier" : 0
+							},
+							"staticObject" : true,
+							"transform" : 
+							{
+								"Content" : 
+								{
+									"local" : 
+									{
+										"Content" : 
+										{
+											"position" : 
+											[
+												0.0,
+												-14.9178466796875,
+												66.485038757324219
+											],
+											"rotation" : 
+											[
+												0.0,
+												0.0,
+												0.0,
+												1.0
+											],
+											"scale" : 
+											[
+												0.12879997491836548,
+												0.12879997491836548,
+												0.12879997491836548
+											]
+										},
+										"Type" : "LocalTransform"
+									},
+									"world" : 
+									{
+										"Content" : 
+										{
+											"modelMatrix" : 
+											[
+												[
+													0.12879997491836548,
+													0.0,
+													0.0,
+													0.0
+												],
+												[
+													0.0,
+													0.12879997491836548,
+													0.0,
+													0.0
+												],
+												[
+													0.0,
+													0.0,
+													0.12879997491836548,
+													0.0
+												],
+												[
+													0.0,
+													-14.9178466796875,
+													66.485038757324219,
+													1.0
+												]
+											]
+										},
+										"Type" : "WorldTransform"
+									}
+								},
+								"Type" : "Transform"
+							}
+						},
+						"Identifier" : 6,
+						"Type" : "classstd::shared_ptr<classspark::GameObject>"
+					},
+					{
+						"Content" : 
+						{
+							"active" : true,
+							"children" : null,
+							"components" : 
+							[
+								{
+									"Content" : 
+									{
+										"active" : true,
+										"cameraTarget" : 
+										[
+											-162.00132751464844,
+											1.0000052452087402,
+											61.948513031005859
+										],
+										"fov" : 60.0,
+										"front" : 
+										[
+											0.99867367744445801,
+											5.2403806876100134e-06,
+											-0.05148816853761673
+										],
+										"gameObject" : 
+										{
+											"Identifier" : 8
+										},
+										"position" : 
+										[
+											-163.0,
+											1.0,
+											62.0
+										],
+										"right" : 
+										[
+											0.05148816853761673,
+											-0.0,
+											0.99867367744445801
+										],
+										"up" : 
+										[
+											-5.2334298743517138e-06,
+											1.0,
+											2.6981757628163905e-07
+										],
+										"zFar" : 1000.0,
+										"zNear" : 0.10000000149011612
+									},
+									"Identifier" : 9,
+									"Type" : "classstd::shared_ptr<classspark::Camera>"
+								},
+								{
+									"Content" : 
+									{
+										"active" : true,
+										"animationData" : "animations\\benchmark_flycam.anim",
+										"animationPlayer" : 
+										{
+											"Content" : 
+											{
+												"isLooped" : false,
+												"isPlaying" : false,
+												"timeMarker" : 0.0
+											},
+											"Type" : "AnimationPlayer"
+										},
+										"gameObject" : 
+										{
+											"Identifier" : 8
+										}
+									},
+									"Identifier" : 10,
+									"Type" : "classstd::shared_ptr<classspark::Animation>"
+								},
+								{
+									"Content" : 
+									{
+										"active" : true,
+										"gameObject" : 
+										{
+											"Identifier" : 8
+										}
+									},
+									"Identifier" : 11,
+									"Type" : "classstd::shared_ptr<classspark::scripts::RendererBenchmark>"
+								}
+							],
+							"name" : "camera",
+							"parent" : 
+							{
+								"Identifier" : 1
+							},
+							"scene" : 
+							{
+								"Identifier" : 0
+							},
+							"staticObject" : false,
+							"transform" : 
+							{
+								"Content" : 
+								{
+									"local" : 
+									{
+										"Content" : 
+										{
+											"position" : 
+											[
+												-163.0,
+												1.0,
+												62.0
+											],
+											"rotation" : 
+											[
+												2.2533117771672551e-06,
+												-0.68866240978240967,
+												1.4322749848361127e-06,
+												0.72508209943771362
+											],
+											"scale" : 
+											[
+												1.0,
+												1.0,
+												1.0
+											]
+										},
+										"Type" : "LocalTransform"
+									},
+									"world" : 
+									{
+										"Content" : 
+										{
+											"modelMatrix" : 
+											[
+												[
+													0.051488161087036133,
+													-1.0265082437399542e-06,
+													0.99867355823516846,
+													0.0
+												],
+												[
+													-5.1805764087475836e-06,
+													1.0,
+													1.2949642496096203e-06,
+													0.0
+												],
+												[
+													-0.99867355823516846,
+													-5.2403802328626625e-06,
+													0.051488161087036133,
+													0.0
+												],
+												[
+													-163.0,
+													1.0,
+													62.0,
+													1.0
+												]
+											]
+										},
+										"Type" : "WorldTransform"
+									}
+								},
+								"Type" : "Transform"
+							}
+						},
+						"Identifier" : 8,
+						"Type" : "classstd::shared_ptr<classspark::GameObject>"
+					}
+				],
+				"components" : null,
+				"name" : "Root",
+				"parent" : 
+				{
+					"Identifier" : -1
+				},
+				"scene" : 
+				{
+					"Identifier" : 0
+				},
+				"staticObject" : false,
+				"transform" : 
+				{
+					"Content" : 
+					{
+						"local" : 
+						{
+							"Content" : 
+							{
+								"position" : 
+								[
+									0.0,
+									0.0,
+									0.0
+								],
+								"rotation" : 
+								[
+									0.0,
+									0.0,
+									0.0,
+									1.0
+								],
+								"scale" : 
+								[
+									1.0,
+									1.0,
+									1.0
+								]
+							},
+							"Type" : "LocalTransform"
+						},
+						"world" : 
+						{
+							"Content" : 
+							{
+								"modelMatrix" : 
+								[
+									[
+										1.0,
+										0.0,
+										0.0,
+										0.0
+									],
+									[
+										0.0,
+										1.0,
+										0.0,
+										0.0
+									],
+									[
+										0.0,
+										0.0,
+										1.0,
+										0.0
+									],
+									[
+										0.0,
+										0.0,
+										0.0,
+										1.0
+									]
+								]
+							},
+							"Type" : "WorldTransform"
+						}
+					},
+					"Type" : "Transform"
+				}
+			},
+			"Identifier" : 1,
+			"Type" : "classstd::shared_ptr<classspark::GameObject>"
+		}
+	},
+	"Identifier" : 0,
+	"Type" : "classstd::shared_ptr<classspark::Scene>"
+}

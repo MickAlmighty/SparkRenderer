@@ -102,6 +102,7 @@ add_subdirectory(HID)
 add_subdirectory(lights)
 add_subdirectory(effects)
 add_subdirectory(renderers)
+add_subdirectory(scripts)
 
 # Create the source groups for source tree with root at CMAKE_CURRENT_SOURCE_DIR.
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SparkSources})

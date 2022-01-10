@@ -15,6 +15,8 @@ class Animation : public Component
     void play(bool isLooped = false);
     void pause();
     void stop();
+    bool isPlaying() const;
+    bool hasData() const;
 
     std::string getAnimationDataRelativePath() const;
     void setAnimationDataByRelativePath(std::string path);

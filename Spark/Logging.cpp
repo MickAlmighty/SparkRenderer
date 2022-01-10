@@ -2,7 +2,7 @@
 #include <spdlog/sinks/basic_file_sink.h>
 #include "spdlog/sinks/stdout_color_sinks.h"
 
-std::shared_ptr<spark::logger> spark::getSparkLogger()
+std::shared_ptr<spark::logging::logger> spark::logging::getSparkLogger()
 {
     static bool configure = true;
     if(configure)
@@ -25,5 +25,18 @@ std::shared_ptr<spark::logger> spark::getSparkLogger()
         set_default_logger(log);
     }
     static std::shared_ptr<spdlog::logger> logger = spdlog::get("spark");
+    return logger;
+}
+
+std::shared_ptr<spark::logging::logger> spark::logging::getRendererLogger()
+{
+    auto logger = spdlog::get(RENDERER_LOGGER_NAME);
+    if(!logger)
+    {
+        logger = spdlog::basic_logger_mt(RENDERER_LOGGER_NAME, RENDERER_LOGGER_FILENAME, true);
+        logger->set_pattern("%v");
+        logger->set_level(static_cast<spdlog::level::level_enum>(SPARK_ACTIVE_LEVEL));
+    }
+
     return logger;
 }

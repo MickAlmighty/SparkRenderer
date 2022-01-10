@@ -2,6 +2,7 @@
 
 #include "CommonUtils.h"
 #include "ICamera.hpp"
+#include "Logging.h"
 #include "Spark.h"
 
 namespace spark::renderers
@@ -51,9 +52,9 @@ void ClusterBasedForwardPlusRenderer::depthPrepass(const std::shared_ptr<Scene>&
 
     shader->use();
     shader->bindUniformBuffer("Camera", camera->getUbo());
-    if (const auto it = scene->getRenderingQueues().find(ShaderType::PBR); it != scene->getRenderingQueues().cend())
+    if(const auto it = scene->getRenderingQueues().find(ShaderType::PBR); it != scene->getRenderingQueues().cend())
     {
-        for (auto& request : it->second)
+        for(auto& request : it->second)
         {
             request.mesh->draw(shader, request.model);
         }
@@ -72,7 +73,8 @@ GLuint ClusterBasedForwardPlusRenderer::aoPass(const std::shared_ptr<Scene>& sce
     return 0;
 }
 
-void ClusterBasedForwardPlusRenderer::lightingPass(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera, const GLuint ssaoTexture)
+void ClusterBasedForwardPlusRenderer::lightingPass(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera,
+                                                   const GLuint ssaoTexture)
 {
     PUSH_DEBUG_GROUP(PBR_LIGHT)
     glBindFramebuffer(GL_FRAMEBUFFER, lightingFramebuffer);
@@ -81,7 +83,7 @@ void ClusterBasedForwardPlusRenderer::lightingPass(const std::shared_ptr<Scene>&
 
     glDepthFunc(GL_EQUAL);
 
-    if (!scene->getSkyboxCubemap().expired())
+    if(!scene->getSkyboxCubemap().expired())
     {
         glBindTextureUnit(7, scene->getSkyboxCubemap().lock()->irradianceCubemap);
         glBindTextureUnit(8, scene->getSkyboxCubemap().lock()->prefilteredCubemap);
@@ -105,9 +107,9 @@ void ClusterBasedForwardPlusRenderer::lightingPass(const std::shared_ptr<Scene>&
     lightingShader->bindSSBO("PerClusterGlobalLightIndicesBufferMetadata", lightCullingPass.perClusterGlobalLightIndicesBufferMetadata);
     lightingShader->setVec2("tileSize", lightCullingPass.pxTileSize);
 
-    if (const auto it = scene->getRenderingQueues().find(ShaderType::PBR); it != scene->getRenderingQueues().cend())
+    if(const auto it = scene->getRenderingQueues().find(ShaderType::PBR); it != scene->getRenderingQueues().cend())
     {
-        for (auto& request : it->second)
+        for(auto& request : it->second)
         {
             request.mesh->draw(lightingShader, request.model);
         }
@@ -119,10 +121,24 @@ void ClusterBasedForwardPlusRenderer::lightingPass(const std::shared_ptr<Scene>&
 
 void ClusterBasedForwardPlusRenderer::renderMeshes(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera)
 {
-    depthPrepass(scene, camera);
-    const GLuint ssaoTexture = aoPass(scene, camera);
-    lightCullingPass.process(depthTexture, scene, camera);
-    lightingPass(scene, camera, ssaoTexture);
+    if(isProfilingEnabled)
+    {
+        timer.measure(0, [this, &scene, &camera] { depthPrepass(scene, camera); });
+        const GLuint ssaoTexture = aoPass(scene, camera);
+        timer.measure(1, [this, &scene, &camera] { lightCullingPass.process(depthTexture, scene, camera); });
+        timer.measure(2, [this, &scene, &camera, ssaoTexture] { lightingPass(scene, camera, ssaoTexture); });
+
+        auto m = timer.getMeasurementsInUs();
+
+        SPARK_RENDERER_INFO("{}, {}, {}", m[0], m[1], m[2]);
+    }
+    else
+    {
+        depthPrepass(scene, camera);
+        const GLuint ssaoTexture = aoPass(scene, camera);
+        lightCullingPass.process(depthTexture, scene, camera);
+        lightingPass(scene, camera, ssaoTexture);
+    }
 }
 
 void ClusterBasedForwardPlusRenderer::resizeDerived(unsigned int width, unsigned int height)

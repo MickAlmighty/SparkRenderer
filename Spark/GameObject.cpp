@@ -23,7 +23,23 @@ void GameObject::update()
         transform.world.setMatrix(parent.lock()->transform.world.getMatrix() * transform.local.getMatrix());
     }
 
-    for(const auto& component : components)
+    for(int i = 0; i < components.size(); ++i)
+    {
+        if(components[i]->getActive())
+        {
+            components[i]->update();
+        }
+    }
+
+    for(int i = 0; i < children.size(); ++i)
+    {
+        if(children[i]->isActive())
+        {
+            children[i]->update();
+        }
+    }
+
+    /*for(const auto& component : components)
     {
         if(component->getActive())
         {
@@ -37,7 +53,7 @@ void GameObject::update()
         {
             child->update();
         }
-    }
+    }*/
 }
 
 std::shared_ptr<GameObject> GameObject::getParent() const

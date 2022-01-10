@@ -24,8 +24,11 @@ class Renderer
     void resize(unsigned int width, unsigned int height);
 
     void drawGui();
+    unsigned int getWidth() const;
+    unsigned int getHeight() const;
 
     bool isAmbientOcclusionEnabled{false};
+    bool isProfilingEnabled{false};
 
     protected:
     virtual void renderMeshes(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera) = 0;

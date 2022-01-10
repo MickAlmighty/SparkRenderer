@@ -2,6 +2,7 @@
 
 #include "CommonUtils.h"
 #include "ICamera.hpp"
+#include "Logging.h"
 #include "Shader.h"
 #include "Spark.h"
 
@@ -52,9 +53,9 @@ void ForwardPlusRenderer::depthPrepass(const std::shared_ptr<Scene>& scene, cons
 
     shader->use();
     shader->bindUniformBuffer("Camera", camera->getUbo());
-    if (const auto it = scene->getRenderingQueues().find(ShaderType::PBR); it != scene->getRenderingQueues().cend())
+    if(const auto it = scene->getRenderingQueues().find(ShaderType::PBR); it != scene->getRenderingQueues().cend())
     {
-        for (auto& request : it->second)
+        for(auto& request : it->second)
         {
             request.mesh->draw(shader, request.model);
         }
@@ -114,9 +115,21 @@ void ForwardPlusRenderer::lightingPass(const std::shared_ptr<Scene>& scene, cons
 
 void ForwardPlusRenderer::renderMeshes(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera)
 {
-    depthPrepass(scene, camera);
-    const GLuint ssaoTexture = aoPass(scene, camera);
-    lightingPass(scene, camera, ssaoTexture);
+    if(isProfilingEnabled)
+    {
+        timer.measure(0, [this, scene, camera] { depthPrepass(scene, camera); });
+        const GLuint ssaoTexture = aoPass(scene, camera);
+        timer.measure(1, [this, scene, camera, ssaoTexture] { lightingPass(scene, camera, ssaoTexture); });
+        auto m = timer.getMeasurementsInUs();
+
+        SPARK_RENDERER_INFO("{}, {}", m[0], m[1]);
+    }
+    else
+    {
+        depthPrepass(scene, camera);
+        const GLuint ssaoTexture = aoPass(scene, camera);
+        lightingPass(scene, camera, ssaoTexture);
+    }
 }
 
 void ForwardPlusRenderer::resizeDerived(unsigned int width, unsigned int height)

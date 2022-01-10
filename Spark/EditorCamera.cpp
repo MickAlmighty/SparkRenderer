@@ -57,7 +57,7 @@ void EditorCamera::processKeyboard()
             position += finalDirection * velocity;
         }
     }
-    else if(HID::getKeyState(Key::MOUSE_RIGHT) == State::NONE)
+    else if(HID::getKeyState(Key::MOUSE_RIGHT) == State::NONE && HID::isKeyPressed(Key::LEFT_CTRL))
     {
         if(HID::mouse.getScrollStatus() == ScrollStatus::POSITIVE)
             position += front;
@@ -117,7 +117,7 @@ void EditorCamera::updateCameraVectors()
 
 void EditorCamera::update()
 {
-    if (Spark::get().isEditorEnabled)
+    if(Spark::get().isEditorEnabled)
     {
         processKeyboard();
         processMouseMovement(HID::mouse.direction.x, -HID::mouse.direction.y);

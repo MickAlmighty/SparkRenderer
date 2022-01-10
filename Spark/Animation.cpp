@@ -28,6 +28,16 @@ void Animation::stop()
     animationPlayer.stop(getGameObject());
 }
 
+bool Animation::isPlaying() const
+{
+    return animationPlayer.isPlayingAnimation();
+}
+
+bool Animation::hasData() const
+{
+    return animationData != nullptr;
+}
+
 std::string Animation::getAnimationDataRelativePath() const
 {
     return animationData ? animationData->getPath().string() : "";

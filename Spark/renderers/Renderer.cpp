@@ -70,6 +70,16 @@ void Renderer::drawGui()
     postProcessingStack.drawGui();
 }
 
+unsigned Renderer::getWidth() const
+{
+    return w;
+}
+
+unsigned Renderer::getHeight() const
+{
+    return h;
+}
+
 void Renderer::postProcessingPass(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera)
 {
     textureHandle = postProcessingStack.process(getLightingTexture(), getDepthTexture(), scene, camera);

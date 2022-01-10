@@ -4,6 +4,7 @@
 
 #include "GBuffer.hpp"
 #include "glad_glfw3.h"
+#include "profiling/GpuTimer.hpp"
 #include "Renderer.hpp"
 #include "TileBasedLightCullingPass.hpp"
 
@@ -33,11 +34,14 @@ class TileBasedDeferredRenderer : public Renderer
 
     private:
     void createFrameBuffersAndTextures();
+    void processLighting(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera, GLuint ssaoTexture);
+    GLuint aoPass(const std::shared_ptr<ICamera>& camera);
 
     GLuint lightingTexture{};
     GLuint brdfLookupTexture{};
     GBuffer gBuffer;
     TileBasedLightCullingPass lightCullingPass;
     std::shared_ptr<resources::Shader> lightingShader{nullptr};
+    profiling::GpuTimer<3> timer;
 };
 }  // namespace spark::renderers

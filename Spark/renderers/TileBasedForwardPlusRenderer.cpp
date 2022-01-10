@@ -2,6 +2,7 @@
 
 #include "CommonUtils.h"
 #include "ICamera.hpp"
+#include "Logging.h"
 #include "Spark.h"
 
 namespace spark::renderers
@@ -104,9 +105,9 @@ void TileBasedForwardPlusRenderer::lightingPass(const std::shared_ptr<Scene>& sc
     lightingShader->bindSSBO("LightProbeIndices", lightCullingPass.lightProbeIndices);
     lightingShader->setUVec2("viewportSize", {w, h});
 
-    if (const auto it = scene->getRenderingQueues().find(ShaderType::PBR); it != scene->getRenderingQueues().cend())
+    if(const auto it = scene->getRenderingQueues().find(ShaderType::PBR); it != scene->getRenderingQueues().cend())
     {
-        for (auto& request : it->second)
+        for(auto& request : it->second)
         {
             request.mesh->draw(lightingShader, request.model);
         }
@@ -118,10 +119,24 @@ void TileBasedForwardPlusRenderer::lightingPass(const std::shared_ptr<Scene>& sc
 
 void TileBasedForwardPlusRenderer::renderMeshes(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera)
 {
-    depthPrepass(scene, camera);
-    const GLuint ssaoTexture = aoPass(scene, camera);
-    lightCullingPass.process(depthTexture, scene, camera);
-    lightingPass(scene, camera, ssaoTexture);
+    if(isProfilingEnabled)
+    {
+        timer.measure(0, [this, &scene, &camera] { depthPrepass(scene, camera); });
+        const GLuint ssaoTexture = aoPass(scene, camera);
+        timer.measure(1, [this, &scene, &camera] { lightCullingPass.process(depthTexture, scene, camera); });
+        timer.measure(2, [this, &scene, &camera, ssaoTexture] { lightingPass(scene, camera, ssaoTexture); });
+
+        auto m = timer.getMeasurementsInUs();
+
+        SPARK_RENDERER_INFO("{}, {}, {}", m[0], m[1], m[2]);
+    }
+    else
+    {
+        depthPrepass(scene, camera);
+        const GLuint ssaoTexture = aoPass(scene, camera);
+        lightCullingPass.process(depthTexture, scene, camera);
+        lightingPass(scene, camera, ssaoTexture);
+    }
 }
 
 void TileBasedForwardPlusRenderer::resizeDerived(unsigned int width, unsigned int height)

@@ -8,8 +8,6 @@
 
 namespace spark
 {
-double Clock::deltaTime = 0;
-
 void Clock::tick()
 {
     using namespace std::chrono;
@@ -31,12 +29,25 @@ void Clock::tick()
 
 double Clock::getDeltaTime()
 {
+    if(isDeltaFixed)
+        return fixedDelta;
+
     return deltaTime;
 }
 
 double Clock::getFPS()
 {
-    return 1.0 / deltaTime;
+    return 1.0 / getDeltaTime();
 }
 
+void Clock::disableFixedDelta()
+{
+    isDeltaFixed = false;
+}
+
+void Clock::enableFixedDelta(double deltaInSeconds)
+{
+    isDeltaFixed = true;
+    deltaInSeconds < 0.0 ? fixedDelta = 0.0 : fixedDelta = deltaInSeconds;
+}
 }  // namespace spark

@@ -1,5 +1,6 @@
 #pragma once
 #include "ClusterBasedLightCullingPass.hpp"
+#include "profiling/GpuTimer.hpp"
 #include "Renderer.hpp"
 
 namespace spark::renderers
@@ -35,5 +36,6 @@ class ClusterBasedForwardPlusRenderer : public Renderer
     std::shared_ptr<resources::Shader> depthOnlyShader{nullptr};
     std::shared_ptr<resources::Shader> depthAndNormalsShader{nullptr};
     std::shared_ptr<resources::Shader> lightingShader{nullptr};
+    profiling::GpuTimer<3> timer;
 };
 }  // namespace spark::renderers

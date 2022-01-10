@@ -2,6 +2,7 @@
 #include <memory>
 
 #include "Renderer.hpp"
+#include "profiling/GpuTimer.hpp"
 
 namespace spark::resources
 {
@@ -40,5 +41,6 @@ class ForwardPlusRenderer : public Renderer
     std::shared_ptr<resources::Shader> depthOnlyShader{nullptr};
     std::shared_ptr<resources::Shader> depthAndNormalsShader{nullptr};
     std::shared_ptr<resources::Shader> lightingShader{nullptr};
+    profiling::GpuTimer<2> timer;
 };
 }  // namespace spark::renderers

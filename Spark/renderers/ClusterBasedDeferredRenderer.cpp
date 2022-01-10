@@ -2,6 +2,7 @@
 
 #include "CommonUtils.h"
 #include "ICamera.hpp"
+#include "Logging.h"
 #include "Shader.h"
 #include "Spark.h"
 
@@ -21,16 +22,8 @@ ClusterBasedDeferredRenderer::~ClusterBasedDeferredRenderer()
     glDeleteTextures(1, &lightingTexture);
 }
 
-void ClusterBasedDeferredRenderer::renderMeshes(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera)
+void ClusterBasedDeferredRenderer::processLighting(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera, GLuint ssaoTexture)
 {
-    gBuffer.fill(scene->getRenderingQueues(), camera->getUbo());
-
-    lightCullingPass.process(gBuffer.depthTexture, scene, camera);
-
-    GLuint ssaoTexture{0};
-    if(isAmbientOcclusionEnabled)
-        ssaoTexture = ao.process(gBuffer.depthTexture, gBuffer.normalsTexture, camera);
-
     PUSH_DEBUG_GROUP(TILE_BASED_DEFERRED)
     float clearRgba[] = {0.0f, 0.0f, 0.0f, 0.0f};
     glClearTexImage(lightingTexture, 0, GL_RGBA, GL_FLOAT, &clearRgba);
@@ -71,6 +64,36 @@ void ClusterBasedDeferredRenderer::renderMeshes(const std::shared_ptr<Scene>& sc
     glBindTextures(0, 0, nullptr);
 
     POP_DEBUG_GROUP();
+}
+
+GLuint ClusterBasedDeferredRenderer::aoPass(const std::shared_ptr<ICamera>& camera)
+{
+    if(isAmbientOcclusionEnabled)
+        return ao.process(gBuffer.depthTexture, gBuffer.normalsTexture, camera);
+
+    return 0;
+}
+
+void ClusterBasedDeferredRenderer::renderMeshes(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera)
+{
+    if(isProfilingEnabled)
+    {
+        timer.measure(0, [this, &scene, &camera] { gBuffer.fill(scene->getRenderingQueues(), camera->getUbo()); });
+        timer.measure(1, [this, &scene, &camera] { lightCullingPass.process(gBuffer.depthTexture, scene, camera); });
+        const GLuint ssaoTexture = aoPass(camera);
+        timer.measure(2, [this, &scene, &camera, ssaoTexture] { processLighting(scene, camera, ssaoTexture); });
+
+        auto m = timer.getMeasurementsInUs();
+
+        SPARK_RENDERER_INFO("{}, {}, {}", m[0], m[1], m[2]);
+    }
+    else
+    {
+        gBuffer.fill(scene->getRenderingQueues(), camera->getUbo());
+        lightCullingPass.process(gBuffer.depthTexture, scene, camera);
+        const GLuint ssaoTexture = aoPass(camera);
+        processLighting(scene, camera, ssaoTexture);
+    }
 }
 
 void ClusterBasedDeferredRenderer::resizeDerived(unsigned int width, unsigned int height)
