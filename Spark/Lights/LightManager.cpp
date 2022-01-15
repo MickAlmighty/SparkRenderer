@@ -61,7 +61,7 @@ void LightManager::updateDirLightBuffer()
     {
         if(const auto lightData = prepareLightDataBuffer<DirectionalLightData>(directionalLights); lightData.empty())
         {
-            dirLightSSBO.clearData();
+            dirLightSSBO.resizeBuffer(0);
         }
         else
         {
@@ -77,7 +77,7 @@ void LightManager::updatePointLightBuffer()
     {
         if(const auto lightData = prepareLightDataBuffer<PointLightData>(pointLights); lightData.empty())
         {
-            pointLightSSBO.clearData();
+            pointLightSSBO.resizeBuffer(0);
         }
         else
         {
@@ -93,7 +93,7 @@ void LightManager::updateSpotLightBuffer()
     {
         if(const auto lightData = prepareLightDataBuffer<SpotLightData>(spotLights); lightData.empty())
         {
-            spotLightSSBO.clearData();
+            spotLightSSBO.resizeBuffer(0);
         }
         else
         {
@@ -109,7 +109,7 @@ void LightManager::updateLightProbeBuffer()
     {
         if(auto lightDataBuffer = prepareLightDataBuffer<LightProbeData>(lightProbes); lightDataBuffer.empty())
         {
-            lightProbeSSBO.clearData();
+            lightProbeSSBO.resizeBuffer(0);
         }
         else
         {

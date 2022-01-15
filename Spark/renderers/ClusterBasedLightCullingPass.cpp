@@ -17,9 +17,9 @@ ClusterBasedLightCullingPass::ClusterBasedLightCullingPass(unsigned int width, u
     activeClusters.resizeBuffer(dispatchSize.x * dispatchSize.y * dispatchSize.z * sizeof(GLuint));
     activeClusterIndices.resizeBuffer(dispatchSize.x * dispatchSize.y * dispatchSize.z * sizeof(GLuint));
     perClusterGlobalLightIndicesBufferMetadata.resizeBuffer(dispatchSize.x * dispatchSize.y * dispatchSize.z * sizeof(GLuint) * 6);
-    globalPointLightIndices.resizeBuffer(dispatchSize.x * dispatchSize.y * dispatchSize.z * sizeof(GLuint) * 128);
-    globalSpotLightIndices.resizeBuffer(dispatchSize.x * dispatchSize.y * dispatchSize.z * sizeof(GLuint) * 128);
-    globalLightProbeIndices.resizeBuffer(dispatchSize.x * dispatchSize.y * dispatchSize.z * sizeof(GLuint) * 128);
+    globalPointLightIndices.resizeBuffer(dispatchSize.x * dispatchSize.y * dispatchSize.z * sizeof(GLuint) * 256);
+    globalSpotLightIndices.resizeBuffer(dispatchSize.x * dispatchSize.y * dispatchSize.z * sizeof(GLuint) * 256);
+    globalLightProbeIndices.resizeBuffer(dispatchSize.x * dispatchSize.y * dispatchSize.z * sizeof(GLuint) * 256);
 
     const std::array<unsigned int, 3> dispatches{1, 1, 1};
     activeClustersCount.updateData(dispatches);
@@ -44,7 +44,7 @@ void ClusterBasedLightCullingPass::createClusters(const std::shared_ptr<Scene>& 
 {
     const bool hasNearAndFarPlaneChanged = lastCamNearZ != camera->zNear || lastCamFarZ != camera->zFar;
     const bool hasTileDimensionChanged = lastPxTileSize != pxTileSize;
-    if(hasNearAndFarPlaneChanged || hasTileDimensionChanged)
+    //if(hasNearAndFarPlaneChanged || hasTileDimensionChanged)
     {
         clusterCreationShader->use();
         clusterCreationShader->setVec2("tileSize", pxTileSize);

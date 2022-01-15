@@ -37,8 +37,7 @@ void RendererBenchmark::drawUIBody()
     }
 
     ImGui::DragInt("numberOfLights", &numberOfLights);
-    if(numberOfLights < 0)
-        numberOfLights = 0;
+    numberOfLights = glm::clamp(numberOfLights, 0, 255);
 
     if(ImGui::Button("Start Benchmark"))
     {
@@ -126,7 +125,7 @@ void RendererBenchmark::generateGameObjectsWithLights()
             go->setParent(lightContainer.lock());
             const auto light = go->addComponent<lights::PointLight>();
 
-            light->setRadius(100);
+            light->setRadius(25);
             light->setColorStrength(200);
         }
     }

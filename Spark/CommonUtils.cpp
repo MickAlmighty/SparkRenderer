@@ -244,7 +244,7 @@ void updateCameraUBO(UniformBuffer& buffer, glm::mat4 projection, glm::mat4 view
     struct CamData
     {
         glm::vec4 camPos;
-        glm::mat4 matrices[4];
+        glm::mat4 matrices[6];
         float nearPlane;
         float farPlane;
         float equation3Part1;
@@ -258,7 +258,14 @@ void updateCameraUBO(UniformBuffer& buffer, glm::mat4 projection, glm::mat4 view
 
     const glm::mat4 invertedView = glm::inverse(view);
     const glm::mat4 invertedProj = glm::inverse(projection);
-    const CamData camData{glm::vec4(pos, 1.0f), {view, projection, invertedView, invertedProj}, nearPlane, farPlane, equation3Part1, equation3Part2};
+    const glm::mat4 viewProjection = projection * view;
+    const glm::mat4 invertedViewProjection = invertedView * invertedProj;
+    const CamData camData{glm::vec4(pos, 1.0f),
+                          {view, projection, invertedView, invertedProj, viewProjection, invertedViewProjection},
+                          nearPlane,
+                          farPlane,
+                          equation3Part1,
+                          equation3Part2};
     buffer.updateData<CamData>({camData});
 }
 }  // namespace spark::utils

@@ -9,6 +9,8 @@ layout (std140) uniform Camera
     mat4 projection;
     mat4 invertedView;
     mat4 invertedProjection;
+    mat4 viewProjection;
+    mat4 invertedViewProjection;
 } camera;
 
 struct AABB 
@@ -108,6 +110,8 @@ layout(std430) readonly buffer LightProbeData
     LightProbe lightProbes[];
 };
 
+#define MAX_LIGHTS 255
+
 bool testSphereVsAABB(const vec3 sphereCenter, const float sphereRadius, const vec3 AABBCenter, const vec3 AABBHalfSize)
 {
     vec3 delta = max(vec3(0), abs(AABBCenter - sphereCenter) - AABBHalfSize);
@@ -136,11 +140,9 @@ bool spotLightConeVsAABB(const SpotLight spotLight, const vec3 aabbCenter, const
 void cullPointLights(uint clusterIndex)
 {
     AABB cluster = clusters[clusterIndex];
-    const uint offset = clusterIndex * 128;
+    const uint offset = clusterIndex * 256;
     uint lightCount = 0;
 
-    uint j = 0;
-    uint packedIndices = 0;
     for (int i = 0; i < pointLights.length(); ++i)
     {
         PointLight p = pointLights[i];
@@ -148,24 +150,12 @@ void cullPointLights(uint clusterIndex)
         const float pRadius = p.positionAndRadius.w;
         if (testSphereVsAABB(pPos, pRadius, cluster.center, cluster.halfSize))
         {
-            uint index = i << (16 * (1 - j));
-            packedIndices |= index;
+            globalPointLightIndices[offset + lightCount] = i;
             lightCount += 1;
-            j += 1;
         }
-        if (j == 2)
-        {
-            const uint packedIndicesOffset = (lightCount - 1) / 2;
-            globalPointLightIndices[offset + packedIndicesOffset] = packedIndices;
-            packedIndices = 0;
-            j = 0;
-        }
-    }
 
-    if (j == 1)
-    {
-        const uint packedIndicesOffset = (lightCount - 1) / 2;
-        globalPointLightIndices[offset + packedIndicesOffset] = packedIndices;
+        if(lightCount == MAX_LIGHTS)
+            break;
     }
 
     lightIndicesBufferMetadata[clusterIndex].pointLightIndicesOffset = offset;
@@ -178,33 +168,18 @@ void cullSpotLights(uint clusterIndex)
     const uint offset = clusterIndex * 256;
     uint lightCount = 0;
 
-    uint j = 0;
-    uint packedIndices = 0;
     const float aabbSphereRadius = length(cluster.halfSize);
     for (uint i = 0; i < spotLights.length(); ++i)
     {
         const SpotLight s = spotLights[i];
         if(spotLightConeVsAABB(s, cluster.center, aabbSphereRadius))
         {
-            uint index = i << (16 * (1 - j));
-            packedIndices |= index;
+            globalSpotLightIndices[offset + lightCount] = i;
             lightCount += 1;
-            j += 1;
         }
 
-        if (j == 2)
-        {
-            const uint packedIndicesOffset = (lightCount - 1) / 2;
-            globalSpotLightIndices[offset + packedIndicesOffset] = packedIndices;
-            packedIndices = 0;
-            j = 0;
-        }
-    }
-
-    if (j == 1)
-    {
-        const uint packedIndicesOffset = (lightCount - 1) / 2;
-        globalSpotLightIndices[offset + packedIndicesOffset] = packedIndices;
+        if(lightCount == MAX_LIGHTS)
+            break;
     }
 
     lightIndicesBufferMetadata[clusterIndex].spotLightIndicesOffset = offset;
@@ -214,11 +189,9 @@ void cullSpotLights(uint clusterIndex)
 void cullLightProbes(uint clusterIndex)
 {
     AABB cluster = clusters[clusterIndex];
-    const uint offset = clusterIndex * 128;
+    const uint offset = clusterIndex * 256;
     uint lightCount = 0;
 
-    uint j = 0;
-    uint packedIndices = 0;
     for (int i = 0; i < lightProbes.length(); ++i)
     {
         LightProbe l = lightProbes[i];
@@ -226,25 +199,12 @@ void cullLightProbes(uint clusterIndex)
         const float lRadius = l.positionAndRadius.w;
         if (testSphereVsAABB(lPos, lRadius, cluster.center, cluster.halfSize))
         {
-            uint index = i << (16 * (1 - j));
-            packedIndices |= index;
+            globalLightProbeIndices[offset + lightCount] = i;
             lightCount += 1;
-            j += 1;
         }
 
-        if (j == 2)
-        {
-            const uint packedIndicesOffset = (lightCount - 1) / 2;
-            globalLightProbeIndices[offset + packedIndicesOffset] = packedIndices;
-            packedIndices = 0;
-            j = 0;
-        }
-    }
-
-    if (j == 1)
-    {
-        const uint packedIndicesOffset = (lightCount - 1) / 2;
-        globalLightProbeIndices[offset + packedIndicesOffset] = packedIndices;
+        if(lightCount == MAX_LIGHTS)
+            break;
     }
 
     lightIndicesBufferMetadata[clusterIndex].lightProbeIndicesOffset = offset;

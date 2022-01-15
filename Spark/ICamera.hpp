@@ -28,7 +28,7 @@ class ICamera
     // perspective
     float fov = 60;
     float zNear = 0.1f;
-    float zFar = 1000.0f;
+    float zFar = 200.0f;
 
     protected:
     glm::vec3 cameraTarget{0};

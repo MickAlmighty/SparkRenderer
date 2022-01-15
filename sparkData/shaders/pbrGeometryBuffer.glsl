@@ -15,6 +15,8 @@ layout (std140) uniform Camera
     mat4 projection;
     mat4 invertedView;
     mat4 invertedProjection;
+    mat4 viewProjection;
+    mat4 invertedViewProjection;
 } camera;
 
 out VS_OUT {
@@ -82,7 +84,7 @@ vec2 parallaxMapping(vec2 texCoords, vec3 viewDir)
     float currentLayerDepth = 0.0;
     // the amount to shift the texture coordinates per layer (from vector P)
     vec2 P = viewDir.xy * heightScale;
-    vec2 deltaTexCoords = P / numLayers;
+    vec2 deltaTexCoords = P * layerDepth;
 
     vec2  currentTexCoords = texCoords;
     float currentDepthMapValue = 1.0f - texture(heightTexture, currentTexCoords).r;
@@ -114,8 +116,8 @@ vec2 encodeViewSpaceNormal(vec3 n)
 {
     //Lambert Azimuthal Equal-Area projection
     //http://aras-p.info/texts/CompactNormalStorage.html
-    float p = sqrt(n.z*8+8);
-    return vec2(n.xy/p + 0.5);
+    float p = inversesqrt(n.z*8+8);
+    return vec2(n.xy * p + 0.5);
 }
 
 vec3 approximationSRgbToLinear (vec3 sRGBColor )
@@ -168,9 +170,6 @@ void main()
         vec3 tangentViewDir = normalize(vs_out.tangentCamPos - vs_out.tangentFragPos);
         tex_coords = parallaxMapping(vs_out.tex_coords, tangentViewDir);
     }
-
-    //if (tex_coords.x > 1.0 || tex_coords.x < 0.0 || tex_coords.y > 1.0 || tex_coords.y < 0.0)
-    //    discard;
 
     FragColor.rgb = accurateSRGBToLinear(texture(diffuseTexture, tex_coords).rgb);
 

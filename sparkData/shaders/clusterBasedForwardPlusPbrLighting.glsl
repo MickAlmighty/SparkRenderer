@@ -15,6 +15,8 @@ layout (std140) uniform Camera
     mat4 projection;
     mat4 invertedView;
     mat4 invertedProjection;
+    mat4 viewProjection;
+    mat4 invertedViewProjection;
     float nearZ;
     float farZ;
     float equation3Part1;
@@ -49,7 +51,7 @@ void main()
     vs_out.TBN = TBN;
     vs_out.worldNormal = vec3(model * vec4(normal, 0));
 
-    gl_Position = camera.projection * camera.view * worldPosition;
+    gl_Position = camera.viewProjection * worldPosition;
 }
 
 #type fragment
@@ -86,6 +88,8 @@ layout (std140) uniform Camera
     mat4 projection;
     mat4 invertedView;
     mat4 invertedProjection;
+    mat4 viewProjection;
+    mat4 invertedViewProjection;
     float nearZ;
     float farZ;
     float equation3Part1;
@@ -274,7 +278,7 @@ uint calculateClusterIndex(vec2 screenCoords, uint clusterZ)
     uint screenSliceOffset = clustersX * clustersY * clusterZ;
 
     uvec2 clusterAssignmentXY = uvec2(screenCoords / tileSize);
-    uint onScreenSliceIndex = clusterAssignmentXY.x * clustersY + clusterAssignmentXY.y;
+    uint onScreenSliceIndex = clusterAssignmentXY.y * clustersX + clusterAssignmentXY.x;
 
     return screenSliceOffset + onScreenSliceIndex;
 }
@@ -344,32 +348,26 @@ void main()
     float iblWeight = 0.0f;
     const uint lightProbeCount = lightIndicesBufferMetadata[clusterIndex].lightProbeCount;
     const uint globalLightProbesOffset = lightIndicesBufferMetadata[clusterIndex].lightProbeIndicesOffset;
-    const uint packedLightProbeIndicesCount = (lightProbeCount + 1) / 2;
-    for (int i = 0; i < packedLightProbeIndicesCount; ++i)
+    for (int i = 0; i < lightProbeCount; ++i)
     {
-        const uint packedLightIndices = globalLightProbeIndices[globalLightProbesOffset + i];
-        const uint i2 = i * 2;
-        for (int j = 0; (i2 + j < lightProbeCount) && (j < 2); ++j)
-        {
-            const uint index = (packedLightIndices >> (16 * (1 - j))) & 0xFFFF;
-            LightProbe lightProbe = lightProbes[index];
-            samplerCube irradianceSampler = samplerCube(lightProbe.irradianceCubemapHandle);
-            vec3 diffuseIBL = calculateDiffuseIBL(N, V, NdotV, material, irradianceSampler);
-            vec4 specularIBL = calculateSpecularFromLightProbe(N, V, P, NdotV, material, lightProbe);
+        const uint index = globalLightProbeIndices[globalLightProbesOffset + i];
+        LightProbe lightProbe = lightProbes[index];
+        samplerCube irradianceSampler = samplerCube(lightProbe.irradianceCubemapHandle);
+        vec3 diffuseIBL = calculateDiffuseIBL(N, V, NdotV, material, irradianceSampler);
+        vec4 specularIBL = calculateSpecularFromLightProbe(N, V, P, NdotV, material, lightProbe);
 
-            //calculating the the smooth light fading at the border of light probe
-            float localDistance = length(P - lightProbe.positionAndRadius.xyz);
-            float alpha = clamp((lightProbe.positionAndRadius.w - localDistance) / 
-                        max(lightProbe.positionAndRadius.w, 0.0001f), 0.0f, 1.0f);
+        //calculating the the smooth light fading at the border of light probe
+        float localDistance = length(P - lightProbe.positionAndRadius.xyz);
+        float alpha = clamp((lightProbe.positionAndRadius.w - localDistance) / 
+                    max(lightProbe.positionAndRadius.w, 0.0001f), 0.0f, 1.0f);
 
-            float alphaAttenuation = smoothstep(0.0f, 1.0f - iblWeight, alpha);
-            iblWeight += alphaAttenuation;// * specularIBL.a;
+        float alphaAttenuation = smoothstep(0.0f, 1.0f - iblWeight, alpha);
+        iblWeight += alphaAttenuation;// * specularIBL.a;
 
-            ambient += (diffuseIBL + specularIBL.rgb) * alphaAttenuation;// * specularIBL.a;
+        ambient += (diffuseIBL + specularIBL.rgb) * alphaAttenuation;// * specularIBL.a;
 
-            if (iblWeight >= 1.0f)
-                break;
-        }
+        if (iblWeight >= 1.0f)
+            break;
     }
 
     if (iblWeight < 1.0f)
@@ -384,64 +382,62 @@ void main()
 
 vec3 directionalLightAddition(vec3 V, vec3 N, Material m)
 {
-    float NdotV = max(dot(N, V), 0.0f);
+    const float NdotV = max(dot(N, V), 0.0f);
 
     vec3 L0 = { 0, 0, 0 };
     for (uint i = 0; i < dirLights.length(); ++i)
     {
-        vec3 L = normalize(-dirLights[i].direction);
-        vec3 H = normalize(V + L);
+        const vec3 L = normalize(-dirLights[i].direction);
+        const vec3 H = normalize(V + L);
 
-        float NdotL = max(dot(N, L), 0.0f);
+        const float NdotL = dot(N, L);
+        if (NdotL > 0.0f)
+        {
+            const vec3 F = fresnelSchlick(V, H, m.F0);
+            const float D = normalDistributionGGX(N, H, m.roughness);
+            const float G = geometrySmith(NdotL, NdotV, m.roughness);
 
-        vec3 F = fresnelSchlick(V, H, m.F0);
-        float D = normalDistributionGGX(N, H, m.roughness);
-        float G = geometrySmith(NdotL, NdotV, m.roughness);
+            const vec3 kD = mix(vec3(1.0) - F, vec3(0.0), m.metalness);
+            const vec3 diffuseColor = kD * m.albedo / M_PI;
 
-        vec3 kD = mix(vec3(1.0) - F, vec3(0.0), m.metalness);
-        vec3 diffuseColor = kD * m.albedo / M_PI;
+            const vec3 specularColor = (F * D * G) / max(4 * NdotV * NdotL, 0.00001);
 
-        vec3 specularColor = (F * D * G) / max(4 * NdotV * NdotL, 0.00001);
-        
-        L0 += (diffuseColor + specularColor) * dirLights[i].color * NdotL;
+            L0 += (diffuseColor + specularColor) * dirLights[i].color * NdotL;
+        }
     }
     return L0;
 }
 
 vec3 pointLightAddition(vec3 V, vec3 N, vec3 Pos, Material m, uint clusterIndex)
 {
-    float NdotV = max(dot(N, V), 0.0f);
+    const float NdotV = max(dot(N, V), 0.0f);
 
     vec3 L0 = { 0, 0, 0 };
     const uint pointLightCount = lightIndicesBufferMetadata[clusterIndex].pointLightCount;
     const uint globalPointLightsOffset = lightIndicesBufferMetadata[clusterIndex].pointLightIndicesOffset;
-    const uint packedPointLightIndicesCount = (pointLightCount + 1) / 2;
-    for (int i = 0; i < packedPointLightIndicesCount; ++i)
+    for (int i = 0; i < pointLightCount; ++i)
     {
-        const uint packedLightIndices = globalPointLightIndices[globalPointLightsOffset + i];
-        const uint i2 = i * 2;
-        for (int j = 0; (i2 + j < pointLightCount) && (j < 2); ++j)
+        const uint index = globalPointLightIndices[globalPointLightsOffset + i];
+        const PointLight p = pointLights[index];
+
+        const vec3 lightPos = p.positionAndRadius.xyz;
+        const float lightRadius = p.positionAndRadius.w;
+        const vec3 L = normalize(lightPos - Pos);
+        const vec3 H = normalize(V + L);
+
+        const float NdotL = dot(N, L);
+        if (NdotL > 0.0f)
         {
-            const uint index = (packedLightIndices >> (16 * (1 - j))) & 0xFFFF;
-            PointLight p = pointLights[index];
+            const vec3 F = fresnelSchlick(V, H, m.F0);
+            const float D = normalDistributionGGX(N, H, m.roughness);
+            const float G = geometrySmith(NdotV, NdotL, m.roughness);
+            
+            const vec3 radiance = p.color * calculateAttenuation(lightPos, Pos, lightRadius);
 
-            vec3 lightPos = p.positionAndRadius.xyz;
-            float lightRadius = p.positionAndRadius.w;
-            vec3 L = normalize(lightPos - Pos);
-            vec3 H = normalize(V + L);
+            const vec3 kD = mix(vec3(1.0) - F, vec3(0.0), m.metalness);
+            const vec3 diffuseColor = kD * m.albedo / M_PI;
 
-            float NdotL = max(dot(N, L), 0.0f);
-
-            vec3 F = fresnelSchlick(V, H, m.F0);
-            float D = normalDistributionGGX(N, H, m.roughness);
-            float G = geometrySmith(NdotV, NdotL, m.roughness);
-        
-            vec3 radiance = p.color * calculateAttenuation(lightPos, Pos, lightRadius);
-
-            vec3 kD = mix(vec3(1.0) - F, vec3(0.0), m.metalness);
-            vec3 diffuseColor = kD * m.albedo / M_PI;
-
-            vec3 specularColor = (F * D * G) / max(4 * NdotV * NdotL, 0.00001);
+            const vec3 specularColor = (F * D * G) / max(4 * NdotV * NdotL, 0.00001);
 
             L0 += (diffuseColor + specularColor) * radiance * NdotL;
         }
@@ -457,59 +453,53 @@ vec3 spotLightAddition(vec3 V, vec3 N, vec3 Pos, Material m, uint clusterIndex)
     vec3 L0 = { 0, 0, 0 };
     const uint spotLightCount = lightIndicesBufferMetadata[clusterIndex].spotLightCount;
     const uint globalSpotLightsOffset = lightIndicesBufferMetadata[clusterIndex].spotLightIndicesOffset;
-    const uint packedSpotLightIndicesCount = (spotLightCount + 1) / 2;
-    for (int i = 0; i < packedSpotLightIndicesCount; ++i)
+    for (int i = 0; i < spotLightCount; ++i)
     {
-        const uint packedLightIndices = globalSpotLightIndices[globalSpotLightsOffset + i];
-        const uint i2 = i * 2;
-        for (int j = 0; (i2 + j < spotLightCount) && (j < 2); ++j)
-        {
-            const uint index = (packedLightIndices >> (16 * (1 - j))) & 0xFFFF;
-            SpotLight s = spotLights[index];
-            vec3 directionToLight = normalize(-s.direction);
-            vec3 L = normalize(s.position - Pos);
+        const uint index = globalSpotLightIndices[globalSpotLightsOffset + i];
+        SpotLight s = spotLights[index];
+        vec3 directionToLight = normalize(-s.direction);
+        vec3 L = normalize(s.position - Pos);
 
-            float theta = dot(directionToLight, L);
-            float epsilon = max(s.cutOff - s.outerCutOff, 0.0);
-            float intensity = clamp((theta - s.outerCutOff) / epsilon, 0.0, 1.0);  
+        float theta = dot(directionToLight, L);
+        float epsilon = max(s.cutOff - s.outerCutOff, 0.0);
+        float intensity = clamp((theta - s.outerCutOff) / epsilon, 0.0, 1.0);  
 
-            vec3 H = normalize(V + L);
+        vec3 H = normalize(V + L);
 
-            float NdotL = max(dot(N, L), 0.0f);
+        float NdotL = max(dot(N, L), 0.0f);
 
-            vec3 F = fresnelSchlick(V, H, m.F0);
-            float D = normalDistributionGGX(N, H, m.roughness);
-            float G = geometrySmith(NdotV, NdotL, m.roughness);
+        vec3 F = fresnelSchlick(V, H, m.F0);
+        float D = normalDistributionGGX(N, H, m.roughness);
+        float G = geometrySmith(NdotV, NdotL, m.roughness);
         
-            vec3 radiance = s.color * calculateAttenuation(s.position, Pos, s.maxDistance);
-            radiance *= intensity;
+        vec3 radiance = s.color * calculateAttenuation(s.position, Pos, s.maxDistance);
+        radiance *= intensity;
 
-            vec3 kD = mix(vec3(1.0) - F, vec3(0.0), m.metalness);
-            vec3 diffuseColor = kD * m.albedo / M_PI;
+        vec3 kD = mix(vec3(1.0) - F, vec3(0.0), m.metalness);
+        vec3 diffuseColor = kD * m.albedo / M_PI;
 
-            vec3 specularColor = (F * D * G) / max(4 * NdotV * NdotL, 0.00001);
+        vec3 specularColor = (F * D * G) / max(4 * NdotV * NdotL, 0.00001);
 
-            L0 += (diffuseColor + specularColor) * radiance * NdotL;
-        }
+        L0 += (diffuseColor + specularColor) * radiance * NdotL;
     }
     return L0;
 }
 
 float normalDistributionGGX(vec3 N, vec3 H, float roughness)
 {
-    float a = roughness * roughness;
-    float a2 = a * a;
-    float NdotH = max(dot(N, H), 0.0);
+    const float a = roughness * roughness;
+    const float a2 = a * a;
+    const float NdotH = max(dot(N, H), 0.0);
 
-    float nom = a2;
-    float denom = (NdotH * NdotH) * (a2 - 1.0) + 1.0;
+    const float nom = a2;
+    const float denom = (NdotH * NdotH) * (a2 - 1.0) + 1.0;
     const float saveValue = 0.0001f;
     return nom / max((M_PI * denom * denom), saveValue);
 }
 
 vec3 fresnelSchlick(vec3 V, vec3 H, vec3 F0)
 {
-    float cosTheta = max(dot(V, H), 0.0);
+    const float cosTheta = max(dot(V, H), 0.0);
     return F0 + (vec3(1.0) - F0) * pow(max(1.0 - cosTheta, 0.0f), 5);
 }
 
@@ -525,8 +515,8 @@ float geometrySchlickGGX(float cosTheta, float k)
 
 float geometrySmith(float NdotL, float NdotV, float roughness)
 {
-    float r = (roughness + 1.0);
-    float k = (r * r) / 8.0;
+    const float r = (roughness + 1.0);
+    const float k = (r * r) * 0.125; // div by 8
     return geometrySchlickGGX(NdotL, k) * geometrySchlickGGX(NdotV, k);
 }
 
@@ -548,13 +538,12 @@ float calculateAttenuation(vec3 lightPos, vec3 pos, float maxDistance)
 {
     //https://seblagarde.files.wordpress.com/2015/07/course_notes_moving_frostbite_to_pbr_v32.pdf
     //page 31
-    float distance    = length(lightPos - pos);
+    float distance = length(lightPos - pos);
     float squaredDistance = distance * distance;
 
-    float invSqrAttRadius = 1 / (maxDistance * maxDistance);
-    float factor = squaredDistance * invSqrAttRadius;
+    float factor = squaredDistance / (maxDistance * maxDistance);
     float smoothFactor = clamp(1.0f - factor * factor, 0.0f, 1.0f);
-    float attenuation = 1.0 / max(squaredDistance, 0.01f * 0.01f) * smoothFactor * smoothFactor;
+    float attenuation = 1.0f / max(squaredDistance, 0.01f * 0.01f) * smoothFactor * smoothFactor;
     return attenuation; 
 }
 

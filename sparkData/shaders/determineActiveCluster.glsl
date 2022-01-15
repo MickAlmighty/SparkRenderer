@@ -13,6 +13,8 @@ layout (std140) uniform Camera
     mat4 projection;
     mat4 invertedView;
     mat4 invertedProjection;
+    mat4 viewProjection;
+    mat4 invertedViewProjection;
     float nearZ;
     float farZ;
     float equation3Part1;
@@ -61,7 +63,7 @@ uint calculateClusterIndex(uint clusterZ)
     uint screenSliceOffset = clustersX * clustersY * clusterZ;
 
     uvec2 clusterAssignmentXY = uvec2(vec2(gl_GlobalInvocationID.xy) / tileSize);
-    uint onScreenSliceIndex = clusterAssignmentXY.x * clustersY + clusterAssignmentXY.y;
+    uint onScreenSliceIndex = clusterAssignmentXY.y * clustersX + clusterAssignmentXY.x;
 
     return screenSliceOffset + onScreenSliceIndex;
 }

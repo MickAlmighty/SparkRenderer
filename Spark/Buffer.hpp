@@ -156,6 +156,7 @@ void Buffer<BUFFER_TYPE>::updateSubData(size_t offsetFromBeginning, const std::a
 template<GLenum BUFFER_TYPE>
 void Buffer<BUFFER_TYPE>::resizeBuffer(size_t sizeInBytes)
 {
+    sizeInBytes = sizeInBytes < 0 ? 0 : sizeInBytes;
     glNamedBufferData(ID, sizeInBytes, nullptr, bufferUsage);
     size = static_cast<GLsizei>(sizeInBytes);
 }

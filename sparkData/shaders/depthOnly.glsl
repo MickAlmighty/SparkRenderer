@@ -15,10 +15,12 @@ layout (std140) uniform Camera
     mat4 projection;
     mat4 invertedView;
     mat4 invertedProjection;
+    mat4 viewProjection;
+    mat4 invertedViewProjection;
 } camera;
 
 void main()
 {
     vec4 worldPosition = model * vec4(position, 1);
-    gl_Position = camera.projection * camera.view * worldPosition;
+    gl_Position = camera.viewProjection * worldPosition;
 }

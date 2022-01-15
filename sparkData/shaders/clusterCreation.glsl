@@ -11,6 +11,8 @@ layout (std140) uniform Camera
     mat4 projection;
     mat4 invertedView;
     mat4 invertedProjection;
+    mat4 viewProjection;
+    mat4 invertedViewProjection;
     float nearZ;
     float farZ;
 } camera;
@@ -45,12 +47,11 @@ vec3 pointOnPlanePerpendicularToCameraFront(float planeZ, vec3 pointOnLine)
 AABB createTileAABB(const float nearPlaneZ, const float farPlaneZ)
 {
     const uvec2 tilesCount = uvec2(64, 64);
-    const float localInvocationSize = 32;
     const float depthBufferFar = 0.0f;
     const vec2 screenSize = tileSize * vec2(tilesCount);
 
-    const vec2 bottomLeftPointOnTile = (gl_WorkGroupID.xy * localInvocationSize + gl_LocalInvocationID.xy) * tileSize;
-    const vec2 upperRightPointOnTile = ((gl_WorkGroupID.xy + 1) * localInvocationSize + gl_LocalInvocationID.xy) * tileSize;
+    const vec2 bottomLeftPointOnTile = gl_GlobalInvocationID.xy * tileSize;
+    const vec2 upperRightPointOnTile = (gl_GlobalInvocationID.xy + 1) * tileSize;
     const vec3 cameraFarPlaneMinPoint = fromPxToViewSpace(vec4(bottomLeftPointOnTile, depthBufferFar, 1), screenSize);
     const vec3 cameraFarPlaneMaxPoint = fromPxToViewSpace(vec4(upperRightPointOnTile, depthBufferFar, 1), screenSize);
 
@@ -73,7 +74,7 @@ uint calculateIndex()
 {
     const uvec2 tilesCount = uvec2(64, 64);
     uint screenSliceOffset = tilesCount.x * tilesCount.y * gl_GlobalInvocationID.z;
-    uint onScreenSliceIndex = gl_GlobalInvocationID.x * tilesCount.y + gl_GlobalInvocationID.y;
+    uint onScreenSliceIndex = gl_GlobalInvocationID.y * tilesCount.x + gl_GlobalInvocationID.x;
     return screenSliceOffset + onScreenSliceIndex;
 }
 
