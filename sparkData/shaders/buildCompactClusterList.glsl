@@ -2,6 +2,8 @@
 #version 450
 layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 
+uniform uvec2 tilesCount;
+
 layout(std430) buffer ActiveClusters
 {
     uint activeClusters[];
@@ -19,7 +21,6 @@ layout(std430) buffer ActiveClusterIndices
 
 uint calculateIndex()
 {
-    const uvec2 tilesCount = uvec2(64, 64);
     const uint screenSliceOffset = tilesCount.x * tilesCount.y * gl_GlobalInvocationID.z;
     const uint onScreenSliceIndex = gl_GlobalInvocationID.x * tilesCount.y + gl_GlobalInvocationID.y;
     return screenSliceOffset + onScreenSliceIndex;

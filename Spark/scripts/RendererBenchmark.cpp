@@ -1,6 +1,7 @@
 #include "RendererBenchmark.hpp"
 
 #include <ctime>
+#include <random>
 #include <sstream>
 
 #include "Animation.hpp"
@@ -37,7 +38,7 @@ void RendererBenchmark::drawUIBody()
     }
 
     ImGui::DragInt("numberOfLights", &numberOfLights);
-    numberOfLights = glm::clamp(numberOfLights, 0, 255);
+    numberOfLights = glm::clamp(numberOfLights, 0, 100000);
 
     if(ImGui::Button("Start Benchmark"))
     {
@@ -90,7 +91,6 @@ void RendererBenchmark::stopBenchmark()
 
         if(std::filesystem::exists(logging::RENDERER_LOGGER_FILENAME))
         {
-
             time_t now = time(0);
             tm* ltm = localtime(&now);
 
@@ -113,6 +113,12 @@ void RendererBenchmark::stopBenchmark()
 
 void RendererBenchmark::generateGameObjectsWithLights()
 {
+    std::uniform_real_distribution<float> randomFloats(0.0f, 1.0f);
+    std::default_random_engine generator{};
+
+    constexpr glm::vec3 minPoint{-200.0f, -10.0f, -25.0f};
+    constexpr glm::vec3 maxPoint{200.0f, 100.0f, 150.0f};
+
     if(numberOfLights != 0)
     {
         const auto scene = getGameObject()->getScene();
@@ -123,10 +129,17 @@ void RendererBenchmark::generateGameObjectsWithLights()
         {
             const auto go = scene->spawnGameObject();
             go->setParent(lightContainer.lock());
+
+            const glm::vec3 positionRandom{randomFloats(generator), randomFloats(generator), randomFloats(generator)};
+            const glm::vec3 position{minPoint + (maxPoint - minPoint) * positionRandom};
+            go->transform.local.setPosition(position);
+
             const auto light = go->addComponent<lights::PointLight>();
 
+            const glm::vec3 colorRandom{randomFloats(generator), randomFloats(generator), randomFloats(generator)};
             light->setRadius(25);
-            light->setColorStrength(200);
+            light->setColor(colorRandom);
+            light->setColorStrength(500);
         }
     }
 }

@@ -2,8 +2,6 @@
 #version 450
 layout(local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
 
-uniform vec2 tileSize;
-
 layout (std140) uniform Camera
 {
     vec4 pos;
@@ -16,6 +14,17 @@ layout (std140) uniform Camera
     float nearZ;
     float farZ;
 } camera;
+
+layout (std140) uniform AlgorithmData
+{
+    vec2 pxTileSize;
+    uint clusterCountX;
+    uint clusterCountY;
+    uint clusterCountZ;
+    float equation3Part1;
+    float equation3Part2;
+    uint maxLightCount;
+} algorithmData;
 
 struct AABB 
 {
@@ -46,12 +55,12 @@ vec3 pointOnPlanePerpendicularToCameraFront(float planeZ, vec3 pointOnLine)
 
 AABB createTileAABB(const float nearPlaneZ, const float farPlaneZ)
 {
-    const uvec2 tilesCount = uvec2(64, 64);
-    const float depthBufferFar = 0.0f;
-    const vec2 screenSize = tileSize * vec2(tilesCount);
+    const vec2 tilesCount = vec2(algorithmData.clusterCountX, algorithmData.clusterCountY);
+    const vec2 screenSize = algorithmData.pxTileSize * tilesCount;
 
-    const vec2 bottomLeftPointOnTile = gl_GlobalInvocationID.xy * tileSize;
-    const vec2 upperRightPointOnTile = (gl_GlobalInvocationID.xy + 1) * tileSize;
+    const vec2 bottomLeftPointOnTile = gl_GlobalInvocationID.xy * algorithmData.pxTileSize;
+    const vec2 upperRightPointOnTile = (gl_GlobalInvocationID.xy + 1) * algorithmData.pxTileSize;
+    const float depthBufferFar = 0.0f;
     const vec3 cameraFarPlaneMinPoint = fromPxToViewSpace(vec4(bottomLeftPointOnTile, depthBufferFar, 1), screenSize);
     const vec3 cameraFarPlaneMaxPoint = fromPxToViewSpace(vec4(upperRightPointOnTile, depthBufferFar, 1), screenSize);
 
@@ -72,7 +81,7 @@ AABB createTileAABB(const float nearPlaneZ, const float farPlaneZ)
 
 uint calculateIndex()
 {
-    const uvec2 tilesCount = uvec2(64, 64);
+    const uvec2 tilesCount = uvec2(algorithmData.clusterCountX, algorithmData.clusterCountY);
     uint screenSliceOffset = tilesCount.x * tilesCount.y * gl_GlobalInvocationID.z;
     uint onScreenSliceIndex = gl_GlobalInvocationID.y * tilesCount.x + gl_GlobalInvocationID.x;
     return screenSliceOffset + onScreenSliceIndex;

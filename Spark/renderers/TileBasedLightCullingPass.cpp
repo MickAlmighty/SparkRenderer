@@ -57,7 +57,7 @@ void TileBasedLightCullingPass::resize(unsigned int width, unsigned int height)
 
 void TileBasedLightCullingPass::createFrameBuffersAndTextures()
 {
-    constexpr unsigned int lightCount = 256;
+    constexpr unsigned int lightCount = 512;
     pointLightIndices.resizeBuffer(lightCount * utils::uiCeil(h, 16u) * utils::uiCeil(w, 16u) * sizeof(uint32_t));
     spotLightIndices.resizeBuffer(lightCount * utils::uiCeil(h, 16u) * utils::uiCeil(w, 16u) * sizeof(uint32_t));
     lightProbeIndices.resizeBuffer(lightCount * utils::uiCeil(h, 16u) * utils::uiCeil(w, 16u) * sizeof(uint32_t));

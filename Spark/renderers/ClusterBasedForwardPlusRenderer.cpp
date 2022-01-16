@@ -97,6 +97,7 @@ void ClusterBasedForwardPlusRenderer::lightingPass(const std::shared_ptr<Scene>&
 
     lightingShader->use();
     lightingShader->bindUniformBuffer("Camera", camera->getUbo());
+    lightingShader->bindUniformBuffer("AlgorithmData", lightCullingPass.algorithmData);
     lightingShader->bindSSBO("DirLightData", scene->lightManager->getDirLightSSBO());
     lightingShader->bindSSBO("PointLightData", scene->lightManager->getPointLightSSBO());
     lightingShader->bindSSBO("SpotLightData", scene->lightManager->getSpotLightSSBO());
@@ -105,7 +106,6 @@ void ClusterBasedForwardPlusRenderer::lightingPass(const std::shared_ptr<Scene>&
     lightingShader->bindSSBO("GlobalSpotLightIndices", lightCullingPass.globalSpotLightIndices);
     lightingShader->bindSSBO("GlobalLightProbeIndices", lightCullingPass.globalLightProbeIndices);
     lightingShader->bindSSBO("PerClusterGlobalLightIndicesBufferMetadata", lightCullingPass.perClusterGlobalLightIndicesBufferMetadata);
-    lightingShader->setVec2("tileSize", lightCullingPass.pxTileSize);
 
     if(const auto it = scene->getRenderingQueues().find(ShaderType::PBR); it != scene->getRenderingQueues().cend())
     {

@@ -4,8 +4,6 @@ layout(local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
 
 layout(binding = 0) uniform sampler2D depthTexture;
 
-uniform vec2 tileSize;
-
 layout (std140) uniform Camera
 {
     vec4 pos;
@@ -17,9 +15,18 @@ layout (std140) uniform Camera
     mat4 invertedViewProjection;
     float nearZ;
     float farZ;
+} camera;
+
+layout (std140) uniform AlgorithmData
+{
+    vec2 pxTileSize;
+    uint clusterCountX;
+    uint clusterCountY;
+    uint clusterCountZ;
     float equation3Part1;
     float equation3Part2;
-} camera;
+    uint maxLightCount;
+} algorithmData;
 
 layout(std430) buffer ActiveClusters
 {
@@ -53,17 +60,17 @@ vec3 fromPxToViewSpace(vec2 pixelCoords, vec2 screenSize, float depth)
 
 uint getZSlice(float viewSpaceDepth)
 {
-    return uint(log(abs(viewSpaceDepth)) * camera.equation3Part1 - camera.equation3Part2);
+    return uint(log(abs(viewSpaceDepth)) * algorithmData.equation3Part1 - algorithmData.equation3Part2);
 }
 
 uint calculateClusterIndex(uint clusterZ)
 {
-    const uint clustersX = 64;
-    const uint clustersY = 64;
-    uint screenSliceOffset = clustersX * clustersY * clusterZ;
+    const uint clustersX = algorithmData.clusterCountX;
+    const uint clustersY = algorithmData.clusterCountY;
+    const uint screenSliceOffset = clustersX * clustersY * clusterZ;
 
-    uvec2 clusterAssignmentXY = uvec2(vec2(gl_GlobalInvocationID.xy) / tileSize);
-    uint onScreenSliceIndex = clusterAssignmentXY.y * clustersX + clusterAssignmentXY.x;
+    const uvec2 clusterAssignmentXY = uvec2(vec2(gl_GlobalInvocationID.xy) / algorithmData.pxTileSize);
+    const uint onScreenSliceIndex = clusterAssignmentXY.y * clustersX + clusterAssignmentXY.x;
 
     return screenSliceOffset + onScreenSliceIndex;
 }
@@ -74,7 +81,6 @@ void main()
 {
     const vec2 texSize = vec2(textureSize(depthTexture, 0));
     const ivec2 texCoords = ivec2(gl_GlobalInvocationID.xy);
-
     const float depth = texelFetch(depthTexture, texCoords, 0).x;
 
     if (depth != 0.0f)

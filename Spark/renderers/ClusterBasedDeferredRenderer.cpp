@@ -31,8 +31,8 @@ void ClusterBasedDeferredRenderer::processLighting(const std::shared_ptr<Scene>&
     const auto cubemap = scene->getSkyboxCubemap().lock();
 
     lightingShader->use();
-    lightingShader->setVec2("tileSize", lightCullingPass.pxTileSize);
     lightingShader->bindUniformBuffer("Camera", camera->getUbo());
+    lightingShader->bindUniformBuffer("AlgorithmData", lightCullingPass.algorithmData);
     lightingShader->bindSSBO("DirLightData", scene->lightManager->getDirLightSSBO());
     lightingShader->bindSSBO("PointLightData", scene->lightManager->getPointLightSSBO());
     lightingShader->bindSSBO("SpotLightData", scene->lightManager->getSpotLightSSBO());

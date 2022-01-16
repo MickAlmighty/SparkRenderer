@@ -142,8 +142,8 @@ void main()
 
     if (gl_LocalInvocationIndex == 0)
     {
-        uint nrOfElementsInColumn = 256 * gl_NumWorkGroups.y;
-        uint startIndex = nrOfElementsInColumn * gl_WorkGroupID.x + 256 * gl_WorkGroupID.y;
+        uint nrOfElementsInColumn = 512 * gl_NumWorkGroups.y;
+        uint startIndex = nrOfElementsInColumn * gl_WorkGroupID.x + 512 * gl_WorkGroupID.y;
         numberOfLightsIndex = startIndex;
         lightBeginIndex = startIndex + 1;
     }

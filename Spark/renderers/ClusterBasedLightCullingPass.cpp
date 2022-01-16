@@ -4,6 +4,20 @@
 #include "EditorCamera.hpp"
 #include "Spark.h"
 
+namespace
+{
+struct alignas(16) ClusterBasedAlgorithmData
+{
+    glm::vec2 pxTileSize;
+    GLuint clusterCountX;
+    GLuint clusterCountY;
+    GLuint clusterCountZ;
+    float equation3Part1;
+    float equation3Part2;
+    unsigned int maxLightCount;
+};
+}  // namespace
+
 namespace spark::renderers
 {
 ClusterBasedLightCullingPass::ClusterBasedLightCullingPass(unsigned int width, unsigned int height) : w(width), h(height)
@@ -17,9 +31,9 @@ ClusterBasedLightCullingPass::ClusterBasedLightCullingPass(unsigned int width, u
     activeClusters.resizeBuffer(dispatchSize.x * dispatchSize.y * dispatchSize.z * sizeof(GLuint));
     activeClusterIndices.resizeBuffer(dispatchSize.x * dispatchSize.y * dispatchSize.z * sizeof(GLuint));
     perClusterGlobalLightIndicesBufferMetadata.resizeBuffer(dispatchSize.x * dispatchSize.y * dispatchSize.z * sizeof(GLuint) * 6);
-    globalPointLightIndices.resizeBuffer(dispatchSize.x * dispatchSize.y * dispatchSize.z * sizeof(GLuint) * 256);
-    globalSpotLightIndices.resizeBuffer(dispatchSize.x * dispatchSize.y * dispatchSize.z * sizeof(GLuint) * 256);
-    globalLightProbeIndices.resizeBuffer(dispatchSize.x * dispatchSize.y * dispatchSize.z * sizeof(GLuint) * 256);
+    globalPointLightIndices.resizeBuffer(dispatchSize.x * dispatchSize.y * dispatchSize.z * sizeof(GLuint) * maxLightCount);
+    globalSpotLightIndices.resizeBuffer(dispatchSize.x * dispatchSize.y * dispatchSize.z * sizeof(GLuint) * maxLightCount);
+    globalLightProbeIndices.resizeBuffer(dispatchSize.x * dispatchSize.y * dispatchSize.z * sizeof(GLuint) * maxLightCount);
 
     const std::array<unsigned int, 3> dispatches{1, 1, 1};
     activeClustersCount.updateData(dispatches);
@@ -44,12 +58,28 @@ void ClusterBasedLightCullingPass::createClusters(const std::shared_ptr<Scene>& 
 {
     const bool hasNearAndFarPlaneChanged = lastCamNearZ != camera->zNear || lastCamFarZ != camera->zFar;
     const bool hasTileDimensionChanged = lastPxTileSize != pxTileSize;
-    //if(hasNearAndFarPlaneChanged || hasTileDimensionChanged)
+    if(hasNearAndFarPlaneChanged || hasTileDimensionChanged)
     {
+        const auto zSlices = static_cast<float>(dispatchSize.z);
+        const float logNearByFar = log(camera->zFar / camera->zNear);
+        const float equation3Part1 = zSlices / logNearByFar;
+        const float equation3Part2 = zSlices * log(camera->zNear) / logNearByFar;
+
+        ClusterBasedAlgorithmData data{};
+        data.pxTileSize = pxTileSize;
+        data.clusterCountX = dispatchSize.x;
+        data.clusterCountY = dispatchSize.y;
+        data.clusterCountZ = dispatchSize.z;
+        data.equation3Part1 = equation3Part1;
+        data.equation3Part2 = equation3Part2;
+        data.maxLightCount = maxLightCount;
+        
+        algorithmData.updateData(std::array{data});
+
         clusterCreationShader->use();
-        clusterCreationShader->setVec2("tileSize", pxTileSize);
         clusterCreationShader->bindSSBO("ClusterData", clusters);
         clusterCreationShader->bindUniformBuffer("Camera", camera->getUbo());
+        clusterCreationShader->bindUniformBuffer("AlgorithmData", algorithmData);
         clusterCreationShader->dispatchCompute(utils::uiCeil(dispatchSize.x, 32u), utils::uiCeil(dispatchSize.y, 32u), dispatchSize.z);
 
         lastCamNearZ = camera->zNear;
@@ -61,8 +91,8 @@ void ClusterBasedLightCullingPass::createClusters(const std::shared_ptr<Scene>& 
 void ClusterBasedLightCullingPass::determineActiveClusters(GLuint depthTexture, const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera)
 {
     determineActiveClustersShader->use();
-    determineActiveClustersShader->setVec2("tileSize", pxTileSize);
     determineActiveClustersShader->bindUniformBuffer("Camera", camera->getUbo());
+    determineActiveClustersShader->bindUniformBuffer("AlgorithmData", algorithmData);
     determineActiveClustersShader->bindSSBO("ActiveClusters", activeClusters);
     determineActiveClustersShader->bindSSBO("PerClusterGlobalLightIndicesBufferMetadata", perClusterGlobalLightIndicesBufferMetadata);
 
@@ -74,6 +104,7 @@ void ClusterBasedLightCullingPass::determineActiveClusters(GLuint depthTexture, 
 void ClusterBasedLightCullingPass::buildCompactClusterList()
 {
     buildCompactClusterListShader->use();
+    buildCompactClusterListShader->setUVec2("tilesCount", glm::uvec2(dispatchSize));
     buildCompactClusterListShader->bindSSBO("ActiveClusters", activeClusters);
     buildCompactClusterListShader->bindSSBO("ActiveClustersCount", activeClustersCount);
     buildCompactClusterListShader->bindSSBO("ActiveClusterIndices", activeClusterIndices);
@@ -84,6 +115,7 @@ void ClusterBasedLightCullingPass::lightCulling(const std::shared_ptr<Scene>& sc
 {
     clusterBasedLightCullingShader->use();
     clusterBasedLightCullingShader->bindUniformBuffer("Camera", camera->getUbo());
+    clusterBasedLightCullingShader->bindUniformBuffer("AlgorithmData", algorithmData);
     clusterBasedLightCullingShader->bindSSBO("ActiveClusterIndices", activeClusterIndices);
     clusterBasedLightCullingShader->bindSSBO("ClusterData", clusters);
     clusterBasedLightCullingShader->bindSSBO("PerClusterGlobalLightIndicesBufferMetadata", perClusterGlobalLightIndicesBufferMetadata);

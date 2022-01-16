@@ -19,8 +19,6 @@ layout (std140) uniform Camera
     mat4 invertedViewProjection;
     float nearZ;
     float farZ;
-    float equation3Part1;
-    float equation3Part2;
 } camera;
 
 out VS_OUT {
@@ -70,8 +68,6 @@ layout(binding = 8) uniform samplerCube prefilterMap;
 layout(binding = 9) uniform sampler2D brdfLUT;
 layout(binding = 10) uniform sampler2D ssaoTexture;
 
-uniform vec2 tileSize;
-
 in VS_OUT {
     vec2 tex_coords;
     mat3 TBN;
@@ -92,9 +88,17 @@ layout (std140) uniform Camera
     mat4 invertedViewProjection;
     float nearZ;
     float farZ;
+} camera;
+
+layout (std140) uniform AlgorithmData
+{
+    vec2 pxTileSize;
+    uint clusterCountX;
+    uint clusterCountY;
+    uint clusterCountZ;
     float equation3Part1;
     float equation3Part2;
-} camera;
+} algorithmData;
 
 struct DirLight {
     vec3 direction;
@@ -268,16 +272,16 @@ vec3 accurateSRGBToLinear(vec3 sRGBColor)
 
 uint getZSlice(float viewSpaceDepth)
 {
-    return uint(log(abs(viewSpaceDepth)) * camera.equation3Part1 - camera.equation3Part2);
+    return uint(log(abs(viewSpaceDepth)) * algorithmData.equation3Part1 - algorithmData.equation3Part2);
 }
 
 uint calculateClusterIndex(vec2 screenCoords, uint clusterZ)
 {
-    const uint clustersX = 64;
-    const uint clustersY = 64;
+    const uint clustersX = algorithmData.clusterCountX;
+    const uint clustersY = algorithmData.clusterCountY;
     uint screenSliceOffset = clustersX * clustersY * clusterZ;
 
-    uvec2 clusterAssignmentXY = uvec2(screenCoords / tileSize);
+    uvec2 clusterAssignmentXY = uvec2(screenCoords / algorithmData.pxTileSize);
     uint onScreenSliceIndex = clusterAssignmentXY.y * clustersX + clusterAssignmentXY.x;
 
     return screenSliceOffset + onScreenSliceIndex;

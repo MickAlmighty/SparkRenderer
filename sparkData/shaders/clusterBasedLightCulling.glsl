@@ -1,6 +1,6 @@
 #type compute
 #version 450
-layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+layout(local_size_x = 1, local_size_y = 16, local_size_z = 1) in;
 
 layout (std140) uniform Camera
 {
@@ -12,6 +12,17 @@ layout (std140) uniform Camera
     mat4 viewProjection;
     mat4 invertedViewProjection;
 } camera;
+
+layout (std140) uniform AlgorithmData
+{
+    vec2 pxTileSize;
+    uint clusterCountX;
+    uint clusterCountY;
+    uint clusterCountZ;
+    float equation3Part1;
+    float equation3Part2;
+    uint maxLightCount;
+} algorithmData;
 
 struct AABB 
 {
@@ -112,6 +123,11 @@ layout(std430) readonly buffer LightProbeData
 
 #define MAX_LIGHTS 255
 
+shared uint pointLightCount;
+shared uint spotLightCount;
+shared uint lightProbeCount;
+shared uint clusterIndex;
+
 bool testSphereVsAABB(const vec3 sphereCenter, const float sphereRadius, const vec3 AABBCenter, const vec3 AABBHalfSize)
 {
     vec3 delta = max(vec3(0), abs(AABBCenter - sphereCenter) - AABBHalfSize);
@@ -140,80 +156,105 @@ bool spotLightConeVsAABB(const SpotLight spotLight, const vec3 aabbCenter, const
 void cullPointLights(uint clusterIndex)
 {
     AABB cluster = clusters[clusterIndex];
-    const uint offset = clusterIndex * 256;
-    uint lightCount = 0;
+    const uint offset = clusterIndex * algorithmData.maxLightCount;
 
-    for (int i = 0; i < pointLights.length(); ++i)
+    for (uint i = gl_LocalInvocationIndex; i < pointLights.length(); i += gl_WorkGroupSize.y)
     {
         PointLight p = pointLights[i];
         const vec3 pPos = (camera.view * vec4(p.positionAndRadius.xyz, 1.0f)).xyz;
         const float pRadius = p.positionAndRadius.w;
+
+        uint lightCount = 0;
         if (testSphereVsAABB(pPos, pRadius, cluster.center, cluster.halfSize))
         {
+            lightCount = min(atomicAdd(pointLightCount, 1), algorithmData.maxLightCount);
             globalPointLightIndices[offset + lightCount] = i;
-            lightCount += 1;
         }
 
         if(lightCount == MAX_LIGHTS)
             break;
     }
 
-    lightIndicesBufferMetadata[clusterIndex].pointLightIndicesOffset = offset;
-    lightIndicesBufferMetadata[clusterIndex].pointLightCount = lightCount;
+    barrier();
+
+    if (gl_LocalInvocationIndex == 0)
+    {
+        lightIndicesBufferMetadata[clusterIndex].pointLightIndicesOffset = offset;
+        lightIndicesBufferMetadata[clusterIndex].pointLightCount = pointLightCount;
+    }
 }
 
 void cullSpotLights(uint clusterIndex)
 {
     AABB cluster = clusters[clusterIndex];
-    const uint offset = clusterIndex * 256;
-    uint lightCount = 0;
+    const uint offset = clusterIndex * algorithmData.maxLightCount;
 
     const float aabbSphereRadius = length(cluster.halfSize);
-    for (uint i = 0; i < spotLights.length(); ++i)
+    for (uint i = gl_LocalInvocationIndex; i < spotLights.length(); i += gl_WorkGroupSize.y)
     {
         const SpotLight s = spotLights[i];
+        uint lightCount = 0;
         if(spotLightConeVsAABB(s, cluster.center, aabbSphereRadius))
         {
+            lightCount = min(atomicAdd(spotLightCount, 1), algorithmData.maxLightCount);
             globalSpotLightIndices[offset + lightCount] = i;
-            lightCount += 1;
         }
 
         if(lightCount == MAX_LIGHTS)
             break;
     }
 
-    lightIndicesBufferMetadata[clusterIndex].spotLightIndicesOffset = offset;
-    lightIndicesBufferMetadata[clusterIndex].spotLightCount = lightCount;
+    barrier();
+
+    if (gl_LocalInvocationIndex == 0)
+    {
+        lightIndicesBufferMetadata[clusterIndex].spotLightIndicesOffset = offset;
+        lightIndicesBufferMetadata[clusterIndex].spotLightCount = spotLightCount;
+    }
 }
 
 void cullLightProbes(uint clusterIndex)
 {
     AABB cluster = clusters[clusterIndex];
-    const uint offset = clusterIndex * 256;
-    uint lightCount = 0;
+    const uint offset = clusterIndex * algorithmData.maxLightCount;
 
-    for (int i = 0; i < lightProbes.length(); ++i)
+    for (uint i = gl_LocalInvocationIndex; i < lightProbes.length(); i += gl_WorkGroupSize.y)
     {
         LightProbe l = lightProbes[i];
         const vec3 lPos = (camera.view * vec4(l.positionAndRadius.xyz, 1.0f)).xyz;
         const float lRadius = l.positionAndRadius.w;
+        uint lightCount = 0;
         if (testSphereVsAABB(lPos, lRadius, cluster.center, cluster.halfSize))
         {
+            lightCount = min(atomicAdd(lightProbeCount, 1), algorithmData.maxLightCount);
             globalLightProbeIndices[offset + lightCount] = i;
-            lightCount += 1;
         }
 
         if(lightCount == MAX_LIGHTS)
             break;
     }
 
-    lightIndicesBufferMetadata[clusterIndex].lightProbeIndicesOffset = offset;
-    lightIndicesBufferMetadata[clusterIndex].lightProbeCount = lightCount;
+    barrier();
+
+    if (gl_LocalInvocationIndex == 0)
+    {
+        lightIndicesBufferMetadata[clusterIndex].lightProbeIndicesOffset = offset;
+        lightIndicesBufferMetadata[clusterIndex].lightProbeCount = lightProbeCount;
+    }
 }
 
 void main()
 {
-    const uint clusterIndex = activeClusterIndices[gl_GlobalInvocationID.x];
+    if (gl_LocalInvocationIndex == 0)
+    {
+        clusterIndex = activeClusterIndices[gl_GlobalInvocationID.x];
+        pointLightCount = 0;
+        spotLightCount = 0;
+        lightProbeCount = 0;
+    }
+
+    barrier();
+
     cullPointLights(clusterIndex);
     cullSpotLights(clusterIndex);
     cullLightProbes(clusterIndex);

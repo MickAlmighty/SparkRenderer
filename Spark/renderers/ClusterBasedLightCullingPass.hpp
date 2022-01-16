@@ -21,6 +21,8 @@ class ClusterBasedLightCullingPass
     void process(GLuint depthTexture, const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera);
     void resize(unsigned int width, unsigned int height);
 
+    UniformBuffer algorithmData{};
+
     SSBO globalPointLightIndices{};
     SSBO globalSpotLightIndices{};
     SSBO globalLightProbeIndices{};
@@ -39,7 +41,8 @@ class ClusterBasedLightCullingPass
     float lastCamNearZ{-1.0f}, lastCamFarZ{-1.0f};
     glm::vec2 lastPxTileSize{1};
 
-    const glm::uvec3 dispatchSize{64, 64, 32};
+    const glm::uvec3 dispatchSize{64, 32, 32};
+    const unsigned int maxLightCount{256};
 
     SSBO clusters{};
     SSBO activeClusters{};

@@ -278,7 +278,7 @@ void main()
     }
 
     const uvec2 viewportCoords = uvec2(gl_FragCoord.xy); // pixel coordinates
-    const uint lightIndicesPerTileLength = 256;
+    const uint lightIndicesPerTileLength = 512;
     const uvec2 workGroupSize = uvec2(16);
     const uint numberOfWorkGroupsInColumn = 1 + ((viewportSize.y - 1) / 16);
     const uvec2 workGroupID = viewportCoords / workGroupSize;

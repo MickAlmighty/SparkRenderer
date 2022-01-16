@@ -22,6 +22,8 @@ shared uint lightBeginIndex;
 #define MAX_WORK_GROUP_SIZE 16
 #define THREADS_PER_TILE MAX_WORK_GROUP_SIZE * MAX_WORK_GROUP_SIZE
 #define M_PI 3.14159265359
+#define LIGHT_BUFFER_LENGTH 512
+#define MAX_LIGHT_COUNT LIGHT_BUFFER_LENGTH - 1
 
 layout (std140) uniform Camera
 {
@@ -133,8 +135,8 @@ void main()
         maxDepth = 0;
         tileDepthMask = 0;
 
-        uint nrOfElementsInColum = 256 * gl_NumWorkGroups.y;
-        uint startIndex = nrOfElementsInColum * gl_WorkGroupID.x + 256 * gl_WorkGroupID.y;
+        uint nrOfElementsInColum = LIGHT_BUFFER_LENGTH * gl_NumWorkGroups.y;
+        uint startIndex = nrOfElementsInColum * gl_WorkGroupID.x + LIGHT_BUFFER_LENGTH * gl_WorkGroupID.y;
         numberOfLightsIndex = startIndex;
         lightBeginIndex = startIndex + 1;
 #ifdef DEBUG
@@ -360,7 +362,12 @@ void cullPointLights(const Frustum tileFrustum, const float minDepthVS, const fl
         }
     }
 
-    pointLightIndices[numberOfLightsIndex] = pointLightCount;
+    barrier();
+
+    if (gl_LocalInvocationIndex == 0)
+    {
+        pointLightIndices[numberOfLightsIndex] = min(pointLightCount, MAX_LIGHT_COUNT);
+    }
 }
 
 void cullPointLights(const AABB tileAABB, const float minDepthVS, const float depthRangeRecip)
@@ -387,14 +394,24 @@ void cullPointLights(const AABB tileAABB, const float minDepthVS, const float de
         if (!intersect2_5D)
             continue;
 
+        uint id = 0;
         if(testSphereVsAABB(lightViewPosition, r, tileAABB.center, tileAABB.halfSize))
         {
-            uint id = atomicAdd(pointLightCount, 1);
+            id = atomicAdd(pointLightCount, 1);
+            id = min(id, MAX_LIGHT_COUNT);
             pointLightIndices[lightBeginIndex + id] = i;
         }
+
+        if (MAX_LIGHT_COUNT <= id)
+            break;
     }
 
-    pointLightIndices[numberOfLightsIndex] = pointLightCount;
+    barrier();
+
+    if (gl_LocalInvocationIndex == 0)
+    {
+        pointLightIndices[numberOfLightsIndex] = min(pointLightCount, MAX_LIGHT_COUNT);
+    }
 }
 
 struct ReducedSpotLight {
@@ -431,14 +448,24 @@ void cullSpotLights(const AABB tileAABB)
         spotLight.angle = acos(s.outerCutOff);
         spotLight.range = s.maxDistance;
 
+        uint id = 0;
         if(spotLightConeVsAABB(spotLight, tileAABB.center, aabbSphereRadius))
         {
-            uint id = atomicAdd(spotLightCount, 1);
+            id = atomicAdd(spotLightCount, 1);
+            id = min(id, MAX_LIGHT_COUNT);
             spotLightIndices[lightBeginIndex + id] = i;
         }
+
+        if (MAX_LIGHT_COUNT <= id)
+            break;
     }
 
-    spotLightIndices[numberOfLightsIndex] = spotLightCount;
+    barrier();
+
+    if (gl_LocalInvocationIndex == 0)
+    {
+        spotLightIndices[numberOfLightsIndex] = min(spotLightCount, MAX_LIGHT_COUNT);
+    }
 }
 
 void cullLightProbes(const AABB tileAABB, const float minDepthVS, const float depthRangeRecip)
@@ -465,12 +492,22 @@ void cullLightProbes(const AABB tileAABB, const float minDepthVS, const float de
         if (!intersect2_5D)
             continue;
 
+        uint id = 0;
         if(testSphereVsAABB(lightViewPosition, r, tileAABB.center, tileAABB.halfSize))
         {
-            uint id = atomicAdd(lightProbesCount, 1);
+            id = atomicAdd(lightProbesCount, 1);
+            id = min(id, MAX_LIGHT_COUNT);
             lightProbeIndices[lightBeginIndex + id] = i;
         }
+
+        if (MAX_LIGHT_COUNT <= id)
+            break;
     }
 
-    lightProbeIndices[numberOfLightsIndex] = lightProbesCount;
+    barrier();
+
+    if (gl_LocalInvocationIndex == 0)
+    {
+        lightProbeIndices[numberOfLightsIndex] = min(lightProbesCount, MAX_LIGHT_COUNT);
+    }
 }
