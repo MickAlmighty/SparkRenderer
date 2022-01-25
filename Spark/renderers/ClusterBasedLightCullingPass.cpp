@@ -94,6 +94,7 @@ void ClusterBasedLightCullingPass::determineActiveClusters(GLuint depthTexture, 
     determineActiveClustersShader->bindUniformBuffer("Camera", camera->getUbo());
     determineActiveClustersShader->bindUniformBuffer("AlgorithmData", algorithmData);
     determineActiveClustersShader->bindSSBO("ActiveClusters", activeClusters);
+    determineActiveClustersShader->bindSSBO("ClusterData", clusters);
     determineActiveClustersShader->bindSSBO("PerClusterGlobalLightIndicesBufferMetadata", perClusterGlobalLightIndicesBufferMetadata);
 
     glBindTextureUnit(0, depthTexture);
