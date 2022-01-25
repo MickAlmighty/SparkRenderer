@@ -42,6 +42,9 @@ void createTexture2D(GLuint& texture, GLuint width, GLuint height, GLenum intern
     }
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, textureWrapping);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, textureWrapping);
+    float maxAnisotropicFiltering{1.0f};
+    glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &maxAnisotropicFiltering);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, maxAnisotropicFiltering);
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
@@ -247,6 +250,7 @@ void updateCameraUBO(UniformBuffer& buffer, glm::mat4 projection, glm::mat4 view
         glm::mat4 matrices[6];
         float nearPlane;
         float farPlane;
+        const glm::vec2 placeholder{};
     };
 
     const glm::mat4 invertedView = glm::inverse(view);
