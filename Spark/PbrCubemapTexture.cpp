@@ -23,6 +23,11 @@ PbrCubemapTexture::~PbrCubemapTexture()
 void PbrCubemapTexture::setup(GLuint hdrTexture, unsigned cubemapSize)
 {
     Timer t("HDR PBR cubemap generation time");
+
+    SSBO cubemapViewMatrices{};
+    cubemapViewMatrices.resizeBuffer(sizeof(glm::mat4) * 6);
+    cubemapViewMatrices.updateData(utils::getCubemapViewMatrices(glm::vec3(0)));
+
     Cube cube = Cube();
 
     GLuint captureFBO;
@@ -36,6 +41,11 @@ void PbrCubemapTexture::setup(GLuint hdrTexture, unsigned cubemapSize)
         Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("equirectangularToCubemap.glsl");
     const auto irradianceShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("irradiance.glsl");
     const auto prefilterShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("prefilter.glsl");
+
+    irradianceShader->bindSSBO("Views", cubemapViewMatrices);
+    prefilterShader->bindSSBO("Views", cubemapViewMatrices);
+    resampleCubemapShader->bindSSBO("Views", cubemapViewMatrices);
+    equirectangularToCubemapShader->bindSSBO("Views", cubemapViewMatrices);
 
     const GLuint envCubemap = createEnvironmentCubemapWithMipmapChain(captureFBO, hdrTexture, cubemapSize, cube, equirectangularToCubemapShader);
     this->irradianceCubemap = createIrradianceCubemap(captureFBO, envCubemap, cube, irradianceShader);
