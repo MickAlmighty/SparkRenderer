@@ -3849,3 +3849,5 @@ GLAPI int GLAD_GL_KHR_no_error;
 #endif
 
 #endif
+
+#undef APIENTRY

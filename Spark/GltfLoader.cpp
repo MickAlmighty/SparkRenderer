@@ -1,10 +1,9 @@
 #include "GltfLoader.hpp"
 
-#define TINYGLTF_IMPLEMENTATION
-#ifndef STB_IMAGE_WRITE_IMPLEMENTATION
-#    define STB_IMAGE_WRITE_IMPLEMENTATION
-#endif
-#include <tiny_gltf.h>
+#include <sstream>
+
+#include <stb_image/stb_image.h>
+#include <stb_image/stb_image_write.h>
 
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
@@ -16,6 +15,7 @@
 #include "ResourceIdentifier.h"
 #include "Spark.h"
 #include "Texture.h"
+#include "tiny_gltf_wrapper.h"
 
 namespace
 {
