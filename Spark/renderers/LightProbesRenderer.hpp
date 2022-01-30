@@ -4,6 +4,7 @@
 #include "GBuffer.hpp"
 #include "glad_glfw3.h"
 #include "effects/SkyboxPass.hpp"
+#include "utils/GlHandle.hpp"
 
 namespace spark::lights
 {
@@ -32,7 +33,7 @@ class LightProbesRenderer
                               const std::shared_ptr<PbrCubemapTexture>& cubemap);
 
     const unsigned int sceneCubemapSize{256};
-    GLuint lightProbeSceneCubemap{};
+    utils::TextureHandle lightProbeSceneCubemap{};
     GLuint lightProbeLightFbo{};
     GLuint lightProbeSkyboxFbo{};
 

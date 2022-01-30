@@ -1,6 +1,6 @@
 #include "EditorCamera.hpp"
 
-#include "CommonUtils.h"
+#include "utils/CommonUtils.h"
 #include "Clock.h"
 #include "HID/HID.h"
 #include "JsonSerializer.h"

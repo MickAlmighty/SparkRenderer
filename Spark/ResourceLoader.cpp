@@ -7,7 +7,7 @@
 #include <gli/load.hpp>
 #include <stb_image/stb_image.h>
 
-#include "CommonUtils.h"
+#include "utils/CommonUtils.h"
 #include "JsonSerializer.h"
 #include "Logging.h"
 #include "Mesh.h"

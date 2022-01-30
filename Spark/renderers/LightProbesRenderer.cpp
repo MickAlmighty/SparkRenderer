@@ -53,7 +53,7 @@ void LightProbesRenderer::process(const std::shared_ptr<Scene>& scene)
     resampleCubemapShader->bindSSBO("Views", cubemapViewMatrices);
     equirectangularToCubemapShader->bindSSBO("Views", cubemapViewMatrices);
 
-    utils::createCubemap(lightProbeSceneCubemap, sceneCubemapSize, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR, true);
+    lightProbeSceneCubemap = utils::createCubemap(sceneCubemapSize, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR, true);
 
     utils::createFramebuffer(lightProbeLightFbo, {});
     utils::createFramebuffer(lightProbeSkyboxFbo, {});
@@ -67,7 +67,6 @@ void LightProbesRenderer::process(const std::shared_ptr<Scene>& scene)
         generateLightProbe(scene->getRenderingQueues(), lightProbe, scene->getSkyboxCubemap().lock());
     }
 
-    glDeleteTextures(1, &lightProbeSceneCubemap);
     glDeleteFramebuffers(1, &lightProbeLightFbo);
     glDeleteFramebuffers(1, &lightProbeSkyboxFbo);
 }
@@ -76,9 +75,9 @@ bool LightProbesRenderer::checkIfSkyboxChanged(const std::shared_ptr<PbrCubemapT
 {
     if(static GLuint cubemapId{0}; cubemap)
     {
-        if(cubemapId != cubemap->cubemap)
+        if(cubemapId != cubemap->cubemap.get())
         {
-            cubemapId = cubemap->cubemap;
+            cubemapId = cubemap->cubemap.get();
             return true;
         }
     }
@@ -111,9 +110,9 @@ void LightProbesRenderer::generateLightProbe(const std::map<ShaderType, std::deq
         utils::updateCameraUBO(cameraUbo, projection, viewMatrices[i], localLightProbePosition, nearPlane, farPlane);
 
         glBindFramebuffer(GL_FRAMEBUFFER, lightProbeLightFbo);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, lightProbeSceneCubemap, 0);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, lightProbeSceneCubemap.get(), 0);
         glBindFramebuffer(GL_FRAMEBUFFER, lightProbeSkyboxFbo);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, lightProbeSceneCubemap, 0);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, lightProbeSceneCubemap.get(), 0);
 
         renderSceneToCubemap(renderQueue, cubemap);
 
@@ -121,15 +120,15 @@ void LightProbesRenderer::generateLightProbe(const std::map<ShaderType, std::deq
     }
 
     // this mipmap chain for all faces is needed for filtered importance sampling in prefilter stage
-    glGenerateTextureMipmap(lightProbeSceneCubemap);
+    glGenerateTextureMipmap(lightProbeSceneCubemap.get());
 
     // light probe generation
     GLuint lightProbeFramebuffer{};
     glGenFramebuffers(1, &lightProbeFramebuffer);
     glBindFramebuffer(GL_FRAMEBUFFER, lightProbeFramebuffer);
 
-    lightProbe->renderIntoIrradianceCubemap(lightProbeFramebuffer, lightProbeSceneCubemap, cube, irradianceShader);
-    lightProbe->renderIntoPrefilterCubemap(lightProbeFramebuffer, lightProbeSceneCubemap, sceneCubemapSize, cube, prefilterShader,
+    lightProbe->renderIntoIrradianceCubemap(lightProbeFramebuffer, lightProbeSceneCubemap.get(), cube, irradianceShader);
+    lightProbe->renderIntoPrefilterCubemap(lightProbeFramebuffer, lightProbeSceneCubemap.get(), sceneCubemapSize, cube, prefilterShader,
                                            resampleCubemapShader);
     lightProbe->generateLightProbe = false;
 

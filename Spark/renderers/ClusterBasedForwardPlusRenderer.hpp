@@ -2,6 +2,7 @@
 #include "ClusterBasedLightCullingPass.hpp"
 #include "profiling/GpuTimer.hpp"
 #include "Renderer.hpp"
+#include "utils/GlHandle.hpp"
 
 namespace spark::renderers
 {
@@ -30,7 +31,7 @@ class ClusterBasedForwardPlusRenderer : public Renderer
 
     GLuint lightingFramebuffer{}, lightingTexture{};
     GLuint depthPrepassFramebuffer{}, depthTexture{}, normalsTexture{};
-    GLuint brdfLookupTexture{};
+    utils::TextureHandle brdfLookupTexture{};
     ScreenQuad screenQuad{};
     ClusterBasedLightCullingPass lightCullingPass;
     std::shared_ptr<resources::Shader> depthOnlyShader{nullptr};

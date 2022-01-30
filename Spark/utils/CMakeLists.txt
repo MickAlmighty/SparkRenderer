@@ -1,0 +1,7 @@
+list(APPEND CURRENT_DIR_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/CommonUtils.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CommonUtils.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/GlHandle.hpp
+)
+
+target_sources(Spark PRIVATE ${CURRENT_DIR_SOURCES})

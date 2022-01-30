@@ -9,6 +9,7 @@
 #include "LightStatus.hpp"
 #include "Observable.hpp"
 #include "Shader.h"
+#include "utils/GlHandle.hpp"
 
 namespace spark
 {
@@ -66,8 +67,8 @@ class LightProbe : public Component, public Observable<LightStatus<LightProbe>>
     void onInactive() override;
     void notifyAbout(LightCommand command);
 
-    GLuint irradianceCubemap{};
-    GLuint prefilterCubemap{};
+    utils::TextureHandle irradianceCubemap{};
+    utils::TextureHandle prefilterCubemap{};
     GLuint64 irradianceCubemapHandle{};
     GLuint64 prefilterCubemapHandle{};
     glm::vec3 position{0.0f};

@@ -2,7 +2,7 @@
 
 #include <glm/gtx/transform.hpp>
 
-#include "CommonUtils.h"
+#include "utils/CommonUtils.h"
 #include "Enums.h"
 #include "GUI/ImGui/imgui.h"
 #include "GameObject.h"
@@ -18,12 +18,12 @@ namespace spark::lights
 {
 LightProbe::LightProbe() : Component()
 {
-    utils::createCubemap(prefilterCubemap, prefilterCubemapSize, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR, true);
-    prefilterCubemapHandle = glGetTextureHandleARB(prefilterCubemap);
+    prefilterCubemap = utils::createCubemap(prefilterCubemapSize, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR, true);
+    prefilterCubemapHandle = glGetTextureHandleARB(prefilterCubemap.get());
     glMakeTextureHandleResidentARB(prefilterCubemapHandle);
 
-    utils::createCubemap(irradianceCubemap, irradianceCubemapSize, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    irradianceCubemapHandle = glGetTextureHandleARB(irradianceCubemap);
+    irradianceCubemap = utils::createCubemap(irradianceCubemapSize, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    irradianceCubemapHandle = glGetTextureHandleARB(irradianceCubemap.get());
     glMakeTextureHandleResidentARB(irradianceCubemapHandle);
 
     const auto attribute = VertexAttribute(0, 3, ShapeCreator::createSphere(1.0f, 10));
@@ -35,10 +35,6 @@ LightProbe::LightProbe() : Component()
 
 LightProbe::~LightProbe()
 {
-    glDeleteTextures(1, &prefilterCubemap);
-    glDeleteTextures(1, &irradianceCubemap);
-    irradianceCubemap = prefilterCubemap = 0;
-
     notifyAbout(LightCommand::remove);
 }
 
@@ -123,12 +119,12 @@ float LightProbe::getFadeDistance() const
 
 GLuint LightProbe::getPrefilterCubemap() const
 {
-    return prefilterCubemap;
+    return prefilterCubemap.get();
 }
 
 GLuint LightProbe::getIrradianceCubemap() const
 {
-    return irradianceCubemap;
+    return irradianceCubemap.get();
 }
 
 void LightProbe::renderIntoIrradianceCubemap(GLuint framebuffer, GLuint environmentCubemap, Cube& cube,
@@ -141,7 +137,7 @@ void LightProbe::renderIntoIrradianceCubemap(GLuint framebuffer, GLuint environm
     irradianceShader->use();
     glBindTextureUnit(0, environmentCubemap);
 
-    glNamedFramebufferTexture(framebuffer, GL_COLOR_ATTACHMENT0, irradianceCubemap, 0);
+    glNamedFramebufferTexture(framebuffer, GL_COLOR_ATTACHMENT0, irradianceCubemap.get(), 0);
     cube.draw();
 
     glFinish();
@@ -158,7 +154,7 @@ void LightProbe::renderIntoPrefilterCubemap(GLuint framebuffer, GLuint environme
         resampleCubemapShader->use();
         glBindTextureUnit(0, environmentCubemap);
 
-        glNamedFramebufferTexture(framebuffer, GL_COLOR_ATTACHMENT0, prefilterCubemap, 0);
+        glNamedFramebufferTexture(framebuffer, GL_COLOR_ATTACHMENT0, prefilterCubemap.get(), 0);
 
         glViewport(0, 0, prefilterCubemapSize, prefilterCubemapSize);
         cube.draw();
@@ -173,7 +169,7 @@ void LightProbe::renderIntoPrefilterCubemap(GLuint framebuffer, GLuint environme
     {
         const auto mipSize = static_cast<unsigned int>(prefilterCubemapSize * std::pow(0.5, mip));
         glViewport(0, 0, mipSize, mipSize);
-        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, prefilterCubemap, mip);
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, prefilterCubemap.get(), mip);
 
         const float roughness = static_cast<float>(mip) / static_cast<float>(maxMipLevels - 1);
         prefilterShader->setFloat("roughness", roughness);

@@ -2,7 +2,7 @@
 
 #include <memory>
 
-#include "CommonUtils.h"
+#include "utils/CommonUtils.h"
 #include "Shader.h"
 #include "Spark.h"
 

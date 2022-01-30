@@ -1,8 +1,9 @@
 #include "ClusterBasedLightCullingPass.hpp"
 
-#include "CommonUtils.h"
+#include "utils/CommonUtils.h"
 #include "EditorCamera.hpp"
 #include "Spark.h"
+#include "utils/GlHandle.hpp"
 
 namespace
 {

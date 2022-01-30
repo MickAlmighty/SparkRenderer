@@ -3,7 +3,7 @@
 #include "GUI/ImGui/imgui.h"
 
 #include "CameraManager.hpp"
-#include "CommonUtils.h"
+#include "utils/CommonUtils.h"
 #include "GameObject.h"
 #include "Scene.h"
 

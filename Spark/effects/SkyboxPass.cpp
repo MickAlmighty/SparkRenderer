@@ -1,7 +1,7 @@
 #include "SkyboxPass.hpp"
 
 #include "ICamera.hpp"
-#include "CommonUtils.h"
+#include "utils/CommonUtils.h"
 #include "PbrCubemapTexture.hpp"
 #include "Scene.h"
 #include "Shader.h"
@@ -57,7 +57,7 @@ void SkyboxPass::renderSkybox(GLuint framebuffer, unsigned int fboWidth, unsigne
     cubemapShader->use();
     cubemapShader->bindUniformBuffer("Camera", cameraUbo);
 
-    glBindTextureUnit(0, cubemapPtr->cubemap);
+    glBindTextureUnit(0, cubemapPtr->cubemap.get());
     cube.draw();
     glBindTextureUnit(0, 0);
     glDepthFunc(GL_GREATER);

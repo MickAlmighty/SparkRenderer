@@ -6,6 +6,7 @@
 
 #include "Buffer.hpp"
 #include "glad_glfw3.h"
+#include "GlHandle.hpp"
 
 #ifdef DEBUG
 #    define PUSH_DEBUG_GROUP(x)                                                                               \
@@ -28,11 +29,8 @@ void createTexture2D(GLuint& texture, GLuint width, GLuint height, GLenum intern
 void recreateTexture2D(GLuint& texture, GLuint width, GLuint height, GLenum internalFormat, GLenum format, GLenum pixelFormat, GLenum textureWrapping,
                        GLenum textureSampling, bool mipMaps = false, void* data = nullptr);
 
-void createCubemap(GLuint& texture, unsigned int size, GLenum internalFormat, GLenum format, GLenum pixelFormat, GLenum textureWrapping,
-                   GLenum textureSampling, bool mipMaps = false);
-
-void recreateCubemap(GLuint& texture, unsigned int size, GLenum internalFormat, GLenum format, GLenum pixelFormat, GLenum textureWrapping,
-                     GLenum textureSampling, bool mipMaps = false);
+TextureHandle createCubemap(unsigned int size, GLenum internalFormat, GLenum format, GLenum pixelFormat, GLenum textureWrapping,
+                            GLenum textureSampling, bool mipMaps = false);
 
 void bindTexture2D(GLuint framebuffer, GLuint colorTexture, GLuint renderTargetIds = 0, GLuint mipmapLevel = 0);
 void bindTextures2D(GLuint framebuffer, const std::vector<GLuint>& colorTextures, const std::vector<GLuint>& renderTargetIds = {});
@@ -43,7 +41,7 @@ void bindDepthTexture(GLuint& framebuffer, GLuint depthTexture);
 void createFramebuffer(GLuint& framebuffer, std::vector<GLuint>&& colorTextures = {}, GLuint renderbuffer = 0);
 void recreateFramebuffer(GLuint& framebuffer, std::vector<GLuint>&& colorTextures = {}, GLuint renderbuffer = 0);
 
-GLuint createBrdfLookupTexture(unsigned int size);
+TextureHandle createBrdfLookupTexture(unsigned int size);
 
 template<typename T>
 void uploadDataToTexture2D(GLuint texture, GLuint mipMapLevel, GLuint width, GLuint height, GLenum format, GLenum type, const std::vector<T>& buffer)

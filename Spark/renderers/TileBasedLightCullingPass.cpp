@@ -1,7 +1,7 @@
 #include "TileBasedLightCullingPass.hpp"
 
 #include "EditorCamera.hpp"
-#include "CommonUtils.h"
+#include "utils/CommonUtils.h"
 #include "Scene.h"
 #include "Shader.h"
 #include "Spark.h"

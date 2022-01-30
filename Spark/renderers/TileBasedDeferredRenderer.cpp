@@ -1,6 +1,6 @@
 #include "TileBasedDeferredRenderer.hpp"
 
-#include "CommonUtils.h"
+#include "utils/CommonUtils.h"
 #include "ICamera.hpp"
 #include "Logging.h"
 #include "Shader.h"
@@ -9,10 +9,8 @@
 namespace spark::renderers
 {
 TileBasedDeferredRenderer::TileBasedDeferredRenderer(unsigned int width, unsigned int height)
-    : Renderer(width, height), gBuffer(width, height), lightCullingPass(width, height)
+    : Renderer(width, height), brdfLookupTexture(utils::createBrdfLookupTexture(1024)), gBuffer(width, height), lightCullingPass(width, height)
 {
-    brdfLookupTexture = utils::createBrdfLookupTexture(1024);
-
     lightingShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("tileBasedLighting.glsl");
     lightingShader->bindSSBO("PointLightIndices", lightCullingPass.pointLightIndices);
     lightingShader->bindSSBO("SpotLightIndices", lightCullingPass.spotLightIndices);
@@ -42,10 +40,10 @@ void TileBasedDeferredRenderer::processLighting(const std::shared_ptr<Scene>& sc
     glBindTextureUnit(0, gBuffer.depthTexture);
     if(const auto cubemap = scene->getSkyboxCubemap().lock(); cubemap)
     {
-        glBindTextureUnit(1, cubemap->irradianceCubemap);
-        glBindTextureUnit(2, cubemap->prefilteredCubemap);
+        glBindTextureUnit(1, cubemap->irradianceCubemap.get());
+        glBindTextureUnit(2, cubemap->prefilteredCubemap.get());
     }
-    glBindTextureUnit(3, brdfLookupTexture);
+    glBindTextureUnit(3, brdfLookupTexture.get());
     glBindTextureUnit(4, ssaoTexture);
 
     // textures as images

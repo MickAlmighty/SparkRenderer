@@ -6,7 +6,7 @@
 
 #include "GameObject.h"
 #include "JsonSerializer.h"
-#include "SparkGui.h"
+#include "GUI/SparkGui.h"
 #include "glm/gtx/string_cast.hpp"
 
 namespace spark

@@ -10,6 +10,7 @@
 #include "Renderer.hpp"
 #include "effects/AmbientOcclusion.hpp"
 #include "lights/LightManager.h"
+#include "utils/GlHandle.hpp"
 
 namespace spark
 {
@@ -42,7 +43,7 @@ class ClusterBasedDeferredRenderer : public Renderer
     GLuint aoPass(const std::shared_ptr<ICamera>& camera);
 
     GLuint lightingTexture{};
-    GLuint brdfLookupTexture{};
+    utils::TextureHandle brdfLookupTexture{};
     GBuffer gBuffer;
     ClusterBasedLightCullingPass lightCullingPass;
     std::shared_ptr<resources::Shader> lightingShader{nullptr};

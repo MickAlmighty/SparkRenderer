@@ -1,6 +1,6 @@
 #include "DepthOfFieldPass.h"
 
-#include "CommonUtils.h"
+#include "utils/CommonUtils.h"
 #include "ICamera.hpp"
 #include "Shader.h"
 #include "Spark.h"

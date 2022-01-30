@@ -1,6 +1,6 @@
 #include "GBuffer.hpp"
 
-#include "CommonUtils.h"
+#include "utils/CommonUtils.h"
 #include "Logging.h"
 #include "Shader.h"
 #include "Spark.h"

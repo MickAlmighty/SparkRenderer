@@ -1,6 +1,6 @@
 #include "ICamera.hpp"
 
-#include "CommonUtils.h"
+#include "utils/CommonUtils.h"
 #include "Spark.h"
 
 namespace spark

@@ -2,6 +2,7 @@
 #include "profiling/GpuTimer.hpp"
 #include "Renderer.hpp"
 #include "TileBasedLightCullingPass.hpp"
+#include "utils/GlHandle.hpp"
 
 namespace spark::renderers
 {
@@ -30,7 +31,7 @@ class TileBasedForwardPlusRenderer : public Renderer
 
     GLuint lightingFramebuffer{}, lightingTexture{};
     GLuint depthPrepassFramebuffer{}, depthTexture{}, normalsTexture{};
-    GLuint brdfLookupTexture{};
+    utils::TextureHandle brdfLookupTexture{};
     ScreenQuad screenQuad{};
     TileBasedLightCullingPass lightCullingPass;
     std::shared_ptr<resources::Shader> depthOnlyShader{nullptr};

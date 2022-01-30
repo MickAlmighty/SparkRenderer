@@ -5,6 +5,7 @@
 #include "profiling/GpuTimer.hpp"
 #include "Renderer.hpp"
 #include "ScreenQuad.hpp"
+#include "utils/GlHandle.hpp"
 
 namespace spark::resources
 {
@@ -37,7 +38,7 @@ class DeferredRenderer : public Renderer
 
     GBuffer gBuffer;
     GLuint framebuffer{}, lightingTexture{};
-    GLuint brdfLookupTexture{};
+    utils::TextureHandle brdfLookupTexture{};
     ScreenQuad screenQuad{};
     std::shared_ptr<resources::Shader> lightingShader{nullptr};
     profiling::GpuTimer<2> timer;

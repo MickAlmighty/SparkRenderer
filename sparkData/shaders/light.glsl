@@ -427,7 +427,7 @@ vec4 calculateSpecularFromLightProbe(vec3 N, vec3 V, vec3 P, float NdotV, Materi
         samplerCube prefilterSampler = samplerCube(lightProbe.prefilterCubemapHandle);
         vec4 prefilteredColor = textureLod(prefilterSampler, localR, mipMapLevel).rgba;
         vec2 brdf = texture(brdfLUT, vec2(NdotV, material.roughness)).rg;
-        
+
         //float specOcclusion = computeSpecOcclusion(NdotV, ssao, material.roughness);
         vec3 F = fresnelSchlickRoughness(NdotV, material.F0, material.roughness);
         specular = vec4(prefilteredColor.rgb * (F * brdf.x + brdf.y), prefilteredColor.a);

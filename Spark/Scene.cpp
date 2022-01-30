@@ -2,7 +2,7 @@
 
 #include "Camera.hpp"
 #include "CameraManager.hpp"
-#include "CommonUtils.h"
+#include "utils/CommonUtils.h"
 #include "EditorCamera.hpp"
 #include "GameObject.h"
 #include "GUI/ImGui/imgui.h"

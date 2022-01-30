@@ -60,9 +60,10 @@ void recreateTexture2D(GLuint& texture, GLuint width, GLuint height, GLenum inte
     createTexture2D(texture, width, height, internalFormat, format, pixelFormat, textureWrapping, textureSampling, mipMaps, data);
 }
 
-void createCubemap(GLuint& texture, unsigned int size, GLenum internalFormat, GLenum format, GLenum pixelFormat, GLenum textureWrapping,
-                   GLenum textureSampling, bool mipMaps)
+TextureHandle createCubemap(unsigned int size, GLenum internalFormat, GLenum format, GLenum pixelFormat, GLenum textureWrapping,
+                            GLenum textureSampling, bool mipMaps)
 {
+    GLuint texture{0};
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_CUBE_MAP, texture);
     for(unsigned int i = 0; i < 6; ++i)
@@ -90,18 +91,8 @@ void createCubemap(GLuint& texture, unsigned int size, GLenum internalFormat, GL
     {
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, textureSampling);
     }
-}
 
-void recreateCubemap(GLuint& texture, unsigned int size, GLenum internalFormat, GLenum format, GLenum pixelFormat, GLenum textureWrapping,
-                     GLenum textureSampling, bool mipMaps)
-{
-    if(texture != 0)
-    {
-        glDeleteTextures(1, &texture);
-        texture = 0;
-    }
-
-    createCubemap(texture, size, internalFormat, format, pixelFormat, textureWrapping, textureSampling, mipMaps);
+    return {texture};
 }
 
 void bindTexture2D(GLuint framebuffer, GLuint colorTexture, GLuint renderTargetIds, GLuint mipmapLevel)
@@ -188,7 +179,7 @@ void recreateFramebuffer(GLuint& framebuffer, std::vector<GLuint>&& colorTexture
     createFramebuffer(framebuffer, std::move(colorTextures), renderbuffer);
 }
 
-GLuint createBrdfLookupTexture(unsigned int size)
+TextureHandle createBrdfLookupTexture(unsigned int size)
 {
     PUSH_DEBUG_GROUP(BRDF_LOOKUP_TABLE);
 
@@ -202,7 +193,7 @@ GLuint createBrdfLookupTexture(unsigned int size)
     glUseProgram(0);
     POP_DEBUG_GROUP();
 
-    return brdfLUTTexture;
+    return {brdfLUTTexture};
 }
 
 glm::mat4 getProjectionReversedZInfFar(uint32_t width, uint32_t height, float fovDegrees, float zNear)
@@ -215,7 +206,7 @@ glm::mat4 getProjectionReversedZInfFar(uint32_t width, uint32_t height, float fo
     const glm::vec4 column2{0.0f, 0.0f, 0.0f, -1.0f};
     const glm::vec4 column3{0.0f, 0.0f, zNear, 0.0f};
 
-    return glm::mat4(column0, column1, column2, column3);
+    return {column0, column1, column2, column3};
 }
 
 glm::mat4 getProjectionReversedZ(uint32_t width, uint32_t height, float fovDegrees, float zNear, float zFar)
@@ -229,7 +220,7 @@ glm::mat4 getProjectionReversedZ(uint32_t width, uint32_t height, float fovDegre
     const glm::vec4 column2{0.0f, 0.0f, zNear / (zFar - zNear), -1.0f};
     const glm::vec4 column3{0.0f, 0.0f, -(zFar * zNear) / (zNear - zFar), 0.0f};
 
-    return glm::mat4(column0, column1, column2, column3);
+    return {column0, column1, column2, column3};
 }
 
 std::array<glm::mat4, 6> getCubemapViewMatrices(glm::vec3 cameraPosition)

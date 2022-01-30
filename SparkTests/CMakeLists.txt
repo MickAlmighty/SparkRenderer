@@ -22,6 +22,7 @@ target_sources(SparkTests PRIVATE
 "SerializationTest.cpp"
 "MockSpark.hpp"
 "GameObjectTest.cpp"
+"GlHandle.cpp"
 )
 
 target_include_directories(SparkTests PUBLIC ${CMAKE_SOURCE_DIR}/Spark)

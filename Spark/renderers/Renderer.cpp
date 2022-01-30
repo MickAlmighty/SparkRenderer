@@ -1,6 +1,6 @@
 #include "Renderer.hpp"
 
-#include "CommonUtils.h"
+#include "utils/CommonUtils.h"
 #include "ICamera.hpp"
 #include "effects/PostProcessingStack.hpp"
 #include "LightProbesRenderer.hpp"

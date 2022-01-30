@@ -3,6 +3,7 @@
 
 #include "Renderer.hpp"
 #include "profiling/GpuTimer.hpp"
+#include "utils/GlHandle.hpp"
 
 namespace spark::resources
 {
@@ -36,7 +37,7 @@ class ForwardPlusRenderer : public Renderer
 
     GLuint lightingFramebuffer{}, lightingTexture{};
     GLuint depthPrepassFramebuffer{}, depthTexture{}, normalsTexture{};
-    GLuint brdfLookupTexture{};
+    utils::TextureHandle brdfLookupTexture{};
     ScreenQuad screenQuad{};
     std::shared_ptr<resources::Shader> depthOnlyShader{nullptr};
     std::shared_ptr<resources::Shader> depthAndNormalsShader{nullptr};

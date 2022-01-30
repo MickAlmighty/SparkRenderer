@@ -1,6 +1,6 @@
 #include "TileBasedForwardPlusRenderer.hpp"
 
-#include "CommonUtils.h"
+#include "utils/CommonUtils.h"
 #include "ICamera.hpp"
 #include "Logging.h"
 #include "Spark.h"
@@ -8,10 +8,8 @@
 namespace spark::renderers
 {
 TileBasedForwardPlusRenderer::TileBasedForwardPlusRenderer(unsigned int width, unsigned int height)
-    : Renderer(width, height), lightCullingPass(width, height)
+    : Renderer(width, height), brdfLookupTexture(utils::createBrdfLookupTexture(1024)), lightCullingPass(width, height)
 {
-    brdfLookupTexture = utils::createBrdfLookupTexture(1024);
-
     depthOnlyShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("depthOnly.glsl");
     depthAndNormalsShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("depthAndNormals.glsl");
     lightingShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("tileBasedForwardPlusPbrLighting.glsl");
@@ -24,7 +22,6 @@ TileBasedForwardPlusRenderer::~TileBasedForwardPlusRenderer()
     glDeleteTextures(1, &lightingTexture);
     glDeleteTextures(1, &normalsTexture);
     glDeleteTextures(1, &depthTexture);
-    glDeleteTextures(1, &brdfLookupTexture);
     glDeleteFramebuffers(1, &lightingFramebuffer);
     glDeleteFramebuffers(1, &depthPrepassFramebuffer);
 }
@@ -84,14 +81,14 @@ void TileBasedForwardPlusRenderer::lightingPass(const std::shared_ptr<Scene>& sc
 
     if(!scene->getSkyboxCubemap().expired())
     {
-        glBindTextureUnit(7, scene->getSkyboxCubemap().lock()->irradianceCubemap);
-        glBindTextureUnit(8, scene->getSkyboxCubemap().lock()->prefilteredCubemap);
+        glBindTextureUnit(7, scene->getSkyboxCubemap().lock()->irradianceCubemap.get());
+        glBindTextureUnit(8, scene->getSkyboxCubemap().lock()->prefilteredCubemap.get());
     }
     else
     {
         glBindTextures(7, 2, nullptr);
     }
-    glBindTextureUnit(9, brdfLookupTexture);
+    glBindTextureUnit(9, brdfLookupTexture.get());
     glBindTextureUnit(10, ssaoTexture);
 
     lightingShader->use();

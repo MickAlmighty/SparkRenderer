@@ -7,6 +7,7 @@
 #include "profiling/GpuTimer.hpp"
 #include "Renderer.hpp"
 #include "TileBasedLightCullingPass.hpp"
+#include "utils/GlHandle.hpp"
 
 namespace spark
 {
@@ -38,7 +39,7 @@ class TileBasedDeferredRenderer : public Renderer
     GLuint aoPass(const std::shared_ptr<ICamera>& camera);
 
     GLuint lightingTexture{};
-    GLuint brdfLookupTexture{};
+    utils::TextureHandle brdfLookupTexture{};
     GBuffer gBuffer;
     TileBasedLightCullingPass lightCullingPass;
     std::shared_ptr<resources::Shader> lightingShader{nullptr};

@@ -1,7 +1,7 @@
 #include "SparkGui.h"
 
 #include "Animation.hpp"
-#include "CommonUtils.h"
+#include "utils/CommonUtils.h"
 #include "ImGuizmo.h"
 #include "ImGui/imgui_impl_glfw.h"
 #include "ImGui/imgui_impl_opengl3.h"

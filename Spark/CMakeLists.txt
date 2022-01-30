@@ -17,8 +17,6 @@ list(APPEND SparkSources
     ${CMAKE_CURRENT_SOURCE_DIR}/Clock.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Cube.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Clock.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/CommonUtils.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/CommonUtils.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Component.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Component.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Enums.cpp
@@ -103,6 +101,7 @@ add_subdirectory(lights)
 add_subdirectory(effects)
 add_subdirectory(renderers)
 add_subdirectory(scripts)
+add_subdirectory(utils)
 
 # Create the source groups for source tree with root at CMAKE_CURRENT_SOURCE_DIR.
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SparkSources})
