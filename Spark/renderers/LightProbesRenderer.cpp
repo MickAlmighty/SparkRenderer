@@ -1,6 +1,6 @@
 #include "LightProbesRenderer.hpp"
 
-#include "CommonUtils.h"
+#include "utils/CommonUtils.h"
 #include "Spark.h"
 #include "Timer.h"
 #include "lights/LightProbe.h"
@@ -17,12 +17,6 @@ LightProbesRenderer::LightProbesRenderer() : localLightProbeGBuffer(sceneCubemap
     irradianceShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("irradiance.glsl");
     prefilterShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("prefilter.glsl");
     resampleCubemapShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("resampleCubemap.glsl");
-
-    localLightProbesLightingShader->bindUniformBuffer("Camera", cameraUbo);
-    irradianceShader->bindSSBO("Views", cubemapViewMatrices);
-    prefilterShader->bindSSBO("Views", cubemapViewMatrices);
-    resampleCubemapShader->bindSSBO("Views", cubemapViewMatrices);
-    equirectangularToCubemapShader->bindSSBO("Views", cubemapViewMatrices);
 
     const glm::mat4 cubemapProjection = utils::getProjectionReversedZ(sceneCubemapSize, sceneCubemapSize, 90.0f, 0.05f, 100.0f);
     irradianceShader->use();
@@ -52,6 +46,12 @@ void LightProbesRenderer::process(const std::shared_ptr<Scene>& scene)
     localLightProbesLightingShader->bindSSBO("DirLightData", scene->lightManager->getDirLightSSBO());
     localLightProbesLightingShader->bindSSBO("PointLightData", scene->lightManager->getPointLightSSBO());
     localLightProbesLightingShader->bindSSBO("SpotLightData", scene->lightManager->getSpotLightSSBO());
+
+    localLightProbesLightingShader->bindUniformBuffer("Camera", cameraUbo);
+    irradianceShader->bindSSBO("Views", cubemapViewMatrices);
+    prefilterShader->bindSSBO("Views", cubemapViewMatrices);
+    resampleCubemapShader->bindSSBO("Views", cubemapViewMatrices);
+    equirectangularToCubemapShader->bindSSBO("Views", cubemapViewMatrices);
 
     utils::createCubemap(lightProbeSceneCubemap, sceneCubemapSize, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR, true);
 
@@ -152,7 +152,7 @@ void LightProbesRenderer::renderSceneToCubemap(const std::map<ShaderType, std::d
         glClear(GL_COLOR_BUFFER_BIT);
 
         localLightProbesLightingShader->use();
-        std::array<GLuint, 4> textures{
+        const std::array<GLuint, 4> textures{
             localLightProbeGBuffer.depthTexture,
             localLightProbeGBuffer.colorTexture,
             localLightProbeGBuffer.normalsTexture,
