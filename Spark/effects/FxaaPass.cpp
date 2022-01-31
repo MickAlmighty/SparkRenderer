@@ -14,7 +14,6 @@ FxaaPass::FxaaPass(unsigned width, unsigned height) : w(width), h(height)
 
 FxaaPass::~FxaaPass()
 {
-    glDeleteTextures(1, &fxaaTexture);
     glDeleteFramebuffers(1, &fxaaFramebuffer);
 }
 
@@ -33,7 +32,7 @@ GLuint FxaaPass::process(GLuint inputTexture)
 
     POP_DEBUG_GROUP();
 
-    return fxaaTexture;
+    return fxaaTexture.get();
 }
 
 void FxaaPass::resize(unsigned int width, unsigned int height)
@@ -45,7 +44,7 @@ void FxaaPass::resize(unsigned int width, unsigned int height)
 
 void FxaaPass::createFrameBuffersAndTextures()
 {
-    utils::recreateTexture2D(fxaaTexture, w, h, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::recreateFramebuffer(fxaaFramebuffer, {fxaaTexture});
+    fxaaTexture = utils::createTexture2D(w, h, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::recreateFramebuffer(fxaaFramebuffer, {fxaaTexture.get()});
 }
 }  // namespace spark::effects

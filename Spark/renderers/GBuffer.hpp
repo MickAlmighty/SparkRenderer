@@ -7,6 +7,7 @@
 #include "Enums.h"
 #include "glad_glfw3.h"
 #include "RenderingRequest.h"
+#include "utils/GlHandle.hpp"
 
 namespace spark::resources
 {
@@ -28,14 +29,11 @@ class GBuffer
     void resize(unsigned int width, unsigned int height);
 
     void fill(const std::map<ShaderType, std::deque<RenderingRequest>>& renderingQueues, const UniformBuffer& cameraUbo);
-    void fill(const std::map<ShaderType, std::deque<RenderingRequest>>& renderingQueues, const std::function<bool(const RenderingRequest& request)>& filter,
-              const UniformBuffer& cameraUbo);
+    void fill(const std::map<ShaderType, std::deque<RenderingRequest>>& renderingQueues,
+              const std::function<bool(const RenderingRequest& request)>& filter, const UniformBuffer& cameraUbo);
 
     GLuint framebuffer{};
-    GLuint colorTexture{};
-    GLuint normalsTexture{};
-    GLuint roughnessMetalnessTexture{};
-    GLuint depthTexture{};
+    utils::TextureHandle colorTexture{}, normalsTexture{}, roughnessMetalnessTexture{}, depthTexture{};
 
     private:
     void createFrameBuffersAndTextures();

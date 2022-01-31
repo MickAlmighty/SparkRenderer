@@ -57,7 +57,7 @@ void LightProbesRenderer::process(const std::shared_ptr<Scene>& scene)
 
     utils::createFramebuffer(lightProbeLightFbo, {});
     utils::createFramebuffer(lightProbeSkyboxFbo, {});
-    utils::bindDepthTexture(lightProbeSkyboxFbo, localLightProbeGBuffer.depthTexture);
+    utils::bindDepthTexture(lightProbeSkyboxFbo, localLightProbeGBuffer.depthTexture.get());
 
     for(const auto& lightProbe : lightProbes)
     {
@@ -152,10 +152,10 @@ void LightProbesRenderer::renderSceneToCubemap(const std::map<ShaderType, std::d
 
         localLightProbesLightingShader->use();
         const std::array<GLuint, 4> textures{
-            localLightProbeGBuffer.depthTexture,
-            localLightProbeGBuffer.colorTexture,
-            localLightProbeGBuffer.normalsTexture,
-            localLightProbeGBuffer.roughnessMetalnessTexture,
+            localLightProbeGBuffer.depthTexture.get(),
+            localLightProbeGBuffer.colorTexture.get(),
+            localLightProbeGBuffer.normalsTexture.get(),
+            localLightProbeGBuffer.roughnessMetalnessTexture.get(),
         };
         glBindTextures(0, static_cast<GLsizei>(textures.size()), textures.data());
         screenQuad.draw();

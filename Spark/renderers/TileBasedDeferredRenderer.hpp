@@ -24,7 +24,7 @@ class TileBasedDeferredRenderer : public Renderer
     TileBasedDeferredRenderer(TileBasedDeferredRenderer&&) = delete;
     TileBasedDeferredRenderer& operator=(const TileBasedDeferredRenderer&) = delete;
     TileBasedDeferredRenderer& operator=(TileBasedDeferredRenderer&&) = delete;
-    ~TileBasedDeferredRenderer() override;
+    ~TileBasedDeferredRenderer() override = default;
 
     protected:
     void renderMeshes(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera) override;
@@ -38,8 +38,7 @@ class TileBasedDeferredRenderer : public Renderer
     void processLighting(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera, GLuint ssaoTexture);
     GLuint aoPass(const std::shared_ptr<ICamera>& camera);
 
-    GLuint lightingTexture{};
-    utils::TextureHandle brdfLookupTexture{};
+    utils::TextureHandle brdfLookupTexture{}, lightingTexture{};
     GBuffer gBuffer;
     TileBasedLightCullingPass lightCullingPass;
     std::shared_ptr<resources::Shader> lightingShader{nullptr};

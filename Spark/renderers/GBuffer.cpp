@@ -72,10 +72,6 @@ void GBuffer::fill(const std::map<ShaderType, std::deque<RenderingRequest>>& ren
 
 GBuffer::~GBuffer()
 {
-    GLuint textures[4] = {colorTexture, normalsTexture, roughnessMetalnessTexture, depthTexture};
-    glDeleteTextures(4, textures);
-    colorTexture = normalsTexture = roughnessMetalnessTexture = depthTexture = 0;
-
     glDeleteFramebuffers(1, &framebuffer);
     framebuffer = 0;
 }
@@ -89,12 +85,12 @@ void GBuffer::resize(unsigned int width, unsigned int height)
 
 void GBuffer::createFrameBuffersAndTextures()
 {
-    utils::recreateTexture2D(colorTexture, w, h, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::recreateTexture2D(normalsTexture, w, h, GL_RG16F, GL_RG, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::recreateTexture2D(roughnessMetalnessTexture, w, h, GL_RG, GL_RG, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::recreateTexture2D(depthTexture, w, h, GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    colorTexture = utils::createTexture2D(w, h, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    normalsTexture = utils::createTexture2D(w, h, GL_RG16F, GL_RG, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    roughnessMetalnessTexture = utils::createTexture2D(w, h, GL_RG, GL_RG, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    depthTexture = utils::createTexture2D(w, h, GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
 
-    utils::recreateFramebuffer(framebuffer, {colorTexture, normalsTexture, roughnessMetalnessTexture});
-    utils::bindDepthTexture(framebuffer, depthTexture);
+    utils::recreateFramebuffer(framebuffer, {colorTexture.get(), normalsTexture.get(), roughnessMetalnessTexture.get()});
+    utils::bindDepthTexture(framebuffer, depthTexture.get());
 }
 }  // namespace spark::renderers

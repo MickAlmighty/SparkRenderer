@@ -20,9 +20,6 @@ ForwardPlusRenderer::ForwardPlusRenderer(unsigned int width, unsigned int height
 
 ForwardPlusRenderer::~ForwardPlusRenderer()
 {
-    glDeleteTextures(1, &lightingTexture);
-    glDeleteTextures(1, &normalsTexture);
-    glDeleteTextures(1, &depthTexture);
     glDeleteFramebuffers(1, &lightingFramebuffer);
     glDeleteFramebuffers(1, &depthPrepassFramebuffer);
 }
@@ -66,7 +63,7 @@ GLuint ForwardPlusRenderer::aoPass(const std::shared_ptr<Scene>& scene, const st
 {
     if(isAmbientOcclusionEnabled)
     {
-        return ao.process(depthTexture, normalsTexture, camera);
+        return ao.process(depthTexture.get(), normalsTexture.get(), camera);
     }
     return 0;
 }
@@ -139,23 +136,23 @@ void ForwardPlusRenderer::resizeDerived(unsigned int width, unsigned int height)
 
 GLuint ForwardPlusRenderer::getDepthTexture() const
 {
-    return depthTexture;
+    return depthTexture.get();
 }
 
 GLuint ForwardPlusRenderer::getLightingTexture() const
 {
-    return lightingTexture;
+    return lightingTexture.get();
 }
 
 void ForwardPlusRenderer::createFrameBuffersAndTextures()
 {
-    utils::recreateTexture2D(lightingTexture, w, h, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::recreateTexture2D(normalsTexture, w, h, GL_RG16F, GL_RG, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::recreateTexture2D(depthTexture, w, h, GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    lightingTexture = utils::createTexture2D(w, h, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    normalsTexture = utils::createTexture2D(w, h, GL_RG16F, GL_RG, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    depthTexture = utils::createTexture2D(w, h, GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
 
-    utils::recreateFramebuffer(depthPrepassFramebuffer, {normalsTexture});
-    utils::bindDepthTexture(depthPrepassFramebuffer, depthTexture);
-    utils::recreateFramebuffer(lightingFramebuffer, {lightingTexture});
-    utils::bindDepthTexture(lightingFramebuffer, depthTexture);
+    utils::recreateFramebuffer(depthPrepassFramebuffer, {normalsTexture.get()});
+    utils::bindDepthTexture(depthPrepassFramebuffer, depthTexture.get());
+    utils::recreateFramebuffer(lightingFramebuffer, {lightingTexture.get()});
+    utils::bindDepthTexture(lightingFramebuffer, depthTexture.get());
 }
 }  // namespace spark::renderers

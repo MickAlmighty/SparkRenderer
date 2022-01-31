@@ -15,11 +15,6 @@ TileBasedLightCullingPass::TileBasedLightCullingPass(unsigned int width, unsigne
     createFrameBuffersAndTextures();
 }
 
-TileBasedLightCullingPass::~TileBasedLightCullingPass()
-{
-    glDeleteTextures(1, &lightsPerTileTexture);
-}
-
 void TileBasedLightCullingPass::process(GLuint depthTexture, const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera)
 {
     PUSH_DEBUG_GROUP(TILE_BASED_LIGHTS_CULLING);
@@ -41,7 +36,7 @@ void TileBasedLightCullingPass::process(GLuint depthTexture, const std::shared_p
     // debug of light count per tile
     /*uint8_t clear[]{0,0,0,0};
     glClearTexImage(lightsPerTileTexture, 0, GL_RGBA, GL_UNSIGNED_BYTE, &clear);*/
-    glBindImageTexture(5, lightsPerTileTexture, 0, false, 0, GL_READ_WRITE, GL_RGBA16F);
+    glBindImageTexture(5, lightsPerTileTexture.get(), 0, false, 0, GL_READ_WRITE, GL_RGBA16F);
 
     tileBasedLightCullingShader->dispatchCompute(utils::uiCeil(w, 16u), utils::uiCeil(h, 16u), 1);
 
@@ -61,7 +56,7 @@ void TileBasedLightCullingPass::createFrameBuffersAndTextures()
     pointLightIndices.resizeBuffer(lightCount * utils::uiCeil(h, 16u) * utils::uiCeil(w, 16u) * sizeof(uint32_t));
     spotLightIndices.resizeBuffer(lightCount * utils::uiCeil(h, 16u) * utils::uiCeil(w, 16u) * sizeof(uint32_t));
     lightProbeIndices.resizeBuffer(lightCount * utils::uiCeil(h, 16u) * utils::uiCeil(w, 16u) * sizeof(uint32_t));
-    utils::recreateTexture2D(lightsPerTileTexture, w / 16, h / 16, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
+    lightsPerTileTexture = utils::createTexture2D(w / 16, h / 16, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
 }
 
 void TileBasedLightCullingPass::bindLightBuffers(const std::shared_ptr<lights::LightManager>& lightManager)

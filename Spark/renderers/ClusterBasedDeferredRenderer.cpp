@@ -15,16 +15,11 @@ ClusterBasedDeferredRenderer::ClusterBasedDeferredRenderer(unsigned int width, u
     createFrameBuffersAndTextures();
 }
 
-ClusterBasedDeferredRenderer::~ClusterBasedDeferredRenderer()
-{
-    glDeleteTextures(1, &lightingTexture);
-}
-
 void ClusterBasedDeferredRenderer::processLighting(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera, GLuint ssaoTexture)
 {
     PUSH_DEBUG_GROUP(TILE_BASED_DEFERRED)
     float clearRgba[] = {0.0f, 0.0f, 0.0f, 0.0f};
-    glClearTexImage(lightingTexture, 0, GL_RGBA, GL_FLOAT, &clearRgba);
+    glClearTexImage(lightingTexture.get(), 0, GL_RGBA, GL_FLOAT, &clearRgba);
 
     const auto cubemap = scene->getSkyboxCubemap().lock();
 
@@ -41,7 +36,7 @@ void ClusterBasedDeferredRenderer::processLighting(const std::shared_ptr<Scene>&
     lightingShader->bindSSBO("PerClusterGlobalLightIndicesBufferMetadata", lightCullingPass.perClusterGlobalLightIndicesBufferMetadata);
 
     // depth texture as sampler2D
-    glBindTextureUnit(0, gBuffer.depthTexture);
+    glBindTextureUnit(0, gBuffer.depthTexture.get());
     if(cubemap)
     {
         glBindTextureUnit(1, cubemap->irradianceCubemap.get());
@@ -51,12 +46,12 @@ void ClusterBasedDeferredRenderer::processLighting(const std::shared_ptr<Scene>&
     glBindTextureUnit(4, ssaoTexture);
 
     // textures as images
-    glBindImageTexture(0, gBuffer.colorTexture, 0, false, 0, GL_READ_ONLY, GL_RGBA8);
-    glBindImageTexture(1, gBuffer.normalsTexture, 0, false, 0, GL_READ_ONLY, GL_RG16F);
-    glBindImageTexture(2, gBuffer.roughnessMetalnessTexture, 0, false, 0, GL_READ_ONLY, GL_RG8);
+    glBindImageTexture(0, gBuffer.colorTexture.get(), 0, false, 0, GL_READ_ONLY, GL_RGBA8);
+    glBindImageTexture(1, gBuffer.normalsTexture.get(), 0, false, 0, GL_READ_ONLY, GL_RG16F);
+    glBindImageTexture(2, gBuffer.roughnessMetalnessTexture.get(), 0, false, 0, GL_READ_ONLY, GL_RG8);
 
     // output image
-    glBindImageTexture(3, lightingTexture, 0, false, 0, GL_WRITE_ONLY, GL_RGBA16F);
+    glBindImageTexture(3, lightingTexture.get(), 0, false, 0, GL_WRITE_ONLY, GL_RGBA16F);
 
     lightingShader->dispatchCompute(utils::uiCeil(w, 16u), utils::uiCeil(h, 16u), 1);
     glBindTextures(0, 0, nullptr);
@@ -67,7 +62,7 @@ void ClusterBasedDeferredRenderer::processLighting(const std::shared_ptr<Scene>&
 GLuint ClusterBasedDeferredRenderer::aoPass(const std::shared_ptr<ICamera>& camera)
 {
     if(isAmbientOcclusionEnabled)
-        return ao.process(gBuffer.depthTexture, gBuffer.normalsTexture, camera);
+        return ao.process(gBuffer.depthTexture.get(), gBuffer.normalsTexture.get(), camera);
 
     return 0;
 }
@@ -77,7 +72,7 @@ void ClusterBasedDeferredRenderer::renderMeshes(const std::shared_ptr<Scene>& sc
     if(isProfilingEnabled)
     {
         timer.measure(0, [this, &scene, &camera] { gBuffer.fill(scene->getRenderingQueues(), camera->getUbo()); });
-        timer.measure(1, [this, &scene, &camera] { lightCullingPass.process(gBuffer.depthTexture, scene, camera); });
+        timer.measure(1, [this, &scene, &camera] { lightCullingPass.process(gBuffer.depthTexture.get(), scene, camera); });
         const GLuint ssaoTexture = aoPass(camera);
         timer.measure(2, [this, &scene, &camera, ssaoTexture] { processLighting(scene, camera, ssaoTexture); });
 
@@ -88,7 +83,7 @@ void ClusterBasedDeferredRenderer::renderMeshes(const std::shared_ptr<Scene>& sc
     else
     {
         gBuffer.fill(scene->getRenderingQueues(), camera->getUbo());
-        lightCullingPass.process(gBuffer.depthTexture, scene, camera);
+        lightCullingPass.process(gBuffer.depthTexture.get(), scene, camera);
         const GLuint ssaoTexture = aoPass(camera);
         processLighting(scene, camera, ssaoTexture);
     }
@@ -105,16 +100,16 @@ void ClusterBasedDeferredRenderer::resizeDerived(unsigned int width, unsigned in
 
 void ClusterBasedDeferredRenderer::createFrameBuffersAndTextures()
 {
-    utils::recreateTexture2D(lightingTexture, w, h, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    lightingTexture = utils::createTexture2D(w, h, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
 }
 
 GLuint ClusterBasedDeferredRenderer::getDepthTexture() const
 {
-    return gBuffer.depthTexture;
+    return gBuffer.depthTexture.get();
 }
 
 GLuint ClusterBasedDeferredRenderer::getLightingTexture() const
 {
-    return lightingTexture;
+    return lightingTexture.get();
 }
 }  // namespace spark::renderers

@@ -3,6 +3,7 @@
 
 #include "Buffer.hpp"
 #include "ICamera.hpp"
+#include "utils/GlHandle.hpp"
 
 namespace spark
 {
@@ -27,7 +28,7 @@ class TileBasedLightCullingPass
     TileBasedLightCullingPass(TileBasedLightCullingPass&&) = delete;
     TileBasedLightCullingPass& operator=(const TileBasedLightCullingPass&) = delete;
     TileBasedLightCullingPass& operator=(TileBasedLightCullingPass&&) = delete;
-    ~TileBasedLightCullingPass();
+    ~TileBasedLightCullingPass() = default;
 
     void process(GLuint depthTexture, const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera);
     void resize(unsigned int width, unsigned int height);
@@ -41,7 +42,7 @@ class TileBasedLightCullingPass
     void createFrameBuffersAndTextures();
 
     unsigned int w{}, h{};
-    GLuint lightsPerTileTexture{};
+    utils::TextureHandle lightsPerTileTexture{};
     std::shared_ptr<resources::Shader> tileBasedLightCullingShader{nullptr};
 };
 }  // namespace spark::renderers

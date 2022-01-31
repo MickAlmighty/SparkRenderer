@@ -15,15 +15,12 @@ ToneMapper::ToneMapper(unsigned int width, unsigned int height): w(width), h(hei
     averageLuminanceComputeShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("averageLuminanceCompute.glsl");
 
     luminanceHistogram.resizeBuffer(256 * sizeof(uint32_t));
-    utils::recreateTexture2D(averageLuminanceTexture, 1, 1, GL_R16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
+    averageLuminanceTexture = utils::createTexture2D(1, 1, GL_R16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
     createFrameBuffersAndTextures();
 }
 
 ToneMapper::~ToneMapper()
 {
-    glDeleteTextures(1, &toneMappingTexture);
-    glDeleteTextures(1, &averageLuminanceTexture);
-    glDeleteTextures(1, &colorTexture);
     glDeleteFramebuffers(1, &toneMappingFramebuffer);
 }
 
@@ -31,7 +28,7 @@ GLuint ToneMapper::process(GLuint inputTexture)
 {
     PUSH_DEBUG_GROUP(TONE_MAPPING);
 
-    texturePass.process(w, h, inputTexture, colorTexture);
+    texturePass.process(w, h, inputTexture, colorTexture.get());
 
     calculateAverageLuminance();
 
@@ -40,13 +37,13 @@ GLuint ToneMapper::process(GLuint inputTexture)
     toneMappingShader->use();
     toneMappingShader->setVec2("inversedScreenSize", {1.0f / w, 1.0f / h});
 
-    glBindTextureUnit(0, colorTexture);
-    glBindTextureUnit(1, averageLuminanceTexture);
+    glBindTextureUnit(0, colorTexture.get());
+    glBindTextureUnit(1, averageLuminanceTexture.get());
     screenQuad.draw();
     glBindTextures(0, 3, nullptr);
 
     POP_DEBUG_GROUP();
-    return toneMappingTexture;
+    return toneMappingTexture.get();
 }
 
 void ToneMapper::resize(unsigned int width, unsigned int height)
@@ -58,9 +55,9 @@ void ToneMapper::resize(unsigned int width, unsigned int height)
 
 void ToneMapper::createFrameBuffersAndTextures()
 {
-    utils::recreateTexture2D(toneMappingTexture, w, h, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::recreateTexture2D(colorTexture, w, h, GL_RGBA16F, GL_RGBA, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::recreateFramebuffer(toneMappingFramebuffer, {toneMappingTexture});
+    toneMappingTexture = utils::createTexture2D(w, h, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    colorTexture = utils::createTexture2D(w, h, GL_RGBA16F, GL_RGBA, GL_UNSIGNED_BYTE, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::recreateFramebuffer(toneMappingFramebuffer, {toneMappingTexture.get()});
 }
 
 void ToneMapper::calculateAverageLuminance()
@@ -77,7 +74,7 @@ void ToneMapper::calculateAverageLuminance()
     luminanceHistogramComputeShader->setFloat("minLogLuminance", minLogLuminance);
     luminanceHistogramComputeShader->setFloat("oneOverLogLuminanceRange", oneOverLogLuminanceRange);
 
-    glBindImageTexture(0, colorTexture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA16F);
+    glBindImageTexture(0, colorTexture.get(), 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA16F);
     luminanceHistogramComputeShader->dispatchCompute(w / 16, h / 16, 1);  // localWorkGroups has dimensions of x = 16, y = 16
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
@@ -90,7 +87,7 @@ void ToneMapper::calculateAverageLuminance()
     averageLuminanceComputeShader->setFloat("deltaTime", static_cast<float>(Clock::getDeltaTime()));
     averageLuminanceComputeShader->setFloat("tau", tau);
 
-    glBindImageTexture(0, averageLuminanceTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R16F);
+    glBindImageTexture(0, averageLuminanceTexture.get(), 0, GL_FALSE, 0, GL_READ_WRITE, GL_R16F);
     averageLuminanceComputeShader->dispatchCompute(1, 1, 1);  // localWorkGroups has dimensions of x = 16, y = 16
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 }

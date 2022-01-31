@@ -29,9 +29,8 @@ class ClusterBasedForwardPlusRenderer : public Renderer
     void lightingPass(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera, const GLuint ssaoTexture);
     void createFrameBuffersAndTextures();
 
-    GLuint lightingFramebuffer{}, lightingTexture{};
-    GLuint depthPrepassFramebuffer{}, depthTexture{}, normalsTexture{};
-    utils::TextureHandle brdfLookupTexture{};
+    utils::TextureHandle brdfLookupTexture{}, lightingTexture{}, depthTexture{}, normalsTexture{};
+    GLuint depthPrepassFramebuffer{}, lightingFramebuffer{};
     ScreenQuad screenQuad{};
     ClusterBasedLightCullingPass lightCullingPass;
     std::shared_ptr<resources::Shader> depthOnlyShader{nullptr};

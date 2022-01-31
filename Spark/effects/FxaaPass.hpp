@@ -4,6 +4,7 @@
 
 #include "glad_glfw3.h"
 #include "ScreenQuad.hpp"
+#include "utils/GlHandle.hpp"
 
 namespace spark::resources
 {
@@ -30,7 +31,8 @@ class FxaaPass
 
     unsigned int w{}, h{};
     ScreenQuad screenQuad{};
-    GLuint fxaaFramebuffer{}, fxaaTexture{};
+    utils::TextureHandle fxaaTexture{};
+    GLuint fxaaFramebuffer{};
     std::shared_ptr<resources::Shader> fxaaShader{nullptr};
 };
 }  // namespace spark::effects

@@ -19,7 +19,6 @@ DeferredRenderer::DeferredRenderer(unsigned int width, unsigned int height)
 
 DeferredRenderer::~DeferredRenderer()
 {
-    glDeleteTextures(1, &lightingTexture);
     glDeleteFramebuffers(1, &framebuffer);
 }
 
@@ -40,24 +39,20 @@ void DeferredRenderer::processLighting(const std::shared_ptr<Scene>& scene, cons
 
     if(const auto cubemap = scene->getSkyboxCubemap().lock(); cubemap)
     {
-        const std::array<GLuint, 8> textures{gBuffer.depthTexture,
-                                             gBuffer.colorTexture,
-                                             gBuffer.normalsTexture,
-                                             gBuffer.roughnessMetalnessTexture,
-                                             cubemap->irradianceCubemap.get(),
-                                             cubemap->prefilteredCubemap.get(),
-                                             brdfLookupTexture.get(),
-                                             aoTexture};
+        const std::array<GLuint, 8> textures{gBuffer.depthTexture.get(),       gBuffer.colorTexture.get(),
+                                             gBuffer.normalsTexture.get(),     gBuffer.roughnessMetalnessTexture.get(),
+                                             cubemap->irradianceCubemap.get(), cubemap->prefilteredCubemap.get(),
+                                             brdfLookupTexture.get(),          aoTexture};
         glBindTextures(0, static_cast<GLsizei>(textures.size()), textures.data());
         screenQuad.draw();
         glBindTextures(0, static_cast<GLsizei>(textures.size()), nullptr);
     }
     else
     {
-        const std::array<GLuint, 8> textures{gBuffer.depthTexture,
-                                             gBuffer.colorTexture,
-                                             gBuffer.normalsTexture,
-                                             gBuffer.roughnessMetalnessTexture,
+        const std::array<GLuint, 8> textures{gBuffer.depthTexture.get(),
+                                             gBuffer.colorTexture.get(),
+                                             gBuffer.normalsTexture.get(),
+                                             gBuffer.roughnessMetalnessTexture.get(),
                                              0,
                                              0,
                                              brdfLookupTexture.get(),
@@ -99,26 +94,26 @@ void DeferredRenderer::resizeDerived(unsigned int width, unsigned int height)
 
 void DeferredRenderer::createFrameBuffersAndTextures()
 {
-    utils::recreateTexture2D(lightingTexture, w, h, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::recreateFramebuffer(framebuffer, {lightingTexture});
+    lightingTexture = utils::createTexture2D(w, h, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::recreateFramebuffer(framebuffer, {lightingTexture.get()});
 }
 
 GLuint DeferredRenderer::processAo(const std::shared_ptr<ICamera>& camera)
 {
     if(isAmbientOcclusionEnabled)
     {
-        return ao.process(gBuffer.depthTexture, gBuffer.normalsTexture, camera);
+        return ao.process(gBuffer.depthTexture.get(), gBuffer.normalsTexture.get(), camera);
     }
     return 0;
 }
 
 GLuint DeferredRenderer::getDepthTexture() const
 {
-    return gBuffer.depthTexture;
+    return gBuffer.depthTexture.get();
 }
 
 GLuint DeferredRenderer::getLightingTexture() const
 {
-    return lightingTexture;
+    return lightingTexture.get();
 }
 }  // namespace spark::renderers

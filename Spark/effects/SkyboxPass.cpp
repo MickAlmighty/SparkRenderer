@@ -18,7 +18,6 @@ SkyboxPass::SkyboxPass(unsigned int width, unsigned int height) : w(width), h(he
 SkyboxPass::~SkyboxPass()
 {
     glDeleteFramebuffers(1, &cubemapFramebuffer);
-    glDeleteTextures(1, &cubemapTexture);
 }
 
 std::optional<GLuint> SkyboxPass::process(GLuint depthTexture, GLuint lightingTexture, const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera)
@@ -28,11 +27,11 @@ std::optional<GLuint> SkyboxPass::process(GLuint depthTexture, GLuint lightingTe
         return {};
 
     PUSH_DEBUG_GROUP(RENDER_CUBEMAP);
-    texturePass.process(w, h, lightingTexture, cubemapTexture);
+    texturePass.process(w, h, lightingTexture, cubemapTexture.get());
     utils::bindDepthTexture(cubemapFramebuffer, depthTexture);
     renderSkybox(cubemapFramebuffer, w, h, cubemapPtr, camera->getUbo());
     POP_DEBUG_GROUP()
-    return cubemapTexture;
+    return cubemapTexture.get();
 }
 
 void SkyboxPass::processFramebuffer(const std::weak_ptr<PbrCubemapTexture>& cubemap, GLuint framebuffer, unsigned int fboWidth,
@@ -73,7 +72,7 @@ void SkyboxPass::resize(unsigned int width, unsigned int height)
 
 void SkyboxPass::createFrameBuffersAndTextures()
 {
-    utils::recreateTexture2D(cubemapTexture, w, h, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::recreateFramebuffer(cubemapFramebuffer, {cubemapTexture});
+    cubemapTexture = utils::createTexture2D(w, h, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::recreateFramebuffer(cubemapFramebuffer, {cubemapTexture.get()});
 }
 }  // namespace spark::effects

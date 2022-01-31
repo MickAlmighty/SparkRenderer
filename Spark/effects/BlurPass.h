@@ -4,6 +4,7 @@
 
 #include "glad_glfw3.h"
 #include "ScreenQuad.hpp"
+#include "utils/GlHandle.hpp"
 
 namespace spark::resources
 {
@@ -29,8 +30,8 @@ class BlurPass
 
     private:
     unsigned int w{}, h{};
-    GLuint hTexture{};
-    GLuint vFramebuffer{}, vTexture{};
+    utils::TextureHandle hTexture{}, vTexture{};
+    GLuint vFramebuffer{};
     ScreenQuad screenQuad{};
 
     std::shared_ptr<resources::Shader> gaussianBlurShader{nullptr};

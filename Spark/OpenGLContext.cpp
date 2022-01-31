@@ -40,9 +40,6 @@ bool OpenGLContext::init(bool vsyncEnabled, bool isContextOffscreen)
 
 #ifdef DEBUG
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
-#else
-    glfwWindowHint(GLFW_CONTEXT_NO_ERROR, GL_TRUE);
-    SPARK_INFO("Created context with disabled gl errors checking and reporting.");
 #endif
 
     window = glfwCreateWindow(static_cast<int>(width), static_cast<int>(height), "SparkRenderer", nullptr, nullptr);

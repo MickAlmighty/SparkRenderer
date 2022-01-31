@@ -18,9 +18,6 @@ ClusterBasedForwardPlusRenderer::ClusterBasedForwardPlusRenderer(unsigned int wi
 
 ClusterBasedForwardPlusRenderer::~ClusterBasedForwardPlusRenderer()
 {
-    glDeleteTextures(1, &lightingTexture);
-    glDeleteTextures(1, &normalsTexture);
-    glDeleteTextures(1, &depthTexture);
     glDeleteFramebuffers(1, &lightingFramebuffer);
     glDeleteFramebuffers(1, &depthPrepassFramebuffer);
 }
@@ -65,7 +62,7 @@ GLuint ClusterBasedForwardPlusRenderer::aoPass(const std::shared_ptr<Scene>& sce
 {
     if(isAmbientOcclusionEnabled)
     {
-        return ao.process(depthTexture, normalsTexture, camera);
+        return ao.process(depthTexture.get(), normalsTexture.get(), camera);
     }
     return 0;
 }
@@ -122,7 +119,7 @@ void ClusterBasedForwardPlusRenderer::renderMeshes(const std::shared_ptr<Scene>&
     {
         timer.measure(0, [this, &scene, &camera] { depthPrepass(scene, camera); });
         const GLuint ssaoTexture = aoPass(scene, camera);
-        timer.measure(1, [this, &scene, &camera] { lightCullingPass.process(depthTexture, scene, camera); });
+        timer.measure(1, [this, &scene, &camera] { lightCullingPass.process(depthTexture.get(), scene, camera); });
         timer.measure(2, [this, &scene, &camera, ssaoTexture] { lightingPass(scene, camera, ssaoTexture); });
 
         auto m = timer.getMeasurementsInUs();
@@ -133,7 +130,7 @@ void ClusterBasedForwardPlusRenderer::renderMeshes(const std::shared_ptr<Scene>&
     {
         depthPrepass(scene, camera);
         const GLuint ssaoTexture = aoPass(scene, camera);
-        lightCullingPass.process(depthTexture, scene, camera);
+        lightCullingPass.process(depthTexture.get(), scene, camera);
         lightingPass(scene, camera, ssaoTexture);
     }
 }
@@ -148,23 +145,23 @@ void ClusterBasedForwardPlusRenderer::resizeDerived(unsigned int width, unsigned
 
 GLuint ClusterBasedForwardPlusRenderer::getDepthTexture() const
 {
-    return depthTexture;
+    return depthTexture.get();
 }
 
 GLuint ClusterBasedForwardPlusRenderer::getLightingTexture() const
 {
-    return lightingTexture;
+    return lightingTexture.get();
 }
 
 void ClusterBasedForwardPlusRenderer::createFrameBuffersAndTextures()
 {
-    utils::recreateTexture2D(lightingTexture, w, h, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::recreateTexture2D(normalsTexture, w, h, GL_RG16F, GL_RG, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::recreateTexture2D(depthTexture, w, h, GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    lightingTexture = utils::createTexture2D(w, h, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    normalsTexture = utils::createTexture2D(w, h, GL_RG16F, GL_RG, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    depthTexture = utils::createTexture2D(w, h, GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
 
-    utils::recreateFramebuffer(depthPrepassFramebuffer, {normalsTexture});
-    utils::bindDepthTexture(depthPrepassFramebuffer, depthTexture);
-    utils::recreateFramebuffer(lightingFramebuffer, {lightingTexture});
-    utils::bindDepthTexture(lightingFramebuffer, depthTexture);
+    utils::recreateFramebuffer(depthPrepassFramebuffer, {normalsTexture.get()});
+    utils::bindDepthTexture(depthPrepassFramebuffer, depthTexture.get());
+    utils::recreateFramebuffer(lightingFramebuffer, {lightingTexture.get()});
+    utils::bindDepthTexture(lightingFramebuffer, depthTexture.get());
 }
 }  // namespace spark::renderers

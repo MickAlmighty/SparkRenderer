@@ -37,8 +37,8 @@ class DeferredRenderer : public Renderer
     void processLighting(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera, GLuint aoTexture);
 
     GBuffer gBuffer;
-    GLuint framebuffer{}, lightingTexture{};
-    utils::TextureHandle brdfLookupTexture{};
+    GLuint framebuffer{};
+    utils::TextureHandle brdfLookupTexture{}, lightingTexture{};
     ScreenQuad screenQuad{};
     std::shared_ptr<resources::Shader> lightingShader{nullptr};
     profiling::GpuTimer<2> timer;

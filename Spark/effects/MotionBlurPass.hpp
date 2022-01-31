@@ -4,6 +4,7 @@
 
 #include "ScreenQuad.hpp"
 #include "Shader.h"
+#include "utils/GlHandle.hpp"
 
 namespace spark {
 class ICamera;
@@ -33,7 +34,7 @@ class MotionBlurPass
     unsigned int w{}, h{};
     ScreenQuad screenQuad;
     GLuint framebuffer1{};
-    GLuint texture1{};
+    utils::TextureHandle texture1{};
     std::shared_ptr<resources::Shader> motionBlurShader{nullptr};
 };
 }  // namespace spark::effects

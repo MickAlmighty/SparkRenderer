@@ -52,12 +52,13 @@ void PbrCubemapTexture::setup(GLuint hdrTexture, unsigned cubemapSize)
     glDeleteFramebuffers(1, &captureFBO);
 }
 
-utils::TextureHandle PbrCubemapTexture::createEnvironmentCubemapWithMipmapChain(GLuint framebuffer, GLuint equirectangularTexture, unsigned size, Cube& cube,
-                                                                                const std::shared_ptr<resources::Shader>& equirectangularToCubemapShader)
+utils::TextureHandle PbrCubemapTexture::createEnvironmentCubemapWithMipmapChain(
+    GLuint framebuffer, GLuint equirectangularTexture, unsigned size, Cube& cube,
+    const std::shared_ptr<resources::Shader>& equirectangularToCubemapShader)
 {
     PUSH_DEBUG_GROUP(EQUIRECTANGULAR_TO_CUBEMAP_WITH_MIPS);
 
-    const auto envCubemap = utils::createCubemap(size, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR, true);
+    utils::TextureHandle envCubemap = utils::createCubemap(size, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR, true);
 
     glViewport(0, 0, size, size);
 
@@ -75,11 +76,11 @@ utils::TextureHandle PbrCubemapTexture::createEnvironmentCubemapWithMipmapChain(
 }
 
 utils::TextureHandle PbrCubemapTexture::createIrradianceCubemap(GLuint framebuffer, utils::TextureHandle environmentCubemap, Cube& cube,
-                                                  const std::shared_ptr<resources::Shader>& irradianceShader)
+                                                                const std::shared_ptr<resources::Shader>& irradianceShader)
 {
     PUSH_DEBUG_GROUP(IRRADIANCE_CUBEMAP);
 
-    const auto irradianceMap = utils::createCubemap(32, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::TextureHandle irradianceMap = utils::createCubemap(32, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
 
     glViewport(0, 0, 32, 32);
 
@@ -95,14 +96,14 @@ utils::TextureHandle PbrCubemapTexture::createIrradianceCubemap(GLuint framebuff
 }
 
 utils::TextureHandle PbrCubemapTexture::createPreFilteredCubemap(GLuint framebuffer, utils::TextureHandle environmentCubemap, unsigned envCubemapSize,
-                                                                 Cube& cube,
-                                                   const std::shared_ptr<resources::Shader>& prefilterShader,
-                                                   const std::shared_ptr<resources::Shader>& resampleCubemapShader)
+                                                                 Cube& cube, const std::shared_ptr<resources::Shader>& prefilterShader,
+                                                                 const std::shared_ptr<resources::Shader>& resampleCubemapShader)
 {
     PUSH_DEBUG_GROUP(PREFILTER_CUBEMAP);
 
     constexpr unsigned int prefilteredMapSize = 128;
-    const auto prefilteredMap = utils::createCubemap(prefilteredMapSize, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR, true);
+    utils::TextureHandle prefilteredMap =
+        utils::createCubemap(prefilteredMapSize, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR, true);
 
     {
         resampleCubemapShader->use();
@@ -136,16 +137,16 @@ utils::TextureHandle PbrCubemapTexture::createPreFilteredCubemap(GLuint framebuf
     return prefilteredMap;
 }
 
-GLuint PbrCubemapTexture::createBrdfLookupTexture(GLuint framebuffer, unsigned int envCubemapSize,
-                                                  const std::shared_ptr<resources::Shader>& brdfShader)
+utils::TextureHandle PbrCubemapTexture::createBrdfLookupTexture(GLuint framebuffer, unsigned int envCubemapSize,
+                                                                const std::shared_ptr<resources::Shader>& brdfShader)
 {
     PUSH_DEBUG_GROUP(BRDF_LOOKUP_TABLE);
 
-    GLuint brdfLUTTexture{};
-    utils::createTexture2D(brdfLUTTexture, envCubemapSize, envCubemapSize, GL_RG16F, GL_RG, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::TextureHandle brdfLUTTexture =
+        utils::createTexture2D(envCubemapSize, envCubemapSize, GL_RG16F, GL_RG, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
 
     glViewport(0, 0, envCubemapSize, envCubemapSize);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, brdfLUTTexture, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, brdfLUTTexture.get(), 0);
 
     brdfShader->use();
     const ScreenQuad screenQuad;
@@ -160,8 +161,9 @@ utils::TextureHandle PbrCubemapTexture::createCubemapAndCopyDataFromFirstLayerOf
 {
     PUSH_DEBUG_GROUP(COPY_CUBEMAP_BASE_LAYER);
 
-    const auto dstCubemap = utils::createCubemap(cubemapSize, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    glCopyImageSubData(cubemap.get(), GL_TEXTURE_CUBE_MAP, 0, 0, 0, 0, dstCubemap.get(), GL_TEXTURE_CUBE_MAP, 0, 0, 0, 0, cubemapSize, cubemapSize, 6);
+    utils::TextureHandle dstCubemap = utils::createCubemap(cubemapSize, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    glCopyImageSubData(cubemap.get(), GL_TEXTURE_CUBE_MAP, 0, 0, 0, 0, dstCubemap.get(), GL_TEXTURE_CUBE_MAP, 0, 0, 0, 0, cubemapSize, cubemapSize,
+                       6);
 
     POP_DEBUG_GROUP();
     return dstCubemap;

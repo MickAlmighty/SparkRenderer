@@ -18,16 +18,11 @@ TileBasedDeferredRenderer::TileBasedDeferredRenderer(unsigned int width, unsigne
     createFrameBuffersAndTextures();
 }
 
-TileBasedDeferredRenderer::~TileBasedDeferredRenderer()
-{
-    glDeleteTextures(1, &lightingTexture);
-}
-
 void TileBasedDeferredRenderer::processLighting(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera, GLuint ssaoTexture)
 {
     PUSH_DEBUG_GROUP(TILE_BASED_DEFERRED)
     float clearRgba[] = {0.0f, 0.0f, 0.0f, 0.0f};
-    glClearTexImage(lightingTexture, 0, GL_RGBA, GL_FLOAT, &clearRgba);
+    glClearTexImage(lightingTexture.get(), 0, GL_RGBA, GL_FLOAT, &clearRgba);
 
     lightingShader->use();
     lightingShader->bindUniformBuffer("Camera", camera->getUbo());
@@ -37,7 +32,7 @@ void TileBasedDeferredRenderer::processLighting(const std::shared_ptr<Scene>& sc
     lightingShader->bindSSBO("LightProbeData", scene->lightManager->getLightProbeSSBO());
 
     // depth texture as sampler2D
-    glBindTextureUnit(0, gBuffer.depthTexture);
+    glBindTextureUnit(0, gBuffer.depthTexture.get());
     if(const auto cubemap = scene->getSkyboxCubemap().lock(); cubemap)
     {
         glBindTextureUnit(1, cubemap->irradianceCubemap.get());
@@ -47,12 +42,12 @@ void TileBasedDeferredRenderer::processLighting(const std::shared_ptr<Scene>& sc
     glBindTextureUnit(4, ssaoTexture);
 
     // textures as images
-    glBindImageTexture(0, gBuffer.colorTexture, 0, false, 0, GL_READ_ONLY, GL_RGBA8);
-    glBindImageTexture(1, gBuffer.normalsTexture, 0, false, 0, GL_READ_ONLY, GL_RG16F);
-    glBindImageTexture(2, gBuffer.roughnessMetalnessTexture, 0, false, 0, GL_READ_ONLY, GL_RG8);
+    glBindImageTexture(0, gBuffer.colorTexture.get(), 0, false, 0, GL_READ_ONLY, GL_RGBA8);
+    glBindImageTexture(1, gBuffer.normalsTexture.get(), 0, false, 0, GL_READ_ONLY, GL_RG16F);
+    glBindImageTexture(2, gBuffer.roughnessMetalnessTexture.get(), 0, false, 0, GL_READ_ONLY, GL_RG8);
 
     // output image
-    glBindImageTexture(3, lightingTexture, 0, false, 0, GL_WRITE_ONLY, GL_RGBA16F);
+    glBindImageTexture(3, lightingTexture.get(), 0, false, 0, GL_WRITE_ONLY, GL_RGBA16F);
 
     lightingShader->dispatchCompute(utils::uiCeil(w, 16u), utils::uiCeil(h, 16u), 1);
     glBindTextures(0, 0, nullptr);
@@ -63,7 +58,7 @@ void TileBasedDeferredRenderer::processLighting(const std::shared_ptr<Scene>& sc
 GLuint TileBasedDeferredRenderer::aoPass(const std::shared_ptr<ICamera>& camera)
 {
     if(isAmbientOcclusionEnabled)
-        return ao.process(gBuffer.depthTexture, gBuffer.normalsTexture, camera);
+        return ao.process(gBuffer.depthTexture.get(), gBuffer.normalsTexture.get(), camera);
 
     return 0;
 }
@@ -73,7 +68,7 @@ void TileBasedDeferredRenderer::renderMeshes(const std::shared_ptr<Scene>& scene
     if(isProfilingEnabled)
     {
         timer.measure(0, [this, &scene, &camera] { gBuffer.fill(scene->getRenderingQueues(), camera->getUbo()); });
-        timer.measure(1, [this, &scene, &camera] { lightCullingPass.process(gBuffer.depthTexture, scene, camera); });
+        timer.measure(1, [this, &scene, &camera] { lightCullingPass.process(gBuffer.depthTexture.get(), scene, camera); });
         const GLuint ssaoTexture = aoPass(camera);
         timer.measure(2, [this, &scene, &camera, ssaoTexture] { processLighting(scene, camera, ssaoTexture); });
 
@@ -84,7 +79,7 @@ void TileBasedDeferredRenderer::renderMeshes(const std::shared_ptr<Scene>& scene
     else
     {
         gBuffer.fill(scene->getRenderingQueues(), camera->getUbo());
-        lightCullingPass.process(gBuffer.depthTexture, scene, camera);
+        lightCullingPass.process(gBuffer.depthTexture.get(), scene, camera);
         const GLuint ssaoTexture = aoPass(camera);
         processLighting(scene, camera, ssaoTexture);
     }
@@ -101,16 +96,16 @@ void TileBasedDeferredRenderer::resizeDerived(unsigned int width, unsigned int h
 
 void TileBasedDeferredRenderer::createFrameBuffersAndTextures()
 {
-    utils::recreateTexture2D(lightingTexture, w, h, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    lightingTexture = utils::createTexture2D(w, h, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
 }
 
 GLuint TileBasedDeferredRenderer::getDepthTexture() const
 {
-    return gBuffer.depthTexture;
+    return gBuffer.depthTexture.get();
 }
 
 GLuint TileBasedDeferredRenderer::getLightingTexture() const
 {
-    return lightingTexture;
+    return lightingTexture.get();
 }
 }  // namespace spark::renderers

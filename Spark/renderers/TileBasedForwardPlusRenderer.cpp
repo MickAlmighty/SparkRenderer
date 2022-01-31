@@ -19,9 +19,6 @@ TileBasedForwardPlusRenderer::TileBasedForwardPlusRenderer(unsigned int width, u
 
 TileBasedForwardPlusRenderer::~TileBasedForwardPlusRenderer()
 {
-    glDeleteTextures(1, &lightingTexture);
-    glDeleteTextures(1, &normalsTexture);
-    glDeleteTextures(1, &depthTexture);
     glDeleteFramebuffers(1, &lightingFramebuffer);
     glDeleteFramebuffers(1, &depthPrepassFramebuffer);
 }
@@ -65,7 +62,7 @@ GLuint TileBasedForwardPlusRenderer::aoPass(const std::shared_ptr<Scene>& scene,
 {
     if(isAmbientOcclusionEnabled)
     {
-        return ao.process(depthTexture, normalsTexture, camera);
+        return ao.process(depthTexture.get(), normalsTexture.get(), camera);
     }
     return 0;
 }
@@ -120,7 +117,7 @@ void TileBasedForwardPlusRenderer::renderMeshes(const std::shared_ptr<Scene>& sc
     {
         timer.measure(0, [this, &scene, &camera] { depthPrepass(scene, camera); });
         const GLuint ssaoTexture = aoPass(scene, camera);
-        timer.measure(1, [this, &scene, &camera] { lightCullingPass.process(depthTexture, scene, camera); });
+        timer.measure(1, [this, &scene, &camera] { lightCullingPass.process(depthTexture.get(), scene, camera); });
         timer.measure(2, [this, &scene, &camera, ssaoTexture] { lightingPass(scene, camera, ssaoTexture); });
 
         auto m = timer.getMeasurementsInUs();
@@ -131,7 +128,7 @@ void TileBasedForwardPlusRenderer::renderMeshes(const std::shared_ptr<Scene>& sc
     {
         depthPrepass(scene, camera);
         const GLuint ssaoTexture = aoPass(scene, camera);
-        lightCullingPass.process(depthTexture, scene, camera);
+        lightCullingPass.process(depthTexture.get(), scene, camera);
         lightingPass(scene, camera, ssaoTexture);
     }
 }
@@ -146,23 +143,23 @@ void TileBasedForwardPlusRenderer::resizeDerived(unsigned int width, unsigned in
 
 GLuint TileBasedForwardPlusRenderer::getDepthTexture() const
 {
-    return depthTexture;
+    return depthTexture.get();
 }
 
 GLuint TileBasedForwardPlusRenderer::getLightingTexture() const
 {
-    return lightingTexture;
+    return lightingTexture.get();
 }
 
 void TileBasedForwardPlusRenderer::createFrameBuffersAndTextures()
 {
-    utils::recreateTexture2D(lightingTexture, w, h, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::recreateTexture2D(normalsTexture, w, h, GL_RG16F, GL_RG, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::recreateTexture2D(depthTexture, w, h, GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    lightingTexture = utils::createTexture2D(w, h, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    normalsTexture = utils::createTexture2D(w, h, GL_RG16F, GL_RG, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    depthTexture = utils::createTexture2D(w, h, GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
 
-    utils::recreateFramebuffer(depthPrepassFramebuffer, {normalsTexture});
-    utils::bindDepthTexture(depthPrepassFramebuffer, depthTexture);
-    utils::recreateFramebuffer(lightingFramebuffer, {lightingTexture});
-    utils::bindDepthTexture(lightingFramebuffer, depthTexture);
+    utils::recreateFramebuffer(depthPrepassFramebuffer, {normalsTexture.get()});
+    utils::bindDepthTexture(depthPrepassFramebuffer, depthTexture.get());
+    utils::recreateFramebuffer(lightingFramebuffer, {lightingTexture.get()});
+    utils::bindDepthTexture(lightingFramebuffer, depthTexture.get());
 }
 }  // namespace spark::renderers

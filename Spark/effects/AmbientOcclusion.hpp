@@ -5,6 +5,7 @@
 #include "Buffer.hpp"
 #include "Shader.h"
 #include "ScreenQuad.hpp"
+#include "utils/GlHandle.hpp"
 
 namespace spark
 {
@@ -38,7 +39,8 @@ class AmbientOcclusion
     static std::array<glm::vec3, 16> generateSsaoNoise();
 
     unsigned int w{}, h{};
-    GLuint ssaoFramebuffer{}, ssaoTexture{}, ssaoTexture2{}, randomNormalsTexture{};
+    GLuint ssaoFramebuffer{};
+    utils::TextureHandle ssaoTexture{}, ssaoTexture2{}, randomNormalsTexture{};
     UniformBuffer samplesUbo{};
     ScreenQuad screenQuad{};
     std::shared_ptr<resources::Shader> ssaoShader{nullptr};

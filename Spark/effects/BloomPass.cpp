@@ -16,9 +16,6 @@ BloomPass::BloomPass(unsigned int width, unsigned int height) : w(width), h(heig
 
 BloomPass::~BloomPass()
 {
-    GLuint textures[5] = {textureMip1, textureMip2, textureMip3, textureMip4, textureMip5};
-    glDeleteTextures(5, textures);
-
     GLuint framebuffers[6] = {fboMip1, fboMip2, fboMip3, fboMip4, fboMip5, fboMip0};
     glDeleteFramebuffers(6, framebuffers);
 }
@@ -29,10 +26,10 @@ GLuint BloomPass::process(GLuint lightingTexture, GLuint brightPassTexture)
     downsampleFromMip0ToMip1(brightPassTexture);
 
     PUSH_DEBUG_GROUP(DOWNSAMPLE_FROM_MIP_1_TO_MIP_5)
-    downsampleTexture(fboMip2, textureMip1, w / 4, h / 4);
-    downsampleTexture(fboMip3, textureMip2, w / 8, h / 8);
-    downsampleTexture(fboMip4, textureMip3, w / 16, h / 16);
-    downsampleTexture(fboMip5, textureMip4, w / 32, h / 32);
+    downsampleTexture(fboMip2, textureMip1.get(), w / 4, h / 4);
+    downsampleTexture(fboMip3, textureMip2.get(), w / 8, h / 8);
+    downsampleTexture(fboMip4, textureMip3.get(), w / 16, h / 16);
+    downsampleTexture(fboMip5, textureMip4.get(), w / 32, h / 32);
     POP_DEBUG_GROUP();
 
     PUSH_DEBUG_GROUP(UPSAMPLE)
@@ -40,12 +37,12 @@ GLuint BloomPass::process(GLuint lightingTexture, GLuint brightPassTexture)
     glBlendEquation(GL_FUNC_ADD);
     glEnable(GL_BLEND);
 
-    upsampleTexture(fboMip4, textureMip5, w / 16, h / 16, radiusMip4);
-    upsampleTexture(fboMip3, textureMip4, w / 8, h / 8, radiusMip3);
-    upsampleTexture(fboMip2, textureMip3, w / 4, h / 4, radiusMip2);
-    upsampleTexture(fboMip1, textureMip2, w / 2, h / 2, radiusMip1);
+    upsampleTexture(fboMip4, textureMip5.get(), w / 16, h / 16, radiusMip4);
+    upsampleTexture(fboMip3, textureMip4.get(), w / 8, h / 8, radiusMip3);
+    upsampleTexture(fboMip2, textureMip3.get(), w / 4, h / 4, radiusMip2);
+    upsampleTexture(fboMip1, textureMip2.get(), w / 2, h / 2, radiusMip1);
     utils::bindTexture2D(fboMip0, lightingTexture);
-    upsampleTexture(fboMip0, textureMip1, w, h, radiusMip0, intensity);
+    upsampleTexture(fboMip0, textureMip1.get(), w, h, radiusMip0, intensity);
 
     glDisable(GL_BLEND);
 
@@ -105,17 +102,17 @@ void BloomPass::upsampleTexture(GLuint framebuffer, GLuint texture, GLuint viewp
 
 void BloomPass::createFrameBuffersAndTextures()
 {
-    utils::recreateTexture2D(textureMip1, w / 2, h / 2, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::recreateTexture2D(textureMip2, w / 4, h / 4, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::recreateTexture2D(textureMip3, w / 8, h / 8, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::recreateTexture2D(textureMip4, w / 16, h / 16, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::recreateTexture2D(textureMip5, w / 32, h / 32, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    textureMip1 = utils::createTexture2D(w / 2, h / 2, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    textureMip2 = utils::createTexture2D(w / 4, h / 4, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    textureMip3 = utils::createTexture2D(w / 8, h / 8, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    textureMip4 = utils::createTexture2D(w / 16, h / 16, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    textureMip5 = utils::createTexture2D(w / 32, h / 32, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
 
-    utils::recreateFramebuffer(fboMip1, {textureMip1});
-    utils::recreateFramebuffer(fboMip2, {textureMip2});
-    utils::recreateFramebuffer(fboMip3, {textureMip3});
-    utils::recreateFramebuffer(fboMip4, {textureMip4});
-    utils::recreateFramebuffer(fboMip5, {textureMip5});
+    utils::recreateFramebuffer(fboMip1, {textureMip1.get()});
+    utils::recreateFramebuffer(fboMip2, {textureMip2.get()});
+    utils::recreateFramebuffer(fboMip3, {textureMip3.get()});
+    utils::recreateFramebuffer(fboMip4, {textureMip4.get()});
+    utils::recreateFramebuffer(fboMip5, {textureMip5.get()});
     utils::recreateFramebuffer(fboMip0, {});
 }
 }  // namespace spark::effects

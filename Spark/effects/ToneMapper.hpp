@@ -5,6 +5,7 @@
 #include "Buffer.hpp"
 #include "ScreenQuad.hpp"
 #include "TexturePass.hpp"
+#include "utils/GlHandle.hpp"
 
 namespace spark::resources
 {
@@ -35,7 +36,8 @@ class ToneMapper
     void createFrameBuffersAndTextures();
 
     unsigned int w{}, h{};
-    GLuint toneMappingFramebuffer{}, toneMappingTexture{}, averageLuminanceTexture{}, colorTexture{};
+    utils::TextureHandle toneMappingTexture{}, averageLuminanceTexture{}, colorTexture{};
+    GLuint toneMappingFramebuffer{};
     ScreenQuad screenQuad{};
     SSBO luminanceHistogram{};
     TexturePass texturePass{};

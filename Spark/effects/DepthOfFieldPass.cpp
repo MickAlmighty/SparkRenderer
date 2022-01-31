@@ -65,7 +65,7 @@ GLuint DepthOfFieldPass::process(GLuint lightPassTexture, GLuint depthTexture, c
     glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::vec4) * 1024, 0, GL_DYNAMIC_DRAW);
     */
     POP_DEBUG_GROUP();
-    return blendDofTexture;
+    return blendDofTexture.get();
 }
 
 void DepthOfFieldPass::resize(unsigned int width, unsigned int height)
@@ -78,20 +78,16 @@ void DepthOfFieldPass::resize(unsigned int width, unsigned int height)
 
 void DepthOfFieldPass::createFrameBuffersAndTextures()
 {
-    utils::recreateTexture2D(cocTexture, w, h, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::recreateTexture2D(blendDofTexture, w, h, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    cocTexture = utils::createTexture2D(w, h, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    blendDofTexture = utils::createTexture2D(w, h, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
 
-    utils::recreateFramebuffer(cocFramebuffer, {cocTexture});
-    utils::recreateFramebuffer(blendDofFramebuffer, {blendDofTexture});
+    utils::recreateFramebuffer(cocFramebuffer, {cocTexture.get()});
+    utils::recreateFramebuffer(blendDofFramebuffer, {blendDofTexture.get()});
 }
 
 DepthOfFieldPass::~DepthOfFieldPass()
 {
-    GLuint textures[] = {cocTexture, blendDofTexture};
-    glDeleteTextures(2, textures);
-    cocTexture = blendDofTexture = 0;
-
-    GLuint framebuffers[] = {cocFramebuffer, blendDofFramebuffer};
+    const GLuint framebuffers[] = {cocFramebuffer, blendDofFramebuffer};
     glDeleteFramebuffers(2, framebuffers);
     cocFramebuffer = blendDofFramebuffer = 0;
 
@@ -165,7 +161,7 @@ void DepthOfFieldPass::blendDepthOfField(GLuint lightPassTexture) const
 
     blendShader->use();
 
-    GLuint textures[3] = {cocTexture, lightPassTexture, blurPass.getBlurredTexture()};
+    GLuint textures[3] = {cocTexture.get(), lightPassTexture, blurPass.getBlurredTexture()};
     glBindTextures(0, 3, textures);
     screenQuad.draw();
     glBindTextures(0, 3, nullptr);

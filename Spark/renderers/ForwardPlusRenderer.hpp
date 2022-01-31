@@ -35,9 +35,8 @@ class ForwardPlusRenderer : public Renderer
     void lightingPass(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera, const GLuint ssaoTexture);
     void createFrameBuffersAndTextures();
 
-    GLuint lightingFramebuffer{}, lightingTexture{};
-    GLuint depthPrepassFramebuffer{}, depthTexture{}, normalsTexture{};
-    utils::TextureHandle brdfLookupTexture{};
+    GLuint lightingFramebuffer{}, depthPrepassFramebuffer{};
+    utils::TextureHandle brdfLookupTexture{}, lightingTexture{}, depthTexture{}, normalsTexture{};
     ScreenQuad screenQuad{};
     std::shared_ptr<resources::Shader> depthOnlyShader{nullptr};
     std::shared_ptr<resources::Shader> depthAndNormalsShader{nullptr};

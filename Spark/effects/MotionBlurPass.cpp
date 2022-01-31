@@ -16,7 +16,6 @@ MotionBlurPass::MotionBlurPass(unsigned int width, unsigned int height) : w(widt
 
 MotionBlurPass::~MotionBlurPass()
 {
-    glDeleteTextures(1, &texture1);
     glDeleteFramebuffers(1, &framebuffer1);
 }
 
@@ -74,7 +73,7 @@ std::optional<GLuint> MotionBlurPass::process(const std::shared_ptr<ICamera>& ca
     prevProjectionView = projectionView;
 
     POP_DEBUG_GROUP()
-    return texture1;
+    return texture1.get();
 }
 
 void MotionBlurPass::resize(unsigned int width, unsigned int height)
@@ -86,7 +85,7 @@ void MotionBlurPass::resize(unsigned int width, unsigned int height)
 
 void MotionBlurPass::createFrameBuffersAndTextures()
 {
-    utils::recreateTexture2D(texture1, w, h, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::recreateFramebuffer(framebuffer1, {texture1});
+    texture1 = utils::createTexture2D(w, h, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::recreateFramebuffer(framebuffer1, {texture1.get()});
 }
 }  // namespace spark::effects

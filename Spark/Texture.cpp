@@ -2,18 +2,14 @@
 
 namespace spark::resources
 {
-Texture::Texture(const std::filesystem::path& path_, GLuint id_, int width_, int height_) : Resource(path_), ID(id_), width(width_), height(height_)
+Texture::Texture(const std::filesystem::path& path_, utils::UniqueTextureHandle textureHandle_, int width_, int height_)
+    : Resource(path_), textureHandle(std::move(textureHandle_)), width(width_), height(height_)
 {
-}
-
-Texture::~Texture()
-{
-    glDeleteTextures(1, &ID);
 }
 
 GLuint Texture::getID() const
 {
-    return ID;
+    return textureHandle.get();
 }
 
 }  // namespace spark::resources

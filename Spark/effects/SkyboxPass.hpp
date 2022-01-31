@@ -8,12 +8,13 @@
 #include "glad_glfw3.h"
 #include "ICamera.hpp"
 #include "TexturePass.hpp"
+#include "utils/GlHandle.hpp"
 
 namespace spark
 {
 class Scene;
 class PbrCubemapTexture;
-}
+}  // namespace spark
 
 namespace spark::resources
 {
@@ -32,7 +33,8 @@ class SkyboxPass
     SkyboxPass& operator=(SkyboxPass&&) = delete;
     ~SkyboxPass();
 
-    std::optional<GLuint> process(GLuint depthTexture, GLuint lightingTexture, const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera);
+    std::optional<GLuint> process(GLuint depthTexture, GLuint lightingTexture, const std::shared_ptr<Scene>& scene,
+                                  const std::shared_ptr<ICamera>& camera);
     void processFramebuffer(const std::weak_ptr<PbrCubemapTexture>& cubemap, GLuint framebuffer, unsigned int fboWidth, unsigned int fboHeight,
                             const UniformBuffer& cameraUbo);
     void renderSkybox(GLuint framebuffer, unsigned int fboWidth, unsigned int fboHeight, const std::shared_ptr<PbrCubemapTexture>& cubemapPtr,
@@ -45,7 +47,8 @@ class SkyboxPass
     unsigned int w{}, h{};
 
     Cube cube{};
-    GLuint cubemapFramebuffer{}, cubemapTexture{};
+    GLuint cubemapFramebuffer{};
+    utils::TextureHandle cubemapTexture{};
     TexturePass texturePass;
     std::shared_ptr<resources::Shader> cubemapShader{nullptr};
 };

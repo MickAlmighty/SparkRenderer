@@ -32,12 +32,12 @@ std::shared_ptr<resourceManagement::Resource> ResourceLoader::createHdrTexture(
         return nullptr;
     }
 
-    GLuint hdrTexture{0};
-    utils::createTexture2D(hdrTexture, width, height, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR, false, data);
+    auto hdrTexture = utils::createTexture2D(width, height, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR, false, data);
 
     stbi_image_free(data);
+    stbi_image_free(data);
 
-    return std::make_shared<resources::Texture>(resourceIdentifier->getRelativePath(), hdrTexture, width, height);
+    return std::make_shared<resources::Texture>(resourceIdentifier->getRelativePath(), std::move(hdrTexture), width, height);
 }
 
 std::shared_ptr<resourceManagement::Resource> ResourceLoader::createCompressedTexture(
@@ -141,7 +141,7 @@ std::shared_ptr<resourceManagement::Resource> ResourceLoader::createCompressedTe
         }
     }
 
-    return std::make_shared<resources::Texture>(resourceIdentifier->getRelativePath(), textureID, Extent.x, Extent.y);
+    return std::make_shared<resources::Texture>(resourceIdentifier->getRelativePath(), utils::UniqueTextureHandle(textureID), Extent.x, Extent.y);
 }
 
 std::shared_ptr<resourceManagement::Resource> ResourceLoader::createUncompressedTexture(
@@ -200,7 +200,7 @@ std::shared_ptr<resourceManagement::Resource> ResourceLoader::createUncompressed
 
     stbi_image_free(pixels);
 
-    return std::make_shared<resources::Texture>(resourceIdentifier->getRelativePath(), texId, width, height);
+    return std::make_shared<resources::Texture>(resourceIdentifier->getRelativePath(), utils::UniqueTextureHandle(texId), width, height);
 }
 
 std::shared_ptr<resourceManagement::Resource> ResourceLoader::createModel(

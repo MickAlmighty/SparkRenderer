@@ -6,6 +6,7 @@
 #include "BlurPass.h"
 #include "glad_glfw3.h"
 #include "ScreenQuad.hpp"
+#include "utils/GlHandle.hpp"
 
 namespace spark
 {
@@ -55,8 +56,8 @@ class DepthOfFieldPass
     SSBO bokehPositionBuffer, bokehColorBuffer;
     GLuint bokehPositionTexture{}, bokehColorTexture{};*/
 
-    GLuint cocFramebuffer{}, cocTexture{};
-    GLuint blendDofFramebuffer{}, blendDofTexture{};
+    utils::TextureHandle cocTexture{}, blendDofTexture{};
+    GLuint cocFramebuffer{}, blendDofFramebuffer{};
 
     BlurPass blurPass;
     ScreenQuad screenQuad{};

@@ -20,11 +20,10 @@ class PbrCubemapTexture final
     PbrCubemapTexture(GLuint hdrTexture, unsigned int size = 1024);
 
     static utils::TextureHandle createIrradianceCubemap(GLuint framebuffer, utils::TextureHandle environmentCubemap, Cube& cube,
-                                          const std::shared_ptr<resources::Shader>& irradianceShader);
+                                                        const std::shared_ptr<resources::Shader>& irradianceShader);
     static utils::TextureHandle createPreFilteredCubemap(GLuint framebuffer, utils::TextureHandle environmentCubemap, unsigned int envCubemapSize,
-                                                         Cube& cube,
-                                           const std::shared_ptr<resources::Shader>& prefilterShader,
-                                           const std::shared_ptr<resources::Shader>& resampleCubemapShader);
+                                                         Cube& cube, const std::shared_ptr<resources::Shader>& prefilterShader,
+                                                         const std::shared_ptr<resources::Shader>& resampleCubemapShader);
 
     utils::TextureHandle cubemap{};
     utils::TextureHandle irradianceCubemap{};
@@ -35,7 +34,8 @@ class PbrCubemapTexture final
     static utils::TextureHandle createEnvironmentCubemapWithMipmapChain(GLuint framebuffer, GLuint equirectangularTexture, unsigned int size,
                                                                         Cube& cube,
                                                                         const std::shared_ptr<resources::Shader>& equirectangularToCubemapShader);
-    static GLuint createBrdfLookupTexture(GLuint framebuffer, unsigned int envCubemapSize, const std::shared_ptr<resources::Shader>& brdfShader);
+    static utils::TextureHandle createBrdfLookupTexture(GLuint framebuffer, unsigned int envCubemapSize,
+                                                        const std::shared_ptr<resources::Shader>& brdfShader);
     static utils::TextureHandle createCubemapAndCopyDataFromFirstLayerOf(utils::TextureHandle cubemap, unsigned int cubemapSize);
 };
 }  // namespace spark

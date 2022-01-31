@@ -23,14 +23,11 @@
 
 namespace spark::utils
 {
-void createTexture2D(GLuint& texture, GLuint width, GLuint height, GLenum internalFormat, GLenum format, GLenum pixelFormat, GLenum textureWrapping,
-                     GLenum textureSampling, bool mipMaps = false, void* data = nullptr);
+[[nodiscard]] UniqueTextureHandle createTexture2D(GLuint width, GLuint height, GLenum internalFormat, GLenum format, GLenum pixelFormat,
+                                                  GLenum textureWrapping, GLenum textureSampling, bool mipMaps = false, void* data = nullptr);
 
-void recreateTexture2D(GLuint& texture, GLuint width, GLuint height, GLenum internalFormat, GLenum format, GLenum pixelFormat, GLenum textureWrapping,
-                       GLenum textureSampling, bool mipMaps = false, void* data = nullptr);
-
-TextureHandle createCubemap(unsigned int size, GLenum internalFormat, GLenum format, GLenum pixelFormat, GLenum textureWrapping,
-                            GLenum textureSampling, bool mipMaps = false);
+[[nodiscard]] UniqueTextureHandle createCubemap(unsigned int size, GLenum internalFormat, GLenum format, GLenum pixelFormat, GLenum textureWrapping,
+                                                GLenum textureSampling, bool mipMaps = false);
 
 void bindTexture2D(GLuint framebuffer, GLuint colorTexture, GLuint renderTargetIds = 0, GLuint mipmapLevel = 0);
 void bindTextures2D(GLuint framebuffer, const std::vector<GLuint>& colorTextures, const std::vector<GLuint>& renderTargetIds = {});

@@ -11,9 +11,10 @@
 
 namespace spark::utils
 {
-void createTexture2D(GLuint& texture, GLuint width, GLuint height, GLenum internalFormat, GLenum format, GLenum pixelFormat, GLenum textureWrapping,
-                     GLenum textureSampling, bool mipMaps, void* data)
+UniqueTextureHandle createTexture2D(GLuint width, GLuint height, GLenum internalFormat, GLenum format, GLenum pixelFormat, GLenum textureWrapping,
+                              GLenum textureSampling, bool mipMaps, void* data)
 {
+    GLuint texture{0};
     glCreateTextures(GL_TEXTURE_2D, 1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
 
@@ -46,21 +47,11 @@ void createTexture2D(GLuint& texture, GLuint width, GLuint height, GLenum intern
     glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &maxAnisotropicFiltering);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, maxAnisotropicFiltering);
     glBindTexture(GL_TEXTURE_2D, 0);
+
+    return {texture};
 }
 
-void recreateTexture2D(GLuint& texture, GLuint width, GLuint height, GLenum internalFormat, GLenum format, GLenum pixelFormat, GLenum textureWrapping,
-                       GLenum textureSampling, bool mipMaps, void* data)
-{
-    if(texture != 0)
-    {
-        glDeleteTextures(1, &texture);
-        texture = 0;
-    }
-
-    createTexture2D(texture, width, height, internalFormat, format, pixelFormat, textureWrapping, textureSampling, mipMaps, data);
-}
-
-TextureHandle createCubemap(unsigned int size, GLenum internalFormat, GLenum format, GLenum pixelFormat, GLenum textureWrapping,
+UniqueTextureHandle createCubemap(unsigned int size, GLenum internalFormat, GLenum format, GLenum pixelFormat, GLenum textureWrapping,
                             GLenum textureSampling, bool mipMaps)
 {
     GLuint texture{0};
@@ -183,17 +174,16 @@ TextureHandle createBrdfLookupTexture(unsigned int size)
 {
     PUSH_DEBUG_GROUP(BRDF_LOOKUP_TABLE);
 
-    GLuint brdfLUTTexture{};
-    utils::createTexture2D(brdfLUTTexture, size, size, GL_RG16F, GL_RG, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    auto brdfLUTTexture = utils::createTexture2D(size, size, GL_RG16F, GL_RG, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
 
     const auto brdfComputeShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("brdfCompute.glsl");
     brdfComputeShader->use();
-    glBindImageTexture(0, brdfLUTTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RG16F);
+    glBindImageTexture(0, brdfLUTTexture.get(), 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RG16F);
     brdfComputeShader->dispatchCompute(size / 32, size / 32, 1);
     glUseProgram(0);
     POP_DEBUG_GROUP();
 
-    return {brdfLUTTexture};
+    return brdfLUTTexture;
 }
 
 glm::mat4 getProjectionReversedZInfFar(uint32_t width, uint32_t height, float fovDegrees, float zNear)

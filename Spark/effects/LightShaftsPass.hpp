@@ -7,8 +7,10 @@
 #include "glad_glfw3.h"
 #include "ScreenQuad.hpp"
 #include "lights/DirectionalLight.h"
+#include "utils/GlHandle.hpp"
 
-namespace spark {
+namespace spark
+{
 class ICamera;
 }
 
@@ -48,9 +50,9 @@ class LightShaftsPass
                                                const lights::DirectionalLight* const dirLight);
 
     unsigned int w{}, h{};
-    GLuint radialBlurFramebuffer1{}, radialBlurTexture1{};
-    GLuint radialBlurTexture2{};
-    GLuint blendingFramebuffer{}, blendingOutputTexture{};
+    GLuint radialBlurFramebuffer1{};
+    utils::TextureHandle radialBlurTexture1{}, radialBlurTexture2{}, blendingOutputTexture{};
+    GLuint blendingFramebuffer{};
     ScreenQuad screenQuad{};
     BlurPass blurPass;
     std::shared_ptr<resources::Shader> lightShaftsShader{nullptr};

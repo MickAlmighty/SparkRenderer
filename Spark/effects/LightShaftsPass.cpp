@@ -16,7 +16,7 @@ LightShaftsPass::LightShaftsPass(unsigned int width, unsigned int height) : w(wi
 
 LightShaftsPass::~LightShaftsPass()
 {
-    const GLuint textures[3] = {radialBlurTexture1, radialBlurTexture2, blendingOutputTexture};
+    const GLuint textures[3] = {radialBlurTexture1.get(), radialBlurTexture2.get(), blendingOutputTexture.get()};
     glDeleteTextures(3, textures);
     const GLuint framebuffers[2] = {radialBlurFramebuffer1, blendingFramebuffer};
     glDeleteFramebuffers(2, framebuffers);
@@ -40,7 +40,7 @@ std::optional<GLuint> LightShaftsPass::process(const std::shared_ptr<ICamera>& c
     blendLightShafts(lightingTexture);
 
     POP_DEBUG_GROUP();
-    return blendingOutputTexture;
+    return blendingOutputTexture.get();
 }
 
 void LightShaftsPass::resize(unsigned int width, unsigned int height)
@@ -90,13 +90,13 @@ void LightShaftsPass::renderLightShaftsToTexture(const lights::DirectionalLight*
     glViewport(0, 0, w / 4, h / 4);
 
     glBindFramebuffer(GL_FRAMEBUFFER, radialBlurFramebuffer1);
-    utils::bindTexture2D(radialBlurFramebuffer1, radialBlurTexture1);
+    utils::bindTexture2D(radialBlurFramebuffer1, radialBlurTexture1.get());
     glBindTextureUnit(0, depthTexture);
     glBindTextureUnit(1, lightingTexture);
     screenQuad.draw();
 
-    utils::bindTexture2D(radialBlurFramebuffer1, radialBlurTexture2);
-    glBindTextureUnit(1, radialBlurTexture1);
+    utils::bindTexture2D(radialBlurFramebuffer1, radialBlurTexture2.get());
+    glBindTextureUnit(1, radialBlurTexture1.get());
     screenQuad.draw();
 
     glBindTextureUnit(0, 0);
@@ -105,7 +105,7 @@ void LightShaftsPass::renderLightShaftsToTexture(const lights::DirectionalLight*
 
 void LightShaftsPass::blurLightShafts() const
 {
-    blurPass.blurTexture(radialBlurTexture2);
+    blurPass.blurTexture(radialBlurTexture2.get());
 }
 
 void LightShaftsPass::blendLightShafts(GLuint lightingTexture) const
@@ -130,10 +130,10 @@ void LightShaftsPass::blendLightShafts(GLuint lightingTexture) const
 
 void LightShaftsPass::createFrameBuffersAndTextures()
 {
-    utils::recreateTexture2D(radialBlurTexture1, w / 4, h / 4, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::recreateTexture2D(radialBlurTexture2, w / 4, h / 4, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::recreateTexture2D(blendingOutputTexture, w, h, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    utils::recreateFramebuffer(radialBlurFramebuffer1, {radialBlurTexture1});
-    utils::recreateFramebuffer(blendingFramebuffer, {blendingOutputTexture});
+    radialBlurTexture1 = utils::createTexture2D(w / 4, h / 4, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    radialBlurTexture2 = utils::createTexture2D(w / 4, h / 4, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    blendingOutputTexture = utils::createTexture2D(w, h, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    utils::recreateFramebuffer(radialBlurFramebuffer1, {radialBlurTexture1.get()});
+    utils::recreateFramebuffer(blendingFramebuffer, {blendingOutputTexture.get()});
 }
 }  // namespace spark::effects

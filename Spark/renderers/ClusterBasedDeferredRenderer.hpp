@@ -27,8 +27,8 @@ class ClusterBasedDeferredRenderer : public Renderer
     ClusterBasedDeferredRenderer(ClusterBasedDeferredRenderer&&) = delete;
     ClusterBasedDeferredRenderer& operator=(const ClusterBasedDeferredRenderer&) = delete;
     ClusterBasedDeferredRenderer& operator=(ClusterBasedDeferredRenderer&&) = delete;
-    ~ClusterBasedDeferredRenderer() override;
-    
+    ~ClusterBasedDeferredRenderer() override = default;
+
     protected:
     void renderMeshes(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera) override;
     void resizeDerived(unsigned int width, unsigned int height) override;
@@ -42,7 +42,7 @@ class ClusterBasedDeferredRenderer : public Renderer
     void processLighting(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera, GLuint ssaoTexture);
     GLuint aoPass(const std::shared_ptr<ICamera>& camera);
 
-    GLuint lightingTexture{};
+    utils::TextureHandle lightingTexture{};
     utils::TextureHandle brdfLookupTexture{};
     GBuffer gBuffer;
     ClusterBasedLightCullingPass lightCullingPass;

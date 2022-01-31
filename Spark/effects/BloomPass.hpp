@@ -4,6 +4,7 @@
 
 #include "glad_glfw3.h"
 #include "ScreenQuad.hpp"
+#include "utils/GlHandle.hpp"
 
 namespace spark::resources
 {
@@ -42,12 +43,8 @@ class BloomPass
 
     unsigned int w{}, h{};
     ScreenQuad screenQuad{};
-    GLuint fboMip0{};
-    GLuint fboMip1{}, textureMip1{};
-    GLuint fboMip2{}, textureMip2{};
-    GLuint fboMip3{}, textureMip3{};
-    GLuint fboMip4{}, textureMip4{};
-    GLuint fboMip5{}, textureMip5{};
+    GLuint fboMip0{}, fboMip1{}, fboMip2{}, fboMip3{}, fboMip4{}, fboMip5{};
+    utils::TextureHandle textureMip1{}, textureMip2{}, textureMip3{}, textureMip4{}, textureMip5{};
 
     std::shared_ptr<resources::Shader> bloomDownScaleShaderMip0ToMip1{nullptr};
     std::shared_ptr<resources::Shader> bloomDownScaleShader{nullptr};
