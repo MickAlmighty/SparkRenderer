@@ -7,30 +7,35 @@
 
 namespace spark::resourceManagement
 {
-std::map<std::string, std::function<std::shared_ptr<Resource>(const std::shared_ptr<ResourceIdentifier>& ri)>>
+
+using path = std::filesystem::path;
+
+std::map<std::string, std::function<std::shared_ptr<Resource>(const path& resourcesRootPath, const path& resourceRelativePath)>>
     ResourceFactory::resourceCreationFunctions{
         // TODO: replace with a reflection-based list
-        {".anim", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createAnimation(ri); }},
-        {".obj", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createModel(ri); }},
-        {".fbx", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createModel(ri); }},
-        {".gltf", [](const std::shared_ptr<ResourceIdentifier>& ri) { return GltfLoader().createModel(ri); }},
-        {".dds", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createCompressedTexture(ri); }},
-        {".ktx", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createCompressedTexture(ri); }},
-        {".png", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createUncompressedTexture(ri); }},
-        {".jpg", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createUncompressedTexture(ri); }},
-        {".tga", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createUncompressedTexture(ri); }},
-        {".hdr", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createHdrTexture(ri); }},
-        {".glsl", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createShader(ri); }},
-        {".scene", [](const std::shared_ptr<ResourceIdentifier>& ri) { return ResourceLoader::createScene(ri); }},
+        {".anim",
+         [](const path& resourcesRootPath, const path& relativePath) { return ResourceLoader::createAnimation(resourcesRootPath, relativePath); }},
+        {".obj", [](const path& resourcesRootPath, const path& relativePath) { return ResourceLoader::createModel(resourcesRootPath, relativePath); }},
+        {".fbx", [](const path& resourcesRootPath, const path& relativePath) { return ResourceLoader::createModel(resourcesRootPath, relativePath); }},
+        {".gltf", [](const path& resourcesRootPath, const path& relativePath) { return GltfLoader().createModel(resourcesRootPath, relativePath); }},
+        {".dds", [](const path& resourcesRootPath, const path& relativePath) { return ResourceLoader::createCompressedTexture(resourcesRootPath, relativePath); }},
+        {".ktx", [](const path& resourcesRootPath, const path& relativePath) { return ResourceLoader::createCompressedTexture(resourcesRootPath, relativePath); }},
+        {".png", [](const path& resourcesRootPath, const path& relativePath) { return ResourceLoader::createUncompressedTexture(resourcesRootPath, relativePath); }},
+        {".jpg", [](const path& resourcesRootPath, const path& relativePath) { return ResourceLoader::createUncompressedTexture(resourcesRootPath, relativePath); }},
+        {".tga", [](const path& resourcesRootPath, const path& relativePath) { return ResourceLoader::createUncompressedTexture(resourcesRootPath, relativePath); }},
+        {".hdr", [](const path& resourcesRootPath, const path& relativePath) { return ResourceLoader::createHdrTexture(resourcesRootPath, relativePath); }},
+        {".glsl", [](const path& resourcesRootPath, const path& relativePath) { return ResourceLoader::createShader(resourcesRootPath, relativePath); }},
+        {".scene", [](const path& resourcesRootPath, const path& relativePath) { return ResourceLoader::createScene(resourcesRootPath, relativePath); }},
     };
 
-std::shared_ptr<Resource> ResourceFactory::loadResource(const std::shared_ptr<ResourceIdentifier>& resourceIdentifier)
+std::shared_ptr<Resource> ResourceFactory::loadResource(const std::filesystem::path& resourcesRootPath,
+                                                        const std::filesystem::path& resourceRelativePath)
 {
-    const auto it = resourceCreationFunctions.find(extensionToLowerCase(resourceIdentifier->getRelativePath().string()));
+    const auto it = resourceCreationFunctions.find(extensionToLowerCase(resourceRelativePath.string()));
     if(it != resourceCreationFunctions.end())
     {
         const auto [extension, resourceCreationFunction] = *it;
-        return resourceCreationFunction(resourceIdentifier);
+        return resourceCreationFunction(resourcesRootPath, resourceRelativePath);
     }
 
     return nullptr;

@@ -10,9 +10,9 @@ namespace spark::renderers
 TileBasedForwardPlusRenderer::TileBasedForwardPlusRenderer(unsigned int width, unsigned int height)
     : Renderer(width, height), brdfLookupTexture(utils::createBrdfLookupTexture(1024)), lightCullingPass(width, height)
 {
-    depthOnlyShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("depthOnly.glsl");
-    depthAndNormalsShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("depthAndNormals.glsl");
-    lightingShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("tileBasedForwardPlusPbrLighting.glsl");
+    depthOnlyShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/depthOnly.glsl");
+    depthAndNormalsShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/depthAndNormals.glsl");
+    lightingShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/tileBasedForwardPlusPbrLighting.glsl");
 
     createFrameBuffersAndTextures();
 }

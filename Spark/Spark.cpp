@@ -13,12 +13,7 @@
 #include "Logging.h"
 #include "OpenGLContext.hpp"
 #include "SparkConfig.hpp"
-#include "renderers/ClusterBasedDeferredRenderer.hpp"
-#include "renderers/ClusterBasedForwardPlusRenderer.hpp"
-#include "renderers/DeferredRenderer.hpp"
-#include "renderers/ForwardPlusRenderer.hpp"
-#include "renderers/TileBasedDeferredRenderer.hpp"
-#include "renderers/TileBasedForwardPlusRenderer.hpp"
+#include "renderers/RendererFactory.hpp"
 
 namespace spark
 {
@@ -49,13 +44,15 @@ void Spark::drawGui()
             using RendererType = renderers::RendererType;
             const unsigned int width = renderingContext->width, height = renderingContext->height;
 
-            constexpr std::array<const std::pair<const char*, const RendererType>, 6> radioButtonsData{
+            constexpr std::array<const std::pair<const char*, const RendererType>, 8> radioButtonsData{
                 std::make_pair("Deferred", RendererType::DEFERRED),
                 std::make_pair("Forward Plus", RendererType::FORWARD_PLUS),
                 std::make_pair("Tile Based Deferred", RendererType::TILE_BASED_DEFERRED),
                 std::make_pair("Tile Based Forward Plus", RendererType::TILE_BASED_FORWARD_PLUS),
                 std::make_pair("Cluster Based Deferred", RendererType::CLUSTER_BASED_DEFERRED),
-                std::make_pair("Cluster Based Forward Plus", RendererType::CLUSTER_BASED_FORWARD_PLUS)};
+                std::make_pair("Cluster Based Forward Plus", RendererType::CLUSTER_BASED_FORWARD_PLUS),
+                std::make_pair("Enhanced Cluster Based Deferred", RendererType::ENHANCED_CLUSTER_BASED_DEFERRED),
+                std::make_pair("Enhanced Cluster Based Forward Plus", RendererType::ENHANCED_CLUSTER_BASED_FORWARD_PLUS)};
 
             for(const auto& [radioButtonName, type] : radioButtonsData)
             {
@@ -120,8 +117,8 @@ void Spark::runLoop()
     {
         Clock::tick();
         glfwPollEvents();
-
         processKeys();
+        resourceLibrary->cleanResourceRegistry();
 
         sceneManager->update();
         if(isEditorEnabled)
@@ -212,7 +209,6 @@ renderers::Renderer& Spark::getRenderer() const
 
 void Spark::selectRenderer(renderers::RendererType type, unsigned int width, unsigned int height)
 {
-    using namespace renderers;
     if(renderer)
     {
         if(type == rendererType && width == renderer->getWidth() && height == renderer->getHeight())
@@ -221,33 +217,8 @@ void Spark::selectRenderer(renderers::RendererType type, unsigned int width, uns
         }
     }
 
-    switch(type)
-    {
-        case RendererType::FORWARD_PLUS:
-            rendererType = RendererType::FORWARD_PLUS;
-            renderer = std::make_unique<ForwardPlusRenderer>(width, height);
-            break;
-        case RendererType::TILE_BASED_FORWARD_PLUS:
-            rendererType = RendererType::TILE_BASED_FORWARD_PLUS;
-            renderer = std::make_unique<TileBasedForwardPlusRenderer>(width, height);
-            break;
-        case RendererType::CLUSTER_BASED_FORWARD_PLUS:
-            rendererType = RendererType::CLUSTER_BASED_FORWARD_PLUS;
-            renderer = std::make_unique<ClusterBasedForwardPlusRenderer>(width, height);
-            break;
-        case RendererType::DEFERRED:
-            rendererType = RendererType::DEFERRED;
-            renderer = std::make_unique<DeferredRenderer>(width, height);
-            break;
-        case RendererType::TILE_BASED_DEFERRED:
-            rendererType = RendererType::TILE_BASED_DEFERRED;
-            renderer = std::make_unique<TileBasedDeferredRenderer>(width, height);
-            break;
-        case RendererType::CLUSTER_BASED_DEFERRED:
-            rendererType = RendererType::CLUSTER_BASED_DEFERRED;
-            renderer = std::make_unique<ClusterBasedDeferredRenderer>(width, height);
-            break;
-    }
+    rendererType = type;
+    renderer = renderers::RendererFactory::createRenderer(type, width, height);
 }
 
 renderers::RendererType Spark::getRendererType() const

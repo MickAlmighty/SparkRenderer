@@ -21,12 +21,13 @@ struct alignas(16) ClusterBasedAlgorithmData
 
 namespace spark::renderers
 {
-ClusterBasedLightCullingPass::ClusterBasedLightCullingPass(unsigned int width, unsigned int height) : w(width), h(height)
+ClusterBasedLightCullingPass::ClusterBasedLightCullingPass(unsigned int width, unsigned int height,
+                                                           const std::shared_ptr<resources::Shader>& activeClustersDeterminationShader,
+                                                           const std::shared_ptr<resources::Shader>& lightCullingShader)
+    : w(width), h(height), determineActiveClustersShader(activeClustersDeterminationShader), clusterBasedLightCullingShader(lightCullingShader)
 {
-    clusterCreationShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("clusterCreation.glsl");
-    determineActiveClustersShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("determineActiveCluster.glsl");
-    buildCompactClusterListShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("buildCompactClusterList.glsl");
-    clusterBasedLightCullingShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("clusterBasedLightCulling.glsl");
+    clusterCreationShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/clusterCreation.glsl");
+    buildCompactClusterListShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/buildCompactClusterList.glsl");
 
     clusters.resizeBuffer(dispatchSize.x * dispatchSize.y * dispatchSize.z * sizeof(glm::vec4) * 2);
     activeClusters.resizeBuffer(dispatchSize.x * dispatchSize.y * dispatchSize.z * sizeof(GLuint));
@@ -74,7 +75,7 @@ void ClusterBasedLightCullingPass::createClusters(const std::shared_ptr<Scene>& 
         data.equation3Part1 = equation3Part1;
         data.equation3Part2 = equation3Part2;
         data.maxLightCount = maxLightCount;
-        
+
         algorithmData.updateData(std::array{data});
 
         clusterCreationShader->use();
@@ -89,7 +90,8 @@ void ClusterBasedLightCullingPass::createClusters(const std::shared_ptr<Scene>& 
     }
 }
 
-void ClusterBasedLightCullingPass::determineActiveClusters(GLuint depthTexture, const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera)
+void ClusterBasedLightCullingPass::determineActiveClusters(GLuint depthTexture, const std::shared_ptr<Scene>& scene,
+                                                           const std::shared_ptr<ICamera>& camera)
 {
     determineActiveClustersShader->use();
     determineActiveClustersShader->bindUniformBuffer("Camera", camera->getUbo());

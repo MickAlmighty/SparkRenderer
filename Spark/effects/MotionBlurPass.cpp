@@ -10,7 +10,7 @@ namespace spark::effects
 {
 MotionBlurPass::MotionBlurPass(unsigned int width, unsigned int height) : w(width), h(height)
 {
-    motionBlurShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("motionBlur.glsl");
+    motionBlurShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/motionBlur.glsl");
     createFrameBuffersAndTextures();
 }
 

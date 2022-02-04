@@ -10,9 +10,9 @@ namespace spark::effects
 {
 ToneMapper::ToneMapper(unsigned int width, unsigned int height): w(width), h(height)
 {
-    toneMappingShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("toneMapping.glsl");
-    luminanceHistogramComputeShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("luminanceHistogramCompute.glsl");
-    averageLuminanceComputeShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("averageLuminanceCompute.glsl");
+    toneMappingShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/toneMapping.glsl");
+    luminanceHistogramComputeShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/luminanceHistogramCompute.glsl");
+    averageLuminanceComputeShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/averageLuminanceCompute.glsl");
 
     luminanceHistogram.resizeBuffer(256 * sizeof(uint32_t));
     averageLuminanceTexture = utils::createTexture2D(1, 1, GL_R16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);

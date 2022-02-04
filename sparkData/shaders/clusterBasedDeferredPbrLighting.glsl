@@ -264,8 +264,8 @@ void main()
     vec4 color = vec4(min(L0 + ambient, vec3(65000)), 1) * (1.0f - ssao);
 
     //barrier();
-    imageStore(lightOutput, texCoords, vec4(lightIndicesBufferMetadata[clusterIndex].pointLightCount, color.yzw));
-    //imageStore(lightOutput, texCoords, color);
+    //imageStore(lightOutput, texCoords, vec4(lightIndicesBufferMetadata[clusterIndex].pointLightCount, color.yzw));
+    imageStore(lightOutput, texCoords, color);
 }
 
 vec3 worldPosFromDepth(float depth, vec2 texCoords) {

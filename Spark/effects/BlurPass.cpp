@@ -46,7 +46,7 @@ void BlurPass::resize(unsigned int width, unsigned int height)
 
 BlurPass::BlurPass(unsigned int width_, unsigned int height_) : w(width_), h(height_)
 {
-    gaussianBlurShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("gaussianBlur.glsl");
+    gaussianBlurShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/gaussianBlur.glsl");
     createGlObjects();
 }
 

@@ -8,9 +8,9 @@ namespace spark::effects
 {
 BloomPass::BloomPass(unsigned int width, unsigned int height) : w(width), h(height)
 {
-    bloomDownScaleShaderMip0ToMip1 = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("bloomDownScaleMip0ToMip1.glsl");
-    bloomDownScaleShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("bloomDownScale.glsl");
-    bloomUpsamplerShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("bloomUpsampler.glsl");
+    bloomDownScaleShaderMip0ToMip1 = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/bloomDownScaleMip0ToMip1.glsl");
+    bloomDownScaleShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/bloomDownScale.glsl");
+    bloomUpsamplerShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/bloomUpsampler.glsl");
     createFrameBuffersAndTextures();
 }
 

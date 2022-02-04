@@ -176,7 +176,7 @@ TextureHandle createBrdfLookupTexture(unsigned int size)
 
     auto brdfLUTTexture = utils::createTexture2D(size, size, GL_RG16F, GL_RG, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
 
-    const auto brdfComputeShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("brdfCompute.glsl");
+    const auto brdfComputeShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/brdfCompute.glsl");
     brdfComputeShader->use();
     glBindImageTexture(0, brdfLUTTexture.get(), 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RG16F);
     brdfComputeShader->dispatchCompute(size / 32, size / 32, 1);

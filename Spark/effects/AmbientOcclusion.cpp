@@ -19,9 +19,9 @@ AmbientOcclusion::AmbientOcclusion(unsigned int width, unsigned int height) : w(
     auto ssaoNoise = generateSsaoNoise();
     randomNormalsTexture = utils::createTexture2D(4, 4, GL_RGB32F, GL_RGB, GL_FLOAT, GL_REPEAT, GL_NEAREST, false, ssaoNoise.data());
 
-    ssaoShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("ssao.glsl");
-    ssaoBlurShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("ssaoBlur.glsl");
-    colorInversionShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("colorInversion.glsl");
+    ssaoShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/ssao.glsl");
+    ssaoBlurShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/ssaoBlur.glsl");
+    colorInversionShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/colorInversion.glsl");
     ssaoShader->bindUniformBuffer("Samples", samplesUbo);
     createFrameBuffersAndTextures();
 }

@@ -18,7 +18,6 @@ class RendererBenchmark : public Component
     void generateGameObjectsWithLights();
     void releaseLights() const;
 
-
     bool benchmarkStarted{false};
     int numberOfLights{0};
     std::weak_ptr<GameObject> lightContainer;
@@ -31,7 +30,9 @@ class RendererBenchmark : public Component
         std::make_pair(renderers::RendererType::TILE_BASED_DEFERRED, "Tile Based Deferred"),
         std::make_pair(renderers::RendererType::TILE_BASED_FORWARD_PLUS, "Tile Based Forward Plus"),
         std::make_pair(renderers::RendererType::CLUSTER_BASED_DEFERRED, "Cluster Based Deferred"),
-        std::make_pair(renderers::RendererType::CLUSTER_BASED_FORWARD_PLUS, "Cluster Based Forward Plus")};
+        std::make_pair(renderers::RendererType::CLUSTER_BASED_FORWARD_PLUS, "Cluster Based Forward Plus"),
+        std::make_pair(renderers::RendererType::ENHANCED_CLUSTER_BASED_DEFERRED, "Enhanced Cluster Based Deferred"),
+        std::make_pair(renderers::RendererType::ENHANCED_CLUSTER_BASED_FORWARD_PLUS, "Enhanced Cluster Based Forward Plus")};
 
     RTTR_ENABLE(Component)
 };

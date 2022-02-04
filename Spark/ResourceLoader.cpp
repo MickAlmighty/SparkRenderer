@@ -20,15 +20,16 @@ namespace spark
 {
 using Path = std::filesystem::path;
 
-std::shared_ptr<resourceManagement::Resource> ResourceLoader::createHdrTexture(
-    const std::shared_ptr<resourceManagement::ResourceIdentifier>& resourceIdentifier)
+std::shared_ptr<resourceManagement::Resource> ResourceLoader::createHdrTexture(const std::filesystem::path& resourcesRootPath,
+                                                                               const std::filesystem::path& resourceRelativePath)
 {
+    const auto path = (resourcesRootPath / resourceRelativePath).string();
     int width, height, nrComponents;
-    float* data = stbi_loadf(resourceIdentifier->getFullPath().string().c_str(), &width, &height, &nrComponents, 0);
+    float* data = stbi_loadf(path.c_str(), &width, &height, &nrComponents, 0);
 
     if(!data)
     {
-        SPARK_ERROR("Failed to load HDR image '{}'.", resourceIdentifier->getFullPath().string());
+        SPARK_ERROR("Failed to load HDR image '{}'.", path);
         return nullptr;
     }
 
@@ -37,13 +38,14 @@ std::shared_ptr<resourceManagement::Resource> ResourceLoader::createHdrTexture(
     stbi_image_free(data);
     stbi_image_free(data);
 
-    return std::make_shared<resources::Texture>(resourceIdentifier->getRelativePath(), std::move(hdrTexture), width, height);
+    return std::make_shared<resources::Texture>(resourceRelativePath, std::move(hdrTexture), width, height);
 }
 
-std::shared_ptr<resourceManagement::Resource> ResourceLoader::createCompressedTexture(
-    const std::shared_ptr<resourceManagement::ResourceIdentifier>& resourceIdentifier)
+std::shared_ptr<resourceManagement::Resource> ResourceLoader::createCompressedTexture(const std::filesystem::path& resourcesRootPath,
+                                                                                      const std::filesystem::path& resourceRelativePath)
 {
-    const auto gliTexture = gli::load(resourceIdentifier->getFullPath().string());
+    const auto path = (resourcesRootPath / resourceRelativePath).string();
+    const auto gliTexture = gli::load(path);
 
     gli::gl GL(gli::gl::PROFILE_GL33);
     gli::gl::format const Format = GL.translate(gliTexture.format(), gliTexture.swizzles());
@@ -141,18 +143,19 @@ std::shared_ptr<resourceManagement::Resource> ResourceLoader::createCompressedTe
         }
     }
 
-    return std::make_shared<resources::Texture>(resourceIdentifier->getRelativePath(), utils::UniqueTextureHandle(textureID), Extent.x, Extent.y);
+    return std::make_shared<resources::Texture>(resourceRelativePath, utils::UniqueTextureHandle(textureID), Extent.x, Extent.y);
 }
 
-std::shared_ptr<resourceManagement::Resource> ResourceLoader::createUncompressedTexture(
-    const std::shared_ptr<resourceManagement::ResourceIdentifier>& resourceIdentifier)
+std::shared_ptr<resourceManagement::Resource> ResourceLoader::createUncompressedTexture(const std::filesystem::path& resourcesRootPath,
+                                                                                        const std::filesystem::path& resourceRelativePath)
 {
+    const auto path = (resourcesRootPath / resourceRelativePath).string();
     int width{0}, height{0}, channels{0};
-    unsigned char* pixels = stbi_load(resourceIdentifier->getFullPath().string().c_str(), &width, &height, &channels, 0);
+    unsigned char* pixels = stbi_load(path.c_str(), &width, &height, &channels, 0);
 
     if(pixels == nullptr)
     {
-        SPARK_ERROR("Texture from path: " + resourceIdentifier->getFullPath().string() + " cannot be loaded!");
+        SPARK_ERROR("Texture from path: " + path + " cannot be loaded!");
         return nullptr;
     }
 
@@ -200,16 +203,17 @@ std::shared_ptr<resourceManagement::Resource> ResourceLoader::createUncompressed
 
     stbi_image_free(pixels);
 
-    return std::make_shared<resources::Texture>(resourceIdentifier->getRelativePath(), utils::UniqueTextureHandle(texId), width, height);
+    return std::make_shared<resources::Texture>(resourceRelativePath, utils::UniqueTextureHandle(texId), width, height);
 }
 
-std::shared_ptr<resourceManagement::Resource> ResourceLoader::createModel(
-    const std::shared_ptr<resourceManagement::ResourceIdentifier>& resourceIdentifier)
+std::shared_ptr<resourceManagement::Resource> ResourceLoader::createModel(const std::filesystem::path& resourcesRootPath,
+                                                                          const std::filesystem::path& resourceRelativePath)
 {
     Assimp::Importer importer;
     const aiScene* scene = nullptr;
 
-    scene = importer.ReadFile(resourceIdentifier->getFullPath().string(), aiProcess_Triangulate | aiProcess_CalcTangentSpace);
+    const auto resourcePath = (resourcesRootPath / resourceRelativePath).string();
+    scene = importer.ReadFile(resourcePath, aiProcess_Triangulate | aiProcess_CalcTangentSpace);
 
     if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
     {
@@ -264,16 +268,17 @@ std::shared_ptr<resourceManagement::Resource> ResourceLoader::createModel(
     std::vector<std::shared_ptr<Mesh>> meshes;
     for(unsigned int i = 0; i < scene->mNumMeshes; i++)
     {
-        meshes.push_back(loadMesh(scene->mMeshes[i], materials, resourceIdentifier->getFullPath()));
+        meshes.push_back(loadMesh(scene->mMeshes[i], materials, resourcePath));
     }
 
-    return std::make_shared<resources::Model>(resourceIdentifier->getRelativePath(), meshes);
+    return std::make_shared<resources::Model>(resourceRelativePath, meshes);
 }
 
-std::shared_ptr<resourceManagement::Resource> ResourceLoader::createShader(
-    const std::shared_ptr<resourceManagement::ResourceIdentifier>& resourceIdentifier)
+std::shared_ptr<resourceManagement::Resource> ResourceLoader::createShader(const std::filesystem::path& resourcesRootPath,
+                                                                           const std::filesystem::path& resourceRelativePath)
 {
-    return std::make_shared<resources::Shader>(resourceIdentifier->getFullPath());
+    const auto path = resourcesRootPath / resourceRelativePath;
+    return std::make_shared<resources::Shader>(path);
 }
 
 std::map<TextureTarget, std::shared_ptr<resources::Texture>> findTextures(const std::filesystem::path& modelDirectory)
@@ -407,24 +412,26 @@ std::shared_ptr<Mesh> ResourceLoader::loadMesh(aiMesh* assimpMesh, std::vector<s
     return std::make_shared<Mesh>(attributes, indices, textures);
 }
 
-std::shared_ptr<resourceManagement::Resource> ResourceLoader::createScene(
-    const std::shared_ptr<resourceManagement::ResourceIdentifier>& resourceIdentifier)
+std::shared_ptr<resourceManagement::Resource> ResourceLoader::createScene(const std::filesystem::path& resourcesRootPath,
+                                                                          const std::filesystem::path& resourceRelativePath)
 {
-    if(auto scene = JsonSerializer().loadSceneFromFile(resourceIdentifier->getFullPath()); scene)
+    const auto path = resourcesRootPath / resourceRelativePath;
+    if(auto scene = JsonSerializer().loadSceneFromFile(path); scene)
     {
-        scene->setPath(resourceIdentifier->getRelativePath());
+        scene->setPath(resourceRelativePath);
         return scene;
     }
 
     return nullptr;
 }
 
-std::shared_ptr<resourceManagement::Resource> ResourceLoader::createAnimation(
-    const std::shared_ptr<resourceManagement::ResourceIdentifier>& resourceIdentifier)
+std::shared_ptr<resourceManagement::Resource> ResourceLoader::createAnimation(const std::filesystem::path& resourcesRootPath,
+                                                                              const std::filesystem::path& resourceRelativePath)
 {
-    if(const auto animation = JsonSerializer().loadShared<resources::AnimationData>(resourceIdentifier->getFullPath()); animation)
+    const auto path = resourcesRootPath / resourceRelativePath;
+    if(const auto animation = JsonSerializer().loadShared<resources::AnimationData>(path); animation)
     {
-        animation->setPath(resourceIdentifier->getRelativePath());
+        animation->setPath(resourceRelativePath);
         return animation;
     }
 

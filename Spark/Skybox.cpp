@@ -16,7 +16,7 @@ void Skybox::update() {}
 
 void Skybox::createPbrCubemap(const std::shared_ptr<resources::Texture>& texture)
 {
-    skyboxName = texture->getPath().filename().string();
+    skyboxPath = texture->getPath().string();
     pbrCubemapTexture = std::make_shared<PbrCubemapTexture>(texture->getID());
 
     if(isSkyboxActive())
@@ -29,7 +29,7 @@ void Skybox::drawUIBody()
 {
     ImGui::Text("Texture: ");
     ImGui::SameLine();
-    ImGui::Text(skyboxName.c_str());
+    ImGui::Text(skyboxPath.c_str());
     bool active = isSkyboxActive();
     ImGui::Checkbox("IsSkyboxActive", &active);
     if(active != isSkyboxActive())
@@ -105,15 +105,15 @@ void Skybox::onInactive()
     }
 }
 
-std::string Skybox::getSkyboxName() const
+std::string Skybox::getSkyboxPath() const
 {
-    return skyboxName;
+    return skyboxPath;
 }
 
-void Skybox::loadSkyboxByName(std::string name)
+void Skybox::loadSkybox(std::string relativePath)
 {
-    skyboxName = std::move(name);
-    const auto texture = Spark::get().getResourceLibrary().getResourceByName<resources::Texture>(skyboxName);
+    skyboxPath = std::move(relativePath);
+    const auto texture = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Texture>(skyboxPath);
     createPbrCubemap(texture);
 }
 }  // namespace spark
@@ -122,6 +122,6 @@ RTTR_REGISTRATION
 {
     rttr::registration::class_<spark::Skybox>("Skybox")
         .constructor()(rttr::policy::ctor::as_std_shared_ptr)
-        .property("skyboxName", &spark::Skybox::getSkyboxName, &spark::Skybox::loadSkyboxByName)
+        .property("skyboxPath", &spark::Skybox::getSkyboxPath, &spark::Skybox::loadSkybox)
         .property("activeSkybox", &spark::Skybox::isSkyboxActive, &spark::Skybox::setActiveSkybox);
 }

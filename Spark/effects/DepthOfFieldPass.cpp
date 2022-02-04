@@ -10,8 +10,8 @@ namespace spark::effects
 DepthOfFieldPass::DepthOfFieldPass(unsigned int width, unsigned int height)
     : w(width), h(height), blurPass(w / 2, h / 2)
 {
-    cocShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("circleOfConfusion.glsl");
-    blendShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("blendDof.glsl");
+    cocShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/circleOfConfusion.glsl");
+    blendShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/blendDof.glsl");
 
     createFrameBuffersAndTextures();
     // glGenBuffers(1, &indirectBufferID);
@@ -133,7 +133,7 @@ void DepthOfFieldPass::blurLightPassTexture(GLuint lightPassTexture) const
 
 void DepthOfFieldPass::detectBokehPositions(GLuint lightPassTexture) const
 {
-    // const auto bokehDetectionShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("bokehDetection.glsl");
+    // const auto bokehDetectionShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/bokehDetection.glsl");
     // bokehDetectionShader->use();
     // GLuint textures[2] = {lightPassTexture, circleOfConfusionTexture};
     // glBindTextures(3, 2, textures);

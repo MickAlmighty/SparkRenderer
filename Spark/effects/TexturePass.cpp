@@ -9,7 +9,7 @@ namespace spark::effects
 TexturePass::TexturePass()
 {
     utils::createFramebuffer(framebuffer);
-    texturePassThrough = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("texturePassThrough.glsl");
+    texturePassThrough = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/texturePassThrough.glsl");
 }
 
 TexturePass::~TexturePass()

@@ -14,8 +14,8 @@ class Skybox : public Component
     void update() override;
     void drawUIBody() override;
 
-    std::string getSkyboxName() const;
-    void loadSkyboxByName(std::string name);
+    std::string getSkyboxPath() const;
+    void loadSkybox(std::string relativePath);
 
     void setActiveSkybox(bool isActive);
     bool isSkyboxActive() const;
@@ -34,7 +34,7 @@ class Skybox : public Component
 
     inline static Skybox* activeSkyboxPtr{nullptr};
 
-    std::string skyboxName{};
+    std::string skyboxPath{};
     std::shared_ptr<PbrCubemapTexture> pbrCubemapTexture{nullptr};
 
     RTTR_REGISTRATION_FRIEND

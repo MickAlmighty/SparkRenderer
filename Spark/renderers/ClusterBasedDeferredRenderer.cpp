@@ -8,10 +8,13 @@
 
 namespace spark::renderers
 {
-ClusterBasedDeferredRenderer::ClusterBasedDeferredRenderer(unsigned int width, unsigned int height)
-    : Renderer(width, height), brdfLookupTexture(utils::createBrdfLookupTexture(1024)), gBuffer(width, height), lightCullingPass(width, height)
+ClusterBasedDeferredRenderer::ClusterBasedDeferredRenderer(unsigned int width, unsigned int height,
+                                                           const std::shared_ptr<resources::Shader>& activeClustersDeterminationShader,
+                                                           const std::shared_ptr<resources::Shader>& lightCullingShader)
+    : Renderer(width, height), brdfLookupTexture(utils::createBrdfLookupTexture(1024)), gBuffer(width, height),
+      lightCullingPass(width, height, activeClustersDeterminationShader, lightCullingShader)
 {
-    lightingShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("clusterBasedDeferredPbrLighting.glsl");
+    lightingShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/clusterBasedDeferredPbrLighting.glsl");
     createFrameBuffersAndTextures();
 }
 

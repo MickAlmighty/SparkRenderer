@@ -9,8 +9,8 @@ namespace spark::effects
 {
 LightShaftsPass::LightShaftsPass(unsigned int width, unsigned int height) : w(width), h(height), blurPass(w / 4, h / 4)
 {
-    lightShaftsShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("lightShafts.glsl");
-    blendingShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("renderTexture.glsl");
+    lightShaftsShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/lightShafts.glsl");
+    blendingShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/renderTexture.glsl");
     createFrameBuffersAndTextures();
 }
 

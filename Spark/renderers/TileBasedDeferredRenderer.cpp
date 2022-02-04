@@ -11,7 +11,7 @@ namespace spark::renderers
 TileBasedDeferredRenderer::TileBasedDeferredRenderer(unsigned int width, unsigned int height)
     : Renderer(width, height), brdfLookupTexture(utils::createBrdfLookupTexture(1024)), gBuffer(width, height), lightCullingPass(width, height)
 {
-    lightingShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("tileBasedLighting.glsl");
+    lightingShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/tileBasedLighting.glsl");
     lightingShader->bindSSBO("PointLightIndices", lightCullingPass.pointLightIndices);
     lightingShader->bindSSBO("SpotLightIndices", lightCullingPass.spotLightIndices);
     lightingShader->bindSSBO("LightProbeIndices", lightCullingPass.lightProbeIndices);

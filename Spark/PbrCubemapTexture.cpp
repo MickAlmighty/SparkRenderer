@@ -30,11 +30,11 @@ void PbrCubemapTexture::setup(GLuint hdrTexture, unsigned cubemapSize)
 
     // these shaders are created in SparkRenderer with uniforms and buffers already bound
     const std::shared_ptr<resources::Shader> resampleCubemapShader =
-        Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("resampleCubemap.glsl");
+        Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/resampleCubemap.glsl");
     const auto equirectangularToCubemapShader =
-        Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("equirectangularToCubemap.glsl");
-    const auto irradianceShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("irradiance.glsl");
-    const auto prefilterShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("prefilter.glsl");
+        Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/equirectangularToCubemap.glsl");
+    const auto irradianceShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/irradiance.glsl");
+    const auto prefilterShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/prefilter.glsl");
 
     irradianceShader->bindSSBO("Views", cubemapViewMatrices);
     prefilterShader->bindSSBO("Views", cubemapViewMatrices);

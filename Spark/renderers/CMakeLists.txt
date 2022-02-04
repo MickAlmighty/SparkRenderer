@@ -15,6 +15,8 @@ list(APPEND CURRENT_DIR_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/LightProbesRenderer.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Renderer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Renderer.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/RendererFactory.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/RendererFactory.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/TileBasedDeferredRenderer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/TileBasedDeferredRenderer.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/TileBasedForwardPlusRenderer.cpp

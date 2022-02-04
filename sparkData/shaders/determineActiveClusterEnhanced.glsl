@@ -108,7 +108,7 @@ void main()
             const vec3 clusterMin = aabb.center.xyz - aabb.halfSize;
             const uvec3 maskCellIndex = uvec3(max(vec3(0), min(vec3(10), floor((viewSpacePosition - clusterMin) * clusterRangeReciprocal))));
 
-            const uvec3 mask = 1 << maskCellIndex;
+            const uvec3 mask = uvec3(1) << maskCellIndex;
 
             uint clusterOccupancyMask = 0;
             clusterOccupancyMask = bitfieldInsert(clusterOccupancyMask, mask.x, 0, 10);

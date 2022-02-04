@@ -7,12 +7,15 @@
 
 namespace spark::renderers
 {
-ClusterBasedForwardPlusRenderer::ClusterBasedForwardPlusRenderer(unsigned int width, unsigned int height)
-    : Renderer(width, height), brdfLookupTexture(utils::createBrdfLookupTexture(1024)), lightCullingPass(width, height)
+ClusterBasedForwardPlusRenderer::ClusterBasedForwardPlusRenderer(unsigned int width, unsigned int height,
+                                                                 const std::shared_ptr<resources::Shader>& activeClustersDeterminationShader,
+                                                                 const std::shared_ptr<resources::Shader>& lightCullingShader)
+    : Renderer(width, height), brdfLookupTexture(utils::createBrdfLookupTexture(1024)),
+      lightCullingPass(width, height, activeClustersDeterminationShader, lightCullingShader)
 {
-    depthOnlyShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("depthOnly.glsl");
-    depthAndNormalsShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("depthAndNormals.glsl");
-    lightingShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("clusterBasedForwardPlusPbrLighting.glsl");
+    depthOnlyShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/depthOnly.glsl");
+    depthAndNormalsShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/depthAndNormals.glsl");
+    lightingShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/clusterBasedForwardPlusPbrLighting.glsl");
     createFrameBuffersAndTextures();
 }
 

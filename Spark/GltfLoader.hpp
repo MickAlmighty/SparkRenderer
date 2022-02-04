@@ -19,8 +19,8 @@ class Mesh;
 class GltfLoader final
 {
     public:
-    std::shared_ptr<resourceManagement::Resource> createModel(
-        const std::shared_ptr<resourceManagement::ResourceIdentifier>& resourceIdentifier) const;
+    std::shared_ptr<resourceManagement::Resource> createModel(const std::filesystem::path& resourcesRootPath,
+                                                              const std::filesystem::path& resourceRelativePath) const;
 
     private:
 

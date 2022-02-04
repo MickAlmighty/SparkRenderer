@@ -12,8 +12,8 @@ namespace spark::renderers
 {
 Renderer::Renderer(unsigned int width, unsigned int height) : w(width), h(height), ao(w, h), postProcessingStack(w, h)
 {
-    screenShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("screen.glsl");
-    solidColorShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("solidColor.glsl");
+    screenShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/screen.glsl");
+    solidColorShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/solidColor.glsl");
 
     utils::createFramebuffer(uiShapesFramebuffer);
 }

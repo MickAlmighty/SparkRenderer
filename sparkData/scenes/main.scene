@@ -1506,7 +1506,7 @@
 										{
 											"Identifier" : 28
 										},
-										"skyboxName" : "evening_road_01_2k.dds"
+										"skyboxPath" : "cubemaps\\evening_road_01_2k.dds"
 									},
 									"Identifier" : 29,
 									"Type" : "classstd::shared_ptr<classspark::Skybox>"
