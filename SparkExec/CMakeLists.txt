@@ -6,7 +6,7 @@ if (MSVC_VERSION GREATER_EQUAL "1900")
     #https://github.com/headupinclouds/cmake_whole_archive
     target_link_libraries(SparkExec Spark -WHOLEARCHIVE:$<TARGET_FILE:Spark>)
 else()
-    target_link_libraries(SparkExec Spark)
+    target_link_libraries(SparkExec -Wl,--whole-archive Spark -Wl,--no-whole-archive)
 endif()
 
 if (CMAKE_BUILD_TYPE STREQUAL "Release")

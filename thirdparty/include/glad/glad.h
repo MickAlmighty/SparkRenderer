@@ -3850,4 +3850,6 @@ GLAPI int GLAD_GL_KHR_no_error;
 
 #endif
 
+#ifdef _WIN32
 #undef APIENTRY
+#endif

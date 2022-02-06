@@ -2,6 +2,7 @@
 
 #include <filesystem>
 #include <map>
+#include <vector>
 
 #include "Resource.h"
 
