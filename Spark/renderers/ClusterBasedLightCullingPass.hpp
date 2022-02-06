@@ -49,6 +49,7 @@ class ClusterBasedLightCullingPass
     SSBO activeClusters{};
     SSBO activeClustersCount{12};
     SSBO activeClusterIndices{};
+    DispatchIndirectBuffer dispatchIndirectBuffer{12, GL_STATIC_READ};
 
     std::shared_ptr<resources::Shader> clusterCreationShader{nullptr};
     std::shared_ptr<resources::Shader> determineActiveClustersShader{nullptr};

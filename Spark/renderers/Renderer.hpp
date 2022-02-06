@@ -42,6 +42,7 @@ class Renderer
 
     unsigned int w{}, h{};
     effects::AmbientOcclusion ao;
+    utils::UniqueTextureHandle skyboxPlaceholder;
 
     private:
     void helperShapes(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera);

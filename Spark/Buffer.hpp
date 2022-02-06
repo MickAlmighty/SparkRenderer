@@ -156,8 +156,17 @@ void Buffer<BUFFER_TYPE>::updateSubData(size_t offsetFromBeginning, const std::a
 template<GLenum BUFFER_TYPE>
 void Buffer<BUFFER_TYPE>::resizeBuffer(size_t sizeInBytes)
 {
+    if(sizeInBytes == 0) // AMD FIX
+    {
+        glDeleteBuffers(1, &ID);
+        ID = 0;
+        glCreateBuffers(1, &ID);
+    }
+    else
+    {
+        glNamedBufferData(ID, sizeInBytes, nullptr, bufferUsage);
+    }
     sizeInBytes = sizeInBytes < 0 ? 0 : sizeInBytes;
-    glNamedBufferData(ID, sizeInBytes, nullptr, bufferUsage);
     size = static_cast<GLsizei>(sizeInBytes);
 }
 
@@ -246,3 +255,4 @@ using SSBO = Buffer<GL_SHADER_STORAGE_BUFFER>;
 using UniformBuffer = Buffer<GL_UNIFORM_BUFFER>;
 using ElementArrayBuffer = Buffer<GL_ELEMENT_ARRAY_BUFFER>;
 using VertexBuffer = Buffer<GL_ARRAY_BUFFER>;
+using DispatchIndirectBuffer = Buffer<GL_DISPATCH_INDIRECT_BUFFER>;

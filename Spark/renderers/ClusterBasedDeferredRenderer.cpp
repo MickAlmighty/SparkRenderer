@@ -24,8 +24,6 @@ void ClusterBasedDeferredRenderer::processLighting(const std::shared_ptr<Scene>&
     float clearRgba[] = {0.0f, 0.0f, 0.0f, 0.0f};
     glClearTexImage(lightingTexture.get(), 0, GL_RGBA, GL_FLOAT, &clearRgba);
 
-    const auto cubemap = scene->getSkyboxCubemap().lock();
-
     lightingShader->use();
     lightingShader->bindUniformBuffer("Camera", camera->getUbo());
     lightingShader->bindUniformBuffer("AlgorithmData", lightCullingPass.algorithmData);
@@ -40,10 +38,15 @@ void ClusterBasedDeferredRenderer::processLighting(const std::shared_ptr<Scene>&
 
     // depth texture as sampler2D
     glBindTextureUnit(0, gBuffer.depthTexture.get());
-    if(cubemap)
+    if(const auto cubemap = scene->getSkyboxCubemap().lock(); cubemap)
     {
         glBindTextureUnit(1, cubemap->irradianceCubemap.get());
         glBindTextureUnit(2, cubemap->prefilteredCubemap.get());
+    }
+    else
+    {
+        glBindTextureUnit(1, skyboxPlaceholder.get());
+        glBindTextureUnit(2, skyboxPlaceholder.get());
     }
     glBindTextureUnit(3, brdfLookupTexture.get());
     glBindTextureUnit(4, ssaoTexture);

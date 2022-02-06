@@ -36,7 +36,6 @@ std::shared_ptr<resourceManagement::Resource> ResourceLoader::createHdrTexture(c
     auto hdrTexture = utils::createTexture2D(width, height, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR, false, data);
 
     stbi_image_free(data);
-    stbi_image_free(data);
 
     return std::make_shared<resources::Texture>(resourceRelativePath, std::move(hdrTexture), width, height);
 }

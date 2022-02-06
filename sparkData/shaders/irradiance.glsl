@@ -20,7 +20,7 @@ layout(std430) readonly buffer Views
     mat4 views[]; // 6 matrices
 };
 
-out vec3 cubemapCoord;
+layout (location = 0) out vec3 cubemapCoord;
 
 void main()
 {

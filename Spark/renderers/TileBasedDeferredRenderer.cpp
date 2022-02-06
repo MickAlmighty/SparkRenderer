@@ -38,6 +38,11 @@ void TileBasedDeferredRenderer::processLighting(const std::shared_ptr<Scene>& sc
         glBindTextureUnit(1, cubemap->irradianceCubemap.get());
         glBindTextureUnit(2, cubemap->prefilteredCubemap.get());
     }
+    else
+    {
+        glBindTextureUnit(1, skyboxPlaceholder.get());
+        glBindTextureUnit(2, skyboxPlaceholder.get());
+    }
     glBindTextureUnit(3, brdfLookupTexture.get());
     glBindTextureUnit(4, ssaoTexture);
 

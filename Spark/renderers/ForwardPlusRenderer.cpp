@@ -84,7 +84,8 @@ void ForwardPlusRenderer::lightingPass(const std::shared_ptr<Scene>& scene, cons
     }
     else
     {
-        glBindTextures(7, 2, nullptr);
+        glBindTextureUnit(7, skyboxPlaceholder.get());
+        glBindTextureUnit(8, skyboxPlaceholder.get());
     }
     glBindTextureUnit(9, brdfLookupTexture.get());
     glBindTextureUnit(10, ssaoTexture);

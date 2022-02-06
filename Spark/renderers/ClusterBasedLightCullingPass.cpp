@@ -129,7 +129,9 @@ void ClusterBasedLightCullingPass::lightCulling(const std::shared_ptr<Scene>& sc
     clusterBasedLightCullingShader->bindSSBO("PointLightData", scene->lightManager->getPointLightSSBO());
     clusterBasedLightCullingShader->bindSSBO("SpotLightData", scene->lightManager->getSpotLightSSBO());
     clusterBasedLightCullingShader->bindSSBO("LightProbeData", scene->lightManager->getLightProbeSSBO());
-    clusterBasedLightCullingShader->dispatchComputeIndirect(activeClustersCount.ID);
+
+    glCopyNamedBufferSubData(activeClustersCount.ID, dispatchIndirectBuffer.ID, 0, 0, 12);
+    clusterBasedLightCullingShader->dispatchComputeIndirect(dispatchIndirectBuffer.ID);
 }
 
 void ClusterBasedLightCullingPass::clearActiveClustersCounter()

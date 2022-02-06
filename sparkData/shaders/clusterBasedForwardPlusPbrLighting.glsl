@@ -54,7 +54,6 @@ void main()
 
 #type fragment
 #version 450
-#extension GL_ARB_bindless_texture : require
 layout (location = 0) out vec4 FragColor;
 
 layout (binding = 1) uniform sampler2D diffuseTexture;
@@ -346,40 +345,10 @@ void main()
     L0 += spotLightAddition(V, N, P, material, clusterIndex);
 
     //IBL here
-    vec3 ambient = vec3(0.0);
     float NdotV = max(dot(N, V), 0.0);
-
-    float iblWeight = 0.0f;
-    const uint lightProbeCount = lightIndicesBufferMetadata[clusterIndex].lightProbeCount;
-    const uint globalLightProbesOffset = lightIndicesBufferMetadata[clusterIndex].lightProbeIndicesOffset;
-    for (int i = 0; i < lightProbeCount; ++i)
-    {
-        const uint index = globalLightProbeIndices[globalLightProbesOffset + i];
-        LightProbe lightProbe = lightProbes[index];
-        samplerCube irradianceSampler = samplerCube(lightProbe.irradianceCubemapHandle);
-        vec3 diffuseIBL = calculateDiffuseIBL(N, V, NdotV, material, irradianceSampler);
-        vec4 specularIBL = calculateSpecularFromLightProbe(N, V, P, NdotV, material, lightProbe);
-
-        //calculating the the smooth light fading at the border of light probe
-        float localDistance = length(P - lightProbe.positionAndRadius.xyz);
-        float alpha = clamp((lightProbe.positionAndRadius.w - localDistance) / 
-                    max(lightProbe.positionAndRadius.w, 0.0001f), 0.0f, 1.0f);
-
-        float alphaAttenuation = smoothstep(0.0f, 1.0f - iblWeight, alpha);
-        iblWeight += alphaAttenuation;// * specularIBL.a;
-
-        ambient += (diffuseIBL + specularIBL.rgb) * alphaAttenuation;// * specularIBL.a;
-
-        if (iblWeight >= 1.0f)
-            break;
-    }
-
-    if (iblWeight < 1.0f)
-    {
-        vec3 diffuseIBL = calculateDiffuseIBL(N, V, NdotV, material, irradianceMap);
-        vec3 specularIBL = calculateSpecularIBL(N, V, NdotV, material);
-        ambient += (diffuseIBL + specularIBL) * (1.0f - iblWeight);
-    }
+    vec3 diffuseIBL = calculateDiffuseIBL(N, V, NdotV, material, irradianceMap);
+    vec3 specularIBL = calculateSpecularIBL(N, V, NdotV, material);
+    vec3 ambient = (diffuseIBL + specularIBL);
 
     FragColor = vec4(L0 + ambient, 1) * (1.0f - ssao);
 }
@@ -574,44 +543,6 @@ vec3 calculateSpecularIBL(vec3 N, vec3 V, float NdotV, Material material)
         
     //float specOcclusion = computeSpecOcclusion(NdotV, ssao, material.roughness);
     vec3 specular = prefilteredColor * (F * brdf.x + brdf.y); //* specOcclusion;
-
-    return specular;
-}
-
-vec4 calculateSpecularFromLightProbe(vec3 N, vec3 V, vec3 P, float NdotV, Material material, LightProbe lightProbe)
-{
-    vec4 specular = vec4(0);
-    vec3 R = reflect(-V, N);
-    vec3 dominantR = getSpecularDominantDir(N, R, material.roughness);
-
-    float distToFarIntersection = raySphereIntersection(P, R, lightProbe.positionAndRadius.xyz, lightProbe.positionAndRadius.w);
-    if (distToFarIntersection != 0.0f)
-    {
-        // Compute the actual direction to sample , only consider far intersection
-        // No need to normalize for fetching cubemap
-        vec3 localR = (P + distToFarIntersection * dominantR) - lightProbe.positionAndRadius.xyz;
-
-        // We use normalized R to calc the intersection , thus intersections .y is
-        // the distance between the intersection and the receiving pixel
-        float distanceReceiverIntersection = distToFarIntersection;
-        float distanceSphereCenterIntersection = length ( localR );
-
-        // Compute the modified roughness based on the travelled distance
-        float localRoughness = computeDistanceBaseRoughness(distanceReceiverIntersection, 
-            distanceSphereCenterIntersection, material.roughness);
-
-        const float MAX_REFLECTION_LOD = 4.0;
-
-        //float mipMapLevel = material.roughness * MAX_REFLECTION_LOD; //base
-        float mipMapLevel = sqrt(localRoughness * MAX_REFLECTION_LOD); //frostbite 3
-        samplerCube prefilterSampler = samplerCube(lightProbe.prefilterCubemapHandle);
-        vec4 prefilteredColor = textureLod(prefilterSampler, localR, mipMapLevel).rgba;
-        vec2 brdf = texture(brdfLUT, vec2(NdotV, material.roughness)).rg;
-        
-        //float specOcclusion = computeSpecOcclusion(NdotV, ssao, material.roughness);
-        vec3 F = fresnelSchlickRoughness(NdotV, material.F0, material.roughness);
-        specular = vec4(prefilteredColor.rgb * (F * brdf.x + brdf.y), prefilteredColor.a);
-    }
 
     return specular;
 }
