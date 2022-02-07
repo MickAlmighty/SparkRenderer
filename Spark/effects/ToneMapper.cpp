@@ -15,7 +15,8 @@ ToneMapper::ToneMapper(unsigned int width, unsigned int height): w(width), h(hei
     averageLuminanceComputeShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/averageLuminanceCompute.glsl");
 
     luminanceHistogram.resizeBuffer(256 * sizeof(uint32_t));
-    averageLuminanceTexture = utils::createTexture2D(1, 1, GL_R16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
+    float initialLuminance = 1.0f;
+    averageLuminanceTexture = utils::createTexture2D(1, 1, GL_R16F, GL_RED, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST, false, reinterpret_cast<void*>(&initialLuminance));
     createFrameBuffersAndTextures();
 }
 

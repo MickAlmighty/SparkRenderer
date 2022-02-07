@@ -1,0 +1,571 @@
+{
+	"Content" : 
+	{
+		"camera" : 
+		{
+			"Content" : 
+			{
+				"cameraTarget" : 
+				[
+					4.2052884101867676,
+					1.9489331245422363,
+					3.7547690868377686
+				],
+				"fov" : 60.0,
+				"front" : 
+				[
+					-0.60776281356811523,
+					-0.19594646990299225,
+					-0.76956439018249512
+				],
+				"mouseSensitivity" : 0.10000000149011612,
+				"movementSpeed" : 3.5,
+				"pitch" : -11.300018310546875,
+				"position" : 
+				[
+					4.8130512237548828,
+					2.1448795795440674,
+					4.5243334770202637
+				],
+				"right" : 
+				[
+					0.78477758169174194,
+					0.0,
+					-0.61977744102478027
+				],
+				"up" : 
+				[
+					-0.12144320458173752,
+					0.98061460256576538,
+					-0.15377439558506012
+				],
+				"yaw" : -128.29988098144531,
+				"zFar" : 200.0,
+				"zNear" : 0.10000000149011612
+			},
+			"Identifier" : 10,
+			"Type" : "std::shared_ptr<EditorCamera>"
+		},
+		"root" : 
+		{
+			"Content" : 
+			{
+				"active" : true,
+				"children" : 
+				[
+					{
+						"Content" : 
+						{
+							"active" : true,
+							"children" : null,
+							"components" : 
+							[
+								{
+									"Content" : 
+									{
+										"active" : true,
+										"gameObject" : 
+										{
+											"Identifier" : 2
+										},
+										"modelPath" : "models/spaceship/Spaceship.obj"
+									},
+									"Identifier" : 3,
+									"Type" : "std::shared_ptr<ModelMesh>"
+								}
+							],
+							"name" : "GameObject",
+							"parent" : 
+							{
+								"Identifier" : 1
+							},
+							"scene" : 
+							{
+								"Identifier" : 0
+							},
+							"staticObject" : false,
+							"transform" : 
+							{
+								"Content" : 
+								{
+									"local" : 
+									{
+										"Content" : 
+										{
+											"position" : 
+											[
+												0.0,
+												0.0,
+												0.0
+											],
+											"rotation" : 
+											[
+												0.0,
+												0.0,
+												0.0,
+												1.0
+											],
+											"scale" : 
+											[
+												1.0,
+												1.0,
+												1.0
+											]
+										},
+										"Type" : "LocalTransform"
+									},
+									"world" : 
+									{
+										"Content" : 
+										{
+											"modelMatrix" : 
+											[
+												[
+													1.0,
+													0.0,
+													0.0,
+													0.0
+												],
+												[
+													0.0,
+													1.0,
+													0.0,
+													0.0
+												],
+												[
+													0.0,
+													0.0,
+													1.0,
+													0.0
+												],
+												[
+													0.0,
+													0.0,
+													0.0,
+													1.0
+												]
+											]
+										},
+										"Type" : "WorldTransform"
+									}
+								},
+								"Type" : "Transform"
+							}
+						},
+						"Identifier" : 2,
+						"Type" : "std::shared_ptr<GameObject>"
+					},
+					{
+						"Content" : 
+						{
+							"active" : true,
+							"children" : null,
+							"components" : 
+							[
+								{
+									"Content" : 
+									{
+										"active" : false,
+										"color" : 
+										[
+											1.0,
+											1.0,
+											1.0
+										],
+										"colorStrength" : 1.0,
+										"direction" : 
+										[
+											0.0,
+											-1.0,
+											0.0
+										],
+										"gameObject" : 
+										{
+											"Identifier" : 4
+										},
+										"lightShaftsActive" : false
+									},
+									"Identifier" : 5,
+									"Type" : "std::shared_ptr<DirectionalLight>"
+								}
+							],
+							"name" : "GameObject",
+							"parent" : 
+							{
+								"Identifier" : 1
+							},
+							"scene" : 
+							{
+								"Identifier" : 0
+							},
+							"staticObject" : false,
+							"transform" : 
+							{
+								"Content" : 
+								{
+									"local" : 
+									{
+										"Content" : 
+										{
+											"position" : 
+											[
+												0.0,
+												0.0,
+												0.0
+											],
+											"rotation" : 
+											[
+												0.0,
+												0.0,
+												0.0,
+												1.0
+											],
+											"scale" : 
+											[
+												1.0,
+												1.0,
+												1.0
+											]
+										},
+										"Type" : "LocalTransform"
+									},
+									"world" : 
+									{
+										"Content" : 
+										{
+											"modelMatrix" : 
+											[
+												[
+													1.0,
+													0.0,
+													0.0,
+													0.0
+												],
+												[
+													0.0,
+													1.0,
+													0.0,
+													0.0
+												],
+												[
+													0.0,
+													0.0,
+													1.0,
+													0.0
+												],
+												[
+													0.0,
+													0.0,
+													0.0,
+													1.0
+												]
+											]
+										},
+										"Type" : "WorldTransform"
+									}
+								},
+								"Type" : "Transform"
+							}
+						},
+						"Identifier" : 4,
+						"Type" : "std::shared_ptr<GameObject>"
+					},
+					{
+						"Content" : 
+						{
+							"active" : true,
+							"children" : null,
+							"components" : 
+							[
+								{
+									"Content" : 
+									{
+										"active" : true,
+										"activeSkybox" : true,
+										"gameObject" : 
+										{
+											"Identifier" : 6
+										},
+										"skyboxPath" : "cubemaps/evening_road_01_2k.dds"
+									},
+									"Identifier" : 7,
+									"Type" : "std::shared_ptr<Skybox>"
+								}
+							],
+							"name" : "GameObject",
+							"parent" : 
+							{
+								"Identifier" : 1
+							},
+							"scene" : 
+							{
+								"Identifier" : 0
+							},
+							"staticObject" : false,
+							"transform" : 
+							{
+								"Content" : 
+								{
+									"local" : 
+									{
+										"Content" : 
+										{
+											"position" : 
+											[
+												0.0,
+												0.0,
+												0.0
+											],
+											"rotation" : 
+											[
+												0.0,
+												0.0,
+												0.0,
+												1.0
+											],
+											"scale" : 
+											[
+												1.0,
+												1.0,
+												1.0
+											]
+										},
+										"Type" : "LocalTransform"
+									},
+									"world" : 
+									{
+										"Content" : 
+										{
+											"modelMatrix" : 
+											[
+												[
+													1.0,
+													0.0,
+													0.0,
+													0.0
+												],
+												[
+													0.0,
+													1.0,
+													0.0,
+													0.0
+												],
+												[
+													0.0,
+													0.0,
+													1.0,
+													0.0
+												],
+												[
+													0.0,
+													0.0,
+													0.0,
+													1.0
+												]
+											]
+										},
+										"Type" : "WorldTransform"
+									}
+								},
+								"Type" : "Transform"
+							}
+						},
+						"Identifier" : 6,
+						"Type" : "std::shared_ptr<GameObject>"
+					},
+					{
+						"Content" : 
+						{
+							"active" : true,
+							"children" : null,
+							"components" : 
+							[
+								{
+									"Content" : 
+									{
+										"active" : true,
+										"color" : 
+										[
+											0.57958483695983887,
+											0.0,
+											0.98529410362243652
+										],
+										"colorStrength" : 30.139999389648438,
+										"gameObject" : 
+										{
+											"Identifier" : 8
+										},
+										"radius" : 3.0
+									},
+									"Identifier" : 9,
+									"Type" : "std::shared_ptr<PointLight>"
+								}
+							],
+							"name" : "GameObject",
+							"parent" : 
+							{
+								"Identifier" : 1
+							},
+							"scene" : 
+							{
+								"Identifier" : 0
+							},
+							"staticObject" : false,
+							"transform" : 
+							{
+								"Content" : 
+								{
+									"local" : 
+									{
+										"Content" : 
+										{
+											"position" : 
+											[
+												2.5919568538665771,
+												0.74215531349182129,
+												0.84189176559448242
+											],
+											"rotation" : 
+											[
+												0.0,
+												0.0,
+												0.0,
+												1.0
+											],
+											"scale" : 
+											[
+												1.0,
+												1.0,
+												1.0
+											]
+										},
+										"Type" : "LocalTransform"
+									},
+									"world" : 
+									{
+										"Content" : 
+										{
+											"modelMatrix" : 
+											[
+												[
+													1.0,
+													0.0,
+													0.0,
+													0.0
+												],
+												[
+													0.0,
+													1.0,
+													0.0,
+													0.0
+												],
+												[
+													0.0,
+													0.0,
+													1.0,
+													0.0
+												],
+												[
+													2.5919568538665771,
+													0.74215531349182129,
+													0.84189176559448242,
+													1.0
+												]
+											]
+										},
+										"Type" : "WorldTransform"
+									}
+								},
+								"Type" : "Transform"
+							}
+						},
+						"Identifier" : 8,
+						"Type" : "std::shared_ptr<GameObject>"
+					}
+				],
+				"components" : null,
+				"name" : "Root",
+				"parent" : 
+				{
+					"Identifier" : -1
+				},
+				"scene" : 
+				{
+					"Identifier" : 0
+				},
+				"staticObject" : false,
+				"transform" : 
+				{
+					"Content" : 
+					{
+						"local" : 
+						{
+							"Content" : 
+							{
+								"position" : 
+								[
+									0.0,
+									0.0,
+									0.0
+								],
+								"rotation" : 
+								[
+									0.0,
+									0.0,
+									0.0,
+									1.0
+								],
+								"scale" : 
+								[
+									1.0,
+									1.0,
+									1.0
+								]
+							},
+							"Type" : "LocalTransform"
+						},
+						"world" : 
+						{
+							"Content" : 
+							{
+								"modelMatrix" : 
+								[
+									[
+										1.0,
+										0.0,
+										0.0,
+										0.0
+									],
+									[
+										0.0,
+										1.0,
+										0.0,
+										0.0
+									],
+									[
+										0.0,
+										0.0,
+										1.0,
+										0.0
+									],
+									[
+										0.0,
+										0.0,
+										0.0,
+										1.0
+									]
+								]
+							},
+							"Type" : "WorldTransform"
+						}
+					},
+					"Type" : "Transform"
+				}
+			},
+			"Identifier" : 1,
+			"Type" : "std::shared_ptr<GameObject>"
+		}
+	},
+	"Identifier" : 0,
+	"Type" : "std::shared_ptr<Scene>"
+}

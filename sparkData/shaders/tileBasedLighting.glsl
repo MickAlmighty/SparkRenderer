@@ -4,16 +4,18 @@
 
 layout(local_size_x = 16, local_size_y = 16) in;
 
-layout(binding = 0) uniform sampler2D depthTexture; 
 layout(binding = 1) uniform samplerCube irradianceMap;
 layout(binding = 2) uniform samplerCube prefilterMap;
 layout(binding = 3) uniform sampler2D brdfLUT;
 layout(binding = 4) uniform sampler2D ssaoTexture;
 
-layout(rgba8, binding = 0) readonly uniform image2D diffuseImage;
-layout(rg16f, binding = 1) readonly uniform image2D normalImage;
-layout(rg8, binding = 2) readonly uniform image2D rougnessMetalnessImage;
-layout(rgba16f, binding = 3) writeonly uniform image2D lightOutput;
+//G-Buffer
+layout(binding = 0) uniform sampler2D depthTexture; 
+layout(binding = 5) uniform sampler2D diffuseImage;
+layout(binding = 6) uniform sampler2D normalImage;
+layout(binding = 7) uniform sampler2D rougnessMetalnessImage;
+
+layout(rgba16f, binding = 0) writeonly uniform image2D lightOutput;
 
 shared uint numberOfLightsIndex;
 shared uint lightBeginIndex;
@@ -137,7 +139,7 @@ float computeDistanceBaseRoughness(float distInteresectionToShadedPoint, float d
 
 void main()
 {
-    vec2 texSize = vec2(imageSize(diffuseImage));
+    vec2 texSize = vec2(imageSize(lightOutput));
     ivec2 texCoords = ivec2(gl_GlobalInvocationID.xy);
 
     if (gl_LocalInvocationIndex == 0)
@@ -156,9 +158,9 @@ void main()
         return;
 
 //light calculations in world space
-    vec3 albedo = imageLoad(diffuseImage, texCoords).rgb;
-    vec2 encodedNormal = imageLoad(normalImage, texCoords).xy;
-    vec2 roughnessMetalness = imageLoad(rougnessMetalnessImage, texCoords).xy;
+    const vec3 albedo = texelFetch(diffuseImage, texCoords, 0).rgb;
+    const vec2 encodedNormal = texelFetch(normalImage, texCoords, 0).xy;
+    const vec2 roughnessMetalness = texelFetch(rougnessMetalnessImage, texCoords, 0).xy;
     float roughness = roughnessMetalness.x;
     float metalness = roughnessMetalness.y;
 

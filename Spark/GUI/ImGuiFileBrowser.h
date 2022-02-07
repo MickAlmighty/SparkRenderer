@@ -34,8 +34,8 @@ class ImGuiFileBrowser
     /* Store the opened/saved file name or dir name (incase of selectDirectoryDialog) and the absolute path to the selection
      * Should only be accessed when above functions return true else may contain garbage.
      */
-    std::string selected_fn;
-    std::string selected_path;
+    std::string selected_fn{};
+    std::string selected_path{};
     std::string ext;  // Store the saved file extension
 
     private:
@@ -99,18 +99,20 @@ class ImGuiFileBrowser
     void initCurrentPath();  // Helper function for UNIX based system to load Absolute path using realpath
 #endif
 
-    ImVec2 min_size, max_size, input_combobox_pos, input_combobox_sz;
+    ImVec2 min_size{500, 300}, max_size, input_combobox_pos, input_combobox_sz;
     DialogMode dialog_mode{DialogMode::OPEN};
-    int filter_mode, col_items_limit, selected_idx, selected_ext_idx;
-    float col_width, ext_box_width;
-    bool show_hidden, show_inputbar_combobox, is_dir, is_appearing, filter_dirty, validate_file, show_files_with_valid_extensions, show_all_files;
-    char input_fn[256];
+    int filter_mode = FilterMode_Files | FilterMode_Dirs;
+    int col_items_limit{12}, selected_idx{-1}, selected_ext_idx{0};
+    float col_width{280.0f}, ext_box_width{-1.0f};
+    bool show_hidden{false}, show_inputbar_combobox{false}, is_dir{false}, is_appearing{true};
+    bool filter_dirty{true}, validate_file{false}, show_files_with_valid_extensions{true}, show_all_files{false};
+    char input_fn[256]{'\0'};
 
     std::vector<std::string> valid_exts;
     std::vector<std::string> current_dirlist;
     std::vector<Info> subdirs;
     std::vector<Info> subfiles;
-    std::string current_path, error_msg, error_title, invfile_modal_id, repfile_modal_id;
+    std::string current_path, error_msg, error_title, invfile_modal_id{"Invalid File!"}, repfile_modal_id{"Replace File?"};
 
     ImGuiTextFilter filter;
     std::string valid_types;

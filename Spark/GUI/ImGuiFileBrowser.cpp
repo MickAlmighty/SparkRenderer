@@ -37,30 +37,6 @@ namespace imgui_addons
 {
 ImGuiFileBrowser::ImGuiFileBrowser()
 {
-    filter_mode = FilterMode_Files | FilterMode_Dirs;
-
-    show_inputbar_combobox = false;
-    validate_file = false;
-    show_hidden = false;
-    is_dir = false;
-    filter_dirty = true;
-    is_appearing = true;
-    show_files_with_valid_extensions = true;
-    show_all_files = false;
-
-    col_items_limit = 12;
-    selected_idx = -1;
-    selected_ext_idx = 0;
-    ext_box_width = -1.0f;
-    col_width = 280.0f;
-    min_size = ImVec2(500, 300);
-
-    invfile_modal_id = "Invalid File!";
-    repfile_modal_id = "Replace File?";
-    selected_fn = "";
-    selected_path = "";
-    input_fn[0] = '\0';
-
 #ifdef OSWIN
     current_path = "./";
 #else
@@ -68,9 +44,15 @@ ImGuiFileBrowser::ImGuiFileBrowser()
 #endif
 }
 
-ImGuiFileBrowser::ImGuiFileBrowser(const std::string& path) : ImGuiFileBrowser()
+ImGuiFileBrowser::ImGuiFileBrowser(const std::string& path)
 {
+#ifdef OSWIN
     current_path = path;
+#else
+    current_path = std::string(path);
+    current_path += "/";
+    parsePathTabs(current_path);
+#endif
 }
 
 void ImGuiFileBrowser::clearFileList()

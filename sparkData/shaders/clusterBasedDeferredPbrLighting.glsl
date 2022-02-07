@@ -1,6 +1,5 @@
 #type compute
 #version 450
-#extension GL_ARB_bindless_texture : require
 
 layout(local_size_x = 16, local_size_y = 16) in;
 
@@ -10,10 +9,11 @@ layout(binding = 2) uniform samplerCube prefilterMap;
 layout(binding = 3) uniform sampler2D brdfLUT;
 layout(binding = 4) uniform sampler2D ssaoTexture;
 
-layout(rgba8, binding = 0) readonly uniform image2D diffuseImage;
-layout(rg16f, binding = 1) readonly uniform image2D normalImage;
-layout(rg8, binding = 2) readonly uniform image2D rougnessMetalnessImage;
-layout(rgba16f, binding = 3) writeonly uniform image2D lightOutput;
+layout(binding = 5) uniform sampler2D diffuseImage;
+layout(binding = 6) uniform sampler2D normalImage;
+layout(binding = 7) uniform sampler2D rougnessMetalnessImage;
+
+layout(rgba16f, binding = 0) writeonly uniform image2D lightOutput;
 
 #define M_PI 3.14159265359 
 
@@ -151,7 +151,6 @@ vec3 spotLightAddition(vec3 V, vec3 N, vec3 Pos, Material m, const uint clusterI
 
 vec3 calculateDiffuseIBL(vec3 N, vec3 V, float NdotV, Material material, samplerCube irradianceCubemap);
 vec3 calculateSpecularIBL(vec3 N, vec3 V, float NdotV, Material material);
-vec4 calculateSpecularFromLightProbe(vec3 N, vec3 V, vec3 P, float NdotV, Material material, LightProbe lightProbe);
 vec3 getDiffuseDominantDir(vec3 N , vec3 V , float NdotV , float roughness);
 vec3 getSpecularDominantDir( vec3 N , vec3 R, float roughness );
 float raySphereIntersection(vec3 rayCenter, vec3 rayDir, vec3 sphereCenter, float sphereRadius);
@@ -186,7 +185,7 @@ uint calculateClusterIndex(vec2 screenCoords, uint clusterZ)
 
 void main()
 {
-    const vec2 texSize = vec2(imageSize(diffuseImage));
+    const vec2 texSize = vec2(imageSize(lightOutput));
     const ivec2 texCoords = ivec2(gl_GlobalInvocationID.xy);
 
     const float depthFloat = texelFetch(depthTexture, texCoords, 0).x;
@@ -199,9 +198,10 @@ void main()
     const uint clusterIndex = calculateClusterIndex(texCoords, clusterZ);
 
 //light calculations in world space
-    const vec3 albedo = imageLoad(diffuseImage, texCoords).rgb;
-    const vec2 encodedNormal = imageLoad(normalImage, texCoords).xy;
-    const vec2 roughnessMetalness = imageLoad(rougnessMetalnessImage, texCoords).xy;
+    const vec3 albedo = texelFetch(diffuseImage, texCoords, 0).rgb;
+    const vec2 encodedNormal = texelFetch(normalImage, texCoords, 0).xy;
+    const vec2 roughnessMetalness = texelFetch(rougnessMetalnessImage, texCoords, 0).xy;
+
     const float roughness = roughnessMetalness.x;
     const float metalness = roughnessMetalness.y;
 
@@ -230,36 +230,9 @@ void main()
     float NdotV = max(dot(N, V), 0.0);
 
     float iblWeight = 0.0f;
-    const uint lightProbeCount = lightIndicesBufferMetadata[clusterIndex].lightProbeCount;
-    const uint globalLightProbesOffset = lightIndicesBufferMetadata[clusterIndex].lightProbeIndicesOffset;
-    for (int i = 0; i < lightProbeCount; ++i)
-    {
-        const uint index = globalLightProbeIndices[globalLightProbesOffset + i];
-        LightProbe lightProbe = lightProbes[index];
-        samplerCube irradianceSampler = samplerCube(lightProbe.irradianceCubemapHandle);
-        vec3 diffuseIBL = calculateDiffuseIBL(N, V, NdotV, material, irradianceSampler);
-        vec4 specularIBL = calculateSpecularFromLightProbe(N, V, P, NdotV, material, lightProbe);
-
-        //calculating the the smooth light fading at the border of light probe
-        float localDistance = length(P - lightProbe.positionAndRadius.xyz);
-        float alpha = clamp((lightProbe.positionAndRadius.w - localDistance) / 
-                    max(lightProbe.positionAndRadius.w, 0.0001f), 0.0f, 1.0f);
-
-        float alphaAttenuation = smoothstep(0.0f, 1.0f - iblWeight, alpha);
-        iblWeight += alphaAttenuation;// * specularIBL.a;
-
-        ambient += (diffuseIBL + specularIBL.rgb) * alphaAttenuation;// * specularIBL.a;
-
-        if (iblWeight >= 1.0f)
-            break;
-    }
-
-    if (iblWeight < 1.0f)
-    {
-        vec3 diffuseIBL = calculateDiffuseIBL(N, V, NdotV, material, irradianceMap);
-        vec3 specularIBL = calculateSpecularIBL(N, V, NdotV, material);
-        ambient += (diffuseIBL + specularIBL) * (1.0f - iblWeight);
-    }
+    vec3 diffuseIBL = calculateDiffuseIBL(N, V, NdotV, material, irradianceMap);
+    vec3 specularIBL = calculateSpecularIBL(N, V, NdotV, material);
+    ambient += (diffuseIBL + specularIBL) * (1.0f - iblWeight);
 
     vec4 color = vec4(min(L0 + ambient, vec3(65000)), 1) * (1.0f - ssao);
 
@@ -477,44 +450,6 @@ vec3 calculateSpecularIBL(vec3 N, vec3 V, float NdotV, Material material)
         
     //float specOcclusion = computeSpecOcclusion(NdotV, ssao, material.roughness);
     vec3 specular = prefilteredColor * (F * brdf.x + brdf.y); //* specOcclusion;
-
-    return specular;
-}
-
-vec4 calculateSpecularFromLightProbe(vec3 N, vec3 V, vec3 P, float NdotV, Material material, LightProbe lightProbe)
-{
-    vec4 specular = vec4(0);
-    vec3 R = reflect(-V, N);
-    vec3 dominantR = getSpecularDominantDir(N, R, material.roughness);
-
-    float distToFarIntersection = raySphereIntersection(P, R, lightProbe.positionAndRadius.xyz, lightProbe.positionAndRadius.w);
-    if (distToFarIntersection != 0.0f)
-    {
-        // Compute the actual direction to sample , only consider far intersection
-        // No need to normalize for fetching cubemap
-        vec3 localR = (P + distToFarIntersection * dominantR) - lightProbe.positionAndRadius.xyz;
-
-        // We use normalized R to calc the intersection , thus intersections .y is
-        // the distance between the intersection and the receiving pixel
-        float distanceReceiverIntersection = distToFarIntersection;
-        float distanceSphereCenterIntersection = length ( localR );
-
-        // Compute the modified roughness based on the travelled distance
-        float localRoughness = computeDistanceBaseRoughness(distanceReceiverIntersection, 
-            distanceSphereCenterIntersection, material.roughness);
-
-        const float MAX_REFLECTION_LOD = 4.0;
-
-        //float mipMapLevel = material.roughness * MAX_REFLECTION_LOD; //base
-        float mipMapLevel = sqrt(localRoughness * MAX_REFLECTION_LOD); //frostbite 3
-        samplerCube prefilterSampler = samplerCube(lightProbe.prefilterCubemapHandle);
-        vec4 prefilteredColor = textureLod(prefilterSampler, localR, mipMapLevel).rgba;
-        vec2 brdf = texture(brdfLUT, vec2(NdotV, material.roughness)).rg;
-        
-        //float specOcclusion = computeSpecOcclusion(NdotV, ssao, material.roughness);
-        vec3 F = fresnelSchlickRoughness(NdotV, material.F0, material.roughness);
-        specular = vec4(prefilteredColor.rgb * (F * brdf.x + brdf.y), prefilteredColor.a);
-    }
 
     return specular;
 }
