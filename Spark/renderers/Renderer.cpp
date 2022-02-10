@@ -116,7 +116,7 @@ void Renderer::helperShapes(const std::shared_ptr<Scene>& scene, const std::shar
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     // light texture must be bound here
     solidColorShader->use();
-    solidColorShader->bindUniformBuffer("Camera", camera->getUbo());
+    solidColorShader->bindUniformBuffer("Camera.camera", camera->getUbo());
 
     for(auto& request : renderingQueue)
     {

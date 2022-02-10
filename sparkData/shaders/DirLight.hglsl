@@ -1,0 +1,12 @@
+#ifndef DIR_LIGHT
+#define DIR_LIGHT
+
+struct DirLight
+{
+    vec3 direction;
+    float nothing;
+    vec3 color;
+    float nothing2;
+};
+
+#endif //DIR_LIGHT

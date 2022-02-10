@@ -3,13 +3,21 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "Logging.h"
-#include "ShaderParser.hpp"
+#include "utils/ShaderParser.hpp"
 
 namespace spark::resources
 {
 Shader::Shader(const std::filesystem::path& path_) : Resource(path_)
 {
-    const auto shaderIds = compileShaders(ShaderParser::parseShaderFile(path.string()));
+    const auto shaderIds = compileShaders(utils::ShaderParser::parseShaderFile(path.string()));
+    linkProgram(shaderIds);
+
+    shaderDescriptor.acquireShaderResources(ID);
+}
+
+Shader::Shader(const std::filesystem::path& path_, const std::vector<std::pair<GLenum, std::vector<unsigned>>>& spirvShaders_) : Resource(path_)
+{
+    const auto shaderIds = compileShaders(spirvShaders_);
     linkProgram(shaderIds);
 
     shaderDescriptor.acquireShaderResources(ID);
@@ -32,13 +40,45 @@ std::vector<GLuint> Shader::compileShaders(const std::map<GLenum, std::string>& 
         glShaderSource(shader, 1, &shaderSource, nullptr);
         glCompileShader(shader);
         GLint success;
-        GLchar infoLog[512];
+
         glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
 
         if(!success)
         {
+            GLchar infoLog[512];
             glGetShaderInfoLog(shader, 512, nullptr, infoLog);
-            
+
+            std::string fullInfo = getPath().string();
+            fullInfo.append("\n\rERROR::SHADER::COMPILATION_FAILED, cause: ");
+            fullInfo.append(infoLog);
+            throw std::runtime_error(fullInfo);
+        }
+        shaderIds.push_back(shader);
+    }
+
+    return shaderIds;
+}
+
+std::vector<GLuint> Shader::compileShaders(const std::vector<std::pair<GLenum, std::vector<unsigned>>>& spirvShaders)
+{
+    std::vector<GLuint> shaderIds;
+    shaderIds.reserve(spirvShaders.size());
+    for(const auto& [shaderType, shaderBinary] : spirvShaders)
+    {
+        const GLuint shader = glCreateShader(shaderType);
+
+        glShaderBinary(1, &shader, GL_SHADER_BINARY_FORMAT_SPIR_V, shaderBinary.data(), static_cast<GLsizei>(shaderBinary.size() * sizeof(unsigned)));
+        const char* vsEntryPoint = "main";
+        glSpecializeShader(shader, vsEntryPoint, 0, nullptr, nullptr);
+
+        GLint success;
+        glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+
+        if(!success)
+        {
+            GLchar infoLog[512];
+            glGetShaderInfoLog(shader, 512, nullptr, infoLog);
+
             std::string fullInfo = getPath().string();
             fullInfo.append("\n\rERROR::SHADER::COMPILATION_FAILED, cause: ");
             fullInfo.append(infoLog);
@@ -147,7 +187,7 @@ void Shader::setIVec2(const std::string& name, glm::ivec2 value) const
 void Shader::setUVec2(const std::string& name, glm::uvec2 value) const
 {
     const GLint location = shaderDescriptor.getUniformLocation(name);
-    if (location < 0)
+    if(location < 0)
         return;
     glUniform2uiv(location, 1, glm::value_ptr(value));
 }

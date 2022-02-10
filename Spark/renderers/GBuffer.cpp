@@ -27,7 +27,7 @@ void GBuffer::fill(const std::map<ShaderType, std::deque<RenderingRequest>>& ren
     glDepthFunc(GL_GREATER);
 
     pbrGeometryBufferShader->use();
-    pbrGeometryBufferShader->bindUniformBuffer("Camera", cameraUbo);
+    pbrGeometryBufferShader->bindUniformBuffer("Camera.camera", cameraUbo);
 
     if(const auto it = renderingQueues.find(ShaderType::PBR); it != renderingQueues.cend())
     {
@@ -55,7 +55,7 @@ void GBuffer::fill(const std::map<ShaderType, std::deque<RenderingRequest>>& ren
     glDepthFunc(GL_GREATER);
 
     pbrGeometryBufferShader->use();
-    pbrGeometryBufferShader->bindUniformBuffer("Camera", cameraUbo);
+    pbrGeometryBufferShader->bindUniformBuffer("Camera.camera", cameraUbo);
     if(const auto it = renderingQueues.find(ShaderType::PBR); it != renderingQueues.cend())
     {
         for(auto& request : it->second)

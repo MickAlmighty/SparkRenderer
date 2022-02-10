@@ -13,11 +13,11 @@ void main()
 layout(triangles) in;
 layout(triangle_strip, max_vertices = 18) out;
 
-uniform mat4 projection;
+layout (location = 0) uniform mat4 projection;
 
-layout(std430) readonly buffer Views
+layout(std430, binding = 0) readonly buffer Views
 {
-    mat4 views[]; // 6 matrices
+    mat4 views[6];
 };
 
 layout (location = 0) out vec3 cubemapCoord;

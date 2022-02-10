@@ -54,7 +54,7 @@ void SkyboxPass::renderSkybox(GLuint framebuffer, unsigned int fboWidth, unsigne
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_EQUAL);
     cubemapShader->use();
-    cubemapShader->bindUniformBuffer("Camera", cameraUbo);
+    cubemapShader->bindUniformBuffer("Camera.camera", cameraUbo);
 
     glBindTextureUnit(0, cubemapPtr->cubemap.get());
     cube.draw();

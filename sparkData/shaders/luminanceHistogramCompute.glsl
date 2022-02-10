@@ -6,11 +6,11 @@ layout(rgba16f, binding = 0) uniform image2D img_input;
 #define HISTOGRAM_BINS 256
 #define EPSILON 0.005
 
-uniform ivec2 inputTextureSize;
-uniform float minLogLuminance;
-uniform float oneOverLogLuminanceRange;
+layout (location = 0) uniform ivec2 inputTextureSize;
+layout (location = 1) uniform float minLogLuminance;
+layout (location = 2) uniform float oneOverLogLuminanceRange;
 
-layout (std430) buffer LuminanceHistogram {
+layout (std430, binding = 0) buffer LuminanceHistogram {
     uint luminanceHistogram[HISTOGRAM_BINS];
 };
 

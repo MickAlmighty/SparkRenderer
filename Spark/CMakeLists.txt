@@ -25,8 +25,6 @@ list(APPEND SparkSources
     ${CMAKE_CURRENT_SOURCE_DIR}/GameObject.h
     ${CMAKE_CURRENT_SOURCE_DIR}/glad_glfw3.h
     ${CMAKE_CURRENT_SOURCE_DIR}/glad.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/GltfLoader.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/GltfLoader.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/IObserver.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ICamera.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ICamera.hpp
@@ -58,8 +56,6 @@ list(APPEND SparkSources
     ${CMAKE_CURRENT_SOURCE_DIR}/ResourceIdentifier.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ResourceLibrary.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ResourceLibrary.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/ResourceLoader.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/ResourceLoader.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Scene.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Scene.h
     ${CMAKE_CURRENT_SOURCE_DIR}/SceneManager.cpp
@@ -69,8 +65,6 @@ list(APPEND SparkSources
     ${CMAKE_CURRENT_SOURCE_DIR}/Shader.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ShaderDescriptor.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ShaderDescriptor.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/ShaderParser.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/ShaderParser.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ShapeCreator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ShapeCreator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Skybox.cpp
@@ -102,6 +96,7 @@ add_subdirectory(effects)
 add_subdirectory(renderers)
 add_subdirectory(scripts)
 add_subdirectory(utils)
+add_subdirectory(loaders)
 
 # Create the source groups for source tree with root at CMAKE_CURRENT_SOURCE_DIR.
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SparkSources})
@@ -122,14 +117,14 @@ target_link_directories(Spark PUBLIC ${CMAKE_SOURCE_DIR}/thirdparty/lib/ReleaseL
 target_link_directories(Spark PUBLIC ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
 
 #GLFW
-set(GLFW_BUILD_EXAMPLES OFF CACHE INTERNAL "Build the GLFW example programs")
-set(GLFW_BUILD_TESTS OFF CACHE INTERNAL "Build the GLFW test programs")
-set(GLFW_BUILD_DOCS OFF CACHE INTERNAL "Build the GLFW documentation")
 FetchContent_Declare(
         glfw
         GIT_REPOSITORY "https://github.com/glfw/glfw"
         GIT_TAG "814b7929c5add4b0541ccad26fb81f28b71dc4d8"
 )
+set(GLFW_BUILD_EXAMPLES OFF CACHE INTERNAL "Build the GLFW example programs")
+set(GLFW_BUILD_TESTS OFF CACHE INTERNAL "Build the GLFW test programs")
+set(GLFW_BUILD_DOCS OFF CACHE INTERNAL "Build the GLFW documentation")
 FetchContent_MakeAvailable(glfw)
 
 #SPDLOG
@@ -154,40 +149,86 @@ FetchContent_MakeAvailable(spdlog)
 # target_include_directories(Spark PUBLIC ${rttr_BINARY_DIR}/src)
 
 #TINYGLTF
-set(TINYGLTF_HEADER_ONLY ON CACHE INTERNAL "" FORCE)
-set(TINYGLTF_INSTALL OFF CACHE INTERNAL "" FORCE)
-set(TINYGLTF_BUILD_LOADER_EXAMPLE OFF CACHE INTERNAL "" FORCE)
 FetchContent_Declare(
         tinygltf
         GIT_REPOSITORY "https://github.com/syoyo/tinygltf"
         GIT_TAG "19a41d20ec03d35cee68ff85511bc5875f6037b8"
 )
+set(TINYGLTF_HEADER_ONLY ON CACHE INTERNAL "" FORCE)
+set(TINYGLTF_INSTALL OFF CACHE INTERNAL "" FORCE)
+set(TINYGLTF_BUILD_LOADER_EXAMPLE OFF CACHE INTERNAL "" FORCE)
 FetchContent_MakeAvailable(tinygltf)
 target_include_directories(Spark PUBLIC ${tinygltf_SOURCE_DIR})
 
 #JSONCPP
-set(JSONCPP_WITH_POST_BUILD_UNITTEST OFF CACHE INTERNAL "Turn off tests" FORCE)
-set(JSONCPP_WITH_TESTS OFF CACHE INTERNAL "Turn off tests" FORCE)
-
 FetchContent_Declare(
         jsoncpp
         GIT_REPOSITORY "https://github.com/open-source-parsers/jsoncpp"
-        GIT_TAG "1.9.4"
+        GIT_TAG "1.9.5"
 )
+set(JSONCPP_WITH_TESTS OFF CACHE INTERNAL "Turn off tests" FORCE)
+set(JSONCPP_WITH_POST_BUILD_UNITTEST OFF CACHE INTERNAL "Turn off tests" FORCE)
+set(JSONCPP_WITH_PKGCONFIG_SUPPORT OFF CACHE INTERNAL "Turn off tests" FORCE)
+set(JSONCPP_WITH_CMAKE_PACKAGE OFF CACHE INTERNAL "Turn off tests" FORCE)
+set(JSONCPP_WITH_TESTS OFF CACHE INTERNAL "Turn off tests" FORCE)
+set(JSONCPP_WITH_STRICT_ISO OFF CACHE INTERNAL "Turn off tests" FORCE)
 FetchContent_MakeAvailable(jsoncpp)
-message("jsoncpp source dir: ${jsoncpp_SOURCE_DIR}/include")
 target_include_directories(Spark PUBLIC ${jsoncpp_SOURCE_DIR}/include)
 
 #ASSIMP
-set(ASSIMP_BUILD_ASSIMP_TOOLS OFF CACHE INTERNAL "Turn off tests")
-set(ASSIMP_BUILD_TESTS OFF CACHE INTERNAL "Turn off tests")
-
 FetchContent_Declare(
         assimp
         GIT_REPOSITORY "https://github.com/assimp/assimp"
-        GIT_TAG "v5.0.1"
+        GIT_TAG "v5.2.1"
 )
+set(ASSIMP_BUILD_ASSIMP_TOOLS OFF CACHE INTERNAL "If the supplementary tools for Assimp are built in addition to the library.")
+set(ASSIMP_BUILD_TESTS OFF CACHE INTERNAL "Turn off tests")
+set(ASSIMP_INSTALL OFF CACHE INTERNAL "Disable this if you want to use assimp as a submodule.")
+set(ASSIMP_NO_EXPORT ON CACHE INTERNAL "Disable Assimp's export functionality.")
 FetchContent_MakeAvailable(assimp)
+
+#spirv-headers (NEEDED ONLY FOR SPIRV-TOOLS)
+FetchContent_Declare(
+        spirv-headers
+        GIT_REPOSITORY "https://github.com/KhronosGroup/SPIRV-Headers"
+        GIT_TAG "6a55fade62dec6a406a5a721148f88a2211cbefa"
+)
+set(SPIRV_HEADERS_SKIP_EXAMPLES ON CACHE INTERNAL "" FORCE)
+set(SPIRV_HEADERS_SKIP_INSTALL ON CACHE INTERNAL "" FORCE)
+FetchContent_MakeAvailable(spirv-headers)
+
+#spirv-tools (NEEDED ONLY FOR SHADERC)
+FetchContent_Declare(
+        spirv-tools
+        GIT_REPOSITORY "https://github.com/KhronosGroup/SPIRV-Tools"
+        GIT_TAG "v2022.1"
+)
+set(SPIRV_SKIP_EXECUTABLES ON CACHE INTERNAL "" FORCE)
+set(SPIRV_SKIP_TESTS ON CACHE INTERNAL "" FORCE)
+FetchContent_MakeAvailable(spirv-tools)
+
+#spirv-headers (NEEDED ONLY FOR SHADERC)
+FetchContent_Declare(
+        glslang
+        GIT_REPOSITORY "https://github.com/KhronosGroup/glslang"
+        GIT_TAG "master-tot"
+)
+set(SKIP_GLSLANG_INSTALL ON CACHE INTERNAL "" FORCE)
+set(ENABLE_GLSLANG_BINARIES OFF CACHE INTERNAL "" FORCE)
+set(ENABLE_GLSLANG_INSTALL OFF CACHE INTERNAL "" FORCE)
+FetchContent_MakeAvailable(glslang)
+
+#SHADERC
+FetchContent_Declare(
+        shaderc
+        GIT_REPOSITORY "https://github.com/google/shaderc"
+        GIT_TAG "v2022.1"
+)
+set(SHADERC_SKIP_TESTS ON CACHE INTERNAL "" FORCE)
+set(SHADERC_SKIP_INSTALL ON CACHE BOOL "" FORCE)
+set(SHADERC_SKIP_EXAMPLES ON CACHE BOOL "" FORCE)
+set(SHADERC_SKIP_COPYRIGHT_CHECK ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(shaderc)
 
 if(MSVC)
     target_link_libraries(Spark debug librttr_core_d optimized librttr_core)
@@ -197,6 +238,7 @@ else()
     target_link_libraries(Spark ${CMAKE_DL_LIBS})
 endif()
 target_link_libraries(Spark assimp)
-target_link_libraries(Spark jsoncpp)
+target_link_libraries(Spark debug jsoncppd optimized jsoncpp)
 target_link_libraries(Spark glfw)
 target_link_libraries(Spark spdlog)
+target_link_libraries(Spark shaderc)

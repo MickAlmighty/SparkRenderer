@@ -3,7 +3,7 @@
 layout (location = 0) in vec3 position;
 layout (location = 1) in vec2 textureCoords;
 
-out vec2 texCoords;
+layout (location = 0) out vec2 texCoords;
 
 void main()
 {
@@ -15,18 +15,18 @@ void main()
 #version 450
 layout (location = 0) out vec4 FragColor;
 
-in vec2 texCoords;
+layout (location = 0) in vec2 texCoords;
 
 layout (binding = 0) uniform sampler2D depthTexture;
 layout (binding = 1) uniform sampler2D lightingTexture;
 
-uniform vec2 lightScreenPos;
-uniform vec3 lightColor;
+layout (location = 0) uniform vec2 lightScreenPos;
+layout (location = 1) uniform vec3 lightColor;
 
-uniform float exposure = 0.0034f;
-uniform float decay = 0.995f;
-uniform float density = 0.95f;
-uniform float weight = 6.65;
+layout (location = 2) uniform float exposure = 0.0034f;
+layout (location = 3) uniform float decay = 0.995f;
+layout (location = 4) uniform float density = 0.95f;
+layout (location = 5) uniform float weight = 6.65;
 
 const int samples = 16;
 const float oneStep = 1.0 / float(samples);

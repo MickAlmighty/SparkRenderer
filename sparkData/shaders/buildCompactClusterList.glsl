@@ -2,19 +2,19 @@
 #version 450
 layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 
-uniform uvec2 tilesCount;
+layout (location = 0) uniform uvec2 tilesCount;
 
-layout(std430) buffer ActiveClusters
+layout(std430, binding = 0) buffer ActiveClusters
 {
     uint activeClusters[];
 };
 
-layout(std430) buffer ActiveClustersCount
+layout(std430, binding = 1) buffer ActiveClustersCount
 {
     uint globalActiveClusterCount;
 };
 
-layout(std430) buffer ActiveClusterIndices
+layout(std430, binding = 2) buffer ActiveClusterIndices
 {
     uint activeClusterIndices[];
 };

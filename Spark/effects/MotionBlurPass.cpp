@@ -56,7 +56,7 @@ std::optional<GLuint> MotionBlurPass::process(const std::shared_ptr<ICamera>& ca
         glBindFramebuffer(GL_FRAMEBUFFER, framebuffer1);
 
         motionBlurShader->use();
-        motionBlurShader->bindUniformBuffer("Camera", camera->getUbo());
+        motionBlurShader->bindUniformBuffer("Camera.camera", camera->getUbo());
         motionBlurShader->setMat4("prevViewProj", prevProjectionView);
 
         motionBlurShader->setFloat("blurScale", blurScale);

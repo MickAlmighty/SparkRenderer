@@ -15,19 +15,18 @@ void BlurPass::blurTexture(GLuint texture) const
     glBindFramebuffer(GL_FRAMEBUFFER, vFramebuffer);
     utils::bindTexture2D(vFramebuffer, vTexture.get());
 
-    gaussianBlurShader->use();
-    gaussianBlurShader->setVec2("inverseScreenSize", {1.0f / static_cast<float>(w), 1.0f / static_cast<float>(h)});
-    gaussianBlurShader->setBool("horizontal", false);
+    horizontalGaussianBlurShader->use();
+    horizontalGaussianBlurShader->setVec2("inverseScreenSize", {1.0f / static_cast<float>(w), 1.0f / static_cast<float>(h)});
     glBindTextureUnit(0, texture);
     screenQuad.draw();
 
     utils::bindTexture2D(vFramebuffer, hTexture.get());
-    gaussianBlurShader->setBool("horizontal", true);
+    verticalGaussianBlurShader->use();
+    verticalGaussianBlurShader->setVec2("inverseScreenSize", {1.0f / static_cast<float>(w), 1.0f / static_cast<float>(h)});
     glBindTextureUnit(0, vTexture.get());
 
     screenQuad.draw();
     glBindTextures(0, 1, nullptr);
-    glViewport(0, 0, Spark::get().getRenderingContext().width, Spark::get().getRenderingContext().height);
 
     POP_DEBUG_GROUP();
 }
@@ -46,7 +45,8 @@ void BlurPass::resize(unsigned int width, unsigned int height)
 
 BlurPass::BlurPass(unsigned int width_, unsigned int height_) : w(width_), h(height_)
 {
-    gaussianBlurShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/gaussianBlur.glsl");
+    horizontalGaussianBlurShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/horizontalGaussianBlur.glsl");
+    verticalGaussianBlurShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/verticalGaussianBlur.glsl");
     createGlObjects();
 }
 

@@ -2,7 +2,7 @@
 #version 450
 layout(local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
 
-layout (std140) uniform Camera
+layout (std140, binding = 0) uniform Camera
 {
     vec4 pos;
     mat4 view;
@@ -15,7 +15,7 @@ layout (std140) uniform Camera
     float farZ;
 } camera;
 
-layout (std140) uniform AlgorithmData
+struct ClusterBasedLightCullingData
 {
     vec2 pxTileSize;
     uint clusterCountX;
@@ -24,7 +24,12 @@ layout (std140) uniform AlgorithmData
     float equation3Part1;
     float equation3Part2;
     uint maxLightCount;
-} algorithmData;
+};
+
+layout (std140, binding = 1) uniform AlgorithmData
+{
+    ClusterBasedLightCullingData algorithmData;
+};
 
 struct AABB 
 {
@@ -32,7 +37,7 @@ struct AABB
     vec4 halfSize;
 };
 
-layout(std430) buffer ClusterData
+layout(std430, binding = 0) buffer ClusterData
 {
     AABB clusters[];
 };

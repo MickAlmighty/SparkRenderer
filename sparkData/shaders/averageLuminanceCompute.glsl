@@ -5,15 +5,15 @@ layout(r16f, binding = 0) uniform image2D output_image;
 
 #define HISTOGRAM_BINS 256
 
-layout (std430) buffer LuminanceHistogram {
+layout (std430, binding = 0) buffer LuminanceHistogram {
     uint luminanceHistogram[HISTOGRAM_BINS];
 };
 
-uniform uint pixelCount;
-uniform float minLogLuminance;
-uniform float logLuminanceRange;
-uniform float deltaTime;
-uniform float tau = 1.1f;
+layout (location = 0) uniform uint pixelCount;
+layout (location = 1) uniform float minLogLuminance;
+layout (location = 2) uniform float logLuminanceRange;
+layout (location = 3) uniform float deltaTime;
+layout (location = 4) uniform float tau = 1.1f;
 
 shared float histogramShared[HISTOGRAM_BINS];
 

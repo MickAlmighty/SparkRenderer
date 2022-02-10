@@ -13,14 +13,14 @@ void main()
 layout(triangles) in;
 layout(triangle_strip, max_vertices = 18) out;
 
-uniform mat4 projection;
+layout (location = 0) uniform mat4 projection;
 
-layout(std430) readonly buffer Views
+layout(std430, binding = 0) readonly buffer Views
 {
-    mat4 views[]; // 6 matrices
+    mat4 views[6];
 };
 
-out vec3 cubemapCoord;
+layout (location = 0) out vec3 cubemapCoord;
 
 void main()
 {
@@ -40,11 +40,11 @@ void main()
 #type fragment
 #version 450 core
 layout (location = 0) out vec4 FragColor;
-in vec3 cubemapCoord;
+layout (location = 0) in vec3 cubemapCoord;
 
 layout (binding = 0) uniform samplerCube environmentMap;
-uniform float roughness;
-uniform float textureSize;
+layout (location = 1) uniform float roughness;
+layout (location = 2) uniform float textureSize;
 
 const float PI = 3.14159265359;
 const uint SAMPLE_COUNT = 32u;

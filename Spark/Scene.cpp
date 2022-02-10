@@ -8,7 +8,6 @@
 #include "GUI/ImGui/imgui.h"
 #include "HID/HID.h"
 #include "Logging.h"
-#include "ResourceLoader.h"
 #include "Spark.h"
 #include "renderers/ClusterBasedForwardPlusRenderer.hpp"
 #include "renderers/RendererFactory.hpp"

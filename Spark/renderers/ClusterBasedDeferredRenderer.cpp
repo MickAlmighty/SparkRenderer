@@ -25,7 +25,7 @@ void ClusterBasedDeferredRenderer::processLighting(const std::shared_ptr<Scene>&
     glClearTexImage(lightingTexture.get(), 0, GL_RGBA, GL_FLOAT, &clearRgba);
 
     lightingShader->use();
-    lightingShader->bindUniformBuffer("Camera", camera->getUbo());
+    lightingShader->bindUniformBuffer("Camera.camera", camera->getUbo());
     lightingShader->bindUniformBuffer("AlgorithmData", lightCullingPass.algorithmData);
     lightingShader->bindSSBO("DirLightData", scene->lightManager->getDirLightSSBO());
     lightingShader->bindSSBO("PointLightData", scene->lightManager->getPointLightSSBO());

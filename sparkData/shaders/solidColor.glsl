@@ -2,9 +2,9 @@
 #version 450
 layout (location = 0) in vec3 Position;
 
-uniform mat4 model;
+layout (location = 0) uniform mat4 model;
 
-layout (std140) uniform Camera
+layout (std140, binding = 0) uniform Camera
 {
     vec4 pos;
     mat4 view;
@@ -23,7 +23,7 @@ void main()
 #version 450
 layout (location = 0) out vec3 FragColor;
 
-uniform vec3 color = vec3(1.0f, 1.0f, 1.0f);
+layout (location = 1) uniform vec3 color = vec3(1.0f, 1.0f, 1.0f);
 
 void main() 
 {

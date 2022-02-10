@@ -3,7 +3,7 @@
 layout (location = 0) in vec3 Position;
 layout (location = 1) in vec2 TextureCoords;
 
-out vec2 texCoords;
+layout (location = 0) out vec2 texCoords;
 
 void main()
 {
@@ -19,7 +19,7 @@ layout (binding = 0) uniform sampler2D depthTexture;
 layout (binding = 1) uniform sampler2D normalTexture;
 layout (binding = 2) uniform sampler2D texNoise;
 
-layout (std140) uniform Camera
+layout (std140, binding = 0) uniform Camera
 {
     vec4 pos;
     mat4 view;
@@ -28,20 +28,20 @@ layout (std140) uniform Camera
     mat4 invertedProjection;
 } camera;
 
-layout (std140) uniform Samples
+layout (std140, binding = 1) uniform Samples
 {
     vec4 samples[64];
 };
 
-uniform int kernelSize = 32;
-uniform float radius = 0.3f;
-uniform float bias = 0.01f;
-uniform float power = 1.0f;
-uniform vec2 screenSize = vec2(1280.0f, 720.0f);
+layout (location = 0) uniform int kernelSize = 32;
+layout (location = 1) uniform float radius = 0.3f;
+layout (location = 2) uniform float bias = 0.01f;
+layout (location = 3) uniform float power = 1.0f;
+layout (location = 4) uniform vec2 screenSize = vec2(1280.0f, 720.0f);
 
-in vec2 texCoords;
+layout (location = 0) in vec2 texCoords;
 
-vec4 viewSpacePosFromDepth(float depth, mat4 invProj, vec2 uv) 
+vec4 viewSpacePosFromDepth(float depth, mat4 invProj, vec2 uv)
 {
     vec4 clipSpacePosition = vec4(uv * 2.0 - 1.0, depth, 1.0);
     vec4 viewSpacePosition = invProj * clipSpacePosition;

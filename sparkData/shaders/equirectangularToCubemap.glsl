@@ -13,14 +13,14 @@ void main()
 layout(triangles) in;
 layout(triangle_strip, max_vertices = 18) out;
 
-uniform mat4 projection;
+layout (location = 0) uniform mat4 projection;
 
-layout(std430) readonly buffer Views
+layout(std430, binding = 0) readonly buffer Views
 {
-    mat4 views[]; // 6 matrices
+    mat4 views[6];
 };
 
-out vec3 cubemapCoord;
+layout (location = 0) out vec3 cubemapCoord;
 
 void main()
 {
@@ -40,7 +40,7 @@ void main()
 #type fragment
 #version 450
 layout (location = 0) out vec4 FragColor;
-in vec3 cubemapCoord;
+layout (location = 0) in vec3 cubemapCoord;
 
 layout (binding = 0) uniform sampler2D equirectangularMap;
 

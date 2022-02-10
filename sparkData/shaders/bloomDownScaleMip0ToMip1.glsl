@@ -3,7 +3,7 @@
 layout (location = 0) in vec3 pos;
 layout (location = 1) in vec2 textureCoords;
 
-out vec2 texCoords;
+layout (location = 0) out vec2 texCoords;
 
 void main()
 {
@@ -17,11 +17,11 @@ layout (location = 0) out vec4 FragColor;
 
 layout (binding = 0) uniform sampler2D inputTexture;
 
-uniform vec2 outputTextureSizeInversion; //equals to 1.0f / texture size 
-uniform float threshold = 0.5f;
-uniform float thresholdSize = 1.0f;
+layout (location = 0) uniform vec2 outputTextureSizeInversion; //equals to 1.0f / texture size 
+layout (location = 1) uniform float threshold = 0.5f;
+layout (location = 2) uniform float thresholdSize = 1.0f;
 
-in vec2 texCoords;
+layout (location = 0) in vec2 texCoords;
 
 vec2 texelOffset(vec2 offset)
 {

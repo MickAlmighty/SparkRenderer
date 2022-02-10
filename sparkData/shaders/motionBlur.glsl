@@ -4,7 +4,7 @@
 layout (location = 0) in vec3 position;
 layout (location = 1) in vec2 texture_coords;
 
-out vec2 texCoords;
+layout (location = 0) out vec2 texCoords;
 
 void main()
 {
@@ -17,16 +17,16 @@ void main()
 
 layout (location = 0) out vec3 FragColor;
 
-noperspective in vec2 texCoords;
+layout (location = 0) in vec2 texCoords;
 
 layout (binding = 0) uniform sampler2D colorTexture;
 layout (binding = 1) uniform sampler2D depthTexture;
 
-uniform mat4 prevViewProj;
-uniform float blurScale = 1.0f;
-uniform vec2 texelSize;
+layout (location = 0) uniform mat4 prevViewProj;
+layout (location = 1) uniform float blurScale = 1.0f;
+layout (location = 2) uniform vec2 texelSize;
 
-layout (std140) uniform Camera
+layout (std140, binding = 0) uniform Camera
 {
     vec4 pos;
     mat4 view;

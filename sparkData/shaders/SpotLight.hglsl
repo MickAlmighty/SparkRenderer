@@ -1,0 +1,14 @@
+#ifndef SPOT_LIGHT
+#define SPOT_LIGHT
+
+struct SpotLight {
+    vec3 position;
+    float cutOff;
+    vec3 color;
+    float outerCutOff;
+    vec3 direction;
+    float maxDistance;
+    vec4 boundingSphere; //xyz - sphere center, w - radius
+};
+
+#endif //SPOT_LIGHT

@@ -2,7 +2,7 @@
 #version 450 core
 layout (location = 0) in vec3 aPos;
 
-layout (std140) uniform Camera
+layout (std140, binding = 0) uniform Camera
 {
     vec4 pos;
     mat4 view;
@@ -11,7 +11,7 @@ layout (std140) uniform Camera
     mat4 invertedProjection;
 } camera;
 
-out vec3 texCoords;
+layout (location = 0) out vec3 texCoords;
 
 void main()
 {
@@ -29,7 +29,7 @@ void main()
 #version 450 core
 layout (location = 0) out vec4 FragColor;
 
-in vec3 texCoords;
+layout (location = 0) in vec3 texCoords;
 
 layout (binding = 0) uniform samplerCube environmentMap;
 

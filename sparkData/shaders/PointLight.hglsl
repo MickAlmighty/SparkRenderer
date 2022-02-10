@@ -1,0 +1,11 @@
+#ifndef POINT_LIGHT
+#define POINT_LIGHT
+
+struct PointLight {
+    vec4 positionAndRadius; // radius in w component
+    vec3 color;
+    float nothing2;
+    mat4 modelMat;
+};
+
+#endif //POINT_LIGHT

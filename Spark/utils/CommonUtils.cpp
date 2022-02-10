@@ -12,17 +12,13 @@
 namespace spark::utils
 {
 UniqueTextureHandle createTexture2D(GLuint width, GLuint height, GLenum internalFormat, GLenum format, GLenum pixelFormat, GLenum textureWrapping,
-                              GLenum textureSampling, bool mipMaps, void* data)
+                                    GLenum textureSampling, bool mipMaps, void* data)
 {
     GLuint texture{0};
     glCreateTextures(GL_TEXTURE_2D, 1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
 
-    if(data == nullptr)
-        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, pixelFormat, nullptr);
-    else
-        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, pixelFormat, data);
-
+    glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, pixelFormat, data);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, textureSampling);
 
     if(mipMaps)
@@ -52,7 +48,7 @@ UniqueTextureHandle createTexture2D(GLuint width, GLuint height, GLenum internal
 }
 
 UniqueTextureHandle createCubemap(unsigned int size, GLenum internalFormat, GLenum format, GLenum pixelFormat, GLenum textureWrapping,
-                            GLenum textureSampling, bool mipMaps)
+                                  GLenum textureSampling, bool mipMaps)
 {
     GLuint texture{0};
     glGenTextures(1, &texture);
@@ -241,5 +237,11 @@ void updateCameraUBO(UniformBuffer& buffer, glm::mat4 projection, glm::mat4 view
     const CamData camData{
         glm::vec4(pos, 1.0f), {view, projection, invertedView, invertedProj, viewProjection, invertedViewProjection}, nearPlane, farPlane};
     buffer.updateData<CamData>({camData});
+}
+
+std::string toLowerCase(std::string&& s)
+{
+    std::for_each(s.begin(), s.end(), [](char& c) { c = static_cast<char>(std::tolower(c)); });
+    return s;
 }
 }  // namespace spark::utils

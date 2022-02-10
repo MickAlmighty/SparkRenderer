@@ -34,7 +34,8 @@ class BlurPass
     GLuint vFramebuffer{};
     ScreenQuad screenQuad{};
 
-    std::shared_ptr<resources::Shader> gaussianBlurShader{nullptr};
+    std::shared_ptr<resources::Shader> horizontalGaussianBlurShader{nullptr};
+    std::shared_ptr<resources::Shader> verticalGaussianBlurShader{nullptr};
 
     void createGlObjects();
 };

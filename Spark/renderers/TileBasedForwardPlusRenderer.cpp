@@ -46,7 +46,7 @@ void TileBasedForwardPlusRenderer::depthPrepass(const std::shared_ptr<Scene>& sc
     }
 
     shader->use();
-    shader->bindUniformBuffer("Camera", camera->getUbo());
+    shader->bindUniformBuffer("Camera.camera", camera->getUbo());
     if(const auto it = scene->getRenderingQueues().find(ShaderType::PBR); it != scene->getRenderingQueues().cend())
     {
         for(auto& request : it->second)
@@ -90,7 +90,7 @@ void TileBasedForwardPlusRenderer::lightingPass(const std::shared_ptr<Scene>& sc
     glBindTextureUnit(10, ssaoTexture);
 
     lightingShader->use();
-    lightingShader->bindUniformBuffer("Camera", camera->getUbo());
+    lightingShader->bindUniformBuffer("Camera.camera", camera->getUbo());
     lightingShader->bindSSBO("DirLightData", scene->lightManager->getDirLightSSBO());
     lightingShader->bindSSBO("PointLightData", scene->lightManager->getPointLightSSBO());
     lightingShader->bindSSBO("SpotLightData", scene->lightManager->getSpotLightSSBO());

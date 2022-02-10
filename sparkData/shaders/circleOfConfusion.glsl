@@ -3,7 +3,7 @@
 layout (location = 0) in vec3 Position;
 layout (location = 1) in vec2 TextureCoords;
 
-out vec2 texCoords;
+layout (location = 0) out vec2 texCoords;
 
 void main()
 {
@@ -16,7 +16,7 @@ void main()
 layout (location = 0) out float CircleOfConfusion;
 
 layout (binding = 0) uniform sampler2D depthTexture;
-layout (std140) uniform Camera
+layout (std140, binding = 0) uniform Camera
 {
     vec4 pos;
     mat4 view;
@@ -25,14 +25,13 @@ layout (std140) uniform Camera
     mat4 invertedProjection;
 } camera;
 
-in vec2 texCoords;
+layout (location = 0) in vec2 texCoords;
 
 //depth range for reversed Z depth buffer
-uniform float zNear = 4.1f;
-uniform float zNearEnd = 5.0f;
-
-uniform float zFarStart = 20.5f;
-uniform float zFar = 100.0f;
+layout (location = 0) uniform float zNear = 4.1f;
+layout (location = 1) uniform float zNearEnd = 5.0f;
+layout (location = 2) uniform float zFarStart = 20.5f;
+layout (location = 3) uniform float zFar = 100.0f;
 
 vec4 viewPosFromDepth(float depth, mat4 invProj, vec2 uv) 
 {

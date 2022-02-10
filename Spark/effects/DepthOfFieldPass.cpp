@@ -116,7 +116,7 @@ void DepthOfFieldPass::calculateCircleOfConfusion(GLuint depthTexture, const std
     cocShader->setFloat("zNearEnd", nearEnd);
     cocShader->setFloat("zFarStart", farStart);
     cocShader->setFloat("zFar", farEnd);
-    cocShader->bindUniformBuffer("Camera", camera->getUbo());
+    cocShader->bindUniformBuffer("Camera.camera", camera->getUbo());
     glBindTextureUnit(0, depthTexture);
     screenQuad.draw();
     glBindTextureUnit(0, 0);

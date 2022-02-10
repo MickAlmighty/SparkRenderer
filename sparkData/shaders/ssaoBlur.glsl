@@ -3,7 +3,7 @@
 layout (location = 0) in vec3 Position;
 layout (location = 1) in vec2 TextureCoords;
 
-out vec2 texCoords;
+layout (location = 0) out vec2 texCoords;
 
 void main()
 {
@@ -15,11 +15,10 @@ void main()
 #version 450
 layout (location = 0) out float AmbientOcclusion;
 
+layout (location = 0) in vec2 texCoords;
+
+layout (location = 0) uniform int uBlurSize = 4; // use size of noise texture
 layout (binding = 0) uniform sampler2D uTexInput;
-
-uniform int uBlurSize = 4; // use size of noise texture
-
-in vec2 texCoords; // input from vertex shader
 
 void main() 
 {

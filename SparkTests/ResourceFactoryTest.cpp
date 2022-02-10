@@ -23,62 +23,23 @@ class ResourceFactoryTest : public ::testing::Test
         EXPECT_CALL(sparkMock, getResourceLibrary()).WillRepeatedly(ReturnRef(resourceLibrary));
     }
 
+    const std::filesystem::path root = utility::findFileOrDirectory("sparkData");
+
     private:
-    ResourceLibrary resourceLibrary = ResourceLibrary(utility::findFileOrDirectory("sparkData"));
+    ResourceLibrary resourceLibrary = ResourceLibrary(root);
     MockSpark sparkMock;
     spark::OpenGLContext oglContext{1280, 720, true, true};
 };
 
-TEST_F(ResourceFactoryTest, AllCreatedResourcesAreValid)
-{
-    std::vector<std::shared_ptr<Resource>> createdResources;
-
-    SPARK_INFO(std::filesystem::current_path().string());
-
-    const std::filesystem::path resPath = utility::findFileOrDirectory("sparkData");
-    for(const auto& pathMaybeInvalid : std::filesystem::recursive_directory_iterator(resPath))
-    {
-        if(!pathMaybeInvalid.is_regular_file())
-            continue;
-
-        const auto& validFilePath = pathMaybeInvalid.path();
-        if(const bool fileWithValidExtension = ResourceFactory::isExtensionSupported(validFilePath); fileWithValidExtension)
-        {
-            const auto sceneExts = ResourceFactory::supportedSceneExtensions();
-            if(const auto isScene = std::find(sceneExts.cbegin(), sceneExts.cend(), validFilePath.extension().string()); isScene != sceneExts.cend())
-            {
-                continue;
-            }
-
-            const std::shared_ptr<Resource> resource = ResourceFactory::loadResource(resPath, validFilePath.lexically_relative(resPath));
-            if(resource != nullptr)
-            {
-                createdResources.push_back(resource);
-            }
-            else
-            {
-                ASSERT_TRUE(false);
-            }
-        }
-    }
-
-    ASSERT_TRUE(!createdResources.empty());
-
-    const auto allValid = std::none_of(createdResources.begin(), createdResources.end(), [](const auto& p) { return p == nullptr; });
-    ASSERT_TRUE(allValid);
-}
-
 TEST_F(ResourceFactoryTest, CreatingResourceFromNonexistentFileReturnsNullptr)
 {
-    const std::shared_ptr<Resource> resource =
-        ResourceFactory::loadResource("", "tmp123.obj");
+    const std::shared_ptr<Resource> resource = ResourceFactory::loadResource("", "tmp123.obj");
     ASSERT_TRUE(resource == nullptr);
 }
 
 TEST_F(ResourceFactoryTest, CreatingResourceFromFileWithUnsuportedExtensionReturnsNullptr)
 {
-    const std::shared_ptr<Resource> resource =
-        ResourceFactory::loadResource("", "tmp123.zip");
+    const std::shared_ptr<Resource> resource = ResourceFactory::loadResource("", "tmp123.zip");
     ASSERT_TRUE(resource == nullptr);
 }
 
@@ -106,5 +67,4 @@ TEST_F(ResourceFactoryTest, NumberOfSupportedExtensionsForDistinctResourcesAreSu
         ResourceFactory::supportedAnimationExtensions().size();
     ASSERT_EQ(numberOfAllSupportedExtensions, summedNumberOfSupportedExtensions);
 }
-
 }  // namespace spark::resourceManagement

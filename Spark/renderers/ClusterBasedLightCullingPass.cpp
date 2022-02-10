@@ -80,7 +80,7 @@ void ClusterBasedLightCullingPass::createClusters(const std::shared_ptr<Scene>& 
 
         clusterCreationShader->use();
         clusterCreationShader->bindSSBO("ClusterData", clusters);
-        clusterCreationShader->bindUniformBuffer("Camera", camera->getUbo());
+        clusterCreationShader->bindUniformBuffer("Camera.camera", camera->getUbo());
         clusterCreationShader->bindUniformBuffer("AlgorithmData", algorithmData);
         clusterCreationShader->dispatchCompute(utils::uiCeil(dispatchSize.x, 32u), utils::uiCeil(dispatchSize.y, 32u), dispatchSize.z);
 
@@ -94,7 +94,7 @@ void ClusterBasedLightCullingPass::determineActiveClusters(GLuint depthTexture, 
                                                            const std::shared_ptr<ICamera>& camera)
 {
     determineActiveClustersShader->use();
-    determineActiveClustersShader->bindUniformBuffer("Camera", camera->getUbo());
+    determineActiveClustersShader->bindUniformBuffer("Camera.camera", camera->getUbo());
     determineActiveClustersShader->bindUniformBuffer("AlgorithmData", algorithmData);
     determineActiveClustersShader->bindSSBO("ActiveClusters", activeClusters);
     determineActiveClustersShader->bindSSBO("ClusterData", clusters);
@@ -118,7 +118,7 @@ void ClusterBasedLightCullingPass::buildCompactClusterList()
 void ClusterBasedLightCullingPass::lightCulling(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera)
 {
     clusterBasedLightCullingShader->use();
-    clusterBasedLightCullingShader->bindUniformBuffer("Camera", camera->getUbo());
+    clusterBasedLightCullingShader->bindUniformBuffer("Camera.camera", camera->getUbo());
     clusterBasedLightCullingShader->bindUniformBuffer("AlgorithmData", algorithmData);
     clusterBasedLightCullingShader->bindSSBO("ActiveClusterIndices", activeClusterIndices);
     clusterBasedLightCullingShader->bindSSBO("ClusterData", clusters);

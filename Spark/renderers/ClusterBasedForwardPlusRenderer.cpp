@@ -48,7 +48,7 @@ void ClusterBasedForwardPlusRenderer::depthPrepass(const std::shared_ptr<Scene>&
     }
 
     shader->use();
-    shader->bindUniformBuffer("Camera", camera->getUbo());
+    shader->bindUniformBuffer("Camera.camera", camera->getUbo());
     if(const auto it = scene->getRenderingQueues().find(ShaderType::PBR); it != scene->getRenderingQueues().cend())
     {
         for(auto& request : it->second)
@@ -94,7 +94,7 @@ void ClusterBasedForwardPlusRenderer::lightingPass(const std::shared_ptr<Scene>&
     glBindTextureUnit(10, ssaoTexture);
 
     lightingShader->use();
-    lightingShader->bindUniformBuffer("Camera", camera->getUbo());
+    lightingShader->bindUniformBuffer("Camera.camera", camera->getUbo());
     lightingShader->bindUniformBuffer("AlgorithmData", lightCullingPass.algorithmData);
     lightingShader->bindSSBO("DirLightData", scene->lightManager->getDirLightSSBO());
     lightingShader->bindSSBO("PointLightData", scene->lightManager->getPointLightSSBO());

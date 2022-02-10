@@ -47,7 +47,7 @@ void LightProbesRenderer::process(const std::shared_ptr<Scene>& scene)
     localLightProbesLightingShader->bindSSBO("PointLightData", scene->lightManager->getPointLightSSBO());
     localLightProbesLightingShader->bindSSBO("SpotLightData", scene->lightManager->getSpotLightSSBO());
 
-    localLightProbesLightingShader->bindUniformBuffer("Camera", cameraUbo);
+    localLightProbesLightingShader->bindUniformBuffer("Camera.camera", cameraUbo);
     irradianceShader->bindSSBO("Views", cubemapViewMatrices);
     prefilterShader->bindSSBO("Views", cubemapViewMatrices);
     resampleCubemapShader->bindSSBO("Views", cubemapViewMatrices);

@@ -24,7 +24,7 @@ void TileBasedLightCullingPass::process(GLuint depthTexture, const std::shared_p
     lightProbeIndices.clearData();
 
     tileBasedLightCullingShader->use();
-    tileBasedLightCullingShader->bindUniformBuffer("Camera", camera->getUbo());
+    tileBasedLightCullingShader->bindUniformBuffer("Camera.camera", camera->getUbo());
 
     tileBasedLightCullingShader->bindSSBO("PointLightIndices", pointLightIndices);
     tileBasedLightCullingShader->bindSSBO("SpotLightIndices", spotLightIndices);

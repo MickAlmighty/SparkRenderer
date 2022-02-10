@@ -11,6 +11,7 @@
 
 #include "Enums.h"
 #include "Logging.h"
+#include "Mesh.h"
 #include "Model.h"
 #include "ResourceIdentifier.h"
 #include "Spark.h"
@@ -278,10 +279,10 @@ std::vector<unsigned int> collectIndices(const tinygltf::Model& model, const tin
 }
 }  // namespace
 
-namespace spark
+namespace spark::loaders
 {
-std::shared_ptr<resourceManagement::Resource> GltfLoader::createModel(const std::filesystem::path& resourcesRootPath,
-                                                                      const std::filesystem::path& resourceRelativePath) const
+std::shared_ptr<resourceManagement::Resource> GltfLoader::load(const std::filesystem::path& resourcesRootPath,
+                                                               const std::filesystem::path& resourceRelativePath)
 {
     tinygltf::TinyGLTF loader;
     tinygltf::Model model;
@@ -324,4 +325,16 @@ std::shared_ptr<resourceManagement::Resource> GltfLoader::createModel(const std:
 
     return std::make_shared<resources::Model>(resourceRelativePath, meshes);
 }
-}  // namespace spark
+
+bool GltfLoader::isExtensionSupported(const std::string& ext)
+{
+    const auto supportedExts = supportedExtensions();
+    const auto it = std::find_if(supportedExts.begin(), supportedExts.end(), [&ext](const auto& e) { return e == ext; });
+    return it != supportedExts.end();
+}
+
+std::vector<std::string> GltfLoader::supportedExtensions()
+{
+    return {".gltf"};
+}
+}  // namespace spark::loaders

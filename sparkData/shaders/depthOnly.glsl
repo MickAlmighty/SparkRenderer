@@ -6,9 +6,9 @@ layout (location = 2) in vec2 texture_coords;
 layout (location = 3) in vec3 tangent;
 layout (location = 4) in vec3 bitangent;
 
-uniform mat4 model;
+layout (location = 0) uniform mat4 model;
 
-layout (std140) uniform Camera
+layout (std140, binding = 0) uniform Camera
 {
     vec4 pos;
     mat4 view;

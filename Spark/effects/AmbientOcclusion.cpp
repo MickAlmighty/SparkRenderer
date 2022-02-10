@@ -48,7 +48,7 @@ GLuint AmbientOcclusion::process(GLuint depthTexture, GLuint normalsTexture, con
     ssaoShader->setFloat("bias", bias);
     ssaoShader->setFloat("power", power);
     ssaoShader->setVec2("screenSize", {static_cast<float>(w), static_cast<float>(h)});
-    ssaoShader->bindUniformBuffer("Camera", camera->getUbo());
+    ssaoShader->bindUniformBuffer("Camera.camera", camera->getUbo());
 
     screenQuad.draw();
     glBindTextures(0, 3, nullptr);
