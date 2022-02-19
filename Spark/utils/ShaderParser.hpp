@@ -12,14 +12,13 @@ namespace spark::utils
 class ShaderParser
 {
     public:
-    static std::map<GLenum, std::string> parseShaderFile(const std::string& shaderPath);
+    static std::map<GLenum, std::string> splitShaderSourceByStages(const std::string& shaderPath);
     static bool any_of_files_from_inlude_chain_modified(const std::filesystem::path& shaderPath,
                                                         const std::filesystem::path& cachedShaderAbsolutePath);
 
     private:
     ~ShaderParser() = default;
 
-    static std::string loadShaderStringFromFile(const std::string& shaderPath);
     static std::map<GLenum, std::string> preProcess(const std::string& shaderSource);
     static GLenum shaderTypeFromString(const std::string& type);
 

@@ -1,0 +1,17 @@
+#ifndef CAMERA
+#define CAMERA
+
+struct CameraData
+{
+    vec4 pos;
+    mat4 view;
+    mat4 projection;
+    mat4 invertedView;
+    mat4 invertedProjection;
+    mat4 viewProjection;
+    mat4 invertedViewProjection;
+    float nearZ;
+    float farZ;
+};
+
+#endif  //CAMERA

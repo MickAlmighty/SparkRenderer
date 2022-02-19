@@ -36,7 +36,7 @@ GLuint ToneMapper::process(GLuint inputTexture)
     glBindFramebuffer(GL_FRAMEBUFFER, toneMappingFramebuffer);
 
     toneMappingShader->use();
-    toneMappingShader->setVec2("inversedScreenSize", {1.0f / w, 1.0f / h});
+    toneMappingShader->setVec2("u_Uniforms.inversedScreenSize", {1.0f / w, 1.0f / h});
 
     glBindTextureUnit(0, colorTexture.get());
     glBindTextureUnit(1, averageLuminanceTexture.get());
@@ -71,9 +71,9 @@ void ToneMapper::calculateAverageLuminance()
     // first compute dispatch
     luminanceHistogramComputeShader->use();
     luminanceHistogramComputeShader->bindSSBO("LuminanceHistogram", luminanceHistogram);
-    luminanceHistogramComputeShader->setIVec2("inputTextureSize", glm::ivec2(w, h));
-    luminanceHistogramComputeShader->setFloat("minLogLuminance", minLogLuminance);
-    luminanceHistogramComputeShader->setFloat("oneOverLogLuminanceRange", oneOverLogLuminanceRange);
+    luminanceHistogramComputeShader->setIVec2("u_Uniforms.inputTextureSize", glm::ivec2(w, h));
+    luminanceHistogramComputeShader->setFloat("u_Uniforms.minLogLuminance", minLogLuminance);
+    luminanceHistogramComputeShader->setFloat("u_Uniforms.oneOverLogLuminanceRange", oneOverLogLuminanceRange);
 
     glBindImageTexture(0, colorTexture.get(), 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA16F);
     luminanceHistogramComputeShader->dispatchCompute(w / 16, h / 16, 1);  // localWorkGroups has dimensions of x = 16, y = 16
@@ -82,11 +82,11 @@ void ToneMapper::calculateAverageLuminance()
     // second compute dispatch
     averageLuminanceComputeShader->use();
     averageLuminanceComputeShader->bindSSBO("LuminanceHistogram", luminanceHistogram);
-    averageLuminanceComputeShader->setUInt("pixelCount", w * h);
-    averageLuminanceComputeShader->setFloat("minLogLuminance", minLogLuminance);
-    averageLuminanceComputeShader->setFloat("logLuminanceRange", logLuminanceRange);
-    averageLuminanceComputeShader->setFloat("deltaTime", static_cast<float>(Clock::getDeltaTime()));
-    averageLuminanceComputeShader->setFloat("tau", tau);
+    averageLuminanceComputeShader->setUInt("u_Uniforms.pixelCount", w * h);
+    averageLuminanceComputeShader->setFloat("u_Uniforms.minLogLuminance", minLogLuminance);
+    averageLuminanceComputeShader->setFloat("u_Uniforms.logLuminanceRange", logLuminanceRange);
+    averageLuminanceComputeShader->setFloat("u_Uniforms.deltaTime", static_cast<float>(Clock::getDeltaTime()));
+    averageLuminanceComputeShader->setFloat("u_Uniforms.tau", tau);
 
     glBindImageTexture(0, averageLuminanceTexture.get(), 0, GL_FALSE, 0, GL_READ_WRITE, GL_R16F);
     averageLuminanceComputeShader->dispatchCompute(1, 1, 1);  // localWorkGroups has dimensions of x = 16, y = 16

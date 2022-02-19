@@ -37,7 +37,7 @@ Mesh::~Mesh()
 
 void Mesh::draw(std::shared_ptr<resources::Shader>& shader, glm::mat4 model)
 {
-    shader->setMat4("model", model);
+    shader->setMat4("u_Uniforms.model", model);
 
     std::array<GLuint, 6> texturesToBind{0, 0, 0, 0, 0, 0};
 

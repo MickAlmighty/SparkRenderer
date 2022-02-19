@@ -13,17 +13,19 @@ void main()
 
 #type fragment
 #version 450
+layout (location = 0) in vec2 texCoords;
 layout (location = 0) out vec4 FragColor;
 
 layout (binding = 0) uniform sampler2D inputTexture;
 
-layout (location = 0) uniform vec2 outputTextureSizeInversion; //equals to 1.0f / texture size 
-
-layout (location = 0) in vec2 texCoords;
+layout (push_constant) uniform PushConstants
+{
+    vec2 outputTextureSizeInversion; //equals to 1.0f / texture size 
+} u_Uniforms;
 
 vec2 texelOffset(vec2 offset)
 {
-    return offset * outputTextureSizeInversion;
+    return offset * u_Uniforms.outputTextureSizeInversion;
 }
 
 #define sampleInputRGB(x) texture(inputTexture, x).xyz

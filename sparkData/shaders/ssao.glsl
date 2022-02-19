@@ -13,6 +13,8 @@ void main()
 
 #type fragment
 #version 450
+#include "Camera.hglsl"
+layout (location = 0) in vec2 texCoords;
 layout (location = 0) out float AmbientOcclusion;
 
 layout (binding = 0) uniform sampler2D depthTexture;
@@ -21,25 +23,22 @@ layout (binding = 2) uniform sampler2D texNoise;
 
 layout (std140, binding = 0) uniform Camera
 {
-    vec4 pos;
-    mat4 view;
-    mat4 projection;
-    mat4 invertedView;
-    mat4 invertedProjection;
-} camera;
+    CameraData camera;
+};
 
 layout (std140, binding = 1) uniform Samples
 {
     vec4 samples[64];
 };
 
-layout (location = 0) uniform int kernelSize = 32;
-layout (location = 1) uniform float radius = 0.3f;
-layout (location = 2) uniform float bias = 0.01f;
-layout (location = 3) uniform float power = 1.0f;
-layout (location = 4) uniform vec2 screenSize = vec2(1280.0f, 720.0f);
-
-layout (location = 0) in vec2 texCoords;
+layout (push_constant) uniform Uniforms
+{
+    float radius;
+    float bias;
+    float power;
+    int kernelSize;
+    vec2 screenSize;
+} u_Uniforms;
 
 vec4 viewSpacePosFromDepth(float depth, mat4 invProj, vec2 uv)
 {
@@ -82,7 +81,7 @@ void main()
         discard;
     }
 
-    const vec2 noiseScale = vec2(screenSize.x / 4.0f, screenSize.y / 4.0f);
+    const vec2 noiseScale = vec2(u_Uniforms.screenSize.x / 4.0f, u_Uniforms.screenSize.y / 4.0f);
 
     vec3 fragPos = viewSpacePosFromDepth(depth, camera.invertedProjection, texCoords).xyz;
     vec3 N = getNormal(texCoords);
@@ -94,10 +93,10 @@ void main()
     mat3 TBN = mat3(T, B, N);
 
     float occlusion = 0.0f;
-    for(int i = 0; i < kernelSize; ++i)
+    for(int i = 0; i < u_Uniforms.kernelSize; ++i)
     {
         vec3 sampleP = TBN * samples[i].xyz; // from tangent to view-space
-        sampleP = fragPos + sampleP * radius;
+        sampleP = fragPos + sampleP * u_Uniforms.radius;
 
         vec4 offset = vec4(sampleP, 1.0);
         offset = camera.projection * offset;    // from view to clip-space
@@ -106,10 +105,10 @@ void main()
 
         float sampleDepth = getViewSpacePosition(offset.xy).z;
 
-        float rangeCheck = smoothstep(0.0f, 1.0f, radius / abs(fragPos.z - sampleDepth));
-        occlusion += (sampleDepth >= sampleP.z + bias ? 1.0 : 0.0) * rangeCheck;
+        float rangeCheck = smoothstep(0.0f, 1.0f, u_Uniforms.radius / abs(fragPos.z - sampleDepth));
+        occlusion += (sampleDepth >= sampleP.z + u_Uniforms.bias ? 1.0 : 0.0) * rangeCheck;
     }
 
-    occlusion = 1.0f - (occlusion / kernelSize);
-    AmbientOcclusion.x = clamp(pow(occlusion, power), 0.0f, 1.0f);
+    occlusion = 1.0f - (occlusion / u_Uniforms.kernelSize);
+    AmbientOcclusion.x = clamp(pow(occlusion, u_Uniforms.power), 0.0f, 1.0f);
 }

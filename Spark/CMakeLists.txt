@@ -230,6 +230,23 @@ set(SHADERC_SKIP_EXAMPLES ON CACHE BOOL "" FORCE)
 set(SHADERC_SKIP_COPYRIGHT_CHECK ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(shaderc)
 
+#SPIRV_CROSS
+FetchContent_Declare(
+        spirv_cross
+        GIT_REPOSITORY "https://github.com/KhronosGroup/SPIRV-Cross"
+        GIT_TAG "sdk-1.3.204.0"
+)
+set(SPIRV_CROSS_CLI OFF CACHE INTERNAL "" FORCE)
+set(SPIRV_CROSS_ENABLE_TESTS OFF CACHE INTERNAL "" FORCE)
+set(SPIRV_CROSS_SKIP_INSTALL ON CACHE INTERNAL "" FORCE)
+set(SPIRV_CROSS_ENABLE_HLSL OFF CACHE INTERNAL "" FORCE)
+set(SPIRV_CROSS_ENABLE_MSL OFF CACHE INTERNAL "" FORCE)
+set(SPIRV_CROSS_ENABLE_CPP OFF CACHE INTERNAL "" FORCE)
+set(SPIRV_CROSS_ENABLE_C_API OFF CACHE INTERNAL "" FORCE)
+set(SPIRV_CROSS_ENABLE_C_API OFF CACHE INTERNAL "" FORCE)
+FetchContent_MakeAvailable(spirv_cross)
+target_include_directories(Spark PUBLIC ${spirv_cross_SOURCE_DIR})
+
 if(MSVC)
     target_link_libraries(Spark debug librttr_core_d optimized librttr_core)
 else()
@@ -242,3 +259,4 @@ target_link_libraries(Spark debug jsoncppd optimized jsoncpp)
 target_link_libraries(Spark glfw)
 target_link_libraries(Spark spdlog)
 target_link_libraries(Spark shaderc)
+target_link_libraries(Spark spirv-cross-core spirv-cross-reflect spirv-cross-glsl)

@@ -15,7 +15,7 @@ class Shader : public resourceManagement::Resource
 {
     public:
     Shader(const std::filesystem::path& path_);
-    Shader(const std::filesystem::path& path_, const std::vector<std::pair<GLenum, std::vector<unsigned>>>& spirvShaders_);
+    Shader(const std::filesystem::path& path_, const std::map<GLenum, std::string>& shaders_);
     ~Shader() override;
 
     void use() const;

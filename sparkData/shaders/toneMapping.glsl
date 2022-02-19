@@ -13,55 +13,56 @@ void main()
 
 #type fragment
 #version 450
+layout (location = 0) in vec2 tex_coords;
 layout (location = 0) out vec4 FragColor;
 
 layout (binding = 0) uniform sampler2D inputTexture;
 layout (binding = 1) uniform sampler2D averageLuminance;
 layout (binding = 2) uniform sampler2D bloomTexture;
 
-layout (location = 0) uniform vec2 invertedScreenSize;
-
-layout (location = 0) in vec2 tex_coords;
-
-float A = 0.15;
-float B = 0.50;
-float C = 0.10;
-float D = 0.20;
-float E = 0.02;
-float F = 0.30;
-float W = 11.2;
+layout (push_constant) uniform PushConstants
+{
+    vec2 invertedScreenSize;
+} u_Uniforms;
 
 vec3 tonemapCalculations(vec3 x)
 {
-	return ((x*(A*x + C * B) + D * E) / (x*(A*x + B) + D * F)) - E / F;
+    const float A = 0.15;
+    const float B = 0.50;
+    const float C = 0.10;
+    const float D = 0.20;
+    const float E = 0.02;
+    const float F = 0.30;
+    return ((x*(A*x + C * B) + D * E) / (x*(A*x + B) + D * F)) - E / F;
 }
 
 vec3 uncharted2Tonemap(vec3 inColor)
 {
-	//inColor *= 16.0f;
+    const float W = 11.2;
+    //inColor *= 16.0f;
 
-	float exposureBias = 2.0f;
-	vec3 curr = tonemapCalculations(exposureBias * inColor);
+    float exposureBias = 2.0f;
+    vec3 curr = tonemapCalculations(exposureBias * inColor);
 
-	vec3 whiteScale = vec3(1.0f) / tonemapCalculations(vec3(W));
-	vec3 color = curr * whiteScale;
+    vec3 whiteScale = vec3(1.0f) / tonemapCalculations(vec3(W));
+    vec3 color = curr * whiteScale;
 
-	return pow(color, vec3(1 / 2.2f));
+    return pow(color, vec3(1 / 2.2f));
 }
 
 vec3 reinhardTonemapping(vec3 color)
 {
-	return color / (color + vec3(1));
+    return color / (color + vec3(1));
 }
 
 vec3 ACESFilm(vec3 x)
 {
-	float a = 2.51f;
+    float a = 2.51f;
     float b = 0.03f;
     float c = 2.43f;
     float d = 0.59f;
     float e = 0.14f;
-	return  clamp((x * (a * x + b)) / (x * (c * x + d) + e), 0.0f, 1.0f);
+    return  clamp((x * (a * x + b)) / (x * (c * x + d) + e), 0.0f, 1.0f);
 }
 
 vec3 approximationLinearToSRGB(vec3 linearColor)
@@ -71,8 +72,8 @@ vec3 approximationLinearToSRGB(vec3 linearColor)
 
 vec3 accurateLinearToSRGB(vec3 linearColor)
 {
-	// https://seblagarde.files.wordpress.com/2015/07/course_notes_moving_frostbite_to_pbr_v32.pdf
-	// page 88
+    // https://seblagarde.files.wordpress.com/2015/07/course_notes_moving_frostbite_to_pbr_v32.pdf
+    // page 88
     vec3 sRGBLo = linearColor * 12.92f;
     vec3 sRGBHi = (pow(abs(linearColor), vec3(1.0f / 2.4)) * 1.055f) - 0.055f;
     vec3 sRGB;
@@ -84,13 +85,13 @@ vec3 accurateLinearToSRGB(vec3 linearColor)
 
 void main()
 {
-	vec3 color = texture(inputTexture, tex_coords).xyz;
-	float avgLuminance = texture(averageLuminance, tex_coords).x;
+    vec3 color = texture(inputTexture, tex_coords).xyz;
+    float avgLuminance = texture(averageLuminance, tex_coords).x;
 
-	color /= avgLuminance;
-	vec4 resultColor = vec4(approximationLinearToSRGB(ACESFilm(color)), 0.0f);
-	//resultColor = approximationLinearToSRGB(resultColor);
-	resultColor.a = dot(resultColor.rgb, vec3(0.299, 0.587, 0.114));
-	
-	FragColor = resultColor;
+    color /= avgLuminance;
+    vec4 resultColor = vec4(approximationLinearToSRGB(ACESFilm(color)), 0.0f);
+    //resultColor = approximationLinearToSRGB(resultColor);
+    resultColor.a = dot(resultColor.rgb, vec3(0.299, 0.587, 0.114));
+
+    FragColor = resultColor;
 }

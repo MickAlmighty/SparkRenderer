@@ -18,7 +18,11 @@ layout (location = 0) out vec4 FragColor;
 layout (location = 0) in vec2 texCoords;
 
 layout (binding = 0) uniform sampler2D image;
-layout (location = 0) uniform vec2 inverseScreenSize;
+
+layout (push_constant) uniform PushConstants
+{
+    vec2 inverseScreenSize;
+} u_Uniforms;
 
 const float weights[4] = {
     0.383103,
@@ -36,7 +40,7 @@ const float weights5x5[3] = {
 
 void main() 
 {
-    const vec2 direction = vec2(inverseScreenSize.x, 0.0f);
+    const vec2 direction = vec2(u_Uniforms.inverseScreenSize.x, 0.0f);
 
     vec4 color = texture(image, texCoords) * weights[0];
     for(int i = 1; i < 4; ++i)

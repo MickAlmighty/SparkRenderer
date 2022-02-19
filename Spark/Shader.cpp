@@ -3,21 +3,12 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "Logging.h"
-#include "utils/ShaderParser.hpp"
 
 namespace spark::resources
 {
-Shader::Shader(const std::filesystem::path& path_) : Resource(path_)
+Shader::Shader(const std::filesystem::path& path_, const std::map<GLenum, std::string>& shaders_)
 {
-    const auto shaderIds = compileShaders(utils::ShaderParser::parseShaderFile(path.string()));
-    linkProgram(shaderIds);
-
-    shaderDescriptor.acquireShaderResources(ID);
-}
-
-Shader::Shader(const std::filesystem::path& path_, const std::vector<std::pair<GLenum, std::vector<unsigned>>>& spirvShaders_) : Resource(path_)
-{
-    const auto shaderIds = compileShaders(spirvShaders_);
+    const auto shaderIds = compileShaders(shaders_);
     linkProgram(shaderIds);
 
     shaderDescriptor.acquireShaderResources(ID);
@@ -41,37 +32,6 @@ std::vector<GLuint> Shader::compileShaders(const std::map<GLenum, std::string>& 
         glCompileShader(shader);
         GLint success;
 
-        glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-
-        if(!success)
-        {
-            GLchar infoLog[512];
-            glGetShaderInfoLog(shader, 512, nullptr, infoLog);
-
-            std::string fullInfo = getPath().string();
-            fullInfo.append("\n\rERROR::SHADER::COMPILATION_FAILED, cause: ");
-            fullInfo.append(infoLog);
-            throw std::runtime_error(fullInfo);
-        }
-        shaderIds.push_back(shader);
-    }
-
-    return shaderIds;
-}
-
-std::vector<GLuint> Shader::compileShaders(const std::vector<std::pair<GLenum, std::vector<unsigned>>>& spirvShaders)
-{
-    std::vector<GLuint> shaderIds;
-    shaderIds.reserve(spirvShaders.size());
-    for(const auto& [shaderType, shaderBinary] : spirvShaders)
-    {
-        const GLuint shader = glCreateShader(shaderType);
-
-        glShaderBinary(1, &shader, GL_SHADER_BINARY_FORMAT_SPIR_V, shaderBinary.data(), static_cast<GLsizei>(shaderBinary.size() * sizeof(unsigned)));
-        const char* vsEntryPoint = "main";
-        glSpecializeShader(shader, vsEntryPoint, 0, nullptr, nullptr);
-
-        GLint success;
         glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
 
         if(!success)

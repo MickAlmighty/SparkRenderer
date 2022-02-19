@@ -1,17 +1,12 @@
 #type compute
 #version 450
+#include "Camera.hglsl"
 layout(local_size_x = 1, local_size_y = 16, local_size_z = 1) in;
 
 layout (std140, binding = 0) uniform Camera
 {
-    vec4 pos;
-    mat4 view;
-    mat4 projection;
-    mat4 invertedView;
-    mat4 invertedProjection;
-    mat4 viewProjection;
-    mat4 invertedViewProjection;
-} camera;
+    CameraData camera;
+};
 
 struct ClusterBasedLightCullingData
 {
@@ -174,27 +169,6 @@ void cullPointLights()
         PointLight p = pointLights[i];
         const vec3 pPos = (camera.view * vec4(p.positionAndRadius.xyz, 1.0f)).xyz;
         const float pRadius = p.positionAndRadius.w;
-
-//        vec3 pMin = pPos - pRadius;
-//        vec3 pMax = pPos + pRadius;
-//
-//        const vec3 clusterMin = cluster.center - cluster.halfSize;
-//        uvec3 lightMaskCellIndexStart = uvec3(max(vec3(0), min(vec3(10), floor((pMin - clusterMin) * clusterRangeReciprocal))));
-//        uvec3 lightMaskCellIndexEnd = uvec3(max(vec3(0), min(vec3(10), floor((pMax - clusterMin) * clusterRangeReciprocal))));
-//
-//        uvec3 lightMask = uvec3(0xFFFFFFFF);
-//        lightMask >>= 31 - (lightMaskCellIndexEnd - lightMaskCellIndexStart);
-//        lightMask <<= lightMaskCellIndexStart;
-//
-//        uint clusterOccupancyMask = 0;
-//        clusterOccupancyMask = bitfieldInsert(clusterOccupancyMask, lightMask.x, 0, 10);
-//        clusterOccupancyMask = bitfieldInsert(clusterOccupancyMask, lightMask.y, 10, 10);
-//        clusterOccupancyMask = bitfieldInsert(clusterOccupancyMask, lightMask.z, 20, 10);
-//
-//        bool isIntersectingWithGeometry = bool(cluster.occupancyMask & clusterOccupancyMask);
-//
-//        if (!isIntersectingWithGeometry)
-//            continue;
 
         uint lightCount = 0;
         if (testSphereVsAABB(pPos, pRadius, cluster.center, cluster.halfSize))

@@ -1,23 +1,21 @@
 #type vertex
 #version 450
+#include "Camera.hglsl"
 layout (location = 0) in vec3 position;
 layout (location = 1) in vec3 normal;
 layout (location = 2) in vec2 texture_coords;
 layout (location = 3) in vec3 tangent;
 layout (location = 4) in vec3 bitangent;
 
-layout (location = 0) uniform mat4 model;
+layout (push_constant) uniform Model
+{
+    mat4 model;
+} u_Uniforms;
 
 layout (std140, binding = 0) uniform Camera
 {
-    vec4 pos;
-    mat4 view;
-    mat4 projection;
-    mat4 invertedView;
-    mat4 invertedProjection;
-    mat4 viewProjection;
-    mat4 invertedViewProjection;
-} camera;
+    CameraData camera;
+};
 
 layout (location = 0) out VS_OUT {
     vec2 tex_coords;
@@ -30,9 +28,9 @@ layout (location = 0) out VS_OUT {
 
 void main()
 {
-    vec4 worldPosition = model * vec4(position, 1);
+    vec4 worldPosition = u_Uniforms.model * vec4(position, 1);
 
-    mat3 normalMatrix = mat3(transpose(inverse(model)));
+    mat3 normalMatrix = mat3(transpose(inverse(u_Uniforms.model)));
     vec3 T = normalize(normalMatrix * tangent);
     vec3 N = normalize(normalMatrix * normal);
     T = normalize(T - dot(T, N) * N);
@@ -45,13 +43,14 @@ void main()
     vs_out.tangentCamPos  = inverseTBN * camera.pos.xyz;
     vs_out.tex_coords = texture_coords;
     vs_out.TBN = TBN;
-    vs_out.worldNormal = vec3(model * vec4(normal, 0));
+    vs_out.worldNormal = vec3(u_Uniforms.model * vec4(normal, 0));
 
     gl_Position = camera.viewProjection * worldPosition;
 }
 
 #type fragment
 #version 450
+#include "Camera.hglsl"
 #include "pbrLighting.hglsl"
 #include "DirLight.hglsl"
 #include "PointLight.hglsl"
@@ -85,14 +84,8 @@ layout (location = 0) in VS_OUT {
 
 layout (std140, binding = 0) uniform Camera
 {
-    vec4 pos;
-    mat4 view;
-    mat4 projection;
-    mat4 invertedView;
-    mat4 invertedProjection;
-    mat4 viewProjection;
-    mat4 invertedViewProjection;
-} camera;
+    CameraData camera;
+};
 
 struct LightProbe {
     uvec2 irradianceCubemapHandle;

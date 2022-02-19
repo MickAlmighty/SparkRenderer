@@ -56,13 +56,13 @@ std::optional<GLuint> MotionBlurPass::process(const std::shared_ptr<ICamera>& ca
         glBindFramebuffer(GL_FRAMEBUFFER, framebuffer1);
 
         motionBlurShader->use();
-        motionBlurShader->bindUniformBuffer("Camera.camera", camera->getUbo());
-        motionBlurShader->setMat4("prevViewProj", prevProjectionView);
+        motionBlurShader->bindUniformBuffer("Camera", camera->getUbo());
+        motionBlurShader->setMat4("u_Uniforms.prevViewProj", prevProjectionView);
 
-        motionBlurShader->setFloat("blurScale", blurScale);
+        motionBlurShader->setFloat("u_Uniforms.blurScale", blurScale);
 
         const glm::vec2 texelSize = {1.0f / static_cast<float>(w), 1.0f / static_cast<float>(h)};
-        motionBlurShader->setVec2("texelSize", texelSize);
+        motionBlurShader->setVec2("u_Uniforms.texelSize", texelSize);
 
         const std::array<GLuint, 2> textures{colorTexture, depthTexture};
         glBindTextures(0, textures.size(), textures.data());

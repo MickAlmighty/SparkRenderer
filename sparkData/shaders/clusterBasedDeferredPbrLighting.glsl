@@ -1,11 +1,13 @@
 #type compute
 #version 450
+#include "Camera.hglsl"
 #include "pbrLighting.hglsl"
 #include "DirLight.hglsl"
 #include "PointLight.hglsl"
 #include "SpotLight.hglsl"
 #include "Material.hglsl"
 #include "IBL.hglsl"
+#include "Constants.hglsl"
 
 layout(local_size_x = 16, local_size_y = 16) in;
 
@@ -21,20 +23,10 @@ layout(binding = 7) uniform sampler2D rougnessMetalnessImage;
 
 layout(rgba16f, binding = 0) writeonly uniform image2D lightOutput;
 
-#define M_PI 3.14159265359 
-
 layout (std140, binding = 0) uniform Camera
 {
-    vec4 pos;
-    mat4 view;
-    mat4 projection;
-    mat4 invertedView;
-    mat4 invertedProjection;
-    mat4 viewProjection;
-    mat4 invertedViewProjection;
-    float nearZ;
-    float farZ;
-} camera;
+    CameraData camera;
+};
 
 struct ClusterBasedLightCullingData
 {

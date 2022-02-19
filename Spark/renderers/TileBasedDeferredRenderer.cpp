@@ -25,7 +25,7 @@ void TileBasedDeferredRenderer::processLighting(const std::shared_ptr<Scene>& sc
     glClearTexImage(lightingTexture.get(), 0, GL_RGBA, GL_FLOAT, &clearRgba);
 
     lightingShader->use();
-    lightingShader->bindUniformBuffer("Camera.camera", camera->getUbo());
+    lightingShader->bindUniformBuffer("Camera", camera->getUbo());
     lightingShader->bindSSBO("DirLightData", scene->lightManager->getDirLightSSBO());
     lightingShader->bindSSBO("PointLightData", scene->lightManager->getPointLightSSBO());
     lightingShader->bindSSBO("SpotLightData", scene->lightManager->getSpotLightSSBO());

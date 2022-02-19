@@ -41,6 +41,16 @@ void PbrCubemapTexture::setup(GLuint hdrTexture, unsigned cubemapSize)
     resampleCubemapShader->bindSSBO("Views", cubemapViewMatrices);
     equirectangularToCubemapShader->bindSSBO("Views", cubemapViewMatrices);
 
+    const glm::mat4 cubemapProjection = utils::getProjectionReversedZ(cubemapSize, cubemapSize, 90.0f, 0.05f, 2000.0f);
+    irradianceShader->use();
+    irradianceShader->setMat4("u_Uniforms.projection", cubemapProjection);
+    prefilterShader->use();
+    prefilterShader->setMat4("u_Uniforms.projection", cubemapProjection);
+    resampleCubemapShader->use();
+    resampleCubemapShader->setMat4("u_Uniforms.projection", cubemapProjection);
+    equirectangularToCubemapShader->use();
+    equirectangularToCubemapShader->setMat4("u_Uniforms.projection", cubemapProjection);
+
     const auto envCubemap = createEnvironmentCubemapWithMipmapChain(captureFBO, hdrTexture, cubemapSize, cube, equirectangularToCubemapShader);
     this->irradianceCubemap = createIrradianceCubemap(captureFBO, envCubemap, cube, irradianceShader);
     this->prefilteredCubemap = createPreFilteredCubemap(captureFBO, envCubemap, cubemapSize, cube, prefilterShader, resampleCubemapShader);
@@ -118,7 +128,7 @@ utils::TextureHandle PbrCubemapTexture::createPreFilteredCubemap(GLuint framebuf
     const GLuint maxMipLevels = 5;
     prefilterShader->use();
     glBindTextureUnit(0, environmentCubemap.get());
-    prefilterShader->setFloat("textureSize", static_cast<float>(envCubemapSize));
+    prefilterShader->setFloat("u_Uniforms2.textureSize", static_cast<float>(envCubemapSize));
 
     for(unsigned int mip = 1; mip < maxMipLevels; ++mip)
     {
@@ -127,7 +137,7 @@ utils::TextureHandle PbrCubemapTexture::createPreFilteredCubemap(GLuint framebuf
         glNamedFramebufferTexture(framebuffer, GL_COLOR_ATTACHMENT0, prefilteredMap.get(), mip);
 
         const float roughness = static_cast<float>(mip) / static_cast<float>(maxMipLevels - 1);
-        prefilterShader->setFloat("roughness", roughness);
+        prefilterShader->setFloat("u_Uniforms2.roughness", roughness);
 
         cube.draw();
     }

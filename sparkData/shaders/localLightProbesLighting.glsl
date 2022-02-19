@@ -13,6 +13,7 @@ void main()
 
 #type fragment
 #version 450
+#include "Camera.hglsl"
 layout(location = 0) out vec4 FragColor;
 
 layout (location = 0) in vec2 texCoords;
@@ -25,12 +26,8 @@ layout(binding = 3) uniform sampler2D rougnessMetalnessTexture;
 
 layout (std140, binding = 0) uniform Camera
 {
-    vec4 pos;
-    mat4 view;
-    mat4 projection;
-    mat4 invertedView;
-    mat4 invertedProjection;
-} camera;
+    CameraData camera;
+};
 
 struct DirLight {
     vec3 direction;

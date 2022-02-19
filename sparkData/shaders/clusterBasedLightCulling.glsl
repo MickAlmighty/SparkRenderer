@@ -1,17 +1,12 @@
 #type compute
 #version 450
+#include "Camera.hglsl"
 layout(local_size_x = 1, local_size_y = 16, local_size_z = 1) in;
 
 layout (std140, binding = 0) uniform Camera
 {
-    vec4 pos;
-    mat4 view;
-    mat4 projection;
-    mat4 invertedView;
-    mat4 invertedProjection;
-    mat4 viewProjection;
-    mat4 invertedViewProjection;
-} camera;
+    CameraData camera;
+};
 
 struct ClusterBasedLightCullingData
 {

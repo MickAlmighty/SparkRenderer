@@ -7,6 +7,7 @@
 #include "Material.hglsl"
 #include "Constants.hglsl"
 #include "IBL.hglsl"
+#include "Camera.hglsl"
 
 layout(local_size_x = 16, local_size_y = 16) in;
 
@@ -31,14 +32,8 @@ shared uint lightBeginIndex;
 
 layout (std140, binding = 0) uniform Camera
 {
-    vec4 pos;
-    mat4 view;
-    mat4 projection;
-    mat4 invertedView;
-    mat4 invertedProjection;
-    mat4 viewProjection;
-    mat4 invertedViewProjection;
-} camera;
+    CameraData camera;
+};
 
 struct LightProbe {
     uvec2 irradianceCubemapHandle;

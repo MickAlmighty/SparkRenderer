@@ -6,9 +6,12 @@ layout(rgba16f, binding = 0) uniform image2D img_input;
 #define HISTOGRAM_BINS 256
 #define EPSILON 0.005
 
-layout (location = 0) uniform ivec2 inputTextureSize;
-layout (location = 1) uniform float minLogLuminance;
-layout (location = 2) uniform float oneOverLogLuminanceRange;
+layout (push_constant) uniform PushConstants
+{
+    ivec2 inputTextureSize;
+    float minLogLuminance;
+    float oneOverLogLuminanceRange;
+} u_Uniforms;
 
 layout (std430, binding = 0) buffer LuminanceHistogram {
     uint luminanceHistogram[HISTOGRAM_BINS];
@@ -25,7 +28,7 @@ void main()
 
     barrier();
 
-    if (gl_GlobalInvocationID.x < inputTextureSize.x || gl_GlobalInvocationID.y < inputTextureSize.y)
+    if (gl_GlobalInvocationID.x < u_Uniforms.inputTextureSize.x || gl_GlobalInvocationID.y < u_Uniforms.inputTextureSize.y)
     {
         ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);
         vec4 pixColor = imageLoad(img_input, pixel_coords);
@@ -52,6 +55,6 @@ uint HDRToHistogramBin(vec3 hdrColor)
         return 0;
     }
 
-    float logLuminance = clamp((log2(luminance) - minLogLuminance) * oneOverLogLuminanceRange, 0.0f, 1.0f);
+    float logLuminance = clamp((log2(luminance) - u_Uniforms.minLogLuminance) * u_Uniforms.oneOverLogLuminanceRange, 0.0f, 1.0f);
     return uint(logLuminance * 254.0 + 1.0);
 }

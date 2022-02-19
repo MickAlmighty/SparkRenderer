@@ -20,13 +20,13 @@ LightProbesRenderer::LightProbesRenderer() : localLightProbeGBuffer(sceneCubemap
 
     const glm::mat4 cubemapProjection = utils::getProjectionReversedZ(sceneCubemapSize, sceneCubemapSize, 90.0f, 0.05f, 100.0f);
     irradianceShader->use();
-    irradianceShader->setMat4("projection", cubemapProjection);
+    irradianceShader->setMat4("u_Uniforms.projection", cubemapProjection);
     prefilterShader->use();
-    prefilterShader->setMat4("projection", cubemapProjection);
+    prefilterShader->setMat4("u_Uniforms.projection", cubemapProjection);
     resampleCubemapShader->use();
-    resampleCubemapShader->setMat4("projection", cubemapProjection);
+    resampleCubemapShader->setMat4("u_Uniforms.projection", cubemapProjection);
     equirectangularToCubemapShader->use();
-    equirectangularToCubemapShader->setMat4("projection", cubemapProjection);
+    equirectangularToCubemapShader->setMat4("u_Uniforms.projection", cubemapProjection);
 }
 
 void LightProbesRenderer::process(const std::shared_ptr<Scene>& scene)
@@ -47,7 +47,7 @@ void LightProbesRenderer::process(const std::shared_ptr<Scene>& scene)
     localLightProbesLightingShader->bindSSBO("PointLightData", scene->lightManager->getPointLightSSBO());
     localLightProbesLightingShader->bindSSBO("SpotLightData", scene->lightManager->getSpotLightSSBO());
 
-    localLightProbesLightingShader->bindUniformBuffer("Camera.camera", cameraUbo);
+    localLightProbesLightingShader->bindUniformBuffer("Camera", cameraUbo);
     irradianceShader->bindSSBO("Views", cubemapViewMatrices);
     prefilterShader->bindSSBO("Views", cubemapViewMatrices);
     resampleCubemapShader->bindSSBO("Views", cubemapViewMatrices);

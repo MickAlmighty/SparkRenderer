@@ -13,19 +13,21 @@ void main()
 
 #type fragment
 #version 450
+layout (location = 0) in vec2 texCoords;
 layout (location = 0) out vec4 FragColor;
 
 layout (binding = 0) uniform sampler2D inputTexture;
 
-layout (location = 0) uniform vec2 outputTextureSizeInversion; //equals to 1.0f / texture size 
-layout (location = 1) uniform float threshold = 0.5f;
-layout (location = 2) uniform float thresholdSize = 1.0f;
-
-layout (location = 0) in vec2 texCoords;
+layout (push_constant) uniform PushConstants
+{
+    vec2 outputTextureSizeInversion; //equals to 1.0f / texture size 
+    float threshold;
+    float thresholdSize;
+} u_Uniforms;
 
 vec2 texelOffset(vec2 offset)
 {
-    return offset * outputTextureSizeInversion;
+    return offset * u_Uniforms.outputTextureSizeInversion;
 }
 
 #define sampleInputRGB(x) texture(inputTexture, x).xyz
@@ -82,7 +84,7 @@ vec3 sampleTexture()
 
     vec3 outputColor = redHBox + yellowHBox + greenHBox + blueHBox + purpleHBox;
 
-    return getBringhtPassColor(outputColor, threshold, thresholdSize);
+    return getBringhtPassColor(outputColor, u_Uniforms.threshold, u_Uniforms.thresholdSize);
 }
 
 void main()

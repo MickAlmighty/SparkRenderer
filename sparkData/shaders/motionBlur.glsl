@@ -14,26 +14,23 @@ void main()
 
 #type fragment
 #version 450
-
-layout (location = 0) out vec3 FragColor;
-
+#include "Camera.hglsl"
 layout (location = 0) in vec2 texCoords;
+layout (location = 0) out vec3 FragColor;
 
 layout (binding = 0) uniform sampler2D colorTexture;
 layout (binding = 1) uniform sampler2D depthTexture;
 
-layout (location = 0) uniform mat4 prevViewProj;
-layout (location = 1) uniform float blurScale = 1.0f;
-layout (location = 2) uniform vec2 texelSize;
+layout (push_constant) uniform PushConstants
+{
+    mat4 prevViewProj;
+    float blurScale;
+} u_Uniforms;
 
 layout (std140, binding = 0) uniform Camera
 {
-    vec4 pos;
-    mat4 view;
-    mat4 projection;
-    mat4 invertedView;
-    mat4 invertedProjection;
-} camera;
+    CameraData camera;
+};
 
 vec4 worldPosFromDepth(float depth, mat4 invProj, mat4 invView) {
     float z = depth;
@@ -56,7 +53,7 @@ void main()
     const float depthValue = texture(depthTexture, texCoords).x;
 
     const vec4 worldPos = worldPosFromDepth(depthValue, camera.invertedProjection, camera.invertedView);
-    const vec4 previousClipSpacePos = prevViewProj * worldPos;
+    const vec4 previousClipSpacePos = u_Uniforms.prevViewProj * worldPos;
     const vec2 previousNdcPos = (previousClipSpacePos.xyz / previousClipSpacePos.w).xy;
 
     //screen space vectors
@@ -64,7 +61,7 @@ void main()
     const vec2 previousPos = previousNdcPos.xy * 0.5 + 0.5;
 
     const vec2 velocityNotScaled = previousPos - currentPos;
-    const vec2 velocity = velocityNotScaled * blurScale;
+    const vec2 velocity = velocityNotScaled * u_Uniforms.blurScale;
 
     const vec2 blurStartTexCoords = texCoords - velocity * 0.5f;
 

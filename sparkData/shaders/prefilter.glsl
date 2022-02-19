@@ -13,7 +13,10 @@ void main()
 layout(triangles) in;
 layout(triangle_strip, max_vertices = 18) out;
 
-layout (location = 0) uniform mat4 projection;
+layout (push_constant) uniform Projection
+{
+    mat4 projection;
+} u_Uniforms;
 
 layout(std430, binding = 0) readonly buffer Views
 {
@@ -30,7 +33,7 @@ void main()
         {
             cubemapCoord = gl_in[i].gl_Position.xyz;
             gl_Layer = face;
-            gl_Position = projection * views[face] * gl_in[i].gl_Position;
+            gl_Position = u_Uniforms.projection * views[face] * gl_in[i].gl_Position;
             EmitVertex();
         }
         EndPrimitive();
@@ -39,12 +42,16 @@ void main()
 
 #type fragment
 #version 450 core
-layout (location = 0) out vec4 FragColor;
 layout (location = 0) in vec3 cubemapCoord;
+layout (location = 0) out vec4 FragColor;
 
 layout (binding = 0) uniform samplerCube environmentMap;
-layout (location = 1) uniform float roughness;
-layout (location = 2) uniform float textureSize;
+
+layout (push_constant) uniform PushConstantsFS
+{
+    float roughness;
+    float textureSize;
+} u_Uniforms2;
 
 const float PI = 3.14159265359;
 const uint SAMPLE_COUNT = 32u;
@@ -70,7 +77,7 @@ void main()
     for(uint i = 0u; i < SAMPLE_COUNT; ++i)
     {
         vec2 Xi = Hammersley(i, SAMPLE_COUNT);
-        vec3 H  = ImportanceSampleGGX(Xi, roughness, tangentToWorld);
+        vec3 H  = ImportanceSampleGGX(Xi, u_Uniforms2.roughness, tangentToWorld);
         float NdotH = max(dot(N, H), 0.0);
         vec3 L  = normalize(2.0 * NdotH * H - V);
 
@@ -78,14 +85,14 @@ void main()
         if(NdotL > 0.0)
         {
             // sample from the environment's mip level based on roughness/pdf
-            float D = DistributionGGX(NdotH, roughness);
+            float D = DistributionGGX(NdotH, u_Uniforms2.roughness);
             float pdf = D * NdotH / (4.0 * NdotH) + 0.0001; 
 
-            float resolution = textureSize; // resolution of source cubemap (per face)
+            float resolution = u_Uniforms2.textureSize; // resolution of source cubemap (per face)
             float saTexel = 4.0 * PI / (6.0 * resolution * resolution);
             float saSample = 1.0 / (float(SAMPLE_COUNT) * pdf + 0.0001);
 
-            float mipLevel = roughness == 0.0 ? 0.0 : 0.5 * log2(saSample / saTexel);
+            float mipLevel = u_Uniforms2.roughness == 0.0 ? 0.0 : 0.5 * log2(saSample / saTexel);
 
             prefilteredColor += textureLod(environmentMap, L, mipLevel).rgb * NdotL;
             totalWeight += NdotL;

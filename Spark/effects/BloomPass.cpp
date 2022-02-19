@@ -67,9 +67,9 @@ void BloomPass::downsampleFromMip0ToMip1(GLuint brightPassTexture)
     glBindFramebuffer(GL_FRAMEBUFFER, fboMip1);
 
     bloomDownScaleShaderMip0ToMip1->use();
-    bloomDownScaleShaderMip0ToMip1->setVec2("outputTextureSizeInversion", glm::vec2(1.0f / (w / 2.0f), 1.0f / (w / 2.0f)));
-    bloomDownScaleShaderMip0ToMip1->setFloat("threshold", threshold);
-    bloomDownScaleShaderMip0ToMip1->setFloat("thresholdSize", thresholdSize);
+    bloomDownScaleShaderMip0ToMip1->setVec2("u_Uniforms.outputTextureSizeInversion", glm::vec2(1.0f / (w / 2.0f), 1.0f / (w / 2.0f)));
+    bloomDownScaleShaderMip0ToMip1->setFloat("u_Uniforms.threshold", threshold);
+    bloomDownScaleShaderMip0ToMip1->setFloat("u_Uniforms.thresholdSize", thresholdSize);
     glBindTextureUnit(0, brightPassTexture);
     screenQuad.draw();
     POP_DEBUG_GROUP()
@@ -82,7 +82,7 @@ void BloomPass::downsampleTexture(GLuint framebuffer, GLuint texture, GLuint vie
 
     bloomDownScaleShader->use();
     const auto lowerMipTextureSize = glm::vec2(1.0f / (viewportWidth / 2.0f), 1.0f / (viewportWidth / 2.0f));
-    bloomDownScaleShader->setVec2("outputTextureSizeInversion", lowerMipTextureSize);
+    bloomDownScaleShader->setVec2("u_Uniforms.outputTextureSizeInversion", lowerMipTextureSize);
     glBindTextureUnit(0, texture);
     screenQuad.draw();
 }
@@ -93,9 +93,9 @@ void BloomPass::upsampleTexture(GLuint framebuffer, GLuint texture, GLuint viewp
     glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
 
     bloomUpsamplerShader->use();
-    bloomUpsamplerShader->setFloat("intensity", bloomIntensity);
-    bloomUpsamplerShader->setFloat("radius", radius);
-    bloomUpsamplerShader->setVec2("outputTextureSizeInversion", glm::vec2(1.0f / viewportWidth, 1.0f / viewportWidth));
+    bloomUpsamplerShader->setFloat("u_Uniforms.intensity", bloomIntensity);
+    bloomUpsamplerShader->setFloat("u_Uniforms.radius", radius);
+    bloomUpsamplerShader->setVec2("u_Uniforms.outputTextureSizeInversion", glm::vec2(1.0f / viewportWidth, 1.0f / viewportWidth));
     glBindTextureUnit(0, texture);
     screenQuad.draw();
 };

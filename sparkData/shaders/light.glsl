@@ -20,6 +20,7 @@ void main()
 #include "Material.hglsl"
 #include "Constants.hglsl"
 #include "IBL.hglsl"
+#include "Camera.hglsl"
 
 layout(location = 0) out vec4 FragColor;
 
@@ -36,14 +37,8 @@ layout(binding = 7) uniform sampler2D ssaoTexture;
 
 layout (std140, binding = 0) uniform Camera
 {
-    vec4 pos;
-    mat4 view;
-    mat4 projection;
-    mat4 invertedView;
-    mat4 invertedProjection;
-    mat4 viewProjection;
-    mat4 invertedViewProjection;
-} camera;
+    CameraData camera;
+};
 
 struct LightProbe {
     uvec2 irradianceCubemapHandle;

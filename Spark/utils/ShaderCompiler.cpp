@@ -100,21 +100,10 @@ shaderc_shader_kind select_proper_shader_kind(GLenum glShaderType)
 
     return shaderc_glsl_infer_from_source;
 }
-}  // namespace
 
-namespace spark::utils
-{
-std::vector<unsigned> ShaderCompiler::compile(const std::string& source_name, GLenum glShaderType, const std::string& source, bool optimize)
+std::vector<unsigned> compile(const std::string& source_name, GLenum glShaderType, const shaderc::CompileOptions& options, const std::string& source)
 {
     const shaderc::Compiler compiler{};
-    shaderc::CompileOptions options;
-
-    if(optimize)
-        options.SetOptimizationLevel(shaderc_optimization_level_performance);
-
-    //options.SetGenerateDebugInfo();
-    options.SetTargetEnvironment(shaderc_target_env_opengl, shaderc_env_version_opengl_4_5);
-    options.SetIncluder(std::make_unique<GlslShaderIncluder>());
 
     const shaderc::SpvCompilationResult module =
         compiler.CompileGlslToSpv(source, select_proper_shader_kind(glShaderType), source_name.c_str(), options);
@@ -127,5 +116,37 @@ std::vector<unsigned> ShaderCompiler::compile(const std::string& source_name, GL
     }
 
     return {module.cbegin(), module.cend()};
+}
+
+}  // namespace
+
+namespace spark::utils
+{
+std::vector<unsigned> ShaderCompiler::compileVulkan(const std::string& source_name, GLenum glShaderType, const std::string& source, bool optimize)
+{
+    shaderc::CompileOptions options;
+
+    if(optimize)
+        options.SetOptimizationLevel(shaderc_optimization_level_performance);
+
+    //options.SetGenerateDebugInfo();
+    options.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_2);
+    options.SetIncluder(std::make_unique<GlslShaderIncluder>());
+    
+
+    return compile(source_name, glShaderType, options, source);
+}
+std::vector<unsigned> ShaderCompiler::compileOpenGL(const std::string& source_name, GLenum glShaderType, const std::string& source, bool optimize)
+{
+    shaderc::CompileOptions options;
+
+    if(optimize)
+        options.SetOptimizationLevel(shaderc_optimization_level_performance);
+
+    // options.SetGenerateDebugInfo();
+    options.SetTargetEnvironment(shaderc_target_env_opengl, shaderc_env_version_opengl_4_5);
+    options.SetIncluder(std::make_unique<GlslShaderIncluder>());
+
+    return compile(source_name, glShaderType, options, source);
 }
 }  // namespace spark::utils

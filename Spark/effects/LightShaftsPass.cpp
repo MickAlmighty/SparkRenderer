@@ -80,12 +80,12 @@ void LightShaftsPass::renderLightShaftsToTexture(const lights::DirectionalLight*
     PUSH_DEBUG_GROUP(RADIAL BLUR);
 
     lightShaftsShader->use();
-    lightShaftsShader->setVec2("lightScreenPos", lightScreenPos);
-    lightShaftsShader->setVec3("lightColor", dirLight->getColor());
-    lightShaftsShader->setFloat("exposure", exposure);
-    lightShaftsShader->setFloat("decay", decay);
-    lightShaftsShader->setFloat("density", density);
-    lightShaftsShader->setFloat("weight", weight);
+    lightShaftsShader->setVec2("u_Uniforms.lightScreenPos", lightScreenPos);
+    lightShaftsShader->setVec3("u_Uniforms.lightColor", dirLight->getColor());
+    lightShaftsShader->setFloat("u_Uniforms.exposure", exposure);
+    lightShaftsShader->setFloat("u_Uniforms.decay", decay);
+    lightShaftsShader->setFloat("u_Uniforms.density", density);
+    lightShaftsShader->setFloat("u_Uniforms.weight", weight);
 
     glViewport(0, 0, w / 4, h / 4);
 

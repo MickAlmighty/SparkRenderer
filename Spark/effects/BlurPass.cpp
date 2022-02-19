@@ -16,13 +16,13 @@ void BlurPass::blurTexture(GLuint texture) const
     utils::bindTexture2D(vFramebuffer, vTexture.get());
 
     horizontalGaussianBlurShader->use();
-    horizontalGaussianBlurShader->setVec2("inverseScreenSize", {1.0f / static_cast<float>(w), 1.0f / static_cast<float>(h)});
+    horizontalGaussianBlurShader->setVec2("u_Uniforms.inverseScreenSize", {1.0f / static_cast<float>(w), 1.0f / static_cast<float>(h)});
     glBindTextureUnit(0, texture);
     screenQuad.draw();
 
     utils::bindTexture2D(vFramebuffer, hTexture.get());
     verticalGaussianBlurShader->use();
-    verticalGaussianBlurShader->setVec2("inverseScreenSize", {1.0f / static_cast<float>(w), 1.0f / static_cast<float>(h)});
+    verticalGaussianBlurShader->setVec2("u_Uniforms.inverseScreenSize", {1.0f / static_cast<float>(w), 1.0f / static_cast<float>(h)});
     glBindTextureUnit(0, vTexture.get());
 
     screenQuad.draw();

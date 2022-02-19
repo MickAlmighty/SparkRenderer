@@ -1,14 +1,15 @@
 #include "ShaderLoader.hpp"
 
-#include <fstream>
-#include <istream>
 #include <sstream>
+
 #include <shaderc/shaderc.hpp>
+#include <spirv_glsl.hpp>
 
 #include "Logging.h"
 #include "Shader.h"
 #include "utils/ShaderCompiler.hpp"
 #include "utils/ShaderParser.hpp"
+#include "utils/FileUtils.hpp"
 
 namespace
 {
@@ -41,42 +42,17 @@ std::string getHashedFileNameFromPath(const std::filesystem::path& path)
     return s.str();
 }
 
-std::vector<unsigned> readShaderBinaryFromFile(const std::filesystem::path& path)
-{
-    std::vector<unsigned> binary;
-
-    if(std::ifstream input(path, std::ios::in | std::ios::binary); input.is_open())
-    {
-        // get its size:
-        input.seekg(0, std::ios::end);
-        const auto fileSize = input.tellg();
-        input.seekg(0, std::ios::beg);
-
-        if(fileSize != 0)
-        {
-            // read the data:
-            binary.resize(fileSize / 4);
-            input.read(reinterpret_cast<char*>(&binary[0]), fileSize);
-        }
-
-        input.close();
-    }
-
-    return binary;
-}
-
-void write_binary_to_file(const std::filesystem::path& binary_path, const std::vector<unsigned>& binary)
-{
-    if(std::ofstream output(binary_path, std::ios::out | std::ios::binary | std::ios::trunc); output.is_open())
-    {
-        output.write(reinterpret_cast<const char*>(binary.data()), binary.size() * sizeof(unsigned));
-        output.close();
-    }
-}
-
 bool is_compilation_needed(const std::filesystem::path& shaderPath, const std::filesystem::path& binary_path)
 {
     return !std::filesystem::exists(binary_path) || spark::utils::ShaderParser::any_of_files_from_inlude_chain_modified(shaderPath, binary_path);
+}
+
+std::string createCachedStagedShaderName(const std::string& shaderHashName, GLenum glShaderType)
+{
+    const auto shaderStageName = select_proper_shader_suffix(glShaderType);
+    const auto cachedShaderName = shaderHashName + shaderStageName;
+    const auto extension = ".glsl";
+    return cachedShaderName + extension;
 }
 }  // namespace
 
@@ -86,32 +62,32 @@ std::shared_ptr<resourceManagement::Resource> ShaderLoader::load(const std::file
                                                                  const std::filesystem::path& resourceRelativePath)
 {
     const auto path = resourcesRootPath / resourceRelativePath;
+    const auto cacheAbsolutePath = resourcesRootPath / "cache";
     SPARK_DEBUG("Loading Shader: {}", resourceRelativePath.string());
     const auto shaderHashName = getHashedFileNameFromPath(resourceRelativePath);
 
-    const auto shaderSources = utils::ShaderParser::parseShaderFile(path.string());
-    std::vector<std::pair<GLenum, std::vector<unsigned>>> shaders{};
-    shaders.reserve(shaderSources.size());
-    for(const auto& [glShaderType, source] : shaderSources)
+    auto shaderSources = utils::ShaderParser::splitShaderSourceByStages(path.string());
+    std::map<GLenum, std::string> shaders;
+    for(auto& [glShaderType, source] : shaderSources)
     {
-        const auto cachedShaderName = shaderHashName + select_proper_shader_suffix(glShaderType);
-        const auto cachedShaderAbsolutePath = resourcesRootPath / "cache" / cachedShaderName;
+        const auto cachedShaderAbsolutePath = cacheAbsolutePath / createCachedStagedShaderName(shaderHashName, glShaderType);
 
         if(is_compilation_needed(path, cachedShaderAbsolutePath))
         {
-            const auto binary = utils::ShaderCompiler::compile(path.string().c_str(), glShaderType, source, false);
-            write_binary_to_file(cachedShaderAbsolutePath, binary);
+            auto binary = utils::ShaderCompiler::compileVulkan(path.string().c_str(), glShaderType, source, false);
+            spirv_cross::CompilerGLSL glslCompiler(std::move(binary));
 
-            shaders.emplace_back(glShaderType, binary);
+            auto code = glslCompiler.compile();
+            utils::write_text_to_file(cachedShaderAbsolutePath, code);
+            shaders.emplace(glShaderType, std::move(code));
         }
         else
         {
-            shaders.emplace_back(glShaderType, readShaderBinaryFromFile(cachedShaderAbsolutePath));
+            shaders.emplace(glShaderType, utils::load_text_from_file(cachedShaderAbsolutePath));
         }
     }
 
     return std::make_shared<resources::Shader>(path, shaders);
-    //return std::make_shared<resources::Shader>(path);
 }
 
 bool ShaderLoader::isExtensionSupported(const std::string& ext)

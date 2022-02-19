@@ -43,18 +43,19 @@ GLuint AmbientOcclusion::process(GLuint depthTexture, GLuint normalsTexture, con
     GLuint textures[3] = {depthTexture, normalsTexture, randomNormalsTexture.get()};
     glBindTextures(0, 3, textures);
     ssaoShader->use();
-    ssaoShader->setInt("kernelSize", kernelSize);
-    ssaoShader->setFloat("radius", radius);
-    ssaoShader->setFloat("bias", bias);
-    ssaoShader->setFloat("power", power);
-    ssaoShader->setVec2("screenSize", {static_cast<float>(w), static_cast<float>(h)});
-    ssaoShader->bindUniformBuffer("Camera.camera", camera->getUbo());
+    ssaoShader->setInt("u_Uniforms.kernelSize", kernelSize);
+    ssaoShader->setFloat("u_Uniforms.radius", radius);
+    ssaoShader->setFloat("u_Uniforms.bias", bias);
+    ssaoShader->setFloat("u_Uniforms.power", power);
+    ssaoShader->setVec2("u_Uniforms.screenSize", {static_cast<float>(w), static_cast<float>(h)});
+    ssaoShader->bindUniformBuffer("Camera", camera->getUbo());
 
     screenQuad.draw();
     glBindTextures(0, 3, nullptr);
 
     utils::bindTexture2D(ssaoFramebuffer, ssaoTexture2.get());
     ssaoBlurShader->use();
+    ssaoBlurShader->setInt("u_Uniforms.blurSize", 4);
     glBindTextureUnit(0, ssaoTexture.get());
     screenQuad.draw();
 

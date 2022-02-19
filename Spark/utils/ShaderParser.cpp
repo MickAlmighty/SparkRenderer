@@ -6,6 +6,7 @@
 #include <regex>
 
 #include "Logging.h"
+#include "utils/FileUtils.hpp"
 
 namespace
 {
@@ -14,9 +15,9 @@ const std::regex regex(R"((#include[\s]*["][\S]+["])|(#include[\s]*[<][\S]+[>]))
 
 namespace spark::utils
 {
-std::map<GLenum, std::string> ShaderParser::parseShaderFile(const std::string& shaderPath)
+std::map<GLenum, std::string> ShaderParser::splitShaderSourceByStages(const std::string& shaderPath)
 {
-    const auto shaderSource = loadShaderStringFromFile(shaderPath);
+    const auto shaderSource = utils::load_text_from_file(shaderPath);
     return preProcess(shaderSource);
 }
 
@@ -66,7 +67,7 @@ std::vector<std::filesystem::path> ShaderParser::get_file_dependency_chain(const
 
 void ShaderParser::look_for_includes_in_file(const std::filesystem::path& file, std::queue<std::filesystem::path>& files_to_traverse)
 {
-    const auto fileContent = loadShaderStringFromFile(file.string());
+    const auto fileContent = utils::load_text_from_file(file.string());
     const auto absoluteDirectoryPath = file.parent_path();
 
     const auto words_begin = std::sregex_iterator(fileContent.begin(), fileContent.end(), regex);
@@ -109,27 +110,6 @@ std::string::size_type ShaderParser::find_path_beginning_sign_idx(const std::str
 
     return std::string::npos;
 };
-
-std::string ShaderParser::loadShaderStringFromFile(const std::string& shaderPath)
-{
-    std::ifstream shaderFile;
-    try
-    {
-        shaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-        shaderFile.open(shaderPath);
-        std::stringstream shaderStream;
-        shaderStream << shaderFile.rdbuf();
-        shaderFile.close();
-
-        return shaderStream.str();
-    }
-    catch(const std::ifstream::failure& e)
-    {
-        shaderFile.close();
-        SPARK_ERROR("SHADER::FILE_NOT_SUCCESSFULLY_READ: {}, {}", e.what(), shaderPath);
-        return {};
-    }
-}
 
 std::map<GLenum, std::string> ShaderParser::preProcess(const std::string& shaderSource)
 {

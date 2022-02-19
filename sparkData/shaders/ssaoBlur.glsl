@@ -13,26 +13,29 @@ void main()
 
 #type fragment
 #version 450
+layout (location = 0) in vec2 texCoords;
 layout (location = 0) out float AmbientOcclusion;
 
-layout (location = 0) in vec2 texCoords;
+layout (push_constant) uniform PushConstants
+{
+    int blurSize;
+} u_Uniforms;
 
-layout (location = 0) uniform int uBlurSize = 4; // use size of noise texture
 layout (binding = 0) uniform sampler2D uTexInput;
 
 void main() 
 {
     vec2 texelSize = 1.0f / vec2(textureSize(uTexInput, 0));
     float result = 0.0;
-    vec2 hlim = vec2(float(-uBlurSize) * 0.5 + 0.5);
-    for (int i = 0; i < uBlurSize; ++i)
+    vec2 hlim = vec2(float(-u_Uniforms.blurSize) * 0.5 + 0.5);
+    for (int i = 0; i < u_Uniforms.blurSize; ++i)
     {
-        for (int j = 0; j < uBlurSize; ++j)
+        for (int j = 0; j < u_Uniforms.blurSize; ++j)
         {
             vec2 offset = (hlim + vec2(float(i), float(j))) * texelSize;
             result += texture(uTexInput, texCoords + offset).r;
         }
     }
 
-    AmbientOcclusion = result / float(uBlurSize * uBlurSize);
+    AmbientOcclusion = result / float(u_Uniforms.blurSize * u_Uniforms.blurSize);
 }
