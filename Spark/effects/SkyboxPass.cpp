@@ -11,7 +11,7 @@ namespace spark::effects
 {
 SkyboxPass::SkyboxPass(unsigned int width, unsigned int height) : w(width), h(height)
 {
-    cubemapShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("cubemap.glsl");
+    cubemapShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/cubemap.glsl");
     createFrameBuffersAndTextures();
 }
 

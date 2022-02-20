@@ -9,7 +9,7 @@ namespace spark::renderers
 {
 GBuffer::GBuffer(unsigned int width, unsigned int height) : w(width), h(height)
 {
-    pbrGeometryBufferShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("pbrGeometryBuffer.glsl");
+    pbrGeometryBufferShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/pbrGeometryBuffer.glsl");
     createFrameBuffersAndTextures();
 }
 

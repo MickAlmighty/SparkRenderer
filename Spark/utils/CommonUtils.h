@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <string>
 
 #include <glm/glm.hpp>
 
@@ -51,6 +52,8 @@ glm::mat4 getProjectionReversedZ(uint32_t width, uint32_t height, float fovDegre
 
 std::array<glm::mat4, 6> getCubemapViewMatrices(glm::vec3 cameraPosition);
 void updateCameraUBO(UniformBuffer& buffer, glm::mat4 projection, glm::mat4 view, glm::vec3 pos, float nearPlane, float farPlane);
+
+std::string toLowerCase(std::string&& s);
 
 template<typename T>
 T uiCeil(T dividend, T divisor)

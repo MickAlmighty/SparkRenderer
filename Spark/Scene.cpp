@@ -8,9 +8,9 @@
 #include "GUI/ImGui/imgui.h"
 #include "HID/HID.h"
 #include "Logging.h"
-#include "ResourceLoader.h"
 #include "Spark.h"
 #include "renderers/ClusterBasedForwardPlusRenderer.hpp"
+#include "renderers/RendererFactory.hpp"
 
 namespace spark
 {
@@ -56,7 +56,7 @@ void Scene::renderGameThroughMainCamera()
     const unsigned int width = 640, height = 360;
     if(!renderer)
     {
-        renderer = std::make_unique<renderers::ClusterBasedForwardPlusRenderer>(width, height);
+        renderer = renderers::RendererFactory::createRenderer(renderers::RendererType::ENHANCED_CLUSTER_BASED_FORWARD_PLUS, width, height);
     }
 
     const auto lastW = Spark::get().getRenderingContext().width;
@@ -195,9 +195,7 @@ void Scene::drawTreeNode(std::shared_ptr<GameObject> node, bool isRootNode)
         if(ImGui::TreeNode("Children"))
         {
             for(auto i = 0; i < node->getChildren().size(); ++i)
-            //for(const auto& child : node->getChildren())
             {
-                //drawTreeNode(child, false);
                 drawTreeNode(node->getChildren()[i], false);
             }
 

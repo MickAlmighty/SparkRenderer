@@ -3,7 +3,7 @@
 layout (location = 0) in vec3 position;
 layout (location = 1) in vec2 textureCoords;
 
-out vec2 texCoords;
+layout (location = 0) out vec2 texCoords;
 
 void main()
 {
@@ -13,20 +13,21 @@ void main()
 
 #type fragment
 #version 450
+layout (location = 0) in vec2 texCoords;
 layout (location = 0) out vec4 FragColor;
-
-in vec2 texCoords;
 
 layout (binding = 0) uniform sampler2D depthTexture;
 layout (binding = 1) uniform sampler2D lightingTexture;
 
-uniform vec2 lightScreenPos;
-uniform vec3 lightColor;
-
-uniform float exposure = 0.0034f;
-uniform float decay = 0.995f;
-uniform float density = 0.95f;
-uniform float weight = 6.65;
+layout (push_constant) uniform PushConstants
+{
+    vec2 lightScreenPos;
+    vec3 lightColor;
+    float exposure;
+    float decay;
+    float density;
+    float weight;
+} u_Uniforms;
 
 const int samples = 16;
 const float oneStep = 1.0 / float(samples);
@@ -37,10 +38,10 @@ void main()
     vec4 outColor = vec4(vec3(0.0f), 1.0f);
 
     vec2 textureCoords = texCoords;
-    vec2 texCoordStep = textureCoords - lightScreenPos;
-    texCoordStep *= oneStep * density;
+    vec2 texCoordStep = textureCoords - u_Uniforms.lightScreenPos;
+    texCoordStep *= oneStep * u_Uniforms.density;
 
-    float distanceToScreenCenter = smoothstep(0.0f, maxDistance, maxDistance - distance(vec2(0.5f), lightScreenPos));
+    float distanceToScreenCenter = smoothstep(0.0f, maxDistance, maxDistance - distance(vec2(0.5f), u_Uniforms.lightScreenPos));
 
     float illuminationDecay = 1.0f;
 
@@ -49,7 +50,7 @@ void main()
         // Step sample location along ray.
         textureCoords -= texCoordStep;
 
-        // vec4 colorSample = vec4(lightColor, 1.0f);
+        // vec4 colorSample = vec4(u_Uniforms.lightColor, 1.0f);
         vec4 colorSample = texture(lightingTexture, clamp(textureCoords, 0.0f, 1.0f));
 
         float depth = texture(depthTexture, clamp(textureCoords, 0.0f, 1.0f)).x;
@@ -59,14 +60,14 @@ void main()
         }
 
         // Apply sample attenuation scale/decay factors.
-        colorSample *= illuminationDecay * weight;
+        colorSample *= illuminationDecay * u_Uniforms.weight;
 
         // Accumulate combined color.  
         outColor += colorSample;
 
         // Update exponential decay factor.
-        illuminationDecay *= decay;
+        illuminationDecay *= u_Uniforms.decay;
     }
 
-    FragColor = outColor * exposure * distanceToScreenCenter;
+    FragColor = outColor * u_Uniforms.exposure * distanceToScreenCenter;
 }

@@ -9,7 +9,9 @@ namespace spark::renderers
 class ClusterBasedForwardPlusRenderer : public Renderer
 {
     public:
-    ClusterBasedForwardPlusRenderer(unsigned int width, unsigned int height);
+    ClusterBasedForwardPlusRenderer(unsigned int width, unsigned int height,
+                                    const std::shared_ptr<resources::Shader>& activeClustersDeterminationShader,
+                                    const std::shared_ptr<resources::Shader>& lightCullingShader);
     ClusterBasedForwardPlusRenderer(const ClusterBasedForwardPlusRenderer&) = delete;
     ClusterBasedForwardPlusRenderer(ClusterBasedForwardPlusRenderer&&) = delete;
     ClusterBasedForwardPlusRenderer& operator=(const ClusterBasedForwardPlusRenderer&) = delete;

@@ -1,5 +1,6 @@
 #type compute
 #version 450
+#include "Camera.hglsl"
 layout(local_size_x = 16, local_size_y = 16) in;
 
 layout(binding = 0) uniform sampler2D depthTexture;
@@ -25,14 +26,10 @@ shared uint lightBeginIndex;
 #define LIGHT_BUFFER_LENGTH 512
 #define MAX_LIGHT_COUNT LIGHT_BUFFER_LENGTH - 1
 
-layout (std140) uniform Camera
+layout (std140, binding = 0) uniform Camera
 {
-    vec4 pos;
-    mat4 view;
-    mat4 projection;
-    mat4 invertedView;
-    mat4 invertedProjection;
-} camera;
+    CameraData camera;
+};
 
 struct PointLight {
     vec4 positionAndRadius; // radius in w component
@@ -61,32 +58,32 @@ struct LightProbe {
     float padding3;
 };
 
-layout(std430) readonly buffer PointLightData
+layout(std430, binding = 0) readonly buffer PointLightData
 {
     PointLight pointLights[];
 };
 
-layout(std430) readonly buffer SpotLightData
+layout(std430, binding = 1) readonly buffer SpotLightData
 {
     SpotLight spotLights[];
 };
 
-layout(std430) readonly buffer LightProbeData
+layout(std430, binding = 2) readonly buffer LightProbeData
 {
     LightProbe lightProbes[];
 };
 
-layout(std430) buffer PointLightIndices
+layout(std430, binding = 3) buffer PointLightIndices
 {
     uint pointLightIndices[];
 };
 
-layout(std430) buffer SpotLightIndices
+layout(std430, binding = 4) buffer SpotLightIndices
 {
     uint spotLightIndices[];
 };
 
-layout(std430) buffer LightProbeIndices
+layout(std430, binding = 5) buffer LightProbeIndices
 {
     uint lightProbeIndices[];
 };

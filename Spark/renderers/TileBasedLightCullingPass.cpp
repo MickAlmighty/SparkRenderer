@@ -10,7 +10,8 @@ namespace spark::renderers
 {
 TileBasedLightCullingPass::TileBasedLightCullingPass(unsigned int width, unsigned int height) : w(width), h(height)
 {
-    tileBasedLightCullingShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("tileBasedLightCulling.glsl");
+    tileBasedLightCullingShader =
+        Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/tileBasedLightCulling.glsl");
 
     createFrameBuffersAndTextures();
 }

@@ -2,27 +2,30 @@
 #version 450
 layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 
-uniform uvec2 tilesCount;
+layout (push_constant) uniform PushConstants
+{
+    uvec2 tilesCount;
+} u_Uniforms;
 
-layout(std430) buffer ActiveClusters
+layout(std430, binding = 0) buffer ActiveClusters
 {
     uint activeClusters[];
 };
 
-layout(std430) buffer ActiveClustersCount
+layout(std430, binding = 1) buffer ActiveClustersCount
 {
     uint globalActiveClusterCount;
 };
 
-layout(std430) buffer ActiveClusterIndices
+layout(std430, binding = 2) buffer ActiveClusterIndices
 {
     uint activeClusterIndices[];
 };
 
 uint calculateIndex()
 {
-    const uint screenSliceOffset = tilesCount.x * tilesCount.y * gl_GlobalInvocationID.z;
-    const uint onScreenSliceIndex = gl_GlobalInvocationID.x * tilesCount.y + gl_GlobalInvocationID.y;
+    const uint screenSliceOffset = u_Uniforms.tilesCount.x * u_Uniforms.tilesCount.y * gl_GlobalInvocationID.z;
+    const uint onScreenSliceIndex = gl_GlobalInvocationID.x * u_Uniforms.tilesCount.y + gl_GlobalInvocationID.y;
     return screenSliceOffset + onScreenSliceIndex;
 }
 

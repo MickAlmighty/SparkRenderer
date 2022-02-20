@@ -11,7 +11,7 @@ namespace spark::renderers
 TileBasedDeferredRenderer::TileBasedDeferredRenderer(unsigned int width, unsigned int height)
     : Renderer(width, height), brdfLookupTexture(utils::createBrdfLookupTexture(1024)), gBuffer(width, height), lightCullingPass(width, height)
 {
-    lightingShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("tileBasedLighting.glsl");
+    lightingShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/tileBasedLighting.glsl");
     lightingShader->bindSSBO("PointLightIndices", lightCullingPass.pointLightIndices);
     lightingShader->bindSSBO("SpotLightIndices", lightCullingPass.spotLightIndices);
     lightingShader->bindSSBO("LightProbeIndices", lightCullingPass.lightProbeIndices);
@@ -38,16 +38,19 @@ void TileBasedDeferredRenderer::processLighting(const std::shared_ptr<Scene>& sc
         glBindTextureUnit(1, cubemap->irradianceCubemap.get());
         glBindTextureUnit(2, cubemap->prefilteredCubemap.get());
     }
+    else
+    {
+        glBindTextureUnit(1, skyboxPlaceholder.get());
+        glBindTextureUnit(2, skyboxPlaceholder.get());
+    }
     glBindTextureUnit(3, brdfLookupTexture.get());
     glBindTextureUnit(4, ssaoTexture);
-
-    // textures as images
-    glBindImageTexture(0, gBuffer.colorTexture.get(), 0, false, 0, GL_READ_ONLY, GL_RGBA8);
-    glBindImageTexture(1, gBuffer.normalsTexture.get(), 0, false, 0, GL_READ_ONLY, GL_RG16F);
-    glBindImageTexture(2, gBuffer.roughnessMetalnessTexture.get(), 0, false, 0, GL_READ_ONLY, GL_RG8);
+    glBindTextureUnit(5, gBuffer.colorTexture.get());
+    glBindTextureUnit(6, gBuffer.normalsTexture.get());
+    glBindTextureUnit(7, gBuffer.roughnessMetalnessTexture.get());
 
     // output image
-    glBindImageTexture(3, lightingTexture.get(), 0, false, 0, GL_WRITE_ONLY, GL_RGBA16F);
+    glBindImageTexture(0, lightingTexture.get(), 0, false, 0, GL_WRITE_ONLY, GL_RGBA16F);
 
     lightingShader->dispatchCompute(utils::uiCeil(w, 16u), utils::uiCeil(h, 16u), 1);
     glBindTextures(0, 0, nullptr);

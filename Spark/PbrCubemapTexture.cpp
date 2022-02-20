@@ -30,16 +30,26 @@ void PbrCubemapTexture::setup(GLuint hdrTexture, unsigned cubemapSize)
 
     // these shaders are created in SparkRenderer with uniforms and buffers already bound
     const std::shared_ptr<resources::Shader> resampleCubemapShader =
-        Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("resampleCubemap.glsl");
+        Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/resampleCubemap.glsl");
     const auto equirectangularToCubemapShader =
-        Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("equirectangularToCubemap.glsl");
-    const auto irradianceShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("irradiance.glsl");
-    const auto prefilterShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("prefilter.glsl");
+        Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/equirectangularToCubemap.glsl");
+    const auto irradianceShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/irradiance.glsl");
+    const auto prefilterShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/prefilter.glsl");
 
     irradianceShader->bindSSBO("Views", cubemapViewMatrices);
     prefilterShader->bindSSBO("Views", cubemapViewMatrices);
     resampleCubemapShader->bindSSBO("Views", cubemapViewMatrices);
     equirectangularToCubemapShader->bindSSBO("Views", cubemapViewMatrices);
+
+    const glm::mat4 cubemapProjection = utils::getProjectionReversedZ(cubemapSize, cubemapSize, 90.0f, 0.05f, 2000.0f);
+    irradianceShader->use();
+    irradianceShader->setMat4("u_Uniforms.projection", cubemapProjection);
+    prefilterShader->use();
+    prefilterShader->setMat4("u_Uniforms.projection", cubemapProjection);
+    resampleCubemapShader->use();
+    resampleCubemapShader->setMat4("u_Uniforms.projection", cubemapProjection);
+    equirectangularToCubemapShader->use();
+    equirectangularToCubemapShader->setMat4("u_Uniforms.projection", cubemapProjection);
 
     const auto envCubemap = createEnvironmentCubemapWithMipmapChain(captureFBO, hdrTexture, cubemapSize, cube, equirectangularToCubemapShader);
     this->irradianceCubemap = createIrradianceCubemap(captureFBO, envCubemap, cube, irradianceShader);
@@ -118,7 +128,7 @@ utils::TextureHandle PbrCubemapTexture::createPreFilteredCubemap(GLuint framebuf
     const GLuint maxMipLevels = 5;
     prefilterShader->use();
     glBindTextureUnit(0, environmentCubemap.get());
-    prefilterShader->setFloat("textureSize", static_cast<float>(envCubemapSize));
+    prefilterShader->setFloat("u_Uniforms2.textureSize", static_cast<float>(envCubemapSize));
 
     for(unsigned int mip = 1; mip < maxMipLevels; ++mip)
     {
@@ -127,7 +137,7 @@ utils::TextureHandle PbrCubemapTexture::createPreFilteredCubemap(GLuint framebuf
         glNamedFramebufferTexture(framebuffer, GL_COLOR_ATTACHMENT0, prefilteredMap.get(), mip);
 
         const float roughness = static_cast<float>(mip) / static_cast<float>(maxMipLevels - 1);
-        prefilterShader->setFloat("roughness", roughness);
+        prefilterShader->setFloat("u_Uniforms2.roughness", roughness);
 
         cube.draw();
     }

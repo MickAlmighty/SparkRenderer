@@ -13,7 +13,7 @@ namespace spark::renderers
 DeferredRenderer::DeferredRenderer(unsigned int width, unsigned int height)
     : Renderer(width, height), gBuffer(width, height), brdfLookupTexture(utils::createBrdfLookupTexture(1024))
 {
-    lightingShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("light.glsl");
+    lightingShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/light.glsl");
     createFrameBuffersAndTextures();
 }
 
@@ -37,30 +37,19 @@ void DeferredRenderer::processLighting(const std::shared_ptr<Scene>& scene, cons
     lightingShader->bindSSBO("SpotLightData", scene->lightManager->getSpotLightSSBO());
     lightingShader->bindSSBO("LightProbeData", scene->lightManager->getLightProbeSSBO());
 
+    std::array<GLuint, 8> textures{
+        gBuffer.depthTexture.get(), gBuffer.colorTexture.get(), gBuffer.normalsTexture.get(), gBuffer.roughnessMetalnessTexture.get(),
+        skyboxPlaceholder.get(),    skyboxPlaceholder.get(),    brdfLookupTexture.get(),      aoTexture};
+
     if(const auto cubemap = scene->getSkyboxCubemap().lock(); cubemap)
     {
-        const std::array<GLuint, 8> textures{gBuffer.depthTexture.get(),       gBuffer.colorTexture.get(),
-                                             gBuffer.normalsTexture.get(),     gBuffer.roughnessMetalnessTexture.get(),
-                                             cubemap->irradianceCubemap.get(), cubemap->prefilteredCubemap.get(),
-                                             brdfLookupTexture.get(),          aoTexture};
-        glBindTextures(0, static_cast<GLsizei>(textures.size()), textures.data());
-        screenQuad.draw();
-        glBindTextures(0, static_cast<GLsizei>(textures.size()), nullptr);
+        textures[4] = cubemap->irradianceCubemap.get();
+        textures[5] = cubemap->prefilteredCubemap.get();
     }
-    else
-    {
-        const std::array<GLuint, 8> textures{gBuffer.depthTexture.get(),
-                                             gBuffer.colorTexture.get(),
-                                             gBuffer.normalsTexture.get(),
-                                             gBuffer.roughnessMetalnessTexture.get(),
-                                             0,
-                                             0,
-                                             brdfLookupTexture.get(),
-                                             aoTexture};
-        glBindTextures(0, static_cast<GLsizei>(textures.size()), textures.data());
-        screenQuad.draw();
-        glBindTextures(0, static_cast<GLsizei>(textures.size()), nullptr);
-    }
+
+    glBindTextures(0, static_cast<GLsizei>(textures.size()), textures.data());
+    screenQuad.draw();
+    glBindTextures(0, static_cast<GLsizei>(textures.size()), nullptr);
 
     POP_DEBUG_GROUP();
 }

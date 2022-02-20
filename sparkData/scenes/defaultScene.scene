@@ -74,7 +74,7 @@
 										{
 											"Identifier" : 2
 										},
-										"skyboxName" : "moonless_golf_2k.dds"
+										"skyboxPath" : "cubemaps\\moonless_golf_2k.dds"
 									},
 									"Identifier" : 3,
 									"Type" : "classstd::shared_ptr<classspark::Skybox>"

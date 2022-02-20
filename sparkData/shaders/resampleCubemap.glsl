@@ -13,14 +13,17 @@ void main()
 layout(triangles) in;
 layout(triangle_strip, max_vertices = 18) out;
 
-uniform mat4 projection;
-
-layout(std430) readonly buffer Views
+layout (push_constant) uniform Projection
 {
-    mat4 views[]; // 6 matrices
+    mat4 projection;
+} u_Uniforms;
+
+layout(std430, binding = 0) readonly buffer Views
+{
+    mat4 views[6];
 };
 
-out vec3 cubemapCoord;
+layout (location = 0) out vec3 cubemapCoord;
 
 void main()
 {
@@ -30,7 +33,7 @@ void main()
         {
             cubemapCoord = gl_in[i].gl_Position.xyz;
             gl_Layer = face;
-            gl_Position = projection * views[face] * gl_in[i].gl_Position;
+            gl_Position = u_Uniforms.projection * views[face] * gl_in[i].gl_Position;
             EmitVertex();
         }
         EndPrimitive();
@@ -39,11 +42,10 @@ void main()
 
 #type fragment
 #version 450
+layout (location = 0) in vec3 cubemapCoord;
 layout (location = 0) out vec4 FragColor;
 
 layout (binding = 0) uniform samplerCube inputCubemap;
-
-in vec3 cubemapCoord;
 
 void main()
 {

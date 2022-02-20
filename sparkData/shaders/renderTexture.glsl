@@ -3,7 +3,7 @@
 layout (location = 0) in vec3 pos;
 layout (location = 1) in vec2 textureCoords;
 
-out vec2 texCoords;
+layout (location = 0) out vec2 texCoords;
 
 void main()
 {
@@ -17,7 +17,7 @@ layout (location = 0) out vec4 FragColor;
 
 layout (binding = 0) uniform sampler2D inputTexture;
 
-in vec2 texCoords;
+layout (location = 0) in vec2 texCoords;
 
 void main()
 {

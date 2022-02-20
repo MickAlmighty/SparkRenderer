@@ -11,7 +11,8 @@ namespace spark::renderers
 class ClusterBasedLightCullingPass
 {
     public:
-    ClusterBasedLightCullingPass(unsigned int width, unsigned int height);
+    ClusterBasedLightCullingPass(unsigned int width, unsigned int height, const std::shared_ptr<resources::Shader>& activeClustersDeterminationShader,
+                                 const std::shared_ptr<resources::Shader>& lightCullingShader);
     ClusterBasedLightCullingPass(const ClusterBasedLightCullingPass&) = delete;
     ClusterBasedLightCullingPass(ClusterBasedLightCullingPass&&) = delete;
     ClusterBasedLightCullingPass& operator=(const ClusterBasedLightCullingPass&) = delete;
@@ -48,6 +49,7 @@ class ClusterBasedLightCullingPass
     SSBO activeClusters{};
     SSBO activeClustersCount{12};
     SSBO activeClusterIndices{};
+    DispatchIndirectBuffer dispatchIndirectBuffer{12, GL_STATIC_READ};
 
     std::shared_ptr<resources::Shader> clusterCreationShader{nullptr};
     std::shared_ptr<resources::Shader> determineActiveClustersShader{nullptr};

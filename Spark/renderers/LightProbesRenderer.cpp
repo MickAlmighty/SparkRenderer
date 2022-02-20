@@ -12,21 +12,21 @@ LightProbesRenderer::LightProbesRenderer() : localLightProbeGBuffer(sceneCubemap
     cubemapViewMatrices.resizeBuffer(sizeof(glm::mat4) * 6);
     cubemapViewMatrices.updateData(utils::getCubemapViewMatrices(glm::vec3(0)));
 
-    localLightProbesLightingShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("localLightProbesLighting.glsl");
-    equirectangularToCubemapShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("equirectangularToCubemap.glsl");
-    irradianceShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("irradiance.glsl");
-    prefilterShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("prefilter.glsl");
-    resampleCubemapShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("resampleCubemap.glsl");
+    localLightProbesLightingShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/localLightProbesLighting.glsl");
+    equirectangularToCubemapShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/equirectangularToCubemap.glsl");
+    irradianceShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/irradiance.glsl");
+    prefilterShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/prefilter.glsl");
+    resampleCubemapShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/resampleCubemap.glsl");
 
     const glm::mat4 cubemapProjection = utils::getProjectionReversedZ(sceneCubemapSize, sceneCubemapSize, 90.0f, 0.05f, 100.0f);
     irradianceShader->use();
-    irradianceShader->setMat4("projection", cubemapProjection);
+    irradianceShader->setMat4("u_Uniforms.projection", cubemapProjection);
     prefilterShader->use();
-    prefilterShader->setMat4("projection", cubemapProjection);
+    prefilterShader->setMat4("u_Uniforms.projection", cubemapProjection);
     resampleCubemapShader->use();
-    resampleCubemapShader->setMat4("projection", cubemapProjection);
+    resampleCubemapShader->setMat4("u_Uniforms.projection", cubemapProjection);
     equirectangularToCubemapShader->use();
-    equirectangularToCubemapShader->setMat4("projection", cubemapProjection);
+    equirectangularToCubemapShader->setMat4("u_Uniforms.projection", cubemapProjection);
 }
 
 void LightProbesRenderer::process(const std::shared_ptr<Scene>& scene)

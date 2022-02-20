@@ -23,6 +23,11 @@ bool ResourceIdentifier::operator<(const ResourceIdentifier& identifier) const
     return relativePathToResource < identifier.relativePathToResource;
 }
 
+bool ResourceIdentifier::isResourceInUse() const
+{
+    return !resource.expired();
+}
+
 std::filesystem::path ResourceIdentifier::getResourcesRootPath() const
 {
     return pathToResources;
@@ -62,7 +67,7 @@ std::shared_ptr<Resource> ResourceIdentifier::getResource()
 {
     if(resource.expired())
     {
-        if(const auto resourcePtr = ResourceFactory::loadResource(shared_from_this()); resourcePtr)
+        if(const auto resourcePtr = ResourceFactory::loadResource(pathToResources, relativePathToResource); resourcePtr)
         {
             resource = resourcePtr;
             return resource.lock();

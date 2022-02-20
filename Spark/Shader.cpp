@@ -3,13 +3,12 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "Logging.h"
-#include "ShaderParser.hpp"
 
 namespace spark::resources
 {
-Shader::Shader(const std::filesystem::path& path_) : Resource(path_)
+Shader::Shader(const std::filesystem::path& path_, const std::map<GLenum, std::string>& shaders_)
 {
-    const auto shaderIds = compileShaders(ShaderParser::parseShaderFile(path.string()));
+    const auto shaderIds = compileShaders(shaders_);
     linkProgram(shaderIds);
 
     shaderDescriptor.acquireShaderResources(ID);
@@ -32,13 +31,14 @@ std::vector<GLuint> Shader::compileShaders(const std::map<GLenum, std::string>& 
         glShaderSource(shader, 1, &shaderSource, nullptr);
         glCompileShader(shader);
         GLint success;
-        GLchar infoLog[512];
+
         glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
 
         if(!success)
         {
+            GLchar infoLog[512];
             glGetShaderInfoLog(shader, 512, nullptr, infoLog);
-            
+
             std::string fullInfo = getPath().string();
             fullInfo.append("\n\rERROR::SHADER::COMPILATION_FAILED, cause: ");
             fullInfo.append(infoLog);
@@ -147,7 +147,7 @@ void Shader::setIVec2(const std::string& name, glm::ivec2 value) const
 void Shader::setUVec2(const std::string& name, glm::uvec2 value) const
 {
     const GLint location = shaderDescriptor.getUniformLocation(name);
-    if (location < 0)
+    if(location < 0)
         return;
     glUniform2uiv(location, 1, glm::value_ptr(value));
 }

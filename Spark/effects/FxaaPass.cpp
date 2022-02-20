@@ -8,7 +8,7 @@ namespace spark::effects
 {
 FxaaPass::FxaaPass(unsigned width, unsigned height) : w(width), h(height)
 {
-    fxaaShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("fxaa.glsl");
+    fxaaShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/fxaa.glsl");
     createFrameBuffersAndTextures();
 }
 

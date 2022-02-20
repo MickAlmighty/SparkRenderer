@@ -11,6 +11,7 @@
 
 #include "Enums.h"
 #include "Logging.h"
+#include "Mesh.h"
 #include "Model.h"
 #include "ResourceIdentifier.h"
 #include "Spark.h"
@@ -105,7 +106,7 @@ std::filesystem::path getRelativeCachedTexturePath(const std::filesystem::path& 
     return std::filesystem::path("cache") / cachedFilename.str();
 }
 
-auto collectMaterials(const tinygltf::Model& model, const std::shared_ptr<spark::resourceManagement::ResourceIdentifier>& ri)
+auto collectMaterials(const tinygltf::Model& model, const std::filesystem::path& resourcesRootPath, const std::filesystem::path& resourceRelativePath)
 {
     std::vector<std::map<spark::TextureTarget, std::filesystem::path>> materials;
 
@@ -114,11 +115,12 @@ auto collectMaterials(const tinygltf::Model& model, const std::shared_ptr<spark:
         return materials;
     }
 
+    const auto resourceFullPath = resourcesRootPath / resourceRelativePath;
     materials.reserve(model.materials.size());
     for(const auto& material : model.materials)
     {
         std::map<spark::TextureTarget, std::filesystem::path> pbrMaterial{};
-        const std::filesystem::path assetDirectoryPath = ri->getRelativePath().parent_path();
+        const std::filesystem::path assetDirectoryPath = resourceFullPath.parent_path();
 
         if(const auto& normalTextureInfo = material.normalTexture; normalTextureInfo.index != -1)
         {
@@ -142,12 +144,12 @@ auto collectMaterials(const tinygltf::Model& model, const std::shared_ptr<spark:
             const auto relativeCachedRoughnessTexturePath =
                 getRelativeCachedTexturePath(assetDirectoryPath, nameWithoutExtension + "_roughness", extension);
 
-            if(const bool atLeastOneFileDoesNotExist = !std::filesystem::exists(ri->getResourcesRootPath() / relativeCachedMetallnessTexturePath) ||
-                                                       !std::filesystem::exists(ri->getResourcesRootPath() / relativeCachedRoughnessTexturePath);
+            if(const bool atLeastOneFileDoesNotExist = !std::filesystem::exists(resourcesRootPath / relativeCachedMetallnessTexturePath) ||
+                                                       !std::filesystem::exists(resourcesRootPath / relativeCachedRoughnessTexturePath);
                atLeastOneFileDoesNotExist)
             {
                 const auto relativeMetallicRoughnessTexPath = assetDirectoryPath / metallicRoughnessTex;
-                splitMetallicRoughnessTexture(ri->getResourcesRootPath(), relativeMetallicRoughnessTexPath, relativeCachedMetallnessTexturePath,
+                splitMetallicRoughnessTexture(resourcesRootPath, relativeMetallicRoughnessTexPath, relativeCachedMetallnessTexturePath,
                                               relativeCachedRoughnessTexturePath);
             }
 
@@ -277,17 +279,18 @@ std::vector<unsigned int> collectIndices(const tinygltf::Model& model, const tin
 }
 }  // namespace
 
-namespace spark
+namespace spark::loaders
 {
-std::shared_ptr<resourceManagement::Resource> GltfLoader::createModel(
-    const std::shared_ptr<resourceManagement::ResourceIdentifier>& resourceIdentifier) const
+std::shared_ptr<resourceManagement::Resource> GltfLoader::load(const std::filesystem::path& resourcesRootPath,
+                                                               const std::filesystem::path& resourceRelativePath)
 {
     tinygltf::TinyGLTF loader;
     tinygltf::Model model;
     std::string err;
     std::string warn;
 
-    const bool ret = loader.LoadASCIIFromFile(&model, &err, &warn, resourceIdentifier->getFullPath().string());
+    const auto path = resourcesRootPath / resourceRelativePath;
+    const bool ret = loader.LoadASCIIFromFile(&model, &err, &warn, path.string());
 
     if(!warn.empty())
     {
@@ -305,7 +308,7 @@ std::shared_ptr<resourceManagement::Resource> GltfLoader::createModel(
         return nullptr;
     }
 
-    const auto materials = collectMaterials(model, resourceIdentifier);
+    const auto materials = collectMaterials(model, resourcesRootPath, resourceRelativePath);
 
     std::vector<std::shared_ptr<Mesh>> meshes;
     for(const auto& mesh : model.meshes)
@@ -314,12 +317,24 @@ std::shared_ptr<resourceManagement::Resource> GltfLoader::createModel(
         {
             auto attributes = collectAttributes(model, primitive);
             auto indices = collectIndices(model, primitive);
-            auto textures = collectMaterialTextures(resourceIdentifier->getFullPath().parent_path(), materials, primitive.material);
+            auto textures = collectMaterialTextures(path.parent_path(), materials, primitive.material);
 
             meshes.push_back(std::make_shared<Mesh>(attributes, indices, textures));
         }
     }
 
-    return std::make_shared<resources::Model>(resourceIdentifier->getRelativePath(), meshes);
+    return std::make_shared<resources::Model>(resourceRelativePath, meshes);
 }
-}  // namespace spark
+
+bool GltfLoader::isExtensionSupported(const std::string& ext)
+{
+    const auto supportedExts = supportedExtensions();
+    const auto it = std::find_if(supportedExts.begin(), supportedExts.end(), [&ext](const auto& e) { return e == ext; });
+    return it != supportedExts.end();
+}
+
+std::vector<std::string> GltfLoader::supportedExtensions()
+{
+    return {".gltf"};
+}
+}  // namespace spark::loaders

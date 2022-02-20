@@ -1,19 +1,14 @@
 #type compute
 #version 450
+#include "Camera.hglsl"
 layout(local_size_x = 1, local_size_y = 16, local_size_z = 1) in;
 
-layout (std140) uniform Camera
+layout (std140, binding = 0) uniform Camera
 {
-    vec4 pos;
-    mat4 view;
-    mat4 projection;
-    mat4 invertedView;
-    mat4 invertedProjection;
-    mat4 viewProjection;
-    mat4 invertedViewProjection;
-} camera;
+    CameraData camera;
+};
 
-layout (std140) uniform AlgorithmData
+struct ClusterBasedLightCullingData
 {
     vec2 pxTileSize;
     uint clusterCountX;
@@ -22,7 +17,12 @@ layout (std140) uniform AlgorithmData
     float equation3Part1;
     float equation3Part2;
     uint maxLightCount;
-} algorithmData;
+};
+
+layout (std140, binding = 1) uniform AlgorithmData
+{
+    ClusterBasedLightCullingData algorithmData;
+};
 
 struct AABB 
 {
@@ -32,12 +32,12 @@ struct AABB
     float placeholder2;
 };
 
-layout(std430) buffer ClusterData
+layout(std430, binding = 0) buffer ClusterData
 {
     AABB clusters[];
 };
 
-layout(std430) buffer ActiveClusterIndices
+layout(std430, binding = 1) buffer ActiveClusterIndices
 {
     uint activeClusterIndices[];
 };
@@ -49,17 +49,17 @@ struct GlobalIndicesOffset
     uint globalLightProbeIndicesOffset;
 };
 
-layout(std430) buffer GlobalPointLightIndices
+layout(std430, binding = 2) buffer GlobalPointLightIndices
 {
     uint globalPointLightIndices[];
 };
 
-layout(std430) buffer GlobalSpotLightIndices
+layout(std430, binding = 3) buffer GlobalSpotLightIndices
 {
     uint globalSpotLightIndices[];
 };
 
-layout(std430) buffer GlobalLightProbeIndices
+layout(std430, binding = 4) buffer GlobalLightProbeIndices
 {
     uint globalLightProbeIndices[];
 };
@@ -74,7 +74,7 @@ struct LightIndicesBufferMetadata
     uint lightProbeCount;
 };
 
-layout(std430) buffer PerClusterGlobalLightIndicesBufferMetadata
+layout(std430, binding = 5) buffer PerClusterGlobalLightIndicesBufferMetadata
 {
     LightIndicesBufferMetadata lightIndicesBufferMetadata[];
 };
@@ -106,17 +106,17 @@ struct LightProbe {
     float padding3;
 };
 
-layout(std430) readonly buffer PointLightData
+layout(std430, binding = 6) readonly buffer PointLightData
 {
     PointLight pointLights[];
 };
 
-layout(std430) readonly buffer SpotLightData
+layout(std430, binding = 7) readonly buffer SpotLightData
 {
     SpotLight spotLights[];
 };
 
-layout(std430) readonly buffer LightProbeData
+layout(std430, binding = 8) readonly buffer LightProbeData
 {
     LightProbe lightProbes[];
 };

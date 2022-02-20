@@ -3,7 +3,7 @@
 layout (location = 0) in vec3 position;
 layout (location = 1) in vec2 textureCoords;
 
-out vec2 texCoords;
+layout (location = 0) out vec2 texCoords;
 
 void main()
 {
@@ -13,9 +13,10 @@ void main()
 
 #type fragment
 #version 450
+#include "Camera.hglsl"
 layout(location = 0) out vec4 FragColor;
 
-in vec2 texCoords;
+layout (location = 0) in vec2 texCoords;
 #define M_PI 3.14159265359 
 
 layout(binding = 0) uniform sampler2D depthTexture;
@@ -23,14 +24,10 @@ layout(binding = 1) uniform sampler2D diffuseTexture;
 layout(binding = 2) uniform sampler2D normalTexture;
 layout(binding = 3) uniform sampler2D rougnessMetalnessTexture;
 
-layout (std140) uniform Camera
+layout (std140, binding = 0) uniform Camera
 {
-    vec4 pos;
-    mat4 view;
-    mat4 projection;
-    mat4 invertedView;
-    mat4 invertedProjection;
-} camera;
+    CameraData camera;
+};
 
 struct DirLight {
     vec3 direction;
@@ -56,17 +53,17 @@ struct SpotLight {
     vec4 boundingSphere; //xyz - sphere center, w - radius 
 };
 
-layout(std430) buffer DirLightData
+layout(std430, binding = 1) buffer DirLightData
 {
     DirLight dirLights[];
 };
 
-layout(std430) buffer PointLightData
+layout(std430, binding = 2) buffer PointLightData
 {
     PointLight pointLights[];
 };
 
-layout(std430) buffer SpotLightData
+layout(std430, binding = 3) buffer SpotLightData
 {
     SpotLight spotLights[];
 };

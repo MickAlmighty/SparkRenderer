@@ -5,15 +5,18 @@ layout(r16f, binding = 0) uniform image2D output_image;
 
 #define HISTOGRAM_BINS 256
 
-layout (std430) buffer LuminanceHistogram {
+layout (std430, binding = 0) buffer LuminanceHistogram {
     uint luminanceHistogram[HISTOGRAM_BINS];
 };
 
-uniform uint pixelCount;
-uniform float minLogLuminance;
-uniform float logLuminanceRange;
-uniform float deltaTime;
-uniform float tau = 1.1f;
+layout (push_constant) uniform PushConstants
+{
+    uint pixelCount;
+    float minLogLuminance;
+    float logLuminanceRange;
+    float deltaTime;
+    float tau;
+} u_Uniforms;
 
 shared float histogramShared[HISTOGRAM_BINS];
 
@@ -36,10 +39,10 @@ void main()
 
     if (gl_LocalInvocationIndex == 0)
     {
-        float weightedLogAverage = (histogramShared[0].x / max(float(pixelCount) - countForThisBin, 1.0f)) - 1.0f;
-        float weightedAverageLuminance = exp2(((weightedLogAverage / 254.0) * logLuminanceRange) + minLogLuminance);
+        float weightedLogAverage = (histogramShared[0].x / max(float(u_Uniforms.pixelCount) - countForThisBin, 1.0f)) - 1.0f;
+        float weightedAverageLuminance = exp2(((weightedLogAverage / 254.0) * u_Uniforms.logLuminanceRange) + u_Uniforms.minLogLuminance);
         float luminanceLastFrame = imageLoad(output_image, ivec2(0,0)).x;
-        float adaptedLuminance = luminanceLastFrame + (weightedAverageLuminance - luminanceLastFrame) * (1 - exp(-deltaTime * tau));
+        float adaptedLuminance = luminanceLastFrame + (weightedAverageLuminance - luminanceLastFrame) * (1 - exp(-u_Uniforms.deltaTime * u_Uniforms.tau));
         imageStore(output_image, ivec2(0.0), vec4(adaptedLuminance, 0, 0, 0));
     }
 }

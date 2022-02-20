@@ -1,25 +1,23 @@
 #type vertex
 #version 450
+#include "Camera.hglsl"
 layout (location = 0) in vec3 position;
 layout (location = 1) in vec3 normal;
 layout (location = 2) in vec2 texture_coords;
 layout (location = 3) in vec3 tangent;
 layout (location = 4) in vec3 bitangent;
 
-uniform mat4 model;
-
-layout (std140) uniform Camera
+layout (push_constant) uniform Model
 {
-    vec4 pos;
-    mat4 view;
-    mat4 projection;
-    mat4 invertedView;
-    mat4 invertedProjection;
-    mat4 viewProjection;
-    mat4 invertedViewProjection;
-} camera;
+    mat4 model;
+} u_Uniforms;
 
-out VS_OUT {
+layout (std140, binding = 0) uniform Camera
+{
+    CameraData camera;
+};
+
+layout (location = 0) out VS_OUT {
     vec2 tex_coords;
     mat3 viewTBN;
     vec3 tangentFragPos;
@@ -29,9 +27,9 @@ out VS_OUT {
 
 void main()
 {
-    vec4 worldPosition = model * vec4(position, 1);
+    vec4 worldPosition = u_Uniforms.model * vec4(position, 1);
 
-    mat3 normalMatrix = mat3(transpose(inverse(model)));
+    mat3 normalMatrix = mat3(transpose(inverse(u_Uniforms.model)));
     vec3 T = normalize(normalMatrix * tangent);
     vec3 N = normalize(normalMatrix * normal);
     T = normalize(T - dot(T, N) * N);
@@ -44,7 +42,7 @@ void main()
     vs_out.tangentCamPos  = inverseTBN * camera.pos.xyz;
     vs_out.tex_coords = texture_coords;
     vs_out.viewTBN = viewTBN;
-    mat4 viewModel = camera.view * model;
+    mat4 viewModel = camera.view * u_Uniforms.model;
     vs_out.normalView = vec3(viewModel * vec4(normal, 0));
 
     gl_Position = camera.projection * camera.view * worldPosition;
@@ -52,6 +50,8 @@ void main()
 
 #type fragment
 #version 450
+#include "ParallaxMapping.hglsl"
+
 layout (location = 0) out vec3 FragColor;
 layout (location = 1) out vec2 Normal;
 layout (location = 2) out vec2 RoughnessMetalness;
@@ -62,55 +62,13 @@ layout (binding = 3) uniform sampler2D roughnessTexture;
 layout (binding = 4) uniform sampler2D metalnessTexture;
 layout (binding = 5) uniform sampler2D heightTexture;
 
-in VS_OUT {
+layout (location = 0) in VS_OUT {
     vec2 tex_coords;
     mat3 viewTBN;
     vec3 tangentFragPos;
     vec3 tangentCamPos;
     vec3 normalView;
 } vs_out;
-
-const float heightScale = 0.05f;
-
-vec2 parallaxMapping(vec2 texCoords, vec3 viewDir)
-{
-    // number of depth layers
-    const float minLayers = 8.0;
-    const float maxLayers = 32.0;
-    float numLayers = mix(maxLayers, minLayers, abs(dot(vec3(0.0, 0.0, 1.0), viewDir)));
-    // calculate the size of each layer
-    float layerDepth = 1.0 / numLayers;
-    // depth of current layer
-    float currentLayerDepth = 0.0;
-    // the amount to shift the texture coordinates per layer (from vector P)
-    vec2 P = viewDir.xy * heightScale;
-    vec2 deltaTexCoords = P * layerDepth;
-
-    vec2  currentTexCoords = texCoords;
-    float currentDepthMapValue = 1.0f - texture(heightTexture, currentTexCoords).r;
-
-    while (currentLayerDepth < currentDepthMapValue)
-    {
-        // shift texture coordinates along direction of P
-        currentTexCoords -= deltaTexCoords;
-        // get depthmap value at current texture coordinates
-        currentDepthMapValue = 1.0f - texture(heightTexture, currentTexCoords).r;
-        // get depth of next layer
-        currentLayerDepth += layerDepth;
-    }
-
-    vec2 prevTexCoords = currentTexCoords + deltaTexCoords;
-
-    // get depth after and before collision for linear interpolation
-    float afterDepth = currentDepthMapValue - currentLayerDepth;
-    float beforeDepth = (1.0f - texture(heightTexture, prevTexCoords).r) - currentLayerDepth + layerDepth;
-
-    // interpolation of texture coordinates
-    float weight = afterDepth / (afterDepth - beforeDepth);
-    vec2 finalTexCoords = prevTexCoords * weight + currentTexCoords * (1.0 - weight);
-
-    return finalTexCoords;
-}
 
 vec2 encodeViewSpaceNormal(vec3 n)
 {
@@ -168,7 +126,7 @@ void main()
     if (texture(heightTexture, vs_out.tex_coords).r != 0.0) 
     {
         vec3 tangentViewDir = normalize(vs_out.tangentCamPos - vs_out.tangentFragPos);
-        tex_coords = parallaxMapping(vs_out.tex_coords, tangentViewDir);
+        tex_coords = parallaxMapping(vs_out.tex_coords, tangentViewDir, heightTexture);
     }
 
     FragColor.rgb = accurateSRGBToLinear(texture(diffuseTexture, tex_coords).rgb);

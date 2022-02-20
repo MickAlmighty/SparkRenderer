@@ -13,7 +13,7 @@ class ResourceIdentifier;
 class ResourceFactory
 {
     public:
-    static std::shared_ptr<Resource> loadResource(const std::shared_ptr<ResourceIdentifier>& resourceIdentifier);
+    static std::shared_ptr<Resource> loadResource(const std::filesystem::path& resourcesRootPath, const std::filesystem::path& resourceRelativePath);
     static bool isExtensionSupported(const std::filesystem::path& filePath);
 
     static std::vector<std::string> supportedAnimationExtensions();
@@ -26,6 +26,8 @@ class ResourceFactory
     private:
     static std::string extensionToLowerCase(const std::filesystem::path& path);
 
-    static std::map<std::string, std::function<std::shared_ptr<Resource>(const std::shared_ptr<ResourceIdentifier>& resourceIdentifier)>> resourceCreationFunctions;
+    static std::map<std::string, std::function<std::shared_ptr<Resource>(const std::filesystem::path& resourcesRootPath,
+                                                                         const std::filesystem::path& resourceRelativePath)>>
+        resourceCreationFunctions;
 };
 }  // namespace spark::resourceManagement

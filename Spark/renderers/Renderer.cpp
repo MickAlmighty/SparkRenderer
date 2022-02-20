@@ -12,9 +12,10 @@ namespace spark::renderers
 {
 Renderer::Renderer(unsigned int width, unsigned int height) : w(width), h(height), ao(w, h), postProcessingStack(w, h)
 {
-    screenShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("screen.glsl");
-    solidColorShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("solidColor.glsl");
+    screenShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/screen.glsl");
+    solidColorShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/solidColor.glsl");
 
+    skyboxPlaceholder = utils::createCubemap(1, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR, true);
     utils::createFramebuffer(uiShapesFramebuffer);
 }
 
@@ -116,6 +117,7 @@ void Renderer::helperShapes(const std::shared_ptr<Scene>& scene, const std::shar
     // light texture must be bound here
     solidColorShader->use();
     solidColorShader->bindUniformBuffer("Camera", camera->getUbo());
+    solidColorShader->setVec3("u_Uniforms2.color", glm::vec3(1.0f));
 
     for(auto& request : renderingQueue)
     {

@@ -1,23 +1,16 @@
 #type compute
 #version 450
+#include "Camera.hglsl"
 layout(local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
 
 layout(binding = 0) uniform sampler2D depthTexture;
 
-layout (std140) uniform Camera
+layout (std140, binding = 0) uniform Camera
 {
-    vec4 pos;
-    mat4 view;
-    mat4 projection;
-    mat4 invertedView;
-    mat4 invertedProjection;
-    mat4 viewProjection;
-    mat4 invertedViewProjection;
-    float nearZ;
-    float farZ;
-} camera;
+    CameraData camera;
+};
 
-layout (std140) uniform AlgorithmData
+struct ClusterBasedLightCullingData
 {
     vec2 pxTileSize;
     uint clusterCountX;
@@ -26,7 +19,12 @@ layout (std140) uniform AlgorithmData
     float equation3Part1;
     float equation3Part2;
     uint maxLightCount;
-} algorithmData;
+};
+
+layout (std140, binding = 1) uniform AlgorithmData
+{
+    ClusterBasedLightCullingData algorithmData;
+};
 
 struct AABB 
 {
@@ -35,12 +33,12 @@ struct AABB
     uint occupancyMask;
 };
 
-layout(std430) buffer ClusterData
+layout(std430, binding = 0) buffer ClusterData
 {
     AABB clusters[];
 };
 
-layout(std430) buffer ActiveClusters
+layout(std430, binding = 1) buffer ActiveClusters
 {
     bool activeClusters[];
 };
@@ -55,7 +53,7 @@ struct LightIndicesBufferMetadata
     uint lightProbeCount;
 };
 
-layout(std430) buffer PerClusterGlobalLightIndicesBufferMetadata
+layout(std430, binding = 2) buffer PerClusterGlobalLightIndicesBufferMetadata
 {
     LightIndicesBufferMetadata lightIndicesBufferMetadata[];
 };
@@ -108,7 +106,7 @@ void main()
             const vec3 clusterMin = aabb.center.xyz - aabb.halfSize;
             const uvec3 maskCellIndex = uvec3(max(vec3(0), min(vec3(10), floor((viewSpacePosition - clusterMin) * clusterRangeReciprocal))));
 
-            const uvec3 mask = 1 << maskCellIndex;
+            const uvec3 mask = uvec3(1) << maskCellIndex;
 
             uint clusterOccupancyMask = 0;
             clusterOccupancyMask = bitfieldInsert(clusterOccupancyMask, mask.x, 0, 10);

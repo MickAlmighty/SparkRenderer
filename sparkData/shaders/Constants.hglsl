@@ -1,0 +1,7 @@
+#ifndef CONSTANTS
+#define CONSTANTS
+
+#define M_PI 3.14159265359
+#define ONE_BY_M_PI 0.31830988618
+
+#endif //CONSTANTS

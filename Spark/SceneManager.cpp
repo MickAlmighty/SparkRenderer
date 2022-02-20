@@ -40,37 +40,6 @@ std::shared_ptr<Scene> SceneManager::getCurrentScene() const
     return current_scene;
 }
 
-std::optional<std::shared_ptr<Scene>> getScene()
-{
-    bool objectPicked{false};
-    std::shared_ptr<Scene> scene{nullptr};
-
-    if(ImGui::BeginPopupModal("Scenes", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
-    {
-        const auto sceneIds = Spark::get().getResourceLibrary().getSceneResourceIdentifiers();
-        for(const auto& id : sceneIds)
-        {
-            if(ImGui::Button(id->getFullPath().string().c_str()))
-            {
-                scene = std::static_pointer_cast<Scene>(id->getResource());
-                objectPicked = true;
-                ImGui::CloseCurrentPopup();
-            }
-        }
-
-        if(ImGui::Button("Close"))
-        {
-            ImGui::CloseCurrentPopup();
-        }
-        ImGui::EndPopup();
-    }
-
-    if(objectPicked)
-        return {scene};
-
-    return std::nullopt;
-}
-
 void SceneManager::drawGui()
 {
     if(ImGui::BeginMenu("SceneManager"))

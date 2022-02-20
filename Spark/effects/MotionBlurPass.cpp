@@ -10,7 +10,7 @@ namespace spark::effects
 {
 MotionBlurPass::MotionBlurPass(unsigned int width, unsigned int height) : w(width), h(height)
 {
-    motionBlurShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("motionBlur.glsl");
+    motionBlurShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/motionBlur.glsl");
     createFrameBuffersAndTextures();
 }
 
@@ -57,12 +57,12 @@ std::optional<GLuint> MotionBlurPass::process(const std::shared_ptr<ICamera>& ca
 
         motionBlurShader->use();
         motionBlurShader->bindUniformBuffer("Camera", camera->getUbo());
-        motionBlurShader->setMat4("prevViewProj", prevProjectionView);
+        motionBlurShader->setMat4("u_Uniforms.prevViewProj", prevProjectionView);
 
-        motionBlurShader->setFloat("blurScale", blurScale);
+        motionBlurShader->setFloat("u_Uniforms.blurScale", blurScale);
 
         const glm::vec2 texelSize = {1.0f / static_cast<float>(w), 1.0f / static_cast<float>(h)};
-        motionBlurShader->setVec2("texelSize", texelSize);
+        motionBlurShader->setVec2("u_Uniforms.texelSize", texelSize);
 
         const std::array<GLuint, 2> textures{colorTexture, depthTexture};
         glBindTextures(0, textures.size(), textures.data());

@@ -19,9 +19,9 @@ AmbientOcclusion::AmbientOcclusion(unsigned int width, unsigned int height) : w(
     auto ssaoNoise = generateSsaoNoise();
     randomNormalsTexture = utils::createTexture2D(4, 4, GL_RGB32F, GL_RGB, GL_FLOAT, GL_REPEAT, GL_NEAREST, false, ssaoNoise.data());
 
-    ssaoShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("ssao.glsl");
-    ssaoBlurShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("ssaoBlur.glsl");
-    colorInversionShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("colorInversion.glsl");
+    ssaoShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/ssao.glsl");
+    ssaoBlurShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/ssaoBlur.glsl");
+    colorInversionShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/colorInversion.glsl");
     ssaoShader->bindUniformBuffer("Samples", samplesUbo);
     createFrameBuffersAndTextures();
 }
@@ -43,11 +43,11 @@ GLuint AmbientOcclusion::process(GLuint depthTexture, GLuint normalsTexture, con
     GLuint textures[3] = {depthTexture, normalsTexture, randomNormalsTexture.get()};
     glBindTextures(0, 3, textures);
     ssaoShader->use();
-    ssaoShader->setInt("kernelSize", kernelSize);
-    ssaoShader->setFloat("radius", radius);
-    ssaoShader->setFloat("bias", bias);
-    ssaoShader->setFloat("power", power);
-    ssaoShader->setVec2("screenSize", {static_cast<float>(w), static_cast<float>(h)});
+    ssaoShader->setInt("u_Uniforms.kernelSize", kernelSize);
+    ssaoShader->setFloat("u_Uniforms.radius", radius);
+    ssaoShader->setFloat("u_Uniforms.bias", bias);
+    ssaoShader->setFloat("u_Uniforms.power", power);
+    ssaoShader->setVec2("u_Uniforms.screenSize", {static_cast<float>(w), static_cast<float>(h)});
     ssaoShader->bindUniformBuffer("Camera", camera->getUbo());
 
     screenQuad.draw();
@@ -55,6 +55,7 @@ GLuint AmbientOcclusion::process(GLuint depthTexture, GLuint normalsTexture, con
 
     utils::bindTexture2D(ssaoFramebuffer, ssaoTexture2.get());
     ssaoBlurShader->use();
+    ssaoBlurShader->setInt("u_Uniforms.blurSize", 4);
     glBindTextureUnit(0, ssaoTexture.get());
     screenQuad.draw();
 

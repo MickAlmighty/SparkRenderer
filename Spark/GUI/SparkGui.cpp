@@ -138,7 +138,7 @@ std::optional<std::string> SparkGui::addComponent()
     {
         for(auto& type : rttr::type::get_types())
         {
-            //SPARK_INFO("{}", type.get_name().begin());
+            // SPARK_INFO("{}", type.get_name().begin());
             if(type.is_wrapper())
             {
                 if(auto rawType = type.get_wrapped_type().get_raw_type();
@@ -260,13 +260,9 @@ std::shared_ptr<resourceManagement::Resource> SparkGui::getResourceIdentifierByF
 
     if(file_dialog.showFileDialog("Select File", imgui_addons::ImGuiFileBrowser::DialogMode::OPEN, ImVec2(700, 310), extensions))
     {
-        if(std::filesystem::path filepath = file_dialog.selected_path; !filepath.empty())
+        if(const std::filesystem::path filepath = file_dialog.selected_path; !filepath.empty())
         {
-            const auto resourceIdentifier = Spark::get().getResourceLibrary().getResourceIdentifier(filepath);
-            if(resourceIdentifier)
-            {
-                return resourceIdentifier->getResource();
-            }
+            return Spark::get().getResourceLibrary().getResourceByFullPath<resourceManagement::Resource>(filepath);
         }
     }
 

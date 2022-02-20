@@ -10,9 +10,9 @@ namespace spark::renderers
 TileBasedForwardPlusRenderer::TileBasedForwardPlusRenderer(unsigned int width, unsigned int height)
     : Renderer(width, height), brdfLookupTexture(utils::createBrdfLookupTexture(1024)), lightCullingPass(width, height)
 {
-    depthOnlyShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("depthOnly.glsl");
-    depthAndNormalsShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("depthAndNormals.glsl");
-    lightingShader = Spark::get().getResourceLibrary().getResourceByName<resources::Shader>("tileBasedForwardPlusPbrLighting.glsl");
+    depthOnlyShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/depthOnly.glsl");
+    depthAndNormalsShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/depthAndNormals.glsl");
+    lightingShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/tileBasedForwardPlusPbrLighting.glsl");
 
     createFrameBuffersAndTextures();
 }
@@ -83,7 +83,8 @@ void TileBasedForwardPlusRenderer::lightingPass(const std::shared_ptr<Scene>& sc
     }
     else
     {
-        glBindTextures(7, 2, nullptr);
+        glBindTextureUnit(7, skyboxPlaceholder.get());
+        glBindTextureUnit(8, skyboxPlaceholder.get());
     }
     glBindTextureUnit(9, brdfLookupTexture.get());
     glBindTextureUnit(10, ssaoTexture);
@@ -97,7 +98,7 @@ void TileBasedForwardPlusRenderer::lightingPass(const std::shared_ptr<Scene>& sc
     lightingShader->bindSSBO("PointLightIndices", lightCullingPass.pointLightIndices);
     lightingShader->bindSSBO("SpotLightIndices", lightCullingPass.spotLightIndices);
     lightingShader->bindSSBO("LightProbeIndices", lightCullingPass.lightProbeIndices);
-    lightingShader->setUVec2("viewportSize", {w, h});
+    lightingShader->setUVec2("u_Uniforms2.viewportSize", {w, h});
 
     if(const auto it = scene->getRenderingQueues().find(ShaderType::PBR); it != scene->getRenderingQueues().cend())
     {

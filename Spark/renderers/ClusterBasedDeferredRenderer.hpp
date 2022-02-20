@@ -22,7 +22,8 @@ namespace spark::renderers
 class ClusterBasedDeferredRenderer : public Renderer
 {
     public:
-    ClusterBasedDeferredRenderer(unsigned int width, unsigned int height);
+    ClusterBasedDeferredRenderer(unsigned int width, unsigned int height, const std::shared_ptr<resources::Shader>& activeClustersDeterminationShader,
+                                 const std::shared_ptr<resources::Shader>& lightCullingShader);
     ClusterBasedDeferredRenderer(const ClusterBasedDeferredRenderer&) = delete;
     ClusterBasedDeferredRenderer(ClusterBasedDeferredRenderer&&) = delete;
     ClusterBasedDeferredRenderer& operator=(const ClusterBasedDeferredRenderer&) = delete;
