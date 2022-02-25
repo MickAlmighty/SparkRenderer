@@ -15,9 +15,10 @@ void main()
 #version 450
 #include "Camera.hglsl"
 layout (location = 0) in vec2 texCoords;
-layout (location = 0) out float CircleOfConfusion;
+layout (location = 0) out vec4 FragColor;
 
 layout (binding = 0) uniform sampler2D depthTexture;
+layout (binding = 1) uniform sampler2D lightingTexture;
 
 layout (std140, binding = 0) uniform Camera
 {
@@ -27,10 +28,10 @@ layout (std140, binding = 0) uniform Camera
 //depth range for reversed Z depth buffer
 layout (push_constant) uniform PushConstants
 {
-    float zNear;
-    float zNearEnd;
-    float zFarStart ;
-    float zFar;
+    float A;        //aperture
+    float f;        //focal length
+    float S1;       //focal distance
+    float maxCoC;   //max CoC diameter
 } u_Uniforms;
 
 vec4 viewPosFromDepth(float depth, mat4 invProj, vec2 uv) 
@@ -50,16 +51,17 @@ vec3 getViewSpacePosition(vec2 uv)
     return viewPosFromDepth(depth, camera.invertedProjection, uv).xyz;
 }
 
-float getCircleOfConfusion(float pixelDepth, float nearDepth, float farDepth)
-{
-    // -1.0f -> camera points to negative z values 
-    return clamp((-1.0f * pixelDepth - nearDepth) / (farDepth - nearDepth), 0.0f, 1.0f);
-}
-
 void main()
 {
     vec3 viewPos = getViewSpacePosition(texCoords);
-    float nearCoc = 1.0f - getCircleOfConfusion(viewPos.z, u_Uniforms.zNear, u_Uniforms.zNearEnd);
-    float farCoc = getCircleOfConfusion(viewPos.z, u_Uniforms.zFarStart, u_Uniforms.zFar) * 0.4f;
-    CircleOfConfusion.x = max(nearCoc, farCoc);
+    const vec3 color = texture(lightingTexture, texCoords).xyz;
+
+    const float S2 = -viewPos.z; // make distance from camera positive by negation
+    const float denominator = (u_Uniforms.S1 - u_Uniforms.f) * S2;
+    const float nominator = u_Uniforms.A * u_Uniforms.f * abs(S2 - u_Uniforms.S1);
+    const float CoC = nominator / denominator;
+    const float sensorHeight = 0.024f;
+    const float percentOfSensor = CoC / sensorHeight;
+    const float blurFactor = clamp(percentOfSensor, 0, u_Uniforms.maxCoC);
+    FragColor = vec4(color, blurFactor);
 }

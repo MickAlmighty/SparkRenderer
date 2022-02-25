@@ -13,19 +13,23 @@ void main()
 
 #type fragment
 #version 450
+layout (location = 0) in vec2 texCoords;
 layout (location = 0) out vec3 FragColor;
 
 layout (binding = 0) uniform sampler2D cocTexture;
 layout (binding = 1) uniform sampler2D sourceColorTexture;
 layout (binding = 2) uniform sampler2D bluredColorTexture;
 
-layout (location = 0) in vec2 texCoords;
+layout (push_constant) uniform PushConstants
+{
+    float maxCoC;
+} u_Uniforms;
 
 void main()
 {
-    vec3 blur = texture(bluredColorTexture, texCoords).xyz;
+    vec4 blur = texture(bluredColorTexture, texCoords);
     vec3 color = texture(sourceColorTexture, texCoords).xyz;
-    float cocValue = texture(cocTexture, texCoords).x;
+    float cocValue = clamp(blur.a / u_Uniforms.maxCoC, 0.0f, 1.0f);
 
-    FragColor = mix(color, blur, cocValue);
+    FragColor = mix(color, blur.xyz, cocValue);
 }

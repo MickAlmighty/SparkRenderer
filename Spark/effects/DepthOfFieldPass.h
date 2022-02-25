@@ -3,7 +3,6 @@
 #include <memory>
 
 #include "Buffer.hpp"
-#include "BlurPass.h"
 #include "glad_glfw3.h"
 #include "ScreenQuad.hpp"
 #include "utils/GlHandle.hpp"
@@ -35,31 +34,30 @@ class DepthOfFieldPass
     DepthOfFieldPass(const DepthOfFieldPass&& blurPass) = delete;
     ~DepthOfFieldPass();
 
-    float nearStart{1}, nearEnd{4};
-    float farStart{20}, farEnd{100};
+    float aperture{0.8f}, f{0.035f};
+    float focusPoint{20.0f}, maxCoC{0.035};
+    float poissonBlurScale{0.1};
 
     private:
     void createFrameBuffersAndTextures();
 
-    void calculateCircleOfConfusion(GLuint depthTexture, const std::shared_ptr<ICamera>& camera) const;
-    void blurLightPassTexture(GLuint lightPassTexture) const;
-    inline void detectBokehPositions(GLuint lightPassTexture) const;
-    inline void renderBokehShapes() const;
+    void calculateCircleOfConfusion(GLuint lightingTexture, GLuint depthTexture, const std::shared_ptr<ICamera>& camera) const;
+    void blurLightPassTexture(GLuint depthTexture) const;
     void blendDepthOfField(GLuint lightPassTexture) const;
 
     unsigned int w{}, h{};
 
     std::shared_ptr<resources::Shader> cocShader{nullptr};
+    std::shared_ptr<resources::Shader> poissonBlurShader{nullptr};
+    std::shared_ptr<resources::Shader> poissonBlurShader2{nullptr};
     std::shared_ptr<resources::Shader> blendShader{nullptr};
 
-    /*GLuint indirectBufferID{}, bokehCountTexID{}, bokehCounterID{};
-    SSBO bokehPositionBuffer, bokehColorBuffer;
-    GLuint bokehPositionTexture{}, bokehColorTexture{};*/
-
+    utils::UniqueTextureHandle poissonBlurTexture{}, poissonBlurTexture2;
     utils::TextureHandle cocTexture{}, blendDofTexture{};
-    GLuint cocFramebuffer{}, blendDofFramebuffer{};
+    GLuint cocFramebuffer{}, blendDofFramebuffer{}, poissonBlurFramebuffer{}, poissonBlurFramebuffer2{};
 
-    BlurPass blurPass;
     ScreenQuad screenQuad{};
+    SSBO taps16{};
+    SSBO taps16_2{};
 };
 }  // namespace spark::effects

@@ -1,69 +1,58 @@
 #include "DepthOfFieldPass.h"
 
+#include <array>
+
 #include "utils/CommonUtils.h"
 #include "ICamera.hpp"
 #include "Shader.h"
 #include "Spark.h"
 
+namespace
+{
+template<size_t T>
+void generatePoints(std::array<glm::vec2, T>& points, float angleOffsetRad = 0.0f)
+{
+    const float GOLDEN_ANGLE = 2.39996323f;
+
+    auto divident = sqrt((float)T);
+    for(int j = 0; j < T; ++j)
+    {
+        float theta = j * GOLDEN_ANGLE + angleOffsetRad;
+        float r = sqrt((float)j) / divident;
+
+        points[j] = glm::vec2(r * cos(theta), r * sin(theta));
+    }
+}
+}  // namespace
+
 namespace spark::effects
 {
-DepthOfFieldPass::DepthOfFieldPass(unsigned int width, unsigned int height)
-    : w(width), h(height), blurPass(w / 2, h / 2)
+DepthOfFieldPass::DepthOfFieldPass(unsigned int width, unsigned int height) : w(width), h(height)
 {
     cocShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/circleOfConfusion.glsl");
     blendShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/blendDof.glsl");
+    poissonBlurShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/poissonBlur.glsl");
+    poissonBlurShader2 = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/poissonBlur2.glsl");
+
+    std::array<glm::vec2, 16> taps16Array;
+    std::array<glm::vec2, 16> taps16Array2;
+
+    generatePoints(taps16Array);
+    generatePoints(taps16Array2, glm::radians(3.0f));
+
+    taps16.updateData(taps16Array);
+    taps16_2.updateData(taps16Array2);
 
     createFrameBuffersAndTextures();
-    // glGenBuffers(1, &indirectBufferID);
-    // glBindBuffer(GL_DRAW_INDIRECT_BUFFER, indirectBufferID);
-    // DrawArraysIndirectCommand indirectCmd{};
-    // indirectCmd.count = 1;
-    // indirectCmd.instanceCount = 0;
-    // indirectCmd.first = 0;
-    // indirectCmd.baseInstance = 0;
-    // glBufferData(GL_DRAW_INDIRECT_BUFFER, sizeof(DrawArraysIndirectCommand), &indirectCmd, GL_DYNAMIC_DRAW);
-
-    //// Create a texture proxy for the indirect buffer
-    //// (used during bokeh count synch.)
-    // glGenTextures(1, &bokehCountTexID);
-    // glBindTexture(GL_TEXTURE_BUFFER, bokehCountTexID);
-    // glTexBuffer(GL_TEXTURE_BUFFER, GL_R32UI, indirectBufferID);
-    //// Create an atomic counter
-    // glGenBuffers(1, &bokehCounterID);
-    // glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, bokehCounterID);
-    // glBufferData(GL_ATOMIC_COUNTER_BUFFER, sizeof(unsigned int), 0, GL_DYNAMIC_DRAW);
-
-    // glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 0, bokehCounterID);
-
-    // bokehPositionBuffer.genBuffer(sizeof(glm::vec4) * 1024);
-    // glGenTextures(1, &bokehPositionTexture);
-    // glBindTexture(GL_TEXTURE_BUFFER, bokehPositionTexture);
-    // glTexBuffer(GL_TEXTURE_BUFFER, GL_RGBA32F, bokehPositionBuffer.ID);
-
-    // bokehColorBuffer.genBuffer(sizeof(glm::vec4) * 1024);
-    // glGenTextures(1, &bokehColorTexture);
-    // glBindTexture(GL_TEXTURE_BUFFER, bokehColorTexture);
-    // glTexBuffer(GL_TEXTURE_BUFFER, GL_RGBA32F, bokehColorBuffer.ID);
 }
 
 GLuint DepthOfFieldPass::process(GLuint lightPassTexture, GLuint depthTexture, const std::shared_ptr<ICamera>& camera) const
 {
     PUSH_DEBUG_GROUP(DEPTH_OF_FIELD)
-    calculateCircleOfConfusion(depthTexture, camera);
-    blurLightPassTexture(lightPassTexture);
-    detectBokehPositions(lightPassTexture);
-    renderBokehShapes();
+    calculateCircleOfConfusion(lightPassTexture, depthTexture, camera);
+    blurLightPassTexture(depthTexture);
     blendDepthOfField(lightPassTexture);
 
-    /*glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, bokehCounterID);
-    glBufferData(GL_ATOMIC_COUNTER_BUFFER, sizeof(unsigned int), 0, GL_DYNAMIC_DRAW);
-
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, bokehPositionBuffer.ID);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::vec4) * 1024, 0, GL_DYNAMIC_DRAW);
-
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, bokehColorBuffer.ID);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::vec4) * 1024, 0, GL_DYNAMIC_DRAW);
-    */
     POP_DEBUG_GROUP();
     return blendDofTexture.get();
 }
@@ -72,37 +61,30 @@ void DepthOfFieldPass::resize(unsigned int width, unsigned int height)
 {
     w = width;
     h = height;
-    blurPass.resize(width / 2, height / 2);
     createFrameBuffersAndTextures();
 }
 
 void DepthOfFieldPass::createFrameBuffersAndTextures()
 {
-    cocTexture = utils::createTexture2D(w, h, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    poissonBlurTexture = utils::createTexture2D(w / 2, h / 2, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    poissonBlurTexture2 = utils::createTexture2D(w / 2, h / 2, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    cocTexture = utils::createTexture2D(w, h, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
     blendDofTexture = utils::createTexture2D(w, h, GL_RGB16F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
 
+    utils::recreateFramebuffer(poissonBlurFramebuffer, {poissonBlurTexture.get()});
+    utils::recreateFramebuffer(poissonBlurFramebuffer2, {poissonBlurTexture2.get()});
     utils::recreateFramebuffer(cocFramebuffer, {cocTexture.get()});
     utils::recreateFramebuffer(blendDofFramebuffer, {blendDofTexture.get()});
 }
 
 DepthOfFieldPass::~DepthOfFieldPass()
 {
-    const GLuint framebuffers[] = {cocFramebuffer, blendDofFramebuffer};
-    glDeleteFramebuffers(2, framebuffers);
+    const GLuint framebuffers[] = {cocFramebuffer, blendDofFramebuffer, poissonBlurFramebuffer, poissonBlurFramebuffer2};
+    glDeleteFramebuffers(4, framebuffers);
     cocFramebuffer = blendDofFramebuffer = 0;
-
-    /*deleteFrameBuffersAndTextures();
-    glDeleteTextures(1, &randomNormalsTexture);
-    glDeleteTextures(1, &bokehCountTexID);
-    glDeleteBuffers(1, &bokehCounterID);
-    glDeleteBuffers(1, &indirectBufferID);
-    bokehPositionBuffer.cleanup();
-    bokehColorBuffer.cleanup();
-    glDeleteTextures(1, &bokehPositionTexture);
-    glDeleteTextures(1, &bokehColorTexture);*/
 }
 
-void DepthOfFieldPass::calculateCircleOfConfusion(GLuint depthTexture, const std::shared_ptr<ICamera>& camera) const
+void DepthOfFieldPass::calculateCircleOfConfusion(GLuint lightingTexture, GLuint depthTexture, const std::shared_ptr<ICamera>& camera) const
 {
     PUSH_DEBUG_GROUP(COC_COMPUTING)
 
@@ -112,43 +94,41 @@ void DepthOfFieldPass::calculateCircleOfConfusion(GLuint depthTexture, const std
     glClear(GL_COLOR_BUFFER_BIT);
 
     cocShader->use();
-    cocShader->setFloat("u_Uniforms.zNear", nearStart);
-    cocShader->setFloat("u_Uniforms.zNearEnd", nearEnd);
-    cocShader->setFloat("u_Uniforms.zFarStart", farStart);
-    cocShader->setFloat("u_Uniforms.zFar", farEnd);
+    cocShader->setFloat("u_Uniforms.A", aperture);
+    cocShader->setFloat("u_Uniforms.f", f);
+    cocShader->setFloat("u_Uniforms.S1", focusPoint);
+    cocShader->setFloat("u_Uniforms.maxCoC", maxCoC);
     cocShader->bindUniformBuffer("Camera", camera->getUbo());
     glBindTextureUnit(0, depthTexture);
+    glBindTextureUnit(1, lightingTexture);
     screenQuad.draw();
     glBindTextureUnit(0, 0);
 
     POP_DEBUG_GROUP();
 }
 
-void DepthOfFieldPass::blurLightPassTexture(GLuint lightPassTexture) const
+void DepthOfFieldPass::blurLightPassTexture(GLuint depthTexture) const
 {
-    blurPass.blurTexture(lightPassTexture);
-    blurPass.blurTexture(blurPass.getBlurredTexture());
-    blurPass.blurTexture(blurPass.getBlurredTexture());
+    glViewport(0, 0, w / 2, h / 2);
+    glBindFramebuffer(GL_FRAMEBUFFER, poissonBlurFramebuffer);
+    poissonBlurShader->use();
+    poissonBlurShader->setFloat("u_Uniforms.scale", poissonBlurScale);
+    poissonBlurShader->bindSSBO("Taps", taps16);
+    glBindTextureUnit(0, cocTexture.get());
+    glBindTextureUnit(1, depthTexture);
+    screenQuad.draw();
+    glBindTextureUnit(1, 0);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, poissonBlurFramebuffer2);
+    poissonBlurShader2->use();
+    poissonBlurShader2->setFloat("u_Uniforms.scale", poissonBlurScale * 0.5f);
+    poissonBlurShader2->bindSSBO("Taps", taps16_2);
+    glBindTextureUnit(0, poissonBlurTexture.get());
+    screenQuad.draw();
+    glBindTextureUnit(0, 0);
+
+    glViewport(0, 0, w, h);
 }
-
-void DepthOfFieldPass::detectBokehPositions(GLuint lightPassTexture) const
-{
-    // const auto bokehDetectionShader = Spark::get().getResourceLibrary().getResourceByRelativePath<resources::Shader>("shaders/bokehDetection.glsl");
-    // bokehDetectionShader->use();
-    // GLuint textures[2] = {lightPassTexture, circleOfConfusionTexture};
-    // glBindTextures(3, 2, textures);
-
-    // glActiveTexture(GL_TEXTURE0 + 1);
-    // glBindImageTexture(1, bokehPositionTexture, 0, false, 0, GL_WRITE_ONLY, GL_RGBA32F);
-    //// Bind color image buffer
-    // glActiveTexture(GL_TEXTURE0 + 2);
-    // glBindImageTexture(2, bokehColorTexture, 0, false, 0, GL_WRITE_ONLY, GL_RGBA32F);
-
-    // screenQuad.draw();
-    // glBindTextures(3, 2, nullptr);
-}
-
-void DepthOfFieldPass::renderBokehShapes() const {}
 
 void DepthOfFieldPass::blendDepthOfField(GLuint lightPassTexture) const
 {
@@ -160,8 +140,8 @@ void DepthOfFieldPass::blendDepthOfField(GLuint lightPassTexture) const
     glClear(GL_COLOR_BUFFER_BIT);
 
     blendShader->use();
-
-    GLuint textures[3] = {cocTexture.get(), lightPassTexture, blurPass.getBlurredTexture()};
+    blendShader->setFloat("u_Uniforms.maxCoC", maxCoC);
+    GLuint textures[3] = {cocTexture.get(), lightPassTexture, poissonBlurTexture2.get()};
     glBindTextures(0, 3, textures);
     screenQuad.draw();
     glBindTextures(0, 3, nullptr);

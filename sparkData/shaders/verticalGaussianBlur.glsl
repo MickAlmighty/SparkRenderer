@@ -41,11 +41,15 @@ void main()
 {
     const vec2 direction = vec2(0.0f, inverseScreenSize.y);
 
+    const vec2 texSize = vec2(textureSize(image, 0).xy);
+    const vec2 screenRatioScaling = vec2(texSize.y / texSize.x, 1.0f);
+
     vec4 color = texture(image, texCoords) * weights[0];
     for(int i = 1; i < 4; ++i)
     {
-        color += texture(image, texCoords + direction * float(i)) * weights[i];
-        color += texture(image, texCoords - direction * float(i)) * weights[i];
+        const vec2 offset = direction * screenRatioScaling * float(i);
+        color += texture(image, texCoords + offset) * weights[i];
+        color += texture(image, texCoords - offset) * weights[i];
     }
 
     FragColor = color;

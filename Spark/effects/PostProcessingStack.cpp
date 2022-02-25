@@ -15,11 +15,11 @@ GLuint PostProcessingStack::process(GLuint lightingTexture, GLuint depthTexture,
 {
     textureHandle = lightingTexture;
     renderCubemap(lightingTexture, depthTexture, scene, camera);
-    depthOfField(depthTexture, camera);
     lightShafts(depthTexture, camera);
     bloom(lightingTexture);
     toneMapping();
     fxaa();
+    depthOfField(depthTexture, camera);
     motionBlur(depthTexture, camera);
 
     return textureHandle;
@@ -42,10 +42,11 @@ void PostProcessingStack::drawGui()
     if(ImGui::BeginMenu(menuName2.c_str()))
     {
         ImGui::Checkbox("DOF enabled", &isDofEnabled);
-        ImGui::DragFloat("NearStart", &dofPass.nearStart, 0.1f, 0.0f);
-        ImGui::DragFloat("NearEnd", &dofPass.nearEnd, 0.1f);
-        ImGui::DragFloat("FarStart", &dofPass.farStart, 0.1f, 0.0f);
-        ImGui::DragFloat("FarEnd", &dofPass.farEnd, 0.1f, 0.0f);
+        ImGui::DragFloat("Aperture", &dofPass.aperture, 0.001f, 0.0f);
+        ImGui::DragFloat("Focal Length", &dofPass.f, 0.001f);
+        ImGui::DragFloat("Focus Point", &dofPass.focusPoint, 0.001f, 0.0f);
+        ImGui::DragFloat("max CoC", &dofPass.maxCoC, 0.001f, 0.0f);
+        ImGui::DragFloat("poisson blur scale", &dofPass.poissonBlurScale, 0.001f, 0.0f);
         ImGui::EndMenu();
     }
 

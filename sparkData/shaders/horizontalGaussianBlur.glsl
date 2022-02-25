@@ -13,9 +13,8 @@ void main()
 
 #type fragment
 #version 450
-layout (location = 0) out vec4 FragColor;
-
 layout (location = 0) in vec2 texCoords;
+layout (location = 0) out vec4 FragColor;
 
 layout (binding = 0) uniform sampler2D image;
 
@@ -42,11 +41,15 @@ void main()
 {
     const vec2 direction = vec2(u_Uniforms.inverseScreenSize.x, 0.0f);
 
+    const vec2 texSize = vec2(textureSize(image, 0).xy);
+    const vec2 screenRatioScaling = vec2(texSize.y / texSize.x, 1.0f);
+
     vec4 color = texture(image, texCoords) * weights[0];
     for(int i = 1; i < 4; ++i)
     {
-        color += texture(image, texCoords + direction * float(i)) * weights[i];
-        color += texture(image, texCoords - direction * float(i)) * weights[i];
+        const vec2 offset = direction * screenRatioScaling * float(i);
+        color += texture(image, texCoords + offset) * weights[i];
+        color += texture(image, texCoords - offset) * weights[i];
     }
 
     FragColor = color;
