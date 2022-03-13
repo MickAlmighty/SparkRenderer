@@ -16,6 +16,8 @@ struct alignas(16) ClusterBasedAlgorithmData
     float equation3Part1;
     float equation3Part2;
     unsigned int maxLightCount;
+    const unsigned int maxNumberOfLightProbes = 256;
+    const glm::uvec3 placeholder{};
 };
 }  // namespace
 
@@ -32,10 +34,8 @@ ClusterBasedLightCullingPass::ClusterBasedLightCullingPass(unsigned int width, u
     clusters.resizeBuffer(dispatchSize.x * dispatchSize.y * dispatchSize.z * sizeof(glm::vec4) * 2);
     activeClusters.resizeBuffer(dispatchSize.x * dispatchSize.y * dispatchSize.z * sizeof(GLuint));
     activeClusterIndices.resizeBuffer(dispatchSize.x * dispatchSize.y * dispatchSize.z * sizeof(GLuint));
-    perClusterGlobalLightIndicesBufferMetadata.resizeBuffer(dispatchSize.x * dispatchSize.y * dispatchSize.z * sizeof(GLuint) * 6);
-    globalPointLightIndices.resizeBuffer(dispatchSize.x * dispatchSize.y * dispatchSize.z * sizeof(GLuint) * maxLightCount);
-    globalSpotLightIndices.resizeBuffer(dispatchSize.x * dispatchSize.y * dispatchSize.z * sizeof(GLuint) * maxLightCount);
-    globalLightProbeIndices.resizeBuffer(dispatchSize.x * dispatchSize.y * dispatchSize.z * sizeof(GLuint) * maxLightCount);
+    perClusterGlobalLightIndicesBufferMetadata.resizeBuffer(dispatchSize.x * dispatchSize.y * dispatchSize.z * sizeof(GLuint) * 4);
+    globalLightIndices.resizeBuffer(dispatchSize.x * dispatchSize.y * dispatchSize.z * sizeof(GLuint) * maxLightCount);
 
     const std::array<unsigned int, 3> dispatches{1, 1, 1};
     activeClustersCount.updateData(dispatches);
@@ -123,9 +123,7 @@ void ClusterBasedLightCullingPass::lightCulling(const std::shared_ptr<Scene>& sc
     clusterBasedLightCullingShader->bindSSBO("ActiveClusterIndices", activeClusterIndices);
     clusterBasedLightCullingShader->bindSSBO("ClusterData", clusters);
     clusterBasedLightCullingShader->bindSSBO("PerClusterGlobalLightIndicesBufferMetadata", perClusterGlobalLightIndicesBufferMetadata);
-    clusterBasedLightCullingShader->bindSSBO("GlobalPointLightIndices", globalPointLightIndices);
-    clusterBasedLightCullingShader->bindSSBO("GlobalSpotLightIndices", globalSpotLightIndices);
-    clusterBasedLightCullingShader->bindSSBO("GlobalLightProbeIndices", globalLightProbeIndices);
+    clusterBasedLightCullingShader->bindSSBO("GlobalLightIndices", globalLightIndices);
     clusterBasedLightCullingShader->bindSSBO("PointLightData", scene->lightManager->getPointLightSSBO());
     clusterBasedLightCullingShader->bindSSBO("SpotLightData", scene->lightManager->getSpotLightSSBO());
     clusterBasedLightCullingShader->bindSSBO("LightProbeData", scene->lightManager->getLightProbeSSBO());

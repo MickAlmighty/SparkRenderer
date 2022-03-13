@@ -1,22 +1,14 @@
 #type compute
 #version 450
 #include "Camera.hglsl"
+#include "ClusterBasedLightCullingData.hglsl"
+#include "GlobalLightIndices.hglsl"
+
 layout(local_size_x = 1, local_size_y = 16, local_size_z = 1) in;
 
 layout (std140, binding = 0) uniform Camera
 {
     CameraData camera;
-};
-
-struct ClusterBasedLightCullingData
-{
-    vec2 pxTileSize;
-    uint clusterCountX;
-    uint clusterCountY;
-    uint clusterCountZ;
-    float equation3Part1;
-    float equation3Part2;
-    uint maxLightCount;
 };
 
 layout (std140, binding = 1) uniform AlgorithmData
@@ -49,28 +41,11 @@ struct GlobalIndicesOffset
     uint globalLightProbeIndicesOffset;
 };
 
-layout(std430, binding = 2) buffer GlobalPointLightIndices
-{
-    uint globalPointLightIndices[];
-};
-
-layout(std430, binding = 3) buffer GlobalSpotLightIndices
-{
-    uint globalSpotLightIndices[];
-};
-
-layout(std430, binding = 4) buffer GlobalLightProbeIndices
-{
-    uint globalLightProbeIndices[];
-};
-
 struct LightIndicesBufferMetadata
 {
-    uint pointLightIndicesOffset;
+    uint lightIndicesOffset;
     uint pointLightCount;
-    uint spotLightIndicesOffset;
     uint spotLightCount;
-    uint lightProbeIndicesOffset;
     uint lightProbeCount;
 };
 
@@ -121,12 +96,11 @@ layout(std430, binding = 8) readonly buffer LightProbeData
     LightProbe lightProbes[];
 };
 
-#define MAX_LIGHTS 255
-
 shared uint pointLightCount;
 shared uint spotLightCount;
 shared uint lightProbeCount;
 shared uint clusterIndex;
+shared uint offset;
 
 bool testSphereVsAABB(const vec3 sphereCenter, const float sphereRadius, const vec3 AABBCenter, const vec3 AABBHalfSize)
 {
@@ -153,11 +127,8 @@ bool spotLightConeVsAABB(const SpotLight spotLight, const vec3 aabbCenter, const
     return !(angleCull || frontCull || backCull);
 }
 
-void cullPointLights(uint clusterIndex)
+void cullPointLights(const AABB cluster)
 {
-    AABB cluster = clusters[clusterIndex];
-    const uint offset = clusterIndex * algorithmData.maxLightCount;
-
     for (uint i = gl_LocalInvocationIndex; i < pointLights.length(); i += gl_WorkGroupSize.y)
     {
         PointLight p = pointLights[i];
@@ -168,27 +139,16 @@ void cullPointLights(uint clusterIndex)
         if (testSphereVsAABB(pPos, pRadius, cluster.center, cluster.halfSize))
         {
             lightCount = min(atomicAdd(pointLightCount, 1), algorithmData.maxLightCount);
-            globalPointLightIndices[offset + lightCount] = i;
+            insertPointLightIndex(offset + lightCount, i);
         }
 
-        if(lightCount == MAX_LIGHTS)
+        if(lightCount == algorithmData.maxLightCount)
             break;
-    }
-
-    barrier();
-
-    if (gl_LocalInvocationIndex == 0)
-    {
-        lightIndicesBufferMetadata[clusterIndex].pointLightIndicesOffset = offset;
-        lightIndicesBufferMetadata[clusterIndex].pointLightCount = pointLightCount;
     }
 }
 
-void cullSpotLights(uint clusterIndex)
+void cullSpotLights(const AABB cluster)
 {
-    AABB cluster = clusters[clusterIndex];
-    const uint offset = clusterIndex * algorithmData.maxLightCount;
-
     const float aabbSphereRadius = length(cluster.halfSize);
     for (uint i = gl_LocalInvocationIndex; i < spotLights.length(); i += gl_WorkGroupSize.y)
     {
@@ -197,27 +157,16 @@ void cullSpotLights(uint clusterIndex)
         if(spotLightConeVsAABB(s, cluster.center, aabbSphereRadius))
         {
             lightCount = min(atomicAdd(spotLightCount, 1), algorithmData.maxLightCount);
-            globalSpotLightIndices[offset + lightCount] = i;
+            insertSpotLightIndex(offset + lightCount, i);
         }
 
-        if(lightCount == MAX_LIGHTS)
+        if(lightCount == algorithmData.maxLightCount)
             break;
-    }
-
-    barrier();
-
-    if (gl_LocalInvocationIndex == 0)
-    {
-        lightIndicesBufferMetadata[clusterIndex].spotLightIndicesOffset = offset;
-        lightIndicesBufferMetadata[clusterIndex].spotLightCount = spotLightCount;
     }
 }
 
-void cullLightProbes(uint clusterIndex)
+void cullLightProbes(const AABB cluster)
 {
-    AABB cluster = clusters[clusterIndex];
-    const uint offset = clusterIndex * algorithmData.maxLightCount;
-
     for (uint i = gl_LocalInvocationIndex; i < lightProbes.length(); i += gl_WorkGroupSize.y)
     {
         LightProbe l = lightProbes[i];
@@ -226,20 +175,12 @@ void cullLightProbes(uint clusterIndex)
         uint lightCount = 0;
         if (testSphereVsAABB(lPos, lRadius, cluster.center, cluster.halfSize))
         {
-            lightCount = min(atomicAdd(lightProbeCount, 1), algorithmData.maxLightCount);
-            globalLightProbeIndices[offset + lightCount] = i;
+            lightCount = min(atomicAdd(lightProbeCount, 1), algorithmData.maxNumberOfLightProbes);
+            insertLightProbeIndex(offset + lightCount, i);
         }
 
-        if(lightCount == MAX_LIGHTS)
+        if(lightCount == algorithmData.maxNumberOfLightProbes)
             break;
-    }
-
-    barrier();
-
-    if (gl_LocalInvocationIndex == 0)
-    {
-        lightIndicesBufferMetadata[clusterIndex].lightProbeIndicesOffset = offset;
-        lightIndicesBufferMetadata[clusterIndex].lightProbeCount = lightProbeCount;
     }
 }
 
@@ -248,6 +189,8 @@ void main()
     if (gl_LocalInvocationIndex == 0)
     {
         clusterIndex = activeClusterIndices[gl_GlobalInvocationID.x];
+        offset = clusterIndex * algorithmData.maxLightCount;
+        lightIndicesBufferMetadata[clusterIndex].lightIndicesOffset = offset;
         pointLightCount = 0;
         spotLightCount = 0;
         lightProbeCount = 0;
@@ -255,7 +198,17 @@ void main()
 
     barrier();
 
-    cullPointLights(clusterIndex);
-    cullSpotLights(clusterIndex);
-    cullLightProbes(clusterIndex);
+    const AABB cluster = clusters[clusterIndex];
+    cullPointLights(cluster);
+    cullSpotLights(cluster);
+    cullLightProbes(cluster);
+
+    barrier();
+
+    if (gl_LocalInvocationIndex == 0)
+    {
+        lightIndicesBufferMetadata[clusterIndex].pointLightCount = min(pointLightCount, algorithmData.maxLightCount);
+        lightIndicesBufferMetadata[clusterIndex].spotLightCount = min(spotLightCount, algorithmData.maxLightCount);
+        lightIndicesBufferMetadata[clusterIndex].lightProbeCount = min(lightProbeCount, algorithmData.maxNumberOfLightProbes);
+    }
 }

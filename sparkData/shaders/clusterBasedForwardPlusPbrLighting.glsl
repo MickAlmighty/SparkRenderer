@@ -59,6 +59,8 @@ void main()
 #include "Constants.hglsl"
 #include "ParallaxMapping.hglsl"
 #include "IBL.hglsl"
+#include "ClusterBasedLightCullingData.hglsl"
+#include "GlobalLightIndices.hglsl"
 
 layout (location = 0) out vec4 FragColor;
 
@@ -85,17 +87,6 @@ layout (location = 0) in VS_OUT {
 layout (std140, binding = 0) uniform Camera
 {
     CameraData camera;
-};
-
-struct ClusterBasedLightCullingData
-{
-    vec2 pxTileSize;
-    uint clusterCountX;
-    uint clusterCountY;
-    uint clusterCountZ;
-    float equation3Part1;
-    float equation3Part2;
-    uint maxLightCount;
 };
 
 layout (std140, binding = 1) uniform AlgorithmData
@@ -133,32 +124,15 @@ layout(std430, binding = 3) readonly buffer LightProbeData
     LightProbe lightProbes[];
 };
 
-layout(std430, binding = 4) readonly buffer GlobalPointLightIndices
-{
-    uint globalPointLightIndices[];
-};
-
-layout(std430, binding = 5) readonly buffer GlobalSpotLightIndices
-{
-    uint globalSpotLightIndices[];
-};
-
-layout(std430, binding = 6) readonly buffer GlobalLightProbeIndices
-{
-    uint globalLightProbeIndices[];
-};
-
 struct LightIndicesBufferMetadata
 {
-    uint pointLightIndicesOffset;
+    uint lightIndicesOffset;
     uint pointLightCount;
-    uint spotLightIndicesOffset;
     uint spotLightCount;
-    uint lightProbeIndicesOffset;
     uint lightProbeCount;
 };
 
-layout(std430, binding = 7) readonly buffer PerClusterGlobalLightIndicesBufferMetadata
+layout(std430, binding = 4) readonly buffer PerClusterGlobalLightIndicesBufferMetadata
 {
     LightIndicesBufferMetadata lightIndicesBufferMetadata[];
 };
@@ -285,10 +259,10 @@ vec3 pointLightAddition(vec3 V, vec3 N, vec3 Pos, Material m, uint clusterIndex)
 
     vec3 L0 = { 0, 0, 0 };
     const uint pointLightCount = lightIndicesBufferMetadata[clusterIndex].pointLightCount;
-    const uint globalPointLightsOffset = lightIndicesBufferMetadata[clusterIndex].pointLightIndicesOffset;
+    const uint globalPointLightsOffset = lightIndicesBufferMetadata[clusterIndex].lightIndicesOffset;
     for (int i = 0; i < pointLightCount; ++i)
     {
-        const uint index = globalPointLightIndices[globalPointLightsOffset + i];
+        const uint index = extractPointLightIndex(globalPointLightsOffset + i);
         L0 += calculatePbrLighting(pointLights[index], m, V, N, Pos, NdotV);
     }
 
@@ -301,10 +275,10 @@ vec3 spotLightAddition(vec3 V, vec3 N, vec3 Pos, Material m, uint clusterIndex)
 
     vec3 L0 = { 0, 0, 0 };
     const uint spotLightCount = lightIndicesBufferMetadata[clusterIndex].spotLightCount;
-    const uint globalSpotLightsOffset = lightIndicesBufferMetadata[clusterIndex].spotLightIndicesOffset;
+    const uint globalSpotLightsOffset = lightIndicesBufferMetadata[clusterIndex].lightIndicesOffset;
     for (int i = 0; i < spotLightCount; ++i)
     {
-        const uint index = globalSpotLightIndices[globalSpotLightsOffset + i];
+        const uint index = extractSpotLightIndex(globalSpotLightsOffset + i);
         L0 += calculatePbrLighting(spotLights[index], m, V, N, Pos, NdotV);
     }
     return L0;

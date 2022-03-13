@@ -1,22 +1,12 @@
 #type compute
 #version 450
 #include "Camera.hglsl"
+#include "ClusterBasedLightCullingData.hglsl"
 layout(local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
 
 layout (std140, binding = 0) uniform Camera
 {
     CameraData camera;
-};
-
-struct ClusterBasedLightCullingData
-{
-    vec2 pxTileSize;
-    uint clusterCountX;
-    uint clusterCountY;
-    uint clusterCountZ;
-    float equation3Part1;
-    float equation3Part2;
-    uint maxLightCount;
 };
 
 layout (std140, binding = 1) uniform AlgorithmData

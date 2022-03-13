@@ -1,0 +1,47 @@
+#ifndef GLOBAL_LIGHT_INDICES
+#define GLOBAL_LIGHT_INDICES
+
+layout(std430, binding = 15) buffer GlobalLightIndices
+{
+    uint globalLightIndices[];
+};
+
+#define POINT_LIGHT_BASE_BIT_INDEX      0
+#define SPOT_LIGHT_BASE_BIT_INDEX       12
+#define LIGHT_PROBE_BASE_BIT_INDEX      24
+
+#define SPOT_LIGHT_BITS                 12
+#define POINT_LIGHT_BITS                12
+#define LIGHT_PROBE_BITS                8
+
+void insertPointLightIndex(uint globalBufferIndex, uint pointLightIndex)
+{
+    globalLightIndices[globalBufferIndex] = bitfieldInsert(globalLightIndices[globalBufferIndex], pointLightIndex, POINT_LIGHT_BASE_BIT_INDEX, POINT_LIGHT_BITS);
+}
+
+uint extractPointLightIndex(uint globalBufferIndex)
+{
+    return bitfieldExtract(globalLightIndices[globalBufferIndex], POINT_LIGHT_BASE_BIT_INDEX, POINT_LIGHT_BITS);
+}
+
+void insertSpotLightIndex(uint globalBufferIndex, uint spotLightIndex)
+{
+    globalLightIndices[globalBufferIndex] = bitfieldInsert(globalLightIndices[globalBufferIndex], spotLightIndex, SPOT_LIGHT_BASE_BIT_INDEX, SPOT_LIGHT_BITS);
+}
+
+uint extractSpotLightIndex(uint globalBufferIndex)
+{
+    return bitfieldExtract(globalLightIndices[globalBufferIndex], SPOT_LIGHT_BASE_BIT_INDEX, SPOT_LIGHT_BITS);
+}
+
+void insertLightProbeIndex(uint globalBufferIndex, uint lightProbeIndex)
+{
+    globalLightIndices[globalBufferIndex] = bitfieldInsert(globalLightIndices[globalBufferIndex], lightProbeIndex, LIGHT_PROBE_BASE_BIT_INDEX, LIGHT_PROBE_BITS);
+}
+
+uint extractLightProbeIndex(uint globalBufferIndex)
+{
+    return bitfieldExtract(globalLightIndices[globalBufferIndex], LIGHT_PROBE_BASE_BIT_INDEX, LIGHT_PROBE_BITS);
+}
+
+#endif //GLOBAL_LIGHT_INDICES

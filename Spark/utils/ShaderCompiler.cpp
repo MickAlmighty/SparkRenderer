@@ -127,21 +127,21 @@ std::vector<unsigned> ShaderCompiler::compileVulkan(const std::string& source_na
     shaderc::CompileOptions options;
 
     if(optimize)
-        options.SetOptimizationLevel(shaderc_optimization_level_performance);
+        options.SetOptimizationLevel(shaderc_optimization_level_size);
 
-    //options.SetGenerateDebugInfo();
+    // options.SetGenerateDebugInfo();
     options.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_2);
     options.SetIncluder(std::make_unique<GlslShaderIncluder>());
-    
 
     return compile(source_name, glShaderType, options, source);
 }
+
 std::vector<unsigned> ShaderCompiler::compileOpenGL(const std::string& source_name, GLenum glShaderType, const std::string& source, bool optimize)
 {
     shaderc::CompileOptions options;
 
     if(optimize)
-        options.SetOptimizationLevel(shaderc_optimization_level_performance);
+        options.SetOptimizationLevel(shaderc_optimization_level_size);
 
     // options.SetGenerateDebugInfo();
     options.SetTargetEnvironment(shaderc_target_env_opengl, shaderc_env_version_opengl_4_5);

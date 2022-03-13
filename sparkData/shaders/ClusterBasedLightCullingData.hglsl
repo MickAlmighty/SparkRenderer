@@ -1,0 +1,17 @@
+#ifndef CLUSTER_BASED_LIGHT_CULLING_DATA
+#define CLUSTER_BASED_LIGHT_CULLING_DATA
+
+struct ClusterBasedLightCullingData
+{
+    vec2 pxTileSize;
+    uint clusterCountX;
+    uint clusterCountY;
+    uint clusterCountZ;
+    float equation3Part1;
+    float equation3Part2;
+    uint maxLightCount;
+    uint maxNumberOfLightProbes;
+    uvec3 placeholder;
+};
+
+#endif //CLUSTER_BASED_LIGHT_CULLING_DATA

@@ -24,9 +24,7 @@ class ClusterBasedLightCullingPass
 
     UniformBuffer algorithmData{};
 
-    SSBO globalPointLightIndices{};
-    SSBO globalSpotLightIndices{};
-    SSBO globalLightProbeIndices{};
+    SSBO globalLightIndices{};
     SSBO perClusterGlobalLightIndicesBufferMetadata{};
     glm::vec2 pxTileSize{1};
 

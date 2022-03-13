@@ -31,9 +31,7 @@ void ClusterBasedDeferredRenderer::processLighting(const std::shared_ptr<Scene>&
     lightingShader->bindSSBO("PointLightData", scene->lightManager->getPointLightSSBO());
     lightingShader->bindSSBO("SpotLightData", scene->lightManager->getSpotLightSSBO());
     lightingShader->bindSSBO("LightProbeData", scene->lightManager->getLightProbeSSBO());
-    lightingShader->bindSSBO("GlobalPointLightIndices", lightCullingPass.globalPointLightIndices);
-    lightingShader->bindSSBO("GlobalSpotLightIndices", lightCullingPass.globalSpotLightIndices);
-    lightingShader->bindSSBO("GlobalLightProbeIndices", lightCullingPass.globalLightProbeIndices);
+    lightingShader->bindSSBO("GlobalLightIndices", lightCullingPass.globalLightIndices);
     lightingShader->bindSSBO("PerClusterGlobalLightIndicesBufferMetadata", lightCullingPass.perClusterGlobalLightIndicesBufferMetadata);
 
     // depth texture as sampler2D
