@@ -13,61 +13,32 @@
 
 namespace spark::resourceManagement
 {
-using path = std::filesystem::path;
-namespace loaders = spark::loaders;
+namespace sl = spark::loaders;
 
-std::map<std::string, std::function<std::shared_ptr<Resource>(const path& resourcesRootPath, const path& resourceRelativePath)>>
-    ResourceFactory::resourceCreationFunctions{
-        // TODO: replace with a reflection-based list
-        {".anim", [](const path& rootPath, const path& relativePath) { return loaders::AnimationLoader::load(rootPath, relativePath); }},
-        {".obj", [](const path& rootPath, const path& relativePath) { return loaders::ModelLoader::load(rootPath, relativePath); }},
-        {".fbx", [](const path& rootPath, const path& relativePath) { return loaders::ModelLoader::load(rootPath, relativePath); }},
-        {".gltf", [](const path& rootPath, const path& relativePath) { return loaders::GltfLoader::load(rootPath, relativePath); }},
-        {".dds", [](const path& rootPath, const path& relativePath) { return loaders::TextureLoader::load(rootPath, relativePath); }},
-        {".ktx", [](const path& rootPath, const path& relativePath) { return loaders::TextureLoader::load(rootPath, relativePath); }},
-        {".png", [](const path& rootPath, const path& relativePath) { return loaders::TextureLoader::load(rootPath, relativePath); }},
-        {".tga", [](const path& rootPath, const path& relativePath) { return loaders::TextureLoader::load(rootPath, relativePath); }},
-        {".jpg", [](const path& rootPath, const path& relativePath) { return loaders::TextureLoader::load(rootPath, relativePath); }},
-        {".hdr", [](const path& rootPath, const path& relativePath) { return loaders::TextureLoader::load(rootPath, relativePath); }},
-        {".glsl", [](const path& rootPath, const path& relativePath) { return loaders::ShaderLoader::load(rootPath, relativePath); }},
-        {".scene", [](const path& rootPath, const path& relativePath) { return loaders::SceneLoader::load(rootPath, relativePath); }},
-    };
+std::vector<std::unique_ptr<const sl::ILoader>> make_unique_loaders() {
+    std::vector<std::unique_ptr<const sl::ILoader>> l;
+    l.emplace_back(std::make_unique<const sl::ModelLoader>());
+    l.emplace_back(std::make_unique<const sl::GltfLoader>());
+    l.emplace_back(std::make_unique<const sl::ShaderLoader>());
+    l.emplace_back(std::make_unique<const sl::TextureLoader>());
+    l.emplace_back(std::make_unique<const sl::SceneLoader>());
+    l.emplace_back(std::make_unique<const sl::AnimationLoader>());
+    return l;
+}
+
+const std::vector<std::unique_ptr<const sl::ILoader>> loaders = make_unique_loaders();
 
 std::shared_ptr<Resource> ResourceFactory::loadResource(const std::filesystem::path& resourcesRootPath,
                                                         const std::filesystem::path& resourceRelativePath)
 {
-    //const auto it = resourceCreationFunctions.find(extensionToLowerCase(resourceRelativePath.string()));
-    //if(it != resourceCreationFunctions.end())
-    //{
-    //    const auto [extension, resourceCreationFunction] = *it;
-    //    return resourceCreationFunction(resourcesRootPath, resourceRelativePath);
-    //}
-
-
     const auto ext = extensionToLowerCase(resourceRelativePath.string());
-    if (loaders::TextureLoader::isExtensionSupported(ext))
+
+    for each(const auto& loader in loaders)
     {
-        return loaders::TextureLoader::load(resourcesRootPath, resourceRelativePath);
-    }
-    else if(loaders::ModelLoader::isExtensionSupported(ext))
-    {
-        return loaders::ModelLoader::load(resourcesRootPath, resourceRelativePath);
-    }
-    else if(loaders::ShaderLoader::isExtensionSupported(ext))
-    {
-        return loaders::ShaderLoader::load(resourcesRootPath, resourceRelativePath);
-    }
-    else if(loaders::GltfLoader::isExtensionSupported(ext))
-    {
-        return loaders::GltfLoader::load(resourcesRootPath, resourceRelativePath);
-    }
-    else if(loaders::SceneLoader::isExtensionSupported(ext))
-    {
-        return loaders::SceneLoader::load(resourcesRootPath, resourceRelativePath);
-    }
-    else if(loaders::AnimationLoader::isExtensionSupported(ext))
-    {
-        return loaders::AnimationLoader::load(resourcesRootPath, resourceRelativePath);
+        if(loader->isExtensionSupported(ext))
+        {
+            return loader->load(resourcesRootPath, resourceRelativePath);
+        }
     }
 
     SPARK_ERROR("File could not be loaded! {}", resourceRelativePath.string());
@@ -76,7 +47,17 @@ std::shared_ptr<Resource> ResourceFactory::loadResource(const std::filesystem::p
 
 bool ResourceFactory::isExtensionSupported(const std::filesystem::path& filePath)
 {
-    return resourceCreationFunctions.find(extensionToLowerCase(filePath)) != resourceCreationFunctions.end();
+    const auto ext = extensionToLowerCase(filePath);
+    for each(const auto& loader in loaders)
+    {
+        if(loader->isExtensionSupported(ext))
+        {
+            return true;
+        }
+    }
+
+    SPARK_WARN("Extension not supported! {}", filePath.string());
+    return false;
 }
 
 std::string ResourceFactory::extensionToLowerCase(const std::filesystem::path& path)
@@ -86,13 +67,13 @@ std::string ResourceFactory::extensionToLowerCase(const std::filesystem::path& p
 
 std::vector<std::string> ResourceFactory::supportedAnimationExtensions()
 {
-    return loaders::AnimationLoader::supportedExtensions();
+    return loaders::AnimationLoader().supportedExtensions();
 }
 
 std::vector<std::string> ResourceFactory::supportedModelExtensions()
 {
-    auto modelExtensions = loaders::ModelLoader::supportedExtensions();
-    auto gltfExtensions = loaders::GltfLoader::supportedExtensions();
+    auto modelExtensions = sl::ModelLoader().supportedExtensions();
+    auto gltfExtensions = sl::GltfLoader().supportedExtensions();
 
     std::vector<std::string> exts;
     exts.reserve(modelExtensions.size() + gltfExtensions.size());
@@ -105,27 +86,28 @@ std::vector<std::string> ResourceFactory::supportedModelExtensions()
 
 std::vector<std::string> ResourceFactory::supportedTextureExtensions()
 {
-    return loaders::TextureLoader::supportedExtensions();
+    return sl::TextureLoader().supportedExtensions();
 }
 
 std::vector<std::string> ResourceFactory::supportedShaderExtensions()
 {
-    return loaders::ShaderLoader::supportedExtensions();
+    return sl::ShaderLoader().supportedExtensions();
 }
 
 std::vector<std::string> ResourceFactory::supportedSceneExtensions()
 {
-    return loaders::SceneLoader::supportedExtensions();
+    return sl::SceneLoader().supportedExtensions();
 }
 
 std::vector<std::string> ResourceFactory::supportedExtensions()
 {
     std::vector<std::string> all;
-    all.reserve(resourceCreationFunctions.size());
+    all.reserve(16);
 
-    for(const auto& [supportedExtension, resourceLoader] : resourceCreationFunctions)
+    for(const auto& loader : loaders)
     {
-        all.push_back(supportedExtension);
+        const auto exts = loader->supportedExtensions();
+        std::move(exts.begin(), exts.end(), std::back_inserter(all));
     }
     return all;
 }

@@ -59,7 +59,7 @@ std::string createCachedStagedShaderName(const std::string& shaderHashName, GLen
 namespace spark::loaders
 {
 std::shared_ptr<resourceManagement::Resource> ShaderLoader::load(const std::filesystem::path& resourcesRootPath,
-                                                                 const std::filesystem::path& resourceRelativePath)
+                                                                 const std::filesystem::path& resourceRelativePath) const
 {
     const auto path = resourcesRootPath / resourceRelativePath;
     const auto cacheAbsolutePath = resourcesRootPath / "cache";
@@ -90,14 +90,14 @@ std::shared_ptr<resourceManagement::Resource> ShaderLoader::load(const std::file
     return std::make_shared<resources::Shader>(path, shaders);
 }
 
-bool ShaderLoader::isExtensionSupported(const std::string& ext)
+bool ShaderLoader::isExtensionSupported(const std::string& ext) const
 {
     const auto supportedExts = supportedExtensions();
     const auto it = std::find_if(supportedExts.begin(), supportedExts.end(), [&ext](const auto& e) { return e == ext; });
     return it != supportedExts.end();
 }
 
-std::vector<std::string> ShaderLoader::supportedExtensions()
+std::vector<std::string> ShaderLoader::supportedExtensions() const
 {
     return {".glsl"};
 }

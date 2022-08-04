@@ -2,30 +2,24 @@
 
 #include <filesystem>
 
-namespace spark::resourceManagement
-{
-class Resource;
-}
+#include "ILoader.hpp"
 
 namespace spark::loaders
 {
-class SceneLoader final
+class SceneLoader final : public ILoader
 {
     public:
-    static std::shared_ptr<resourceManagement::Resource> load(const std::filesystem::path& resourcesRootPath,
-                                                              const std::filesystem::path& resourceRelativePath);
+    std::shared_ptr<resourceManagement::Resource> load(const std::filesystem::path& resourcesRootPath,
+                                                       const std::filesystem::path& resourceRelativePath) const override;
 
-    static bool isExtensionSupported(const std::string& ext);
-    static std::vector<std::string> supportedExtensions();
+    bool isExtensionSupported(const std::string& ext) const override;
+    std::vector<std::string> supportedExtensions() const override;
 
-    
+    SceneLoader() = default;
+    ~SceneLoader() = default;
     SceneLoader(const SceneLoader&) = delete;
     SceneLoader(const SceneLoader&&) = delete;
     SceneLoader& operator=(const SceneLoader&) = delete;
     SceneLoader& operator=(const SceneLoader&&) = delete;
-
-    private:
-    SceneLoader() = default;
-    ~SceneLoader() = default;
 };
 }  // namespace spark::loaders

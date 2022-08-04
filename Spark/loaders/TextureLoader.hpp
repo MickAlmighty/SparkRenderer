@@ -4,31 +4,27 @@
 #include <memory>
 #include <vector>
 
-namespace spark::resourceManagement
-{
-class Resource;
-}
+#include "ILoader.hpp"
 
 namespace spark::loaders
 {
-class TextureLoader final
+class TextureLoader final : public ILoader
 {
     public:
-    static std::shared_ptr<resourceManagement::Resource> load(const std::filesystem::path& resourcesRootPath,
-                                                              const std::filesystem::path& resourceRelativePath);
+    std::shared_ptr<resourceManagement::Resource> load(const std::filesystem::path& resourcesRootPath,
+                                                       const std::filesystem::path& resourceRelativePath) const override;
 
-    static bool isExtensionSupported(const std::string& ext);
-    static std::vector<std::string> supportedExtensions();
+    bool isExtensionSupported(const std::string& ext) const override;
+    std::vector<std::string> supportedExtensions() const override;
 
+    TextureLoader() = default;
+    ~TextureLoader() = default;
     TextureLoader(const TextureLoader&) = delete;
     TextureLoader(const TextureLoader&&) = delete;
     TextureLoader& operator=(const TextureLoader&) = delete;
     TextureLoader& operator=(const TextureLoader&&) = delete;
 
     private:
-    TextureLoader() = default;
-    ~TextureLoader() = default;
-
     static bool isTextureUnCompressed(const std::string& extension);
     static bool isTextureCompressed(const std::string& extension);
 
@@ -39,12 +35,10 @@ class TextureLoader final
                                                                           const std::filesystem::path& resourceRelativePath);
 
     static std::shared_ptr<resourceManagement::Resource> loadHdrTexture(const std::filesystem::path& resourcesRootPath,
-                                                                          const std::filesystem::path& resourceRelativePath);
-
+                                                                        const std::filesystem::path& resourceRelativePath);
 
     static const std::vector<std::string> extsUnCompressed;
     static const std::vector<std::string> extsCompressed;
     static const std::string hdrExtension;
-
 };
 }  // namespace spark::loaders

@@ -282,7 +282,7 @@ std::vector<unsigned int> collectIndices(const tinygltf::Model& model, const tin
 namespace spark::loaders
 {
 std::shared_ptr<resourceManagement::Resource> GltfLoader::load(const std::filesystem::path& resourcesRootPath,
-                                                               const std::filesystem::path& resourceRelativePath)
+                                                               const std::filesystem::path& resourceRelativePath) const
 {
     tinygltf::TinyGLTF loader;
     tinygltf::Model model;
@@ -326,14 +326,14 @@ std::shared_ptr<resourceManagement::Resource> GltfLoader::load(const std::filesy
     return std::make_shared<resources::Model>(resourceRelativePath, meshes);
 }
 
-bool GltfLoader::isExtensionSupported(const std::string& ext)
+bool GltfLoader::isExtensionSupported(const std::string& ext) const
 {
     const auto supportedExts = supportedExtensions();
     const auto it = std::find_if(supportedExts.begin(), supportedExts.end(), [&ext](const auto& e) { return e == ext; });
     return it != supportedExts.end();
 }
 
-std::vector<std::string> GltfLoader::supportedExtensions()
+std::vector<std::string> GltfLoader::supportedExtensions() const
 {
     return {".gltf"};
 }

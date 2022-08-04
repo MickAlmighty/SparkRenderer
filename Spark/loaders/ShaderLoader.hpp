@@ -3,29 +3,24 @@
 #include <filesystem>
 #include <memory>
 
-namespace spark::resourceManagement
-{
-class Resource;
-}
+#include "ILoader.hpp"
 
 namespace spark::loaders
 {
-class ShaderLoader final
+class ShaderLoader final : public ILoader
 {
     public:
-    static std::shared_ptr<resourceManagement::Resource> load(const std::filesystem::path& resourcesRootPath,
-                                                                      const std::filesystem::path& resourceRelativePath);
+    std::shared_ptr<resourceManagement::Resource> load(const std::filesystem::path& resourcesRootPath,
+                                                       const std::filesystem::path& resourceRelativePath) const override;
 
-    static bool isExtensionSupported(const std::string& ext);
-    static std::vector<std::string> supportedExtensions();
+    bool isExtensionSupported(const std::string& ext) const override;
+    std::vector<std::string> supportedExtensions() const override;
 
+    ShaderLoader() = default;
+    ~ShaderLoader() = default;
     ShaderLoader(const ShaderLoader&) = delete;
     ShaderLoader(const ShaderLoader&&) = delete;
     ShaderLoader& operator=(const ShaderLoader&) = delete;
     ShaderLoader& operator=(const ShaderLoader&&) = delete;
-
-    private:
-    ShaderLoader() = default;
-    ~ShaderLoader() = default;
 };
 }  // namespace spark::loaders

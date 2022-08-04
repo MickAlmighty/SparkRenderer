@@ -16,7 +16,7 @@
 namespace spark::loaders
 {
 std::shared_ptr<resourceManagement::Resource> ModelLoader::load(const std::filesystem::path& resourcesRootPath,
-                                                                const std::filesystem::path& resourceRelativePath)
+                                                                const std::filesystem::path& resourceRelativePath) const
 {
     Assimp::Importer importer;
     const aiScene* scene = nullptr;
@@ -83,14 +83,14 @@ std::shared_ptr<resourceManagement::Resource> ModelLoader::load(const std::files
     return std::make_shared<resources::Model>(resourceRelativePath, meshes);
 }
 
-bool ModelLoader::isExtensionSupported(const std::string& ext)
+bool ModelLoader::isExtensionSupported(const std::string& ext) const
 {
     const auto supportedExts = supportedExtensions();
     const auto it = std::find_if(supportedExts.begin(), supportedExts.end(), [&ext](const auto& e) { return e == ext; });
     return it != supportedExts.end();
 }
 
-std::vector<std::string> ModelLoader::supportedExtensions()
+std::vector<std::string> ModelLoader::supportedExtensions() const
 {
     return {".obj", ".fbx"};
 }

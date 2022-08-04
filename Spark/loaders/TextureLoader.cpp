@@ -20,7 +20,7 @@ const std::vector<std::string> TextureLoader::extsCompressed{".dds", ".ktx"};
 const std::string TextureLoader::hdrExtension{".hdr"};
 
 std::shared_ptr<resourceManagement::Resource> TextureLoader::load(const std::filesystem::path& resourcesRootPath,
-                                                                  const std::filesystem::path& resourceRelativePath)
+                                                                  const std::filesystem::path& resourceRelativePath) const
 {
     const auto ext = utils::toLowerCase(resourceRelativePath.extension().string());
     if(isTextureUnCompressed(ext))
@@ -42,14 +42,14 @@ std::shared_ptr<resourceManagement::Resource> TextureLoader::load(const std::fil
     return nullptr;
 }
 
-bool TextureLoader::isExtensionSupported(const std::string& ext)
+bool TextureLoader::isExtensionSupported(const std::string& ext) const
 {
     const auto supportedExts = supportedExtensions();
     const auto it = std::find_if(supportedExts.begin(), supportedExts.end(), [&ext](const auto& e) { return e == ext; });
     return it != supportedExts.end();
 }
 
-std::vector<std::string> TextureLoader::supportedExtensions()
+std::vector<std::string> TextureLoader::supportedExtensions() const
 {
     std::vector<std::string> supportedExtensions;
     supportedExtensions.reserve(extsUnCompressed.size() + extsCompressed.size() + 1);
