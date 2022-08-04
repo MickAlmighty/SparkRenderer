@@ -24,6 +24,9 @@
 
 namespace spark::utils
 {
+[[nodiscard]] UniqueTextureHandle createCubemapArray(GLuint width, GLuint height, GLuint numberOfCubemaps, GLenum internalFormat,
+                                       GLenum textureWrapping, GLenum textureSampling, uint32_t numberOfMipMaps);
+
 [[nodiscard]] UniqueTextureHandle createTexture2D(GLuint width, GLuint height, GLenum internalFormat, GLenum format, GLenum pixelFormat,
                                                   GLenum textureWrapping, GLenum textureSampling, bool mipMaps = false, void* data = nullptr);
 

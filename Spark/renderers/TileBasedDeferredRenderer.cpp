@@ -48,6 +48,8 @@ void TileBasedDeferredRenderer::processLighting(const std::shared_ptr<Scene>& sc
     glBindTextureUnit(5, gBuffer.colorTexture.get());
     glBindTextureUnit(6, gBuffer.normalsTexture.get());
     glBindTextureUnit(7, gBuffer.roughnessMetalnessTexture.get());
+    glBindTextureUnit(11, scene->lightManager->getLightProbeManager().getIrradianceCubemapArray());
+    glBindTextureUnit(12, scene->lightManager->getLightProbeManager().getPrefilterCubemapArray());
 
     // output image
     glBindImageTexture(0, lightingTexture.get(), 0, false, 0, GL_WRITE_ONLY, GL_RGBA16F);

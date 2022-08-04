@@ -6,6 +6,7 @@
 #include "Buffer.hpp"
 #include "IObserver.hpp"
 #include "LightStatus.hpp"
+#include "LightProbeManager.hpp"
 
 namespace spark::lights
 {
@@ -30,6 +31,7 @@ class LightManager : public IObserver<LightStatus<DirectionalLight>>,
     const std::vector<PointLight*>& getPointLights() const;
     const std::vector<SpotLight*>& getSpotLights() const;
     const std::vector<LightProbe*>& getLightProbes() const;
+    LightProbeManager& getLightProbeManager();
 
     LightManager() = default;
     ~LightManager() override = default;
@@ -39,17 +41,6 @@ class LightManager : public IObserver<LightStatus<DirectionalLight>>,
     LightManager&& operator=(const LightManager&& lightManager) = delete;
 
     private:
-    bool areDirLightsDirty{false};
-    bool arePointLightsDirty{false};
-    bool areSpotLightsDirty{false};
-    bool areLightProbesDirty{false};
-
-    SSBO dirLightSSBO{}, pointLightSSBO{}, spotLightSSBO{}, lightProbeSSBO{};
-    std::vector<DirectionalLight*> directionalLights;
-    std::vector<PointLight*> pointLights;
-    std::vector<SpotLight*> spotLights;
-    std::vector<LightProbe*> lightProbes;
-
     void updateDirLightBuffer();
     void updatePointLightBuffer();
     void updateSpotLightBuffer();
@@ -65,6 +56,19 @@ class LightManager : public IObserver<LightStatus<DirectionalLight>>,
 
     template<typename Light>
     void processLightStatus(const LightStatus<Light>* const lightStatus, bool& areLightsDirty, std::vector<Light*>& lights);
+
+    bool areDirLightsDirty{false};
+    bool arePointLightsDirty{false};
+    bool areSpotLightsDirty{false};
+    bool areLightProbesDirty{false};
+
+    SSBO dirLightSSBO{}, pointLightSSBO{}, spotLightSSBO{}, lightProbeSSBO{};
+    std::vector<DirectionalLight*> directionalLights;
+    std::vector<PointLight*> pointLights;
+    std::vector<SpotLight*> spotLights;
+    std::vector<LightProbe*> lightProbes;
+
+    LightProbeManager lightProbeManager{256};
 };
 
 template<typename LightData, typename LightType>

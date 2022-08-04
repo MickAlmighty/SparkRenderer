@@ -3,6 +3,9 @@
 #include "Camera.hglsl"
 #include "ClusterBasedLightCullingData.hglsl"
 #include "GlobalLightIndices.hglsl"
+#include "PointLight.hglsl"
+#include "SpotLight.hglsl"
+#include "LightProbe.hglsl"
 layout(local_size_x = 1, local_size_y = 16, local_size_z = 1) in;
 
 layout (std140, binding = 0) uniform Camera
@@ -51,33 +54,6 @@ struct LightIndicesBufferMetadata
 layout(std430, binding = 3) buffer PerClusterGlobalLightIndicesBufferMetadata
 {
     LightIndicesBufferMetadata lightIndicesBufferMetadata[];
-};
-
-struct PointLight {
-    vec4 positionAndRadius; // radius in w component
-    vec3 color;
-    float nothing2;
-    mat4 modelMat;
-};
-
-struct SpotLight {
-    vec3 position;
-    float cutOff;
-    vec3 color;
-    float outerCutOff;
-    vec3 direction;
-    float maxDistance;
-    vec4 boundingSphere; //xyz - sphere center, w - radius 
-};
-
-struct LightProbe {
-    uvec2 irradianceCubemapHandle; //int64_t handle
-    uvec2 prefilterCubemapHandle; //int64_t handle
-    vec4 positionAndRadius;
-    float fadeDistance;
-    float padding1;
-    float padding2;
-    float padding3;
 };
 
 layout(std430, binding = 4) readonly buffer PointLightData

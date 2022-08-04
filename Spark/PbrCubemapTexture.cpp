@@ -95,6 +95,7 @@ utils::TextureHandle PbrCubemapTexture::createIrradianceCubemap(GLuint framebuff
     glViewport(0, 0, 32, 32);
 
     irradianceShader->use();
+    irradianceShader->setInt("u_Uniforms.layer", 0);
     glBindTextureUnit(0, environmentCubemap.get());
 
     glNamedFramebufferTexture(framebuffer, GL_COLOR_ATTACHMENT0, irradianceMap.get(), 0);
@@ -117,6 +118,7 @@ utils::TextureHandle PbrCubemapTexture::createPreFilteredCubemap(GLuint framebuf
 
     {
         resampleCubemapShader->use();
+        resampleCubemapShader->setInt("u_Uniforms.layer", 0);
         glBindTextureUnit(0, environmentCubemap.get());
 
         glNamedFramebufferTexture(framebuffer, GL_COLOR_ATTACHMENT0, prefilteredMap.get(), 0);
@@ -128,6 +130,7 @@ utils::TextureHandle PbrCubemapTexture::createPreFilteredCubemap(GLuint framebuf
     const GLuint maxMipLevels = 5;
     prefilterShader->use();
     glBindTextureUnit(0, environmentCubemap.get());
+    prefilterShader->setInt("u_Uniforms.layer", 0);
     prefilterShader->setFloat("u_Uniforms2.textureSize", static_cast<float>(envCubemapSize));
 
     for(unsigned int mip = 1; mip < maxMipLevels; ++mip)

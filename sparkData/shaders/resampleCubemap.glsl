@@ -13,9 +13,10 @@ void main()
 layout(triangles) in;
 layout(triangle_strip, max_vertices = 18) out;
 
-layout (push_constant) uniform Projection
+layout (push_constant) uniform Uniforms
 {
     mat4 projection;
+    int layer;
 } u_Uniforms;
 
 layout(std430, binding = 0) readonly buffer Views
@@ -32,7 +33,7 @@ void main()
         for(int i = 0; i < 3; ++i)
         {
             cubemapCoord = gl_in[i].gl_Position.xyz;
-            gl_Layer = face;
+            gl_Layer = 6 * u_Uniforms.layer + face;
             gl_Position = u_Uniforms.projection * views[face] * gl_in[i].gl_Position;
             EmitVertex();
         }

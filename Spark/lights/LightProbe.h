@@ -20,10 +20,10 @@ namespace spark::lights
 {
 struct LightProbeData final
 {
-    GLint64 irradianceCubemapHandle{0};
-    GLint64 prefilterCubemapHandle{0};
     glm::vec4 positionAndRadius{0};
     alignas(16) float fadeDistance{0};
+    GLuint index{0};
+    glm::uvec2 placeholder{0};
 
     bool operator<(const LightProbeData& rhs) const
     {
@@ -53,10 +53,10 @@ class LightProbe : public Component, public Observable<LightStatus<LightProbe>>
     [[nodiscard]] GLuint getIrradianceCubemap() const;
 
     void renderIntoIrradianceCubemap(GLuint framebuffer, GLuint environmentCubemap, Cube& cube,
-                                     const std::shared_ptr<resources::Shader>& irradianceShader) const;
+                                     const std::shared_ptr<resources::Shader>& irradianceShader, GLuint layer = 0) const;
     void renderIntoPrefilterCubemap(GLuint framebuffer, GLuint environmentCubemap, unsigned envCubemapSize, Cube& cube,
                                     const std::shared_ptr<resources::Shader>& prefilterShader,
-                                    const std::shared_ptr<resources::Shader>& resampleCubemapShader) const;
+                                    const std::shared_ptr<resources::Shader>& resampleCubemapShader, GLuint layer = 0) const;
     void setRadius(float radius_);
     void setFadeDistance(float fadeDistance_);
 
@@ -67,18 +67,16 @@ class LightProbe : public Component, public Observable<LightStatus<LightProbe>>
     void onInactive() override;
     void notifyAbout(LightCommand command);
 
-    utils::TextureHandle irradianceCubemap{};
-    utils::TextureHandle prefilterCubemap{};
-    GLuint64 irradianceCubemapHandle{};
-    GLuint64 prefilterCubemapHandle{};
     glm::vec3 position{0.0f};
     float radius{1};
     float fadeDistance{1};
 
     const GLuint irradianceCubemapSize = 32;
     const GLuint prefilterCubemapSize = 128;
+    LightProbeCubemaps cubemaps{};
 
     std::shared_ptr<Mesh> sphere{nullptr};
+    std::shared_ptr<LightManager> lightManager{nullptr};
 
     RTTR_REGISTRATION_FRIEND
     RTTR_ENABLE(Component)

@@ -55,6 +55,11 @@ const std::vector<LightProbe*>& LightManager::getLightProbes() const
     return lightProbes;
 }
 
+LightProbeManager& LightManager::getLightProbeManager()
+{
+    return lightProbeManager;
+}
+
 void LightManager::updateDirLightBuffer()
 {
     if(areDirLightsDirty)

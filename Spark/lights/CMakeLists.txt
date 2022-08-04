@@ -5,6 +5,8 @@ list(APPEND CURRENT_DIR_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/LightManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/LightProbe.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/LightProbe.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/LightProbeManager.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LightProbeManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/LightStatus.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/PointLight.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/PointLight.h

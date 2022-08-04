@@ -1,6 +1,9 @@
 #type compute
 #version 450
 #include "Camera.hglsl"
+#include "PointLight.hglsl"
+#include "SpotLight.hglsl"
+#include "LightProbe.hglsl"
 layout(local_size_x = 16, local_size_y = 16) in;
 
 layout(binding = 0) uniform sampler2D depthTexture;
@@ -29,33 +32,6 @@ shared uint lightBeginIndex;
 layout (std140, binding = 0) uniform Camera
 {
     CameraData camera;
-};
-
-struct PointLight {
-    vec4 positionAndRadius; // radius in w component
-    vec3 color;
-    float nothing2;
-    mat4 modelMat;
-};
-
-struct SpotLight {
-    vec3 position;
-    float cutOff;
-    vec3 color;
-    float outerCutOff;
-    vec3 direction;
-    float maxDistance;
-    vec4 boundingSphere; //xyz - sphere center, w - radius 
-};
-
-struct LightProbe {
-    uvec2 irradianceCubemapHandle; //int64_t handle
-    uvec2 prefilterCubemapHandle; //int64_t handle
-    vec4 positionAndRadius;
-    float fadeDistance;
-    float padding1;
-    float padding2;
-    float padding3;
 };
 
 layout(std430, binding = 0) readonly buffer PointLightData

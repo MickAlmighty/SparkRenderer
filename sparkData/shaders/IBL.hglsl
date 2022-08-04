@@ -1,6 +1,7 @@
 #ifndef IBL
 #define IBL
 #include "Material.hglsl"
+#include "LightProbe.hglsl"
 #include "pbrLighting.hglsl"
 
 float computeSpecOcclusion(float NdotV, float AO, float roughness)
@@ -10,12 +11,11 @@ float computeSpecOcclusion(float NdotV, float AO, float roughness)
     return clamp(pow(NdotV + AO, exp2(-16.0f * roughness - 1.0f)) - 1.0f + AO, 0.0f, 1.0f);
 }
 
-vec3 calculateDiffuseIBL(vec3 N, vec3 V, float NdotV, Material material, samplerCube irradianceCubemap)
+vec3 calculateDiffuseIBL(float NdotV, Material material, vec3 irradiance)
 {
     vec3 kS = fresnelSchlickRoughness(NdotV, material.F0, material.roughness);
     vec3 kD = 1.0 - kS;
     kD *= 1.0 - material.metalness;
-    vec3 irradiance = texture(irradianceCubemap, N).rgb;
     vec3 diffuse = kD * irradiance * material.albedo;
     return diffuse;
 }
@@ -90,6 +90,43 @@ float computeDistanceBaseRoughness (
     float newLinearRoughness = clamp( distInteresectionToShadedPoint /
         distInteresectionToProbeCenter * linearRoughness, 0, linearRoughness);
     return mix( newLinearRoughness , linearRoughness , linearRoughness );
+}
+
+vec4 calculateSpecularFromLightProbe(vec3 N, vec3 V, vec3 P, float NdotV, Material material, LightProbe lightProbe, samplerCubeArray prefilterCubemapArray, sampler2D brdfLut)
+{
+    vec4 specular = vec4(0);
+    vec3 R = reflect(-V, N);
+    vec3 dominantR = getSpecularDominantDir(N, R, material.roughness);
+
+    float distToFarIntersection = raySphereIntersection(P, R, lightProbe.positionAndRadius.xyz, lightProbe.positionAndRadius.w);
+    if (distToFarIntersection != 0.0f)
+    {
+        // Compute the actual direction to sample , only consider far intersection
+        // No need to normalize for fetching cubemap
+        vec3 localR = (P + distToFarIntersection * dominantR) - lightProbe.positionAndRadius.xyz;
+
+        // We use normalized R to calc the intersection , thus intersections .y is
+        // the distance between the intersection and the receiving pixel
+        float distanceReceiverIntersection = distToFarIntersection;
+        float distanceSphereCenterIntersection = length ( localR );
+
+        // Compute the modified roughness based on the travelled distance
+        float localRoughness = computeDistanceBaseRoughness(distanceReceiverIntersection, 
+            distanceSphereCenterIntersection, material.roughness);
+
+        const float MAX_REFLECTION_LOD = 4.0;
+
+        //float mipMapLevel = material.roughness * MAX_REFLECTION_LOD; //base
+        float mipMapLevel = sqrt(localRoughness * MAX_REFLECTION_LOD); //frostbite 3
+        vec4 prefilteredColor = textureLod(prefilterCubemapArray, vec4(localR, lightProbe.index), mipMapLevel).rgba;
+        vec2 brdf = texture(brdfLut, vec2(NdotV, material.roughness)).rg;
+
+        //float specOcclusion = computeSpecOcclusion(NdotV, ssao, material.roughness);
+        vec3 F = fresnelSchlickRoughness(NdotV, material.F0, material.roughness);
+        specular = vec4(prefilteredColor.rgb * (F * brdf.x + brdf.y), prefilteredColor.a);
+    }
+
+    return specular;
 }
 
 #endif //IBL

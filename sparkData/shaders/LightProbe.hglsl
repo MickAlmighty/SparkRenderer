@@ -1,0 +1,12 @@
+#ifndef LIGHT_PROBE
+#define LIGHT_PROBE
+
+struct LightProbe {
+    vec4 positionAndRadius;
+    float fadeDistance;
+    uint index;
+    float padding2;
+    float padding3;
+};
+
+#endif //LIGHT_PROBE

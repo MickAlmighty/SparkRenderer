@@ -18,14 +18,6 @@ namespace spark::lights
 {
 LightProbe::LightProbe() : Component()
 {
-    prefilterCubemap = utils::createCubemap(prefilterCubemapSize, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR, true);
-    prefilterCubemapHandle = glGetTextureHandleARB(prefilterCubemap.get());
-    glMakeTextureHandleResidentARB(prefilterCubemapHandle);
-
-    irradianceCubemap = utils::createCubemap(irradianceCubemapSize, GL_R11F_G11F_B10F, GL_RGB, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
-    irradianceCubemapHandle = glGetTextureHandleARB(irradianceCubemap.get());
-    glMakeTextureHandleResidentARB(irradianceCubemapHandle);
-
     const auto attribute = VertexAttribute(0, 3, ShapeCreator::createSphere(1.0f, 10));
     auto vertexAttributes = std::vector{attribute};
     auto indices = std::vector<unsigned int>{};
@@ -35,6 +27,7 @@ LightProbe::LightProbe() : Component()
 
 LightProbe::~LightProbe()
 {
+    lightManager->getLightProbeManager().releaseLightProbeCubemaps(cubemaps);
     notifyAbout(LightCommand::remove);
 }
 
@@ -93,17 +86,18 @@ void LightProbe::drawUIBody()
 
 void LightProbe::start()
 {
-    add(getGameObject()->getScene()->lightManager);
+    lightManager = getGameObject()->getScene()->lightManager;
+    add(lightManager);
+    cubemaps = lightManager->getLightProbeManager().acquireLightProbeCubemaps();
     notifyAbout(LightCommand::add);
 }
 
 LightProbeData LightProbe::getLightData() const
 {
     LightProbeData data{};
-    data.irradianceCubemapHandle = irradianceCubemapHandle;
-    data.prefilterCubemapHandle = prefilterCubemapHandle;
     data.positionAndRadius = glm::vec4(position, getRadius());
     data.fadeDistance = getFadeDistance();
+    data.index = cubemaps.id;
     return data;
 }
 
@@ -119,25 +113,26 @@ float LightProbe::getFadeDistance() const
 
 GLuint LightProbe::getPrefilterCubemap() const
 {
-    return prefilterCubemap.get();
+    return cubemaps.prefilterCubemap.get();
 }
 
 GLuint LightProbe::getIrradianceCubemap() const
 {
-    return irradianceCubemap.get();
+    return cubemaps.irradianceCubemap.get();
 }
 
 void LightProbe::renderIntoIrradianceCubemap(GLuint framebuffer, GLuint environmentCubemap, Cube& cube,
-                                             const std::shared_ptr<resources::Shader>& irradianceShader) const
+                                             const std::shared_ptr<resources::Shader>& irradianceShader, GLuint layer) const
 {
     PUSH_DEBUG_GROUP(IRRADIANCE_CUBEMAP)
 
     glViewport(0, 0, irradianceCubemapSize, irradianceCubemapSize);
 
     irradianceShader->use();
+    irradianceShader->setInt("u_Uniforms.layer", layer);
     glBindTextureUnit(0, environmentCubemap);
 
-    glNamedFramebufferTexture(framebuffer, GL_COLOR_ATTACHMENT0, irradianceCubemap.get(), 0);
+    glNamedFramebufferTexture(framebuffer, GL_COLOR_ATTACHMENT0, cubemaps.irradianceCubemap.get(), 0);
     cube.draw();
 
     glFinish();
@@ -146,15 +141,16 @@ void LightProbe::renderIntoIrradianceCubemap(GLuint framebuffer, GLuint environm
 
 void LightProbe::renderIntoPrefilterCubemap(GLuint framebuffer, GLuint environmentCubemap, unsigned envCubemapSize, Cube& cube,
                                             const std::shared_ptr<resources::Shader>& prefilterShader,
-                                            const std::shared_ptr<resources::Shader>& resampleCubemapShader) const
+                                            const std::shared_ptr<resources::Shader>& resampleCubemapShader, GLuint layer) const
 {
     PUSH_DEBUG_GROUP(PREFILTER_CUBEMAP);
 
     {
         resampleCubemapShader->use();
+        resampleCubemapShader->setInt("u_Uniforms.layer", layer);
         glBindTextureUnit(0, environmentCubemap);
 
-        glNamedFramebufferTexture(framebuffer, GL_COLOR_ATTACHMENT0, prefilterCubemap.get(), 0);
+        glNamedFramebufferTexture(framebuffer, GL_COLOR_ATTACHMENT0, cubemaps.prefilterCubemap.get(), 0);
 
         glViewport(0, 0, prefilterCubemapSize, prefilterCubemapSize);
         cube.draw();
@@ -163,16 +159,17 @@ void LightProbe::renderIntoPrefilterCubemap(GLuint framebuffer, GLuint environme
     const GLuint maxMipLevels = 5;
     prefilterShader->use();
     glBindTextureUnit(0, environmentCubemap);
-    prefilterShader->setFloat("textureSize", static_cast<float>(envCubemapSize));
+    prefilterShader->setInt("u_Uniforms.layer", layer);
+    prefilterShader->setFloat("u_Uniforms2.textureSize", static_cast<float>(envCubemapSize));
 
     for(unsigned int mip = 0; mip < maxMipLevels; ++mip)
     {
         const auto mipSize = static_cast<unsigned int>(prefilterCubemapSize * std::pow(0.5, mip));
         glViewport(0, 0, mipSize, mipSize);
-        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, prefilterCubemap.get(), mip);
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, cubemaps.prefilterCubemap.get(), mip);
 
         const float roughness = static_cast<float>(mip) / static_cast<float>(maxMipLevels - 1);
-        prefilterShader->setFloat("roughness", roughness);
+        prefilterShader->setFloat("u_Uniforms2.roughness", roughness);
 
         cube.draw();
     }

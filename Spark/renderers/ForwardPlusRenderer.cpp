@@ -89,6 +89,8 @@ void ForwardPlusRenderer::lightingPass(const std::shared_ptr<Scene>& scene, cons
     }
     glBindTextureUnit(9, brdfLookupTexture.get());
     glBindTextureUnit(10, ssaoTexture);
+    glBindTextureUnit(11, scene->lightManager->getLightProbeManager().getIrradianceCubemapArray());
+    glBindTextureUnit(12, scene->lightManager->getLightProbeManager().getPrefilterCubemapArray());
 
     lightingShader->use();
     lightingShader->bindUniformBuffer("Camera", camera->getUbo());

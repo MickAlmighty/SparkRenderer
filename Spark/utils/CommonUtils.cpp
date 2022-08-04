@@ -11,6 +11,45 @@
 
 namespace spark::utils
 {
+UniqueTextureHandle createCubemapArray(GLuint width, GLuint height, GLuint numberOfCubemaps, GLenum internalFormat,
+                                       GLenum textureWrapping, GLenum textureSampling, uint32_t numberOfMipMaps)
+{
+    GLuint texture{0};
+
+    glCreateTextures(GL_TEXTURE_CUBE_MAP_ARRAY, 1, &texture);
+    glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, texture);
+
+    //glTexImage3D(GL_TEXTURE_CUBE_MAP_ARRAY, 0, internalFormat, width, height, 6 * numberOfCubemaps, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+    glTexStorage3D(GL_TEXTURE_CUBE_MAP_ARRAY, numberOfMipMaps, internalFormat, width, height, 6 * numberOfCubemaps);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_MAG_FILTER, textureSampling);
+    if(numberOfMipMaps > 1)
+    {
+        glGenerateMipmap(GL_TEXTURE_CUBE_MAP_ARRAY);
+        if(textureSampling == GL_LINEAR)
+        {
+            glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        }
+        else if(textureSampling == GL_NEAREST)
+        {
+            glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+        }
+    }
+    else
+    {
+        glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_MIN_FILTER, textureSampling);
+    }
+
+    glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_WRAP_S, textureWrapping);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_WRAP_T, textureWrapping);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_WRAP_R, textureWrapping);
+    float maxAnisotropicFiltering{1.0f};
+    glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &maxAnisotropicFiltering);
+    glTexParameterf(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_MAX_ANISOTROPY, maxAnisotropicFiltering);
+    glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, 0);
+
+    return {texture};
+}
+
 UniqueTextureHandle createTexture2D(GLuint width, GLuint height, GLenum internalFormat, GLenum format, GLenum pixelFormat, GLenum textureWrapping,
                                     GLenum textureSampling, bool mipMaps, void* data)
 {
@@ -20,7 +59,6 @@ UniqueTextureHandle createTexture2D(GLuint width, GLuint height, GLenum internal
 
     glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, pixelFormat, data);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, textureSampling);
-
     if(mipMaps)
     {
         glGenerateMipmap(GL_TEXTURE_2D);

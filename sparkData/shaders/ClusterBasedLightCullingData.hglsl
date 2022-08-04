@@ -11,7 +11,9 @@ struct ClusterBasedLightCullingData
     float equation3Part2;
     uint maxLightCount;
     uint maxNumberOfLightProbes;
-    uvec3 placeholder;
+    uint placeholder1;
+    uint placeholder2;
+    uint placeholder3;
 };
 
 #endif //CLUSTER_BASED_LIGHT_CULLING_DATA

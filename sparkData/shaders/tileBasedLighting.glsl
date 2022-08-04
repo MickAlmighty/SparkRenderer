@@ -4,6 +4,7 @@
 #include "DirLight.hglsl"
 #include "PointLight.hglsl"
 #include "SpotLight.hglsl"
+#include "LightProbe.hglsl"
 #include "Material.hglsl"
 #include "Constants.hglsl"
 #include "IBL.hglsl"
@@ -21,6 +22,8 @@ layout(binding = 0) uniform sampler2D depthTexture;
 layout(binding = 5) uniform sampler2D diffuseImage;
 layout(binding = 6) uniform sampler2D normalImage;
 layout(binding = 7) uniform sampler2D rougnessMetalnessImage;
+layout (binding = 11) uniform samplerCubeArray lightProbeIrradianceCubemapArray;
+layout (binding = 12) uniform samplerCubeArray lightProbePrefilterCubemapArray;
 
 layout(rgba16f, binding = 0) writeonly uniform image2D lightOutput;
 
@@ -33,16 +36,6 @@ shared uint lightBeginIndex;
 layout (std140, binding = 0) uniform Camera
 {
     CameraData camera;
-};
-
-struct LightProbe {
-    uvec2 irradianceCubemapHandle;
-    uvec2 prefilterCubemapHandle;
-    vec4 positionAndRadius;
-    float fadeDistance;
-    float padding1;
-    float padding2;
-    float padding3;
 };
 
 layout(std430, binding = 0) readonly buffer DirLightData
@@ -88,6 +81,7 @@ float calculateAttenuation(vec3 lightPos, vec3 Pos);
 vec3 directionalLightAddition(vec3 V, vec3 N, Material m);
 vec3 pointLightAddition(vec3 V, vec3 N, vec3 Pos, Material m);
 vec3 spotLightAddition(vec3 V, vec3 N, vec3 Pos, Material m);
+vec3 ambientLightAddition(vec3 V, vec3 N, vec3 P, Material m);
 
 void main()
 {
@@ -135,15 +129,9 @@ void main()
     vec3 L0 = directionalLightAddition(V, N, material);
     L0 += pointLightAddition(V, N, P, material);
     L0 += spotLightAddition(V, N, P, material);
+    const vec3 ambient = ambientLightAddition(V, N, P, material);
 
-    //IBL here
-    float ssao = texture(ssaoTexture, screenSpaceTexCoords).x;
-    float NdotV = max(dot(N, V), 0.0);
-
-    vec3 diffuseIBL = calculateDiffuseIBL(N, V, NdotV, material, irradianceCubemap);
-    vec3 specularIBL = calculateSpecularIBL(N, V, NdotV, material, prefilterCubemap, brdfLUT);
-    vec3 ambient = (diffuseIBL + specularIBL);
-
+    const float ssao = texture(ssaoTexture, vec2(texCoords) / texSize).x;
     vec4 color = vec4(min(L0 + ambient, vec3(65000)), 1) * (1.0f - ssao);
 
     imageStore(lightOutput, texCoords, color);
@@ -206,6 +194,43 @@ vec3 spotLightAddition(vec3 V, vec3 N, vec3 Pos, Material m)
         L0 += calculatePbrLighting(s, m, V, N, Pos, NdotV);
     }
     return L0;
+}
+
+vec3 ambientLightAddition(vec3 V, vec3 N, vec3 P, Material m)
+{
+    const float NdotV = max(dot(N, V), 0.0);
+    vec3 ambient = vec3(0.0);
+    float iblWeight = 0.0f;
+    for (int index = 0; index < lightProbeIndices[numberOfLightsIndex]; ++index)
+    {
+        const LightProbe lightProbe = lightProbes[lightProbeIndices[lightBeginIndex + index]];
+        const vec3 irradiance = texture(lightProbeIrradianceCubemapArray, vec4(N, lightProbe.index)).rgb;
+        vec3 diffuseIBL = calculateDiffuseIBL(NdotV, m, irradiance);
+        vec4 specularIBL = calculateSpecularFromLightProbe(N, V, P, NdotV, m, lightProbe, lightProbePrefilterCubemapArray, brdfLUT);
+
+        //calculating the the smooth light fading at the border of light probe
+        float localDistance = length(P - lightProbe.positionAndRadius.xyz);
+        float alpha = clamp((lightProbe.positionAndRadius.w - localDistance) / 
+                    max(lightProbe.positionAndRadius.w, 0.0001f), 0.0f, 1.0f);
+
+        float alphaAttenuation = smoothstep(0.0f, 1.0f - iblWeight, alpha);
+        iblWeight += alphaAttenuation;// * specularIBL.a;
+
+        ambient += (diffuseIBL + specularIBL.rgb) * alphaAttenuation;// * specularIBL.a;
+
+        if (iblWeight >= 1.0f)
+            break;
+    }
+
+    if (iblWeight < 1.0f)
+    {
+        const vec3 irradiance = texture(irradianceCubemap, N).rgb;
+        vec3 diffuseIBL = calculateDiffuseIBL(NdotV, m, irradiance);
+        vec3 specularIBL = calculateSpecularIBL(N, V, NdotV, m, prefilterCubemap, brdfLUT);
+        ambient += (diffuseIBL + specularIBL) * (1.0f - iblWeight);
+    }
+
+    return ambient;
 }
 
 float calculateAttenuation(vec3 lightPos, vec3 Pos)

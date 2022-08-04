@@ -37,9 +37,16 @@ void DeferredRenderer::processLighting(const std::shared_ptr<Scene>& scene, cons
     lightingShader->bindSSBO("SpotLightData", scene->lightManager->getSpotLightSSBO());
     lightingShader->bindSSBO("LightProbeData", scene->lightManager->getLightProbeSSBO());
 
-    std::array<GLuint, 8> textures{
-        gBuffer.depthTexture.get(), gBuffer.colorTexture.get(), gBuffer.normalsTexture.get(), gBuffer.roughnessMetalnessTexture.get(),
-        skyboxPlaceholder.get(),    skyboxPlaceholder.get(),    brdfLookupTexture.get(),      aoTexture};
+    std::array<GLuint, 10> textures{gBuffer.depthTexture.get(),
+                                    gBuffer.colorTexture.get(),
+                                    gBuffer.normalsTexture.get(),
+                                    gBuffer.roughnessMetalnessTexture.get(),
+                                    skyboxPlaceholder.get(),
+                                    skyboxPlaceholder.get(),
+                                    brdfLookupTexture.get(),
+                                    aoTexture,
+                                    scene->lightManager->getLightProbeManager().getIrradianceCubemapArray(),
+                                    scene->lightManager->getLightProbeManager().getPrefilterCubemapArray()};
 
     if(const auto cubemap = scene->getSkyboxCubemap().lock(); cubemap)
     {
