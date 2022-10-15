@@ -105,15 +105,13 @@ target_include_directories(Spark PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(Spark PUBLIC ${CMAKE_SOURCE_DIR}/thirdparty/include)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    target_compile_definitions(Spark PRIVATE DEBUG)
+    #target_compile_definitions(Spark PRIVATE DEBUG)
     if(MSVC_VERSION GREATER_EQUAL "1930")
         target_compile_options(Spark PRIVATE "/ZI")
     endif()
 endif()
 target_compile_definitions(Spark PRIVATE GLM_FORCE_ALIGNED_GENTYPES)
 
-# message("Paths to libraries ${LIB_PATH}")
-#target_link_directories(Spark PUBLIC ${CMAKE_SOURCE_DIR}/thirdparty/lib/ReleaseLib ${CMAKE_SOURCE_DIR}/thirdparty/lib/DebugLib)
 target_link_directories(Spark PUBLIC ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
 
 #GLFW
@@ -139,7 +137,7 @@ FetchContent_MakeAvailable(spdlog)
 FetchContent_Declare(
         rttr
         GIT_REPOSITORY "https://github.com/MickAlmighty/rttr"
-        GIT_TAG "76f32f775eedcadf39931e2de28cc3c5437e6076"
+        GIT_TAG "4e9f49a5e67f569331d706744064e7bae5796306" #15/05/2021
 )
 set(BUILD_RTTR_DYNAMIC OFF CACHE INTERNAL "" FORCE)
 set(BUILD_STATIC ON CACHE INTERNAL "" FORCE)
@@ -191,7 +189,7 @@ target_include_directories(Spark PUBLIC ${jsoncpp_SOURCE_DIR}/include)
 FetchContent_Declare(
         assimp
         GIT_REPOSITORY "https://github.com/assimp/assimp"
-        GIT_TAG "v5.2.1"
+        GIT_TAG "v5.2.5"
 )
 set(ASSIMP_BUILD_ASSIMP_TOOLS OFF CACHE INTERNAL "If the supplementary tools for Assimp are built in addition to the library.")
 set(ASSIMP_BUILD_TESTS OFF CACHE INTERNAL "Turn off tests")
@@ -287,8 +285,7 @@ if(MSVC)
     target_link_libraries(Spark debug librttr_core_d optimized librttr_core_s)
 else()
     target_link_libraries(Spark X11.so)
-    target_link_libraries(Spark librttr_core.a)
-    target_link_libraries(Spark ${CMAKE_DL_LIBS})
+    target_link_libraries(Spark debug rttr_core_d optimized rttr_core)
 endif()
 target_link_libraries(Spark assimp)
 target_link_libraries(Spark jsoncpp)

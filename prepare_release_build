@@ -1,0 +1,11 @@
+#!/bin/bash
+
+FILE=release_build
+if [ ! -d "$FILE" ]; then
+    mkdir $FILE    
+fi
+
+cd $FILE
+export CC=/usr/bin/clang
+export CXX=/usr/bin/clang++
+cmake -DCMAKE_BUILD_TYPE=Release ..

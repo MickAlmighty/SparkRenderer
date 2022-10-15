@@ -13,7 +13,7 @@ namespace ImGui
 {
 static ImVector<ImRect> s_GroupPanelLabelStack;
 
-void ImGui::BeginGroupPanel(const char* name, const ImVec2& size)
+void BeginGroupPanel(const char* name, const ImVec2& size)
 {
     ImGui::BeginGroup();
 
@@ -63,7 +63,7 @@ void ImGui::BeginGroupPanel(const char* name, const ImVec2& size)
     s_GroupPanelLabelStack.push_back(ImRect(labelMin, labelMax));
 }
 
-void ImGui::EndGroupPanel()
+void EndGroupPanel()
 {
     ImGui::PopItemWidth();
 

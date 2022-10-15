@@ -352,3 +352,5 @@ sparkData/cache/**
 .vscode/
 /build/
 /lib/
+/debug_build/**
+/release_build/**

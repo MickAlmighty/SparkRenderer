@@ -5,18 +5,16 @@ cmake_policy(SET CMP0077 NEW)
 # ---------------------------------------------------------------------------
 # use ccache if found, has to be done before project()
 # ---------------------------------------------------------------------------
-find_program(CCACHE_EXECUTABLE "ccache" HINTS /usr/local/bin /opt/local/bin)
-if(CCACHE_EXECUTABLE)
-    message(STATUS "use ccache")
-    set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_EXECUTABLE}" CACHE PATH "ccache" FORCE)
-    set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE_EXECUTABLE}" CACHE PATH "ccache" FORCE)
-endif()
+#find_program(CCACHE_EXECUTABLE "ccache" HINTS /usr/local/bin /opt/local/bin)
+#if(CCACHE_EXECUTABLE)
+#    message(STATUS "use ccache")
+#    set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_EXECUTABLE}" CACHE PATH "ccache" FORCE)
+#    set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE_EXECUTABLE}" CACHE PATH "ccache" FORCE)
+#endif()
 
 project (SparkRenderer VERSION 1.0)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-
-message("Build files directory ${CMAKE_BINARY_DIR}")
 
 include(FetchContent)
 
@@ -37,8 +35,10 @@ if (MSVC_VERSION GREATER_EQUAL "1900")
     endif()
     add_compile_options("/bigobj")
 else()
-    set(CMAKE_C_COMPILER /bin/clang CACHE INTERNAL "Clang compiler")
-    set(CMAKE_CXX_COMPILER /bin/clang++ CACHE INTERNAL "Clang compiler")
+    #find_program(CCACHE_FOUND ccache)
+    #if(CCACHE_FOUND)
+    #    set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CCACHE_FOUND}")
+    #endif()
     set(CMAKE_CXX_STANDARD 17)
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
     set(CMAKE_CXX_EXTENSIONS OFF)
