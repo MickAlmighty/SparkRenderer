@@ -2,6 +2,16 @@
 cmake_policy(SET CMP0076 NEW)
 cmake_policy(SET CMP0077 NEW)
 
+# ---------------------------------------------------------------------------
+# use ccache if found, has to be done before project()
+# ---------------------------------------------------------------------------
+find_program(CCACHE_EXECUTABLE "ccache" HINTS /usr/local/bin /opt/local/bin)
+if(CCACHE_EXECUTABLE)
+    message(STATUS "use ccache")
+    set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_EXECUTABLE}" CACHE PATH "ccache" FORCE)
+    set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE_EXECUTABLE}" CACHE PATH "ccache" FORCE)
+endif()
+
 project (SparkRenderer VERSION 1.0)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)

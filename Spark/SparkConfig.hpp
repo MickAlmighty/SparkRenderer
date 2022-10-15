@@ -7,9 +7,9 @@ struct SparkConfig final
 {
     SparkConfig();
 
-    unsigned int width{1280};
-    unsigned int height{720};
+    unsigned int width{1920};
+    unsigned int height{1080};
     std::string pathToResources{R"(res)"};
-    bool vsync{true};
+    bool vsync{false};
 };
 }  // namespace spark

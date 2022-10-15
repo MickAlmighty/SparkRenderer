@@ -72,17 +72,17 @@ void Spark::drawGui()
 
 void Spark::loadConfig(const SparkConfig& config)
 {
-    renderingContext = std::make_unique<OpenGLContext>(config.width, config.height, vsync, false);
+    renderingContext = std::make_unique<OpenGLContext>(config.width, config.height, config.vsync, false);
     pathToResources = config.pathToResources;
     vsync = config.vsync;
 }
 
 void Spark::setup()
 {
+    findResourceDirectoryPath();
     renderingContext->setupCallbacks();
-    const auto resourcePath = std::filesystem::exists(pathToResources) ? pathToResources : findResourceDirectoryPath();
-    resourceLibrary = std::make_unique<resourceManagement::ResourceLibrary>(resourcePath);
-    SparkGui::setFilePickerPath(resourcePath.string());
+    resourceLibrary = std::make_unique<resourceManagement::ResourceLibrary>(pathToResources);
+    SparkGui::setFilePickerPath(pathToResources.string());
     initImGui();
     sceneManager = std::make_unique<SceneManager>();
     selectRenderer(rendererType, renderingContext->width, renderingContext->height);
@@ -150,36 +150,41 @@ void Spark::destroy()
     delete ptr;
 }
 
-std::filesystem::path Spark::findResourceDirectoryPath() const
+void Spark::findResourceDirectoryPath()
 {
-    constexpr auto resourceDirectoryName = "sparkData";
-
-    auto currentDir = std::filesystem::current_path();
-
-    const unsigned int maxDepth = 5;
-    for(unsigned int i = 0; i < maxDepth; ++i)
+    if(!std::filesystem::exists(pathToResources))
     {
-        for(const auto& entry : std::filesystem::directory_iterator(currentDir))
+        constexpr auto resourceDirectoryName = "sparkData";
+        SPARK_WARN("Resources directory: {} not found! Searching for default: {}", pathToResources.string(), resourceDirectoryName);
+
+        auto currentDir = std::filesystem::current_path();
+
+        constexpr unsigned int maxDepth = 5;
+        for(unsigned int i = 0; i < maxDepth; ++i)
         {
-            if(entry.is_directory() && entry.path().filename() == resourceDirectoryName)
+            for(const auto& entry : std::filesystem::directory_iterator(currentDir))
             {
-                return entry.path();
+                if(entry.is_directory() && entry.path().filename() == resourceDirectoryName)
+                {
+                    pathToResources = entry.path();
+                    return;
+                }
+            }
+
+            if(currentDir.has_parent_path())
+            {
+                currentDir = currentDir.parent_path();
+            }
+            else
+            {
+                break;
             }
         }
 
-        if(currentDir.has_parent_path())
-        {
-            currentDir = currentDir.parent_path();
-        }
-        else
-        {
-            break;
-        }
+        constexpr auto errorMessage{R"(Resource directory "sparkData" has not been found!)"};
+        SPARK_CRITICAL(errorMessage);
+        throw std::runtime_error(errorMessage);
     }
-
-    constexpr auto errorMessage{R"(Resource directory "sparkData" has not been found!)"};
-    SPARK_CRITICAL(errorMessage);
-    throw std::runtime_error(errorMessage);
 }
 
 OpenGLContext& Spark::getRenderingContext() const

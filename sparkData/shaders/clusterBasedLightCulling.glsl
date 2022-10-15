@@ -114,7 +114,10 @@ void cullPointLights(const AABB cluster)
         uint lightCount = 0;
         if (testSphereVsAABB(pPos, pRadius, cluster.center, cluster.halfSize))
         {
-            lightCount = min(atomicAdd(pointLightCount, 1), algorithmData.maxLightCount);
+            lightCount = atomicAdd(pointLightCount, 1);
+            if (lightCount > algorithmData.maxLightCount)
+                break;
+
             insertPointLightIndex(offset + lightCount, i);
         }
 
@@ -132,7 +135,10 @@ void cullSpotLights(const AABB cluster)
         uint lightCount = 0;
         if(spotLightConeVsAABB(s, cluster.center, aabbSphereRadius))
         {
-            lightCount = min(atomicAdd(spotLightCount, 1), algorithmData.maxLightCount);
+            lightCount = atomicAdd(spotLightCount, 1);
+            if (lightCount > algorithmData.maxLightCount)
+                break;
+
             insertSpotLightIndex(offset + lightCount, i);
         }
 
@@ -151,12 +157,12 @@ void cullLightProbes(const AABB cluster)
         uint lightCount = 0;
         if (testSphereVsAABB(lPos, lRadius, cluster.center, cluster.halfSize))
         {
-            lightCount = min(atomicAdd(lightProbeCount, 1), algorithmData.maxNumberOfLightProbes);
+            lightCount = atomicAdd(lightProbeCount, 1);
+            if (lightCount > algorithmData.maxNumberOfLightProbes)
+                break;
+
             insertLightProbeIndex(offset + lightCount, i);
         }
-
-        if(lightCount == algorithmData.maxNumberOfLightProbes)
-            break;
     }
 }
 

@@ -118,12 +118,12 @@ void cullPointLights()
         uint lightCount = 0;
         if (testSphereVsAABB(pPos, pRadius, cluster.center, cluster.halfSize))
         {
-            lightCount = min(atomicAdd(pointLightCount, 1), algorithmData.maxLightCount);
+            lightCount = atomicAdd(pointLightCount, 1);
+            if (lightCount > algorithmData.maxLightCount)
+                break;
+
             insertPointLightIndex(offset + lightCount, i);
         }
-
-        if (lightCount == algorithmData.maxLightCount)
-            break;
     }
 }
 
@@ -136,12 +136,12 @@ void cullSpotLights()
         uint lightCount = 0;
         if (spotLightConeVsAABB(s, cluster.center, aabbSphereRadius))
         {
-            lightCount = min(atomicAdd(spotLightCount, 1), algorithmData.maxLightCount);
+            lightCount = atomicAdd(spotLightCount, 1);
+            if (lightCount > algorithmData.maxLightCount)
+                break;
+
             insertSpotLightIndex(offset + lightCount, i);
         }
-
-        if (lightCount == algorithmData.maxLightCount)
-            break;
     }
 }
 
@@ -155,41 +155,24 @@ void cullLightProbes()
         uint lightCount = 0;
         if (testSphereVsAABB(lPos, lRadius, cluster.center, cluster.halfSize))
         {
-            lightCount = min(atomicAdd(lightProbeCount, 1), algorithmData.maxNumberOfLightProbes);
+            lightCount = atomicAdd(lightProbeCount, 1);
+            if (lightCount > algorithmData.maxNumberOfLightProbes)
+                break;
+            
             insertLightProbeIndex(offset + lightCount, i);
         }
-
-        if (lightCount == algorithmData.maxNumberOfLightProbes)
-            break;
     }
 }
 
 void getClusterMinMaxDimsBasedOnOccupancyMask()
 {
-    const uint bitmap = cluster.occupancyMask;
-
     uvec3 clusterOccupancy = uvec3(0);
-    clusterOccupancy.x = bitfieldExtract(bitmap, 0, 10);
-    clusterOccupancy.y = bitfieldExtract(bitmap, 10, 10);
-    clusterOccupancy.z = bitfieldExtract(bitmap, 20, 10);
+    clusterOccupancy.x = bitfieldExtract(cluster.occupancyMask, 0, 10);
+    clusterOccupancy.y = bitfieldExtract(cluster.occupancyMask, 10, 10);
+    clusterOccupancy.z = bitfieldExtract(cluster.occupancyMask, 20, 10);
 
-    if (bool((clusterOccupancy.x >> gl_LocalInvocationIndex) & 0x1) )
-    {
-        atomicMin(minBitIndices.x, gl_LocalInvocationIndex);
-        atomicMax(maxBitIndices.x, gl_LocalInvocationIndex);
-    }
-
-    if (bool((clusterOccupancy.y >> gl_LocalInvocationIndex) & 0x1) )
-    {
-        atomicMin(minBitIndices.y, gl_LocalInvocationIndex);
-        atomicMax(maxBitIndices.y, gl_LocalInvocationIndex);
-    }
-
-    if (bool((clusterOccupancy.z >> gl_LocalInvocationIndex) & 0x1) )
-    {
-        atomicMin(minBitIndices.z, gl_LocalInvocationIndex);
-        atomicMax(maxBitIndices.z, gl_LocalInvocationIndex);
-    }
+    minBitIndices = findLSB(clusterOccupancy);
+    maxBitIndices = findMSB(clusterOccupancy);
 }
 
 void createTightClusterAABB()
@@ -218,19 +201,7 @@ void main()
         minBitIndices = uvec3(9);
         maxBitIndices = uvec3(0);
         cluster = clusters[clusterIndex];
-    }
-
-    barrier();
-
-    if (gl_LocalInvocationIndex < 10)
-    {
         getClusterMinMaxDimsBasedOnOccupancyMask();
-    }
-
-    barrier();
-
-    if (gl_LocalInvocationIndex == 0)
-    {
         createTightClusterAABB();
     }
 
@@ -246,8 +217,8 @@ void main()
     {
         clusters[clusterIndex].occupancyMask = 0;
         lightIndicesBufferMetadata[clusterIndex].lightIndicesOffset = offset;
-        lightIndicesBufferMetadata[clusterIndex].pointLightCount = pointLightCount;
-        lightIndicesBufferMetadata[clusterIndex].spotLightCount = spotLightCount;
-        lightIndicesBufferMetadata[clusterIndex].lightProbeCount = lightProbeCount;
+        lightIndicesBufferMetadata[clusterIndex].pointLightCount = min(pointLightCount, algorithmData.maxLightCount);
+        lightIndicesBufferMetadata[clusterIndex].spotLightCount = min(spotLightCount, algorithmData.maxLightCount);
+        lightIndicesBufferMetadata[clusterIndex].lightProbeCount = min(lightProbeCount, algorithmData.maxNumberOfLightProbes);
     }
 }

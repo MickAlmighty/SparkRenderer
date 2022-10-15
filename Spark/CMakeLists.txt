@@ -113,7 +113,7 @@ endif()
 target_compile_definitions(Spark PRIVATE GLM_FORCE_ALIGNED_GENTYPES)
 
 # message("Paths to libraries ${LIB_PATH}")
-target_link_directories(Spark PUBLIC ${CMAKE_SOURCE_DIR}/thirdparty/lib/ReleaseLib ${CMAKE_SOURCE_DIR}/thirdparty/lib/DebugLib)
+#target_link_directories(Spark PUBLIC ${CMAKE_SOURCE_DIR}/thirdparty/lib/ReleaseLib ${CMAKE_SOURCE_DIR}/thirdparty/lib/DebugLib)
 target_link_directories(Spark PUBLIC ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
 
 #GLFW
@@ -135,18 +135,30 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(spdlog)
 
-# #RTTR
-# FetchContent_Declare(
-#         rttr
-#         GIT_REPOSITORY "https://github.com/Doctor-Ned/rttr"
-#         GIT_TAG "a851ebae2fc8f08f05a84d358786d7f7c5856c82"
-# )
+#RTTR
+FetchContent_Declare(
+        rttr
+        GIT_REPOSITORY "https://github.com/MickAlmighty/rttr"
+        GIT_TAG "76f32f775eedcadf39931e2de28cc3c5437e6076"
+)
+set(BUILD_RTTR_DYNAMIC OFF CACHE INTERNAL "" FORCE)
+set(BUILD_STATIC ON CACHE INTERNAL "" FORCE)
+FetchContent_MakeAvailable(rttr)
+target_include_directories(Spark PUBLIC ${rttr_SOURCE_DIR}/src)
+target_include_directories(Spark PUBLIC ${rttr_BINARY_DIR}/src)
+target_link_directories(Spark PUBLIC ${rttr_BINARY_DIR}/lib)
 
-# FetchContent_MakeAvailable(rttr)
-# message("rttr source dir: ${rttr_SOURCE_DIR}/scr")
-# message("rttr source dir: ${rttr_BINARY_DIR}/scr")
-# target_include_directories(Spark PUBLIC ${rttr_SOURCE_DIR}/src)
-# target_include_directories(Spark PUBLIC ${rttr_BINARY_DIR}/src)
+#STB
+FetchContent_Declare(
+        stb
+        GIT_REPOSITORY "https://github.com/nothings/stb"
+        GIT_TAG "8b5f1f37b5b75829fc72d38e7b5d4bcbf8a26d55"
+)
+FetchContent_GetProperties(stb)
+if(NOT stb_POPULATED)
+  FetchContent_Populate(stb)
+  target_include_directories(Spark PUBLIC ${stb_SOURCE_DIR})
+endif()
 
 #TINYGLTF
 FetchContent_Declare(
@@ -191,7 +203,7 @@ FetchContent_MakeAvailable(assimp)
 FetchContent_Declare(
         spirv-headers
         GIT_REPOSITORY "https://github.com/KhronosGroup/SPIRV-Headers"
-        GIT_TAG "6a55fade62dec6a406a5a721148f88a2211cbefa"
+        GIT_TAG "sdk-1.3.224.1"
 )
 set(SPIRV_HEADERS_SKIP_EXAMPLES ON CACHE INTERNAL "" FORCE)
 set(SPIRV_HEADERS_SKIP_INSTALL ON CACHE INTERNAL "" FORCE)
@@ -201,7 +213,7 @@ FetchContent_MakeAvailable(spirv-headers)
 FetchContent_Declare(
         spirv-tools
         GIT_REPOSITORY "https://github.com/KhronosGroup/SPIRV-Tools"
-        GIT_TAG "v2022.1"
+        GIT_TAG "v2022.3"
 )
 set(SPIRV_SKIP_EXECUTABLES ON CACHE INTERNAL "" FORCE)
 set(SPIRV_SKIP_TESTS ON CACHE INTERNAL "" FORCE)
@@ -211,7 +223,7 @@ FetchContent_MakeAvailable(spirv-tools)
 FetchContent_Declare(
         glslang
         GIT_REPOSITORY "https://github.com/KhronosGroup/glslang"
-        GIT_TAG "master-tot"
+        GIT_TAG "11.12.0"
 )
 set(SKIP_GLSLANG_INSTALL ON CACHE INTERNAL "" FORCE)
 set(ENABLE_GLSLANG_BINARIES OFF CACHE INTERNAL "" FORCE)
@@ -222,7 +234,7 @@ FetchContent_MakeAvailable(glslang)
 FetchContent_Declare(
         shaderc
         GIT_REPOSITORY "https://github.com/google/shaderc"
-        GIT_TAG "v2022.1"
+        GIT_TAG "v2022.3"
 )
 set(SHADERC_SKIP_TESTS ON CACHE INTERNAL "" FORCE)
 set(SHADERC_SKIP_INSTALL ON CACHE BOOL "" FORCE)
@@ -234,7 +246,7 @@ FetchContent_MakeAvailable(shaderc)
 FetchContent_Declare(
         spirv_cross
         GIT_REPOSITORY "https://github.com/KhronosGroup/SPIRV-Cross"
-        GIT_TAG "sdk-1.3.204.0"
+        GIT_TAG "sdk-1.3.224.1"
 )
 set(SPIRV_CROSS_CLI OFF CACHE INTERNAL "" FORCE)
 set(SPIRV_CROSS_ENABLE_TESTS OFF CACHE INTERNAL "" FORCE)
@@ -247,15 +259,39 @@ set(SPIRV_CROSS_ENABLE_C_API OFF CACHE INTERNAL "" FORCE)
 FetchContent_MakeAvailable(spirv_cross)
 target_include_directories(Spark PUBLIC ${spirv_cross_SOURCE_DIR})
 
+#GLM
+FetchContent_Declare(
+        glm
+        GIT_REPOSITORY "https://github.com/g-truc/glm"
+        GIT_TAG "0.9.9.8"
+)
+FetchContent_GetProperties(glm)
+if(NOT glm_POPULATED)
+  FetchContent_Populate(glm)
+  target_include_directories(Spark PUBLIC ${glm_SOURCE_DIR})
+endif()
+
+#GLI
+FetchContent_Declare(
+        gli
+        GIT_REPOSITORY "https://github.com/g-truc/gli"
+        GIT_TAG "779b99ac6656e4d30c3b24e96e0136a59649a869" #15/05/2021
+)
+FetchContent_GetProperties(gli)
+if(NOT gli_POPULATED)
+  FetchContent_Populate(gli)
+  target_include_directories(Spark PUBLIC ${gli_SOURCE_DIR})
+endif()
+
 if(MSVC)
-    target_link_libraries(Spark debug librttr_core_d optimized librttr_core)
+    target_link_libraries(Spark debug librttr_core_d optimized librttr_core_s)
 else()
     target_link_libraries(Spark X11.so)
     target_link_libraries(Spark librttr_core.a)
     target_link_libraries(Spark ${CMAKE_DL_LIBS})
 endif()
 target_link_libraries(Spark assimp)
-target_link_libraries(Spark debug jsoncppd optimized jsoncpp)
+target_link_libraries(Spark jsoncpp)
 target_link_libraries(Spark glfw)
 target_link_libraries(Spark spdlog)
 target_link_libraries(Spark shaderc)

@@ -12,6 +12,16 @@
 #include "renderers/Renderer.hpp"
 #include "Spark.h"
 
+namespace
+{
+enum class Benchmark
+{
+    Test1,
+    Test2,
+    LightSpawner
+};
+}
+
 namespace spark::scripts
 {
 void RendererBenchmark::update()
@@ -21,6 +31,15 @@ void RendererBenchmark::update()
     if(animation && !animation->isPlaying() && benchmarkStarted)
     {
         stopBenchmark();
+    }
+
+    if(lightScalingBenchmarkStarted && activeLightCounter != numberOfLights)
+    {
+        activateNextLight();
+    }
+    else if(lightScalingBenchmarkStarted && activeLightCounter == numberOfLights)
+    {
+        stopLightScalingBenchmark();
     }
 }
 
@@ -36,13 +55,78 @@ void RendererBenchmark::drawUIBody()
             spark.selectRenderer(type, width, height);
         }
     }
-
-    ImGui::DragInt("numberOfLights", &numberOfLights);
-    numberOfLights = glm::clamp(numberOfLights, 0, 100000);
-
-    if(ImGui::Button("Start Benchmark"))
+    ImGui::Separator();
+    ImGui::NewLine();
+    static Benchmark benchmark{Benchmark::Test1};
+    if(ImGui::RadioButton("Scene Benchmark", benchmark == Benchmark::Test1))
     {
-        startBenchmark();
+        benchmark = Benchmark::Test1;
+    }
+    if(ImGui::RadioButton("Light Scaling Benchmark", benchmark == Benchmark::Test2))
+    {
+        benchmark = Benchmark::Test2;
+    }
+    if(ImGui::RadioButton("Light Spawner", benchmark == Benchmark::LightSpawner))
+    {
+        benchmark = Benchmark::LightSpawner;
+    }
+
+    if(benchmark == Benchmark::Test1)
+    {
+        if(!benchmarkStarted)
+        {
+            ImGui::DragInt("numberOfLights", &numberOfLights);
+            numberOfLights = glm::clamp(numberOfLights, 0, 10000);
+            if(ImGui::Button("Start Benchmark"))
+            {
+                startBenchmark();
+            }
+        }
+        else
+        {
+            if(ImGui::Button("Stop Benchmark"))
+            {
+                stopBenchmark();
+            }
+        }
+    }
+
+    if(benchmark == Benchmark::Test2)
+    {
+        if(!lightScalingBenchmarkStarted)
+        {
+            ImGui::DragInt("numberOfLights", &numberOfLights);
+            numberOfLights = glm::clamp(numberOfLights, 0, 10000);
+            ImGui::DragInt("light Counter Step", &lightCounterStep);
+            lightCounterStep = glm::clamp(lightCounterStep, 1, 10000);
+
+            if(ImGui::Button("Start Light Scaling Benchmark"))
+            {
+                startLightScalingBenchmark();
+            }
+        }
+        else
+        {
+            if(ImGui::Button("Stop Light Scaling Benchmark"))
+            {
+                stopLightScalingBenchmark();
+            }
+        }
+    }
+
+    if(benchmark == Benchmark::LightSpawner)
+    {
+        ImGui::DragInt("numberOfLights", &numberOfLights);
+        numberOfLights = glm::clamp(numberOfLights, 0, 10000);
+        if(ImGui::Button("Spawn Lights"))
+        {
+            generateGameObjectsWithLights();
+        }
+        ImGui::SameLine();
+        if(ImGui::Button("Release Lights"))
+        {
+            releaseLights();
+        }
     }
 }
 
@@ -71,7 +155,10 @@ void RendererBenchmark::stopBenchmark()
 {
     benchmarkStarted = false;
 
-    getGameObject()->getComponent<Animation>()->stop();
+    if(auto animation = getGameObject()->getComponent<Animation>(); animation)
+    {
+        animation->stop();
+    }
 
     auto& spark = spark::Spark::get();
     spark.isEditorEnabled = true;
@@ -111,8 +198,83 @@ void RendererBenchmark::stopBenchmark()
     }
 }
 
-void RendererBenchmark::generateGameObjectsWithLights()
+void RendererBenchmark::startLightScalingBenchmark()
 {
+    lightScalingBenchmarkStarted = true;
+
+    auto& spark = spark::Spark::get();
+    spark.isEditorEnabled = false;
+    spark.getRenderer().isProfilingEnabled = true;
+    selectedRenderer = spark.getRendererType();
+    isFirstTime = true;
+
+    generateGameObjectsWithLights(false);
+}
+
+void RendererBenchmark::activateNextLight()
+{
+    if(isFirstTime)
+    {
+        isFirstTime = false;
+    }
+    else
+    {
+        const int loopEnd = glm::min(activeLightCounter + lightCounterStep, numberOfLights);
+        for(int i = activeLightCounter; i < loopEnd; i++)
+        {
+            lightContainer.lock()->getChildren()[i]->getComponent<lights::PointLight>()->setActive(true);
+        }
+
+        activeLightCounter = loopEnd;
+    }
+}
+
+void RendererBenchmark::stopLightScalingBenchmark()
+{
+    lightScalingBenchmarkStarted = false;
+    activeLightCounter = 0;
+
+    auto& spark = spark::Spark::get();
+    spark.isEditorEnabled = true;
+    spark.getRenderer().isProfilingEnabled = false;
+
+    releaseLights();
+    spdlog::drop(spark::logging::RENDERER_LOGGER_NAME);
+
+    try
+    {
+        const std::filesystem::path directory{"benchmarks"};
+        if(!std::filesystem::exists(directory))
+        {
+            std::filesystem::create_directory(directory);
+        }
+
+        if(std::filesystem::exists(logging::RENDERER_LOGGER_FILENAME))
+        {
+            time_t now = time(0);
+            tm* ltm = localtime(&now);
+
+            std::stringstream time;
+            time << "_" << ltm->tm_hour << "_" << ltm->tm_min << "_" << ltm->tm_sec;
+
+            std::string rendererName = std::string(radioButtonsData.at(selectedRenderer));
+            std::replace(std::begin(rendererName), std::end(rendererName), ' ', '_');
+
+            const auto filename = rendererName + "_light_scaling" + time.str() + ".csv";
+
+            std::filesystem::rename(logging::RENDERER_LOGGER_FILENAME, directory / filename);
+        }
+    }
+    catch(std::exception& e)
+    {
+        SPARK_ERROR(e.what());
+    }
+}
+
+void RendererBenchmark::generateGameObjectsWithLights(bool areLightsActive)
+{
+    releaseLights();
+
     std::uniform_real_distribution<float> randomFloats(0.0f, 1.0f);
     std::default_random_engine generator{};
 
@@ -135,18 +297,19 @@ void RendererBenchmark::generateGameObjectsWithLights()
             go->transform.local.setPosition(position);
 
             const auto light = go->addComponent<lights::PointLight>();
+            light->setActive(areLightsActive);
 
             const glm::vec3 colorRandom{randomFloats(generator), randomFloats(generator), randomFloats(generator)};
             light->setRadius(25);
             light->setColor(colorRandom);
-            light->setColorStrength(500);
+            light->setColorStrength(20);
         }
     }
 }
 
 void RendererBenchmark::releaseLights() const
 {
-    if(numberOfLights != 0)
+    if(numberOfLights != 0 || !lightContainer.expired())
     {
         getGameObject()->getParent()->removeChild(lightContainer.lock());
     }

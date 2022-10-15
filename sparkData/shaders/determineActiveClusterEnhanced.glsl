@@ -20,7 +20,7 @@ struct AABB
 {
     vec4 center;
     vec3 halfSize;
-    uint occupancyMask;
+    uint occupancyMask; //used for adaptive clustering
 };
 
 layout(std430, binding = 0) buffer ClusterData
@@ -92,16 +92,17 @@ void main()
 
         {
             const AABB aabb = clusters[clusterIndex];
-            const vec3 clusterRangeReciprocal = 10.0f / (aabb.halfSize * 2.0f);
+            const int numOfSegments = 10;
+            const vec3 clusterRangeReciprocal = float(numOfSegments) / (aabb.halfSize * 2.0f);
             const vec3 clusterMin = aabb.center.xyz - aabb.halfSize;
-            const uvec3 maskCellIndex = uvec3(max(vec3(0), min(vec3(10), floor((viewSpacePosition - clusterMin) * clusterRangeReciprocal))));
+            const uvec3 maskCellIndex = uvec3(max(vec3(0), min(vec3(numOfSegments), floor((viewSpacePosition - clusterMin) * clusterRangeReciprocal))));
 
             const uvec3 mask = uvec3(1) << maskCellIndex;
 
             uint clusterOccupancyMask = 0;
-            clusterOccupancyMask = bitfieldInsert(clusterOccupancyMask, mask.x, 0, 10);
-            clusterOccupancyMask = bitfieldInsert(clusterOccupancyMask, mask.y, 10, 10);
-            clusterOccupancyMask = bitfieldInsert(clusterOccupancyMask, mask.z, 20, 10);
+            clusterOccupancyMask = bitfieldInsert(clusterOccupancyMask, mask.x, 0, numOfSegments);
+            clusterOccupancyMask = bitfieldInsert(clusterOccupancyMask, mask.y, 10, numOfSegments);
+            clusterOccupancyMask = bitfieldInsert(clusterOccupancyMask, mask.z, 20, numOfSegments);
 
             atomicOr(clusters[clusterIndex].occupancyMask, clusterOccupancyMask);
         }

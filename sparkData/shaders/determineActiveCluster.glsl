@@ -46,16 +46,16 @@ vec3 fromPxToViewSpace(vec2 pixelCoords, vec2 screenSize, float depth)
     return viewSpacePosition;
 }
 
-uint getZSlice(float viewSpaceDepth)
+uint getZSlice(float viewSpaceDepth) // equation (2)
 {
     return uint(log(abs(viewSpaceDepth)) * algorithmData.equation3Part1 - algorithmData.equation3Part2);
 }
 
-uint calculateClusterIndex(uint clusterZ)
+uint calculateClusterIndex(uint zSlice)
 {
     const uint clustersX = algorithmData.clusterCountX;
     const uint clustersY = algorithmData.clusterCountY;
-    const uint screenSliceOffset = clustersX * clustersY * clusterZ;
+    const uint screenSliceOffset = clustersX * clustersY * zSlice;
 
     const uvec2 clusterAssignmentXY = uvec2(vec2(gl_GlobalInvocationID.xy) / algorithmData.pxTileSize);
     const uint onScreenSliceIndex = clusterAssignmentXY.y * clustersX + clusterAssignmentXY.x;

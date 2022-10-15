@@ -43,8 +43,7 @@ class ClusterBasedDeferredRenderer : public Renderer
     void processLighting(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera, GLuint ssaoTexture);
     GLuint aoPass(const std::shared_ptr<ICamera>& camera);
 
-    utils::TextureHandle lightingTexture{};
-    utils::TextureHandle brdfLookupTexture{};
+    utils::TextureHandle lightingTexture{}, lightCountTexture{}, brdfLookupTexture{};
     GBuffer gBuffer;
     ClusterBasedLightCullingPass lightCullingPass;
     std::shared_ptr<resources::Shader> lightingShader{nullptr};

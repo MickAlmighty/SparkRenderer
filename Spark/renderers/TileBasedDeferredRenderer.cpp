@@ -23,6 +23,7 @@ void TileBasedDeferredRenderer::processLighting(const std::shared_ptr<Scene>& sc
     PUSH_DEBUG_GROUP(TILE_BASED_DEFERRED)
     float clearRgba[] = {0.0f, 0.0f, 0.0f, 0.0f};
     glClearTexImage(lightingTexture.get(), 0, GL_RGBA, GL_FLOAT, &clearRgba);
+    glClearTexImage(lightsPerTileTexture.get(), 0, GL_RGBA, GL_FLOAT, &clearRgba);
 
     lightingShader->use();
     lightingShader->bindUniformBuffer("Camera", camera->getUbo());
@@ -53,9 +54,10 @@ void TileBasedDeferredRenderer::processLighting(const std::shared_ptr<Scene>& sc
 
     // output image
     glBindImageTexture(0, lightingTexture.get(), 0, false, 0, GL_WRITE_ONLY, GL_RGBA16F);
+    glBindImageTexture(1, lightsPerTileTexture.get(), 0, false, 0, GL_WRITE_ONLY, GL_RGBA16F);
 
     lightingShader->dispatchCompute(utils::uiCeil(w, 16u), utils::uiCeil(h, 16u), 1);
-    glBindTextures(0, 0, nullptr);
+    glBindTextures(0, 12, nullptr);
 
     POP_DEBUG_GROUP();
 }
@@ -102,6 +104,7 @@ void TileBasedDeferredRenderer::resizeDerived(unsigned int width, unsigned int h
 void TileBasedDeferredRenderer::createFrameBuffersAndTextures()
 {
     lightingTexture = utils::createTexture2D(w, h, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    lightsPerTileTexture = utils::createTexture2D(w, h, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_NEAREST);
 }
 
 GLuint TileBasedDeferredRenderer::getDepthTexture() const

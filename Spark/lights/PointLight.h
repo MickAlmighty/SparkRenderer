@@ -19,7 +19,6 @@ struct PointLightData final
 {
     alignas(16) glm::vec4 positionAndRadius;
     alignas(16) glm::vec3 color;  // strength baked into color
-    alignas(16) glm::mat4 modelMat;
 };
 
 class PointLight final : public Component, public Observable<LightStatus<PointLight>>

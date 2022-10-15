@@ -7,10 +7,7 @@ namespace spark
 {
 void Animation::update()
 {
-    if(animationPlayer.isPlayingAnimation())
-    {
-        animationPlayer.update(getGameObject(), Clock::getDeltaTime());
-    }
+    animationPlayer.update(getGameObject(), Clock::getDeltaTime());
 }
 
 void Animation::play(bool isLooped)
@@ -54,6 +51,14 @@ void Animation::drawUIBody()
     if(animationData)
     {
         ImGui::Text("%s", animationData->getPath().string().c_str());
+
+        float tm = animationPlayer.getTimeMarker();
+        ImGui::DragFloat("Preview", &tm, 0.001f, 0.0f, 1.0f);
+        if(tm != animationPlayer.getTimeMarker())
+        {
+            animationPlayer.setTimeMarker(tm);
+        }
+
         if(ImGui::Button("Play"))
         {
             play(animationPlayer.isAnimationLooped());

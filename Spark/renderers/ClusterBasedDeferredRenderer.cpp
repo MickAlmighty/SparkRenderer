@@ -21,8 +21,9 @@ ClusterBasedDeferredRenderer::ClusterBasedDeferredRenderer(unsigned int width, u
 void ClusterBasedDeferredRenderer::processLighting(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera, GLuint ssaoTexture)
 {
     PUSH_DEBUG_GROUP(CLUSTER_BASED_DEFERRED)
-    float clearRgba[] = {0.0f, 0.0f, 0.0f, 0.0f};
+    const float clearRgba[] = {0.0f, 0.0f, 0.0f, 0.0f};
     glClearTexImage(lightingTexture.get(), 0, GL_RGBA, GL_FLOAT, &clearRgba);
+    glClearTexImage(lightCountTexture.get(), 0, GL_RGBA, GL_FLOAT, &clearRgba);
 
     lightingShader->use();
     lightingShader->bindUniformBuffer("Camera", camera->getUbo());
@@ -56,9 +57,10 @@ void ClusterBasedDeferredRenderer::processLighting(const std::shared_ptr<Scene>&
 
     // output image
     glBindImageTexture(0, lightingTexture.get(), 0, false, 0, GL_WRITE_ONLY, GL_RGBA16F);
+    glBindImageTexture(1, lightCountTexture.get(), 0, false, 0, GL_WRITE_ONLY, GL_RGBA16F);
 
     lightingShader->dispatchCompute(utils::uiCeil(w, 16u), utils::uiCeil(h, 16u), 1);
-    glBindTextures(0, 0, nullptr);
+    glBindTextures(0, 13, nullptr);
 
     POP_DEBUG_GROUP();
 }
@@ -105,6 +107,7 @@ void ClusterBasedDeferredRenderer::resizeDerived(unsigned int width, unsigned in
 void ClusterBasedDeferredRenderer::createFrameBuffersAndTextures()
 {
     lightingTexture = utils::createTexture2D(w, h, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+    lightCountTexture = utils::createTexture2D(w, h, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_CLAMP_TO_EDGE, GL_LINEAR);
 }
 
 GLuint ClusterBasedDeferredRenderer::getDepthTexture() const

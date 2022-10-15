@@ -26,6 +26,8 @@ class AnimationPlayer
 
     void setAnimationData(const std::shared_ptr<const resources::AnimationData>& animData);
 
+    void setTimeMarker(float tm);
+    float getTimeMarker() const;
     void setLooped(bool looped);
     bool isAnimationLooped() const;
 

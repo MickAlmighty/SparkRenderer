@@ -4,7 +4,7 @@
 #include <algorithm>
 
 #include <gli/load.hpp>
-#include <stb_image/stb_image.h>
+#include <stb_image.h>
 
 #include "utils/CommonUtils.h"
 #include "glad_glfw3.h"
