@@ -33,8 +33,8 @@ target_include_directories(SparkTests PUBLIC ${googletest_SOURCE_DIR}/googletest
 #target_link_libraries(SparkTests googletest Spark)
 target_link_libraries(SparkTests Spark)
 #target_link_libraries(SparkTests googletest-distribution)
-target_link_libraries(SparkTests debug ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libgtest_maind.a optimized gtest_main)
-target_link_libraries(SparkTests debug ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libgmock_maind.a optimized gmock_main)
+target_link_libraries(SparkTests debug gtest_maind optimized gtest_main)
+target_link_libraries(SparkTests debug gmock_maind optimized gmock_main)
 
 include(GoogleTest)
 gtest_discover_tests(SparkTests)
