@@ -1,8 +1,8 @@
 #include "Spark.h"
 
-#include "GUI/ImGui/imgui.h"
-#include "GUI/ImGui/imgui_impl_glfw.h"
-#include "GUI/ImGui/imgui_impl_opengl3.h"
+#include <imgui.h>
+#include <backends/imgui_impl_glfw.h>
+#include <backends/imgui_impl_opengl3.h>
 
 #include "Camera.hpp"
 #include "CameraManager.hpp"

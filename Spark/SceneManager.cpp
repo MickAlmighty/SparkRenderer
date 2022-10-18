@@ -1,6 +1,6 @@
 #include "SceneManager.h"
 
-#include "GUI/ImGui/imgui.h"
+#include <imgui.h>
 
 #include "JsonSerializer.h"
 #include "ResourceLibrary.h"

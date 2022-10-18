@@ -1,9 +1,9 @@
 #include "DirectionalLight.h"
 
 #include <glm/gtc/type_ptr.hpp>
+#include <imgui.h>
 
 #include "Scene.h"
-#include "GUI/ImGui/imgui.h"
 #include "GameObject.h"
 #include "JsonSerializer.h"
 

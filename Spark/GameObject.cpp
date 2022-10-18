@@ -1,10 +1,10 @@
 #include "GameObject.h"
 
 #include <glm/gtc/type_ptr.hpp>
+#include <imgui.h>
 
 #include "EditorCamera.hpp"
 #include "Component.h"
-#include "GUI/ImGui/imgui.h"
 #include "GUI/ImGuizmo.h"
 #include "Scene.h"
 #include "GUI/SparkGui.h"

@@ -2,7 +2,7 @@
 
 #include <string>
 #include <vector>
-#include "ImGui/imgui.h"
+#include <imgui.h>
 
 namespace imgui_addons
 {

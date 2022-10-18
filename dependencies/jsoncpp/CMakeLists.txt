@@ -6,12 +6,8 @@ set(JSONCPP_WITH_TESTS OFF CACHE INTERNAL "Turn off tests" FORCE)
 set(JSONCPP_WITH_STRICT_ISO OFF CACHE INTERNAL "Turn off tests" FORCE)
 
 set(PREVIOUS_DEBUG_POSTFIX ${DEBUG_POSTFIX})
-message("Previous debug postfix: ${DEBUG_POSTFIX}")
-set(DEBUG_POSTFIX "d")
-
+set(DEBUG_POSTFIX "")
 FetchContent_MakeAvailable(jsoncpp)
 
 set(DEBUG_POSTFIX ${PREVIOUS_DEBUG_POSTFIX})
-message("DEBUG_POSTFIX ${DEBUG_POSTFIX}")
-
 set(JSONCPP_SOURCE_DIR ${jsoncpp_SOURCE_DIR}/include CACHE INTERNAL "")

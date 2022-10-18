@@ -27,7 +27,7 @@ void BeginGroupPanel(const char* name, const ImVec2& size)
 
     ImVec2 effectiveSize = size;
     if(size.x < 0.0f)
-        effectiveSize.x = ImGui::GetContentRegionAvailWidth();
+        effectiveSize.x = ImGui::GetContentRegionAvail().x;
     else
         effectiveSize.x = size.x;
     ImGui::Dummy(ImVec2(effectiveSize.x, 0.0f));

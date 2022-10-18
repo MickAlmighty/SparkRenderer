@@ -3,9 +3,9 @@
 #include <map>
 
 #include <glm/gtc/type_ptr.hpp>
+#include <imgui.h>
 
 #include "Enums.h"
-#include "GUI/ImGui/imgui.h"
 #include "GameObject.h"
 #include "Mesh.h"
 #include "renderers/RenderingRequest.h"

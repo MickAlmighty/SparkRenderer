@@ -354,3 +354,5 @@ sparkData/cache/**
 /lib/
 /debug_build/**
 /release_build/**
+/cmake-build-relwithdebinfo-clang/**
+/cmake-build-debug-clang/**

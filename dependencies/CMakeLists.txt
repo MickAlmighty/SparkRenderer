@@ -98,6 +98,20 @@ FetchContent_Declare(
     GIT_TAG "779b99ac6656e4d30c3b24e96e0136a59649a869" #15/05/2021
 )
 
+#DIRENT
+FetchContent_Declare(
+    dirent
+    GIT_REPOSITORY "https://github.com/tronkko/dirent"
+    GIT_TAG "1.23.2"
+)
+
+#IMGUI
+FetchContent_Declare(
+    imgui
+    GIT_REPOSITORY "https://github.com/ocornut/imgui"
+    GIT_TAG "v1.88"
+)
+
 add_subdirectory(glfw)
 add_subdirectory(spdlog)
 add_subdirectory(rttr)
@@ -112,3 +126,5 @@ add_subdirectory(shaderc)
 add_subdirectory(spirv_cross)
 add_subdirectory(glm)
 add_subdirectory(gli)
+add_subdirectory(dirent)
+add_subdirectory(imgui)

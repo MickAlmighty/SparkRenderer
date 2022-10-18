@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#include "GUI/ImGui/imgui.h"
+#include <imgui.h>
 
 #include "GameObject.h"
 #include "GUI/SparkGui.h"

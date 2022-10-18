@@ -1,11 +1,12 @@
 ﻿#include "Scene.h"
 
+#include <imgui.h>
+
 #include "Camera.hpp"
 #include "CameraManager.hpp"
 #include "utils/CommonUtils.h"
 #include "EditorCamera.hpp"
 #include "GameObject.h"
-#include "GUI/ImGui/imgui.h"
 #include "HID/HID.h"
 #include "Logging.h"
 #include "Spark.h"

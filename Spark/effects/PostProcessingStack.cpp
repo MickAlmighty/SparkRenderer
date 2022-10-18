@@ -1,6 +1,7 @@
 #include "PostProcessingStack.hpp"
 
-#include "GUI/ImGui/imgui.h"
+#include <imgui.h>
+
 #include "Scene.h"
 
 namespace spark::effects
