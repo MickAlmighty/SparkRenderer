@@ -112,6 +112,13 @@ FetchContent_Declare(
     GIT_TAG "v1.88"
 )
 
+FetchContent_Declare(
+  glad
+  GIT_REPOSITORY https://github.com/Dav1dde/glad.git
+  GIT_TAG        v0.1.36
+)
+
+add_subdirectory(glad)
 add_subdirectory(glfw)
 add_subdirectory(spdlog)
 add_subdirectory(rttr)

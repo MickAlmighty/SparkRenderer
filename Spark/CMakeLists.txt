@@ -24,7 +24,6 @@ list(APPEND SparkSources
     ${CMAKE_CURRENT_SOURCE_DIR}/GameObject.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/GameObject.h
     ${CMAKE_CURRENT_SOURCE_DIR}/glad_glfw3.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/glad.c
     ${CMAKE_CURRENT_SOURCE_DIR}/IObserver.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ICamera.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ICamera.hpp
@@ -109,7 +108,7 @@ endif()
 target_compile_definitions(Spark PRIVATE GLM_FORCE_ALIGNED_GENTYPES)
 
 target_include_directories(Spark PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_include_directories(Spark PUBLIC ${CMAKE_SOURCE_DIR}/thirdparty/include)
+target_include_directories(Spark PUBLIC ${GLAD_INCLUDE_DIRS})
 target_include_directories(Spark PUBLIC ${JSONCPP_SOURCE_DIR})
 target_include_directories(Spark PUBLIC ${GLM_SOURCE_DIR})
 target_include_directories(Spark PUBLIC ${GLI_SOURCE_DIR})
@@ -132,6 +131,7 @@ else()
 endif()
 target_link_libraries(Spark assimp)
 target_link_libraries(Spark jsoncpp)
+target_link_libraries(Spark glad)
 target_link_libraries(Spark glfw)
 target_link_libraries(Spark spdlog)
 target_link_libraries(Spark shaderc)

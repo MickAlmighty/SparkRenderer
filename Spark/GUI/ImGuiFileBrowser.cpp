@@ -22,7 +22,7 @@
 #    ifndef NOMINMAX
 #        define NOMINMAX
 #    endif
-#    include <dirent/dirent.h>
+#    include <dirent.h>
 #    include <windows.h>
 #else
 #    include <dirent.h>
