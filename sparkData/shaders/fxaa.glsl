@@ -74,7 +74,7 @@ vec3 FXAA(vec2 texelStep)
 
 #define FXAA_QUALITY__PRESET 39
 #if (FXAA_QUALITY__PRESET == 39)
-    #define FXAA_QUALITY_PS 12
+    #define FXAA_QUALITY_PS 6
     #define FXAA_QUALITY_P0 1.0
     #define FXAA_QUALITY_P1 1.0
     #define FXAA_QUALITY_P2 1.0

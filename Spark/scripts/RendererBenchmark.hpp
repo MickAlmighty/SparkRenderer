@@ -15,14 +15,21 @@ class RendererBenchmark : public Component
     private:
     void startBenchmark();
     void stopBenchmark();
-    void generateGameObjectsWithLights();
+    void startLightScalingBenchmark();
+    void activateNextLight();
+    void stopLightScalingBenchmark();
+    void generateGameObjectsWithLights(bool areLightsActive = true);
     void releaseLights() const;
 
     bool benchmarkStarted{false};
+    bool lightScalingBenchmarkStarted{false};
     int numberOfLights{0};
     std::weak_ptr<GameObject> lightContainer;
 
     renderers::RendererType selectedRenderer{};
+    int activeLightCounter{0};
+    int lightCounterStep{1};
+    bool isFirstTime{true};
 
     inline const static std::map<const renderers::RendererType, const char*> radioButtonsData{
         std::make_pair(renderers::RendererType::DEFERRED, "Deferred"),

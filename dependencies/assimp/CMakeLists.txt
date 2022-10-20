@@ -1,0 +1,5 @@
+set(ASSIMP_BUILD_ASSIMP_TOOLS OFF CACHE INTERNAL "If the supplementary tools for Assimp are built in addition to the library.")
+set(ASSIMP_BUILD_TESTS OFF CACHE INTERNAL "Turn off tests")
+set(ASSIMP_INSTALL OFF CACHE INTERNAL "Disable this if you want to use assimp as a submodule.")
+set(ASSIMP_NO_EXPORT ON CACHE INTERNAL "Disable Assimp's export functionality.")
+FetchContent_MakeAvailable(assimp)

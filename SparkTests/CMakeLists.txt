@@ -1,11 +1,12 @@
 FetchContent_Declare(
     googletest
     GIT_REPOSITORY "https://github.com/google/googletest"
-    GIT_TAG "release-1.11.0"
+    GIT_TAG "release-1.12.1"
 )
 
 # For Windows: Prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+set(INSTALL_GTEST OFF CACHE INTERNAL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
 enable_testing()
@@ -31,6 +32,7 @@ target_include_directories(SparkTests PUBLIC ${googletest_SOURCE_DIR}/googlemock
 target_include_directories(SparkTests PUBLIC ${googletest_SOURCE_DIR}/googletest/include)
 #target_link_libraries(SparkTests googletest Spark)
 target_link_libraries(SparkTests Spark)
+#target_link_libraries(SparkTests googletest-distribution)
 target_link_libraries(SparkTests debug gtest_maind optimized gtest_main)
 target_link_libraries(SparkTests debug gmock_maind optimized gmock_main)
 

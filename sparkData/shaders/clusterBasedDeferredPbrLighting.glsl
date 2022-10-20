@@ -27,6 +27,10 @@ layout (binding = 11) uniform samplerCubeArray lightProbeIrradianceCubemapArray;
 layout (binding = 12) uniform samplerCubeArray lightProbePrefilterCubemapArray;
 
 layout(rgba16f, binding = 0) writeonly uniform image2D lightOutput;
+#define DEBUG
+#ifdef DEBUG
+layout(rgba16f, binding = 1) writeonly uniform image2D lightCount;
+#endif
 
 layout (std140, binding = 0) uniform Camera
 {
@@ -77,9 +81,9 @@ vec3 decodeViewSpaceNormal(vec2 enc);
 float calculateAttenuation(vec3 lightPos, vec3 Pos);
 
 vec3 directionalLightAddition(vec3 V, vec3 N, Material m);
-vec3 pointLightAddition(vec3 V, vec3 N, vec3 Pos, Material m, const uint clusterIndex);
-vec3 spotLightAddition(vec3 V, vec3 N, vec3 Pos, Material m, const uint clusterIndex);
-vec3 ambientLightAddition(vec3 V, vec3 N, vec3 P, Material m, uint clusterIndex);
+vec3 pointLightAddition(vec3 V, vec3 N, vec3 Pos, Material m, const LightIndicesBufferMetadata metadata);
+vec3 spotLightAddition(vec3 V, vec3 N, vec3 Pos, Material m, const LightIndicesBufferMetadata metadata);
+vec3 ambientLightAddition(vec3 V, vec3 N, vec3 P, Material m, const LightIndicesBufferMetadata metadata);
 
 vec3 fromPxToViewSpace(vec2 pixelCoords, vec2 screenSize, float depth)
 {
@@ -145,17 +149,21 @@ void main()
     vec3 F0 = vec3(0.16) * pow(1 - material.roughness, 2.0); //frostbite3 fresnel reflectance https://seblagarde.files.wordpress.com/2015/07/course_notes_moving_frostbite_to_pbr_v32.pdf page 14
     material.F0 = mix(F0, material.albedo, material.metalness);
 
+    const LightIndicesBufferMetadata metadata = lightIndicesBufferMetadata[clusterIndex];
     vec3 L0 = directionalLightAddition(V, N, material);
-    L0 += pointLightAddition(V, N, P, material, clusterIndex);
-    L0 += spotLightAddition(V, N, P, material, clusterIndex);
-    const vec3 ambient = ambientLightAddition(V, N, P, material, clusterIndex);
+    L0 += pointLightAddition(V, N, P, material, metadata);
+    L0 += spotLightAddition(V, N, P, material, metadata);
+    const vec3 ambient = ambientLightAddition(V, N, P, material, metadata);
 
     const float ssao = texture(ssaoTexture, vec2(texCoords) / texSize).x;
-    vec4 color = vec4(min(L0 + ambient, vec3(65000)), 1) * (1.0f - ssao);
+    const vec4 color = vec4(min(L0 + ambient, vec3(65000)), 1) * (1.0f - ssao);
 
-    //barrier();
-    //imageStore(lightOutput, texCoords, vec4(lightIndicesBufferMetadata[clusterIndex].pointLightCount, color.yzw));
     imageStore(lightOutput, texCoords, color);
+
+    #ifdef DEBUG
+    const vec4 lightIndices = vec4(metadata.pointLightCount, metadata.spotLightCount, metadata.lightProbeCount, 0.0f);
+    imageStore(lightCount, texCoords.xy, lightIndices);
+    #endif
 }
 
 vec3 worldPosFromDepth(float depth, vec2 texCoords) {
@@ -189,13 +197,13 @@ vec3 directionalLightAddition(vec3 V, vec3 N, Material m)
     return L0;
 }
 
-vec3 pointLightAddition(vec3 V, vec3 N, vec3 Pos, Material m, const uint clusterIndex)
+vec3 pointLightAddition(vec3 V, vec3 N, vec3 Pos, Material m, const LightIndicesBufferMetadata metadata)
 {
     const float NdotV = max(dot(N, V), 0.0f);
 
     vec3 L0 = { 0, 0, 0 };
-    const uint pointLightCount = lightIndicesBufferMetadata[clusterIndex].pointLightCount;
-    const uint globalPointLightsOffset = lightIndicesBufferMetadata[clusterIndex].lightIndicesOffset;
+    const uint pointLightCount = metadata.pointLightCount;
+    const uint globalPointLightsOffset = metadata.lightIndicesOffset;
     for (int i = 0; i < pointLightCount; ++i)
     {
         const uint index = extractPointLightIndex(globalPointLightsOffset + i);
@@ -205,13 +213,13 @@ vec3 pointLightAddition(vec3 V, vec3 N, vec3 Pos, Material m, const uint cluster
     return L0;
 }
 
-vec3 spotLightAddition(vec3 V, vec3 N, vec3 Pos, Material m, const uint clusterIndex)
+vec3 spotLightAddition(vec3 V, vec3 N, vec3 Pos, Material m, const LightIndicesBufferMetadata metadata)
 {
     float NdotV = max(dot(N, V), 0.0f);
 
     vec3 L0 = { 0, 0, 0 };
-    const uint spotLightCount = lightIndicesBufferMetadata[clusterIndex].spotLightCount;
-    const uint globalSpotLightsOffset = lightIndicesBufferMetadata[clusterIndex].lightIndicesOffset;
+    const uint spotLightCount = metadata.spotLightCount;
+    const uint globalSpotLightsOffset = metadata.lightIndicesOffset;
     for (int i = 0; i < spotLightCount; ++i)
     {
         const uint index = extractSpotLightIndex(globalSpotLightsOffset + i);
@@ -220,13 +228,13 @@ vec3 spotLightAddition(vec3 V, vec3 N, vec3 Pos, Material m, const uint clusterI
     return L0;
 }
 
-vec3 ambientLightAddition(vec3 V, vec3 N, vec3 P, Material m, uint clusterIndex)
+vec3 ambientLightAddition(vec3 V, vec3 N, vec3 P, Material m, const LightIndicesBufferMetadata metadata)
 {
     const float NdotV = max(dot(N, V), 0.0);
     vec3 ambient = vec3(0.0);
     float iblWeight = 0.0f;
-    const uint lightProbeCount = lightIndicesBufferMetadata[clusterIndex].lightProbeCount;
-    const uint globalLightProbesOffset = lightIndicesBufferMetadata[clusterIndex].lightIndicesOffset;
+    const uint lightProbeCount = metadata.lightProbeCount;
+    const uint globalLightProbesOffset = metadata.lightIndicesOffset;
     for (int i = 0; i < lightProbeCount; ++i)
     {
         const uint index = extractLightProbeIndex(globalLightProbesOffset + i);

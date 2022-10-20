@@ -3,9 +3,9 @@
 #include <map>
 
 #include <glm/gtc/type_ptr.hpp>
+#include <imgui.h>
 
 #include "Enums.h"
-#include "GUI/ImGui/imgui.h"
 #include "GameObject.h"
 #include "Mesh.h"
 #include "renderers/RenderingRequest.h"
@@ -16,7 +16,7 @@ namespace spark::lights
 {
 PointLightData PointLight::getLightData() const
 {
-    return {glm::vec4(getPosition(), getRadius()), getColor() * getColorStrength(), getLightModel()};
+    return {glm::vec4(getPosition(), getRadius()), getColor() * getColorStrength()};
 }
 
 glm::vec3 PointLight::getPosition() const
@@ -37,11 +37,6 @@ float PointLight::getColorStrength() const
 float PointLight::getRadius() const
 {
     return radius;
-}
-
-glm::mat4 PointLight::getLightModel() const
-{
-    return lightModel;
 }
 
 void PointLight::setRadius(float radius)

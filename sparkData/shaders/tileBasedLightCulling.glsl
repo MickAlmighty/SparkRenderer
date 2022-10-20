@@ -8,11 +8,6 @@ layout(local_size_x = 16, local_size_y = 16) in;
 
 layout(binding = 0) uniform sampler2D depthTexture;
 
-#define DEBUG
-#ifdef DEBUG
-    layout(rgba16f, binding = 5) uniform image2D lightCountImage;
-#endif
-
 shared uint minDepth;
 shared uint maxDepth;
 shared uint tileDepthMask;
@@ -26,7 +21,7 @@ shared uint lightBeginIndex;
 #define MAX_WORK_GROUP_SIZE 16
 #define THREADS_PER_TILE MAX_WORK_GROUP_SIZE * MAX_WORK_GROUP_SIZE
 #define M_PI 3.14159265359
-#define LIGHT_BUFFER_LENGTH 512
+#define LIGHT_BUFFER_LENGTH 4096
 #define MAX_LIGHT_COUNT LIGHT_BUFFER_LENGTH - 1
 
 layout (std140, binding = 0) uniform Camera
@@ -170,14 +165,12 @@ void main()
     cullLightProbes(tileAABB, minDepthVS, depthRangeRecip);
 
     barrier();
-
-#ifdef DEBUG
     if (gl_LocalInvocationIndex == 0)
     {
-        imageStore(lightCountImage, ivec2(gl_WorkGroupID.xy), vec4(float(pointLightCount), float(spotLightCount), float(lightProbesCount), 0));
-        //imageStore(lightCountImage, ivec2(gl_WorkGroupID.xy), uvec4(3, 3, 3, 0));
+        pointLightIndices[numberOfLightsIndex] = min(pointLightCount, MAX_LIGHT_COUNT);
+        spotLightIndices[numberOfLightsIndex] = min(spotLightCount, MAX_LIGHT_COUNT);
+        lightProbeIndices[numberOfLightsIndex] = min(lightProbesCount, MAX_LIGHT_COUNT);
     }
-#endif
 }
 
 Frustum createTileFrustum(const float minDepthZ, const float maxDepthZ, const vec2 texSize)
@@ -331,23 +324,20 @@ void cullPointLights(const Frustum tileFrustum, const float minDepthVS, const fl
             )
         {
             uint id = atomicAdd(pointLightCount, 1);
+            if (id > MAX_LIGHT_COUNT)
+                break;
+
             pointLightIndices[lightBeginIndex + id] = il;
         }
-    }
-
-    barrier();
-
-    if (gl_LocalInvocationIndex == 0)
-    {
-        pointLightIndices[numberOfLightsIndex] = min(pointLightCount, MAX_LIGHT_COUNT);
     }
 }
 
 void cullPointLights(const AABB tileAABB, const float minDepthVS, const float depthRangeRecip)
 {
-    for (uint i = gl_LocalInvocationIndex; i < pointLights.length(); i += THREADS_PER_TILE)
+    for (uint j = gl_LocalInvocationIndex * 4; j < pointLights.length(); j += THREADS_PER_TILE * 4)
+    for (uint i = 0; i < 4; i++)
     {
-        PointLight p = pointLights[i];
+        PointLight p = pointLights[j + i];
 
         vec3 lightViewPosition = (camera.view * vec4(p.positionAndRadius.xyz, 1.0f)).xyz;
         float r = p.positionAndRadius.w;
@@ -371,12 +361,11 @@ void cullPointLights(const AABB tileAABB, const float minDepthVS, const float de
         if(testSphereVsAABB(lightViewPosition, r, tileAABB.center, tileAABB.halfSize))
         {
             id = atomicAdd(pointLightCount, 1);
-            id = min(id, MAX_LIGHT_COUNT);
-            pointLightIndices[lightBeginIndex + id] = i;
-        }
+            if (id > MAX_LIGHT_COUNT)
+                break;
 
-        if (MAX_LIGHT_COUNT <= id)
-            break;
+            pointLightIndices[lightBeginIndex + id] = j + i;
+        }
     }
 
     barrier();
@@ -425,19 +414,11 @@ void cullSpotLights(const AABB tileAABB)
         if(spotLightConeVsAABB(spotLight, tileAABB.center, aabbSphereRadius))
         {
             id = atomicAdd(spotLightCount, 1);
-            id = min(id, MAX_LIGHT_COUNT);
+            if (id > MAX_LIGHT_COUNT)
+                break;
+
             spotLightIndices[lightBeginIndex + id] = i;
         }
-
-        if (MAX_LIGHT_COUNT <= id)
-            break;
-    }
-
-    barrier();
-
-    if (gl_LocalInvocationIndex == 0)
-    {
-        spotLightIndices[numberOfLightsIndex] = min(spotLightCount, MAX_LIGHT_COUNT);
     }
 }
 
@@ -469,18 +450,10 @@ void cullLightProbes(const AABB tileAABB, const float minDepthVS, const float de
         if(testSphereVsAABB(lightViewPosition, r, tileAABB.center, tileAABB.halfSize))
         {
             id = atomicAdd(lightProbesCount, 1);
-            id = min(id, MAX_LIGHT_COUNT);
+            if (id > MAX_LIGHT_COUNT)
+                break;
+
             lightProbeIndices[lightBeginIndex + id] = i;
         }
-
-        if (MAX_LIGHT_COUNT <= id)
-            break;
-    }
-
-    barrier();
-
-    if (gl_LocalInvocationIndex == 0)
-    {
-        lightProbeIndices[numberOfLightsIndex] = min(lightProbesCount, MAX_LIGHT_COUNT);
     }
 }

@@ -2,8 +2,8 @@
 
 #include <sstream>
 
-#include <stb_image/stb_image.h>
-#include <stb_image/stb_image_write.h>
+#include <stb_image.h>
+#include <stb_image_write.h>
 
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>

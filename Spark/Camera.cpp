@@ -1,6 +1,6 @@
 #include "Camera.hpp"
 
-#include "GUI/ImGui/imgui.h"
+#include <imgui.h>
 
 #include "CameraManager.hpp"
 #include "utils/CommonUtils.h"

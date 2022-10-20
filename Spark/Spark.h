@@ -51,7 +51,7 @@ class Spark
     void runLoop();
     void destroy();
 
-    std::filesystem::path findResourceDirectoryPath() const;
+    void findResourceDirectoryPath();
 
     void processKeys();
     void initImGui();

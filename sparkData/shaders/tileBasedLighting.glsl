@@ -26,6 +26,10 @@ layout (binding = 11) uniform samplerCubeArray lightProbeIrradianceCubemapArray;
 layout (binding = 12) uniform samplerCubeArray lightProbePrefilterCubemapArray;
 
 layout(rgba16f, binding = 0) writeonly uniform image2D lightOutput;
+#define DEBUG
+#ifdef DEBUG
+    layout(rgba16f, binding = 1) uniform image2D lightCountImage;
+#endif
 
 shared uint numberOfLightsIndex;
 shared uint lightBeginIndex;
@@ -90,8 +94,9 @@ void main()
 
     if (gl_LocalInvocationIndex == 0)
     {
-        uint nrOfElementsInColumn = 512 * gl_NumWorkGroups.y;
-        uint startIndex = nrOfElementsInColumn * gl_WorkGroupID.x + 512 * gl_WorkGroupID.y;
+        const uint lightIndicesPerTileLength = 4096;
+        uint nrOfElementsInColumn = lightIndicesPerTileLength * gl_NumWorkGroups.y;
+        uint startIndex = nrOfElementsInColumn * gl_WorkGroupID.x + lightIndicesPerTileLength * gl_WorkGroupID.y;
         numberOfLightsIndex = startIndex;
         lightBeginIndex = startIndex + 1;
     }
@@ -135,6 +140,10 @@ void main()
     vec4 color = vec4(min(L0 + ambient, vec3(65000)), 1) * (1.0f - ssao);
 
     imageStore(lightOutput, texCoords, color);
+
+#ifdef DEBUG
+    imageStore(lightCountImage, ivec2(gl_GlobalInvocationID.xy), vec4(pointLightIndices[numberOfLightsIndex], spotLightIndices[numberOfLightsIndex], lightProbeIndices[numberOfLightsIndex], 0));
+#endif
 }
 
 vec3 worldPosFromDepth(float depth, vec2 texCoords) {

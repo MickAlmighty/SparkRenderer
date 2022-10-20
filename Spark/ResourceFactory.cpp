@@ -33,7 +33,7 @@ std::shared_ptr<Resource> ResourceFactory::loadResource(const std::filesystem::p
 {
     const auto ext = extensionToLowerCase(resourceRelativePath.string());
 
-    for each(const auto& loader in loaders)
+    for(const auto & loader : loaders)
     {
         if(loader->isExtensionSupported(ext))
         {
@@ -48,7 +48,7 @@ std::shared_ptr<Resource> ResourceFactory::loadResource(const std::filesystem::p
 bool ResourceFactory::isExtensionSupported(const std::filesystem::path& filePath)
 {
     const auto ext = extensionToLowerCase(filePath);
-    for each(const auto& loader in loaders)
+    for (const auto& loader : loaders)
     {
         if(loader->isExtensionSupported(ext))
         {

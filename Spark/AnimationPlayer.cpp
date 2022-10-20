@@ -49,6 +49,46 @@ void AnimationPlayer::stop(const std::shared_ptr<GameObject>& gameObject)
     }
 }
 
+void AnimationPlayer::setTimeMarker(float tm)
+{
+    float integerPart{0.0f};
+    tm = std::abs(tm);
+    tm = std::modf(tm, &integerPart);
+
+    if(animationData)
+    {
+        if(tm == 0.0f && integerPart != 0.0f)
+        {
+            timeMarker = animationData->getLastTimePoint();
+        }
+        else
+        {
+            timeMarker = animationData->getLastTimePoint() * tm;
+        }
+    }
+    else
+    {
+        timeMarker = 0;
+    }
+}
+
+float AnimationPlayer::getTimeMarker() const
+{
+    if(animationData)
+    {
+        if(auto tm = animationData->getLastTimePoint(); animationData->getLastTimePoint() != 0)
+        {
+            return timeMarker / tm;
+        }
+        else
+        {
+            return 0;
+        }
+    }
+
+    return 0;
+}
+
 void AnimationPlayer::setAnimationData(const std::shared_ptr<const resources::AnimationData>& animData)
 {
     animationData = animData;
@@ -61,10 +101,13 @@ void AnimationPlayer::setLooped(bool looped)
 
 void AnimationPlayer::update(const std::shared_ptr<GameObject>& gameObject, float deltaTime)
 {
-    if(!isPlaying || !animationData)
+    if(!animationData)
         return;
 
-    timeMarker += deltaTime;
+    if(isPlaying)
+    {
+        timeMarker += deltaTime;
+    }
 
     if(const float lastTimePoint = animationData->getLastTimePoint(); timeMarker > lastTimePoint)
     {

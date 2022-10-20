@@ -6,7 +6,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "Logging.h"
-#include "GUI/ImGui/imgui_custom_widgets.h"
+#include "GUI/imgui_custom_widgets.h"
 
 namespace spark
 {

@@ -1,6 +1,6 @@
 #include "Component.h"
 
-#include "GUI/ImGui/imgui_custom_widgets.h"
+#include "GUI/imgui_custom_widgets.h"
 #include "GameObject.h"
 #include "Logging.h"
 #include "Scene.h"

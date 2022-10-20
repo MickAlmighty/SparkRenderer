@@ -42,7 +42,6 @@ class TileBasedLightCullingPass
     void createFrameBuffersAndTextures();
 
     unsigned int w{}, h{};
-    utils::TextureHandle lightsPerTileTexture{};
     std::shared_ptr<resources::Shader> tileBasedLightCullingShader{nullptr};
 };
 }  // namespace spark::renderers

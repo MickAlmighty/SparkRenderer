@@ -2,8 +2,6 @@
 #ifndef IMGUI_DEFINE_MATH_OPERATORS
 #    define IMGUI_DEFINE_MATH_OPERATORS
 #endif
-#include "ImGui/imgui_internal.h"
-
 #include <iostream>
 #include <functional>
 #include <cstring>
@@ -15,6 +13,8 @@
 #include <cmath>
 #include <filesystem>
 
+#include <imgui_internal.h>
+
 #include <sys/stat.h>
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32)
@@ -22,7 +22,7 @@
 #    ifndef NOMINMAX
 #        define NOMINMAX
 #    endif
-#    include "Dirent/dirent.h"
+#    include <include/dirent.h>
 #    include <windows.h>
 #else
 #    include <dirent.h>
@@ -305,7 +305,7 @@ bool ImGuiFileBrowser::renderNavAndSearchBarRegion()
             {
                 ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1.0f, 1.0f, 1.0f, 0.01f));
                 ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
-                ImGui::ArrowButtonEx("##Right", ImGuiDir_Right, ImVec2(frame_height, frame_height), ImGuiButtonFlags_Disabled);
+                ImGui::ArrowButtonEx("##Right", ImGuiDir_Right, ImVec2(frame_height, frame_height), ImGuiItemFlags_Disabled);
                 ImGui::SameLine(0, 0);
                 ImGui::PopStyleColor(2);
             }

@@ -24,7 +24,6 @@ list(APPEND SparkSources
     ${CMAKE_CURRENT_SOURCE_DIR}/GameObject.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/GameObject.h
     ${CMAKE_CURRENT_SOURCE_DIR}/glad_glfw3.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/glad.c
     ${CMAKE_CURRENT_SOURCE_DIR}/IObserver.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ICamera.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ICamera.hpp
@@ -86,7 +85,6 @@ list(APPEND SparkSources
 )
 
 add_library(Spark "")
-
 target_sources(Spark PRIVATE ${SparkSources})
 
 add_subdirectory(GUI)
@@ -101,161 +99,39 @@ add_subdirectory(loaders)
 # Create the source groups for source tree with root at CMAKE_CURRENT_SOURCE_DIR.
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SparkSources})
 
-target_include_directories(Spark PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_include_directories(Spark PUBLIC ${CMAKE_SOURCE_DIR}/thirdparty/include)
-
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    target_compile_definitions(Spark PRIVATE DEBUG)
+    #target_compile_definitions(Spark PRIVATE DEBUG)
     if(MSVC_VERSION GREATER_EQUAL "1930")
         target_compile_options(Spark PRIVATE "/ZI")
     endif()
 endif()
 target_compile_definitions(Spark PRIVATE GLM_FORCE_ALIGNED_GENTYPES)
 
-# message("Paths to libraries ${LIB_PATH}")
-target_link_directories(Spark PUBLIC ${CMAKE_SOURCE_DIR}/thirdparty/lib/ReleaseLib ${CMAKE_SOURCE_DIR}/thirdparty/lib/DebugLib)
+target_include_directories(Spark PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(Spark PUBLIC ${GLAD_INCLUDE_DIRS})
+target_include_directories(Spark PUBLIC ${JSONCPP_SOURCE_DIR})
+target_include_directories(Spark PUBLIC ${GLM_SOURCE_DIR})
+target_include_directories(Spark PUBLIC ${GLI_SOURCE_DIR})
+target_include_directories(Spark PUBLIC ${TINYGLTF_SOURCE_DIR})
+target_include_directories(Spark PUBLIC ${STB_SOURCE_DIR})
+target_include_directories(Spark PUBLIC ${SPIRV_CROSS_SOURCE_DIR})
+target_include_directories(Spark PUBLIC ${RTTR_SOURCE_DIR}/src)
+target_include_directories(Spark PUBLIC ${RTTR_BINARY_DIR}/src)
+target_include_directories(Spark PUBLIC ${DIRENT_SOURCE_DIR})
+target_include_directories(Spark PUBLIC ${IMGUI_SOURCE_DIR})
+
+
+target_link_directories(Spark PUBLIC ${RTTR_BINARY_DIR}/lib)
 target_link_directories(Spark PUBLIC ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
-
-#GLFW
-FetchContent_Declare(
-        glfw
-        GIT_REPOSITORY "https://github.com/glfw/glfw"
-        GIT_TAG "814b7929c5add4b0541ccad26fb81f28b71dc4d8"
-)
-set(GLFW_BUILD_EXAMPLES OFF CACHE INTERNAL "Build the GLFW example programs")
-set(GLFW_BUILD_TESTS OFF CACHE INTERNAL "Build the GLFW test programs")
-set(GLFW_BUILD_DOCS OFF CACHE INTERNAL "Build the GLFW documentation")
-FetchContent_MakeAvailable(glfw)
-
-#SPDLOG
-FetchContent_Declare(
-        spdlog
-        GIT_REPOSITORY "https://github.com/gabime/spdlog"
-        GIT_TAG "100f30043f33277122e0991c83845a2617172ffd"
-)
-FetchContent_MakeAvailable(spdlog)
-
-# #RTTR
-# FetchContent_Declare(
-#         rttr
-#         GIT_REPOSITORY "https://github.com/Doctor-Ned/rttr"
-#         GIT_TAG "a851ebae2fc8f08f05a84d358786d7f7c5856c82"
-# )
-
-# FetchContent_MakeAvailable(rttr)
-# message("rttr source dir: ${rttr_SOURCE_DIR}/scr")
-# message("rttr source dir: ${rttr_BINARY_DIR}/scr")
-# target_include_directories(Spark PUBLIC ${rttr_SOURCE_DIR}/src)
-# target_include_directories(Spark PUBLIC ${rttr_BINARY_DIR}/src)
-
-#TINYGLTF
-FetchContent_Declare(
-        tinygltf
-        GIT_REPOSITORY "https://github.com/syoyo/tinygltf"
-        GIT_TAG "19a41d20ec03d35cee68ff85511bc5875f6037b8"
-)
-set(TINYGLTF_HEADER_ONLY ON CACHE INTERNAL "" FORCE)
-set(TINYGLTF_INSTALL OFF CACHE INTERNAL "" FORCE)
-set(TINYGLTF_BUILD_LOADER_EXAMPLE OFF CACHE INTERNAL "" FORCE)
-FetchContent_MakeAvailable(tinygltf)
-target_include_directories(Spark PUBLIC ${tinygltf_SOURCE_DIR})
-
-#JSONCPP
-FetchContent_Declare(
-        jsoncpp
-        GIT_REPOSITORY "https://github.com/open-source-parsers/jsoncpp"
-        GIT_TAG "1.9.5"
-)
-set(JSONCPP_WITH_TESTS OFF CACHE INTERNAL "Turn off tests" FORCE)
-set(JSONCPP_WITH_POST_BUILD_UNITTEST OFF CACHE INTERNAL "Turn off tests" FORCE)
-set(JSONCPP_WITH_PKGCONFIG_SUPPORT OFF CACHE INTERNAL "Turn off tests" FORCE)
-set(JSONCPP_WITH_CMAKE_PACKAGE OFF CACHE INTERNAL "Turn off tests" FORCE)
-set(JSONCPP_WITH_TESTS OFF CACHE INTERNAL "Turn off tests" FORCE)
-set(JSONCPP_WITH_STRICT_ISO OFF CACHE INTERNAL "Turn off tests" FORCE)
-FetchContent_MakeAvailable(jsoncpp)
-target_include_directories(Spark PUBLIC ${jsoncpp_SOURCE_DIR}/include)
-
-#ASSIMP
-FetchContent_Declare(
-        assimp
-        GIT_REPOSITORY "https://github.com/assimp/assimp"
-        GIT_TAG "v5.2.1"
-)
-set(ASSIMP_BUILD_ASSIMP_TOOLS OFF CACHE INTERNAL "If the supplementary tools for Assimp are built in addition to the library.")
-set(ASSIMP_BUILD_TESTS OFF CACHE INTERNAL "Turn off tests")
-set(ASSIMP_INSTALL OFF CACHE INTERNAL "Disable this if you want to use assimp as a submodule.")
-set(ASSIMP_NO_EXPORT ON CACHE INTERNAL "Disable Assimp's export functionality.")
-FetchContent_MakeAvailable(assimp)
-
-#spirv-headers (NEEDED ONLY FOR SPIRV-TOOLS)
-FetchContent_Declare(
-        spirv-headers
-        GIT_REPOSITORY "https://github.com/KhronosGroup/SPIRV-Headers"
-        GIT_TAG "6a55fade62dec6a406a5a721148f88a2211cbefa"
-)
-set(SPIRV_HEADERS_SKIP_EXAMPLES ON CACHE INTERNAL "" FORCE)
-set(SPIRV_HEADERS_SKIP_INSTALL ON CACHE INTERNAL "" FORCE)
-FetchContent_MakeAvailable(spirv-headers)
-
-#spirv-tools (NEEDED ONLY FOR SHADERC)
-FetchContent_Declare(
-        spirv-tools
-        GIT_REPOSITORY "https://github.com/KhronosGroup/SPIRV-Tools"
-        GIT_TAG "v2022.1"
-)
-set(SPIRV_SKIP_EXECUTABLES ON CACHE INTERNAL "" FORCE)
-set(SPIRV_SKIP_TESTS ON CACHE INTERNAL "" FORCE)
-FetchContent_MakeAvailable(spirv-tools)
-
-#spirv-headers (NEEDED ONLY FOR SHADERC)
-FetchContent_Declare(
-        glslang
-        GIT_REPOSITORY "https://github.com/KhronosGroup/glslang"
-        GIT_TAG "master-tot"
-)
-set(SKIP_GLSLANG_INSTALL ON CACHE INTERNAL "" FORCE)
-set(ENABLE_GLSLANG_BINARIES OFF CACHE INTERNAL "" FORCE)
-set(ENABLE_GLSLANG_INSTALL OFF CACHE INTERNAL "" FORCE)
-FetchContent_MakeAvailable(glslang)
-
-#SHADERC
-FetchContent_Declare(
-        shaderc
-        GIT_REPOSITORY "https://github.com/google/shaderc"
-        GIT_TAG "v2022.1"
-)
-set(SHADERC_SKIP_TESTS ON CACHE INTERNAL "" FORCE)
-set(SHADERC_SKIP_INSTALL ON CACHE BOOL "" FORCE)
-set(SHADERC_SKIP_EXAMPLES ON CACHE BOOL "" FORCE)
-set(SHADERC_SKIP_COPYRIGHT_CHECK ON CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(shaderc)
-
-#SPIRV_CROSS
-FetchContent_Declare(
-        spirv_cross
-        GIT_REPOSITORY "https://github.com/KhronosGroup/SPIRV-Cross"
-        GIT_TAG "sdk-1.3.204.0"
-)
-set(SPIRV_CROSS_CLI OFF CACHE INTERNAL "" FORCE)
-set(SPIRV_CROSS_ENABLE_TESTS OFF CACHE INTERNAL "" FORCE)
-set(SPIRV_CROSS_SKIP_INSTALL ON CACHE INTERNAL "" FORCE)
-set(SPIRV_CROSS_ENABLE_HLSL OFF CACHE INTERNAL "" FORCE)
-set(SPIRV_CROSS_ENABLE_MSL OFF CACHE INTERNAL "" FORCE)
-set(SPIRV_CROSS_ENABLE_CPP OFF CACHE INTERNAL "" FORCE)
-set(SPIRV_CROSS_ENABLE_C_API OFF CACHE INTERNAL "" FORCE)
-set(SPIRV_CROSS_ENABLE_C_API OFF CACHE INTERNAL "" FORCE)
-FetchContent_MakeAvailable(spirv_cross)
-target_include_directories(Spark PUBLIC ${spirv_cross_SOURCE_DIR})
-
 if(MSVC)
     target_link_libraries(Spark debug librttr_core_d optimized librttr_core)
 else()
     target_link_libraries(Spark X11.so)
-    target_link_libraries(Spark librttr_core.a)
-    target_link_libraries(Spark ${CMAKE_DL_LIBS})
+    target_link_libraries(Spark debug rttr_core_d optimized rttr_core)
 endif()
 target_link_libraries(Spark assimp)
-target_link_libraries(Spark debug jsoncppd optimized jsoncpp)
+target_link_libraries(Spark jsoncpp)
+target_link_libraries(Spark glad)
 target_link_libraries(Spark glfw)
 target_link_libraries(Spark spdlog)
 target_link_libraries(Spark shaderc)

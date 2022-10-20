@@ -1,8 +1,9 @@
 #include "AnimationCreator.hpp"
 
+#include <imgui.h>
+
 #include "Clock.h"
-#include "GUI/ImGui/imgui.h"
-#include "GUI/ImGui/imgui_custom_widgets.h"
+#include "GUI/imgui_custom_widgets.h"
 
 #include "GameObject.h"
 #include "JsonSerializer.h"

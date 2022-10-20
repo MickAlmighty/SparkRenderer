@@ -38,7 +38,7 @@ class TileBasedDeferredRenderer : public Renderer
     void processLighting(const std::shared_ptr<Scene>& scene, const std::shared_ptr<ICamera>& camera, GLuint ssaoTexture);
     GLuint aoPass(const std::shared_ptr<ICamera>& camera);
 
-    utils::TextureHandle brdfLookupTexture{}, lightingTexture{};
+    utils::TextureHandle brdfLookupTexture{}, lightingTexture{}, lightsPerTileTexture{};
     GBuffer gBuffer;
     TileBasedLightCullingPass lightCullingPass;
     std::shared_ptr<resources::Shader> lightingShader{nullptr};

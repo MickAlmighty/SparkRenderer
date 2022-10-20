@@ -41,17 +41,16 @@ float geometrySmith(float NdotL, float NdotV, float roughness)
     return geometrySchlickGGX(NdotL, k) * geometrySchlickGGX(NdotV, k);
 }
 
-float calculateAttenuation(vec3 lightPos, vec3 P, float maxDistance)
+float calculateAttenuation(vec3 lightPos, vec3 P, float radius)
 {
     //https://seblagarde.files.wordpress.com/2015/07/course_notes_moving_frostbite_to_pbr_v32.pdf
-    //page 31
-    float distance = length(lightPos - P);
-    float squaredDistance = distance * distance;
-
-    float factor = squaredDistance / (maxDistance * maxDistance);
-    float smoothFactor = clamp(1.0f - factor * factor, 0.0f, 1.0f);
-    float attenuation = 1.0f / max(squaredDistance, 0.01f * 0.01f) * smoothFactor * smoothFactor;
-    return attenuation; 
+    //page 32
+    const float distance = length(lightPos - P);
+    const float squaredDistance = distance * distance;
+    const float squaredRadius = radius * radius;
+    const float factor = (squaredDistance * squaredDistance) / (squaredRadius * squaredRadius);
+    const float smoothFactor = clamp(1.0f - factor, 0.0f, 1.0f);
+    return smoothFactor * smoothFactor;
 }
 
 vec3 calculateSpecularColor(vec3 F, float roughness, vec3 N, vec3 H, float NdotL, float NdotV)

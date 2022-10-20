@@ -1,10 +1,10 @@
 #include "LightProbe.h"
 
 #include <glm/gtx/transform.hpp>
+#include <imgui.h>
 
 #include "utils/CommonUtils.h"
 #include "Enums.h"
-#include "GUI/ImGui/imgui.h"
 #include "GameObject.h"
 #include "Mesh.h"
 #include "renderers/RenderingRequest.h"

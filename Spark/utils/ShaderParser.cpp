@@ -1,4 +1,3 @@
-#pragma once
 #include "ShaderParser.hpp"
 
 #include <sstream>

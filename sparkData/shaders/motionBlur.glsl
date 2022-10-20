@@ -33,16 +33,13 @@ layout (std140, binding = 0) uniform Camera
 };
 
 vec4 worldPosFromDepth(float depth, mat4 invProj, mat4 invView) {
-    float z = depth;
-    vec4 ndcPosition = vec4(texCoords * 2.0 - 1.0, z, 1.0);
-    vec4 viewSpacePosition = invProj * ndcPosition;
+    const float z = depth;
+    const vec4 ndcPosition = vec4(texCoords * 2.0 - 1.0, z, 1.0);
+    const vec4 pos = invView * invProj * ndcPosition;
 
     // inverse of perspective division
-    viewSpacePosition /= viewSpacePosition.w;
-
-    vec4 worldSpacePosition = invView * viewSpacePosition;
-
-    return worldSpacePosition;
+    const vec3 worldPos = pos.xyz / pos.w;
+    return vec4(worldPos, 1.0f);
 }
 
 #define MAX_SAMPLES 12
